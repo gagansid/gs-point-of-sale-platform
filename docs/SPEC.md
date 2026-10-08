@@ -207,6 +207,7 @@ tabel master memakai soft delete.
 | Sistem | `admins` | name, email, password, last_login_at |
 | Sistem | `app_versions` | platform, min_version, latest_version, force_update |
 | Sistem | `announcements` | title, body, starts_at, ends_at (banner ke semua tenant) |
+| Sistem | `system_settings` | key, value (JSON), updated_by — setelan global dari panel `/admin`, mis. wajib 2FA (ADR 0006) |
 | Akses | `tenants` | name, slug, business_type (cafe/retail/other), status (trial/active/suspended), subscription_ends_at |
 | Akses | `outlets` | tenant_id, code, name, address, tax_rate, service_charge_rate, tax_inclusive, rounding, receipt_header, receipt_footer, discount_limits (JSON), timezone (default `Asia/Jakarta`, ADR 0001) |
 | Akses | `users` | tenant_id, outlet_id, name, email (unik global, boleh kosong untuk kasir), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
@@ -430,6 +431,7 @@ Memakai tabel `admins` dan guard sendiri. Tidak pernah bisa diakses akun tenant.
 | Log Viewer | Membaca log Laravel tanpa SSH |
 | Queue | Daftar job gagal, jalankan ulang |
 | Admin | Kelola akun super admin |
+| Keamanan | On/off wajib 2FA untuk semua super admin (konfirmasi kata sandi, ADR 0006); 2FA pribadi diatur di profil |
 
 ## Keamanan
 
@@ -443,7 +445,7 @@ Memakai tabel `admins` dan guard sendiri. Tidak pernah bisa diakses akun tenant.
 | Void & diskon manual | Butuh permission atau PIN approver; tidak boleh approve transaksi sendiri |
 | HTTPS | Wajib; redirect HTTP ke HTTPS |
 | File sensitif | `.env`, `storage/`, `vendor/` di luar folder publik |
-| Admin panel | Guard terpisah, sebaiknya 2FA (fitur bawaan Filament) |
+| Admin panel | Guard terpisah, 2FA aplikasi authenticator (wajib secara default, bisa diatur di menu Keamanan — ADR 0006) |
 
 ## Deploy ke cPanel
 

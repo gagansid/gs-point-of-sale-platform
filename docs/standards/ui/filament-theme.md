@@ -18,14 +18,7 @@ Token di [design-tokens.md](design-tokens.md) diterapkan di **tiga tempat saja**
 return $panel
     ->id('dashboard')
     ->path('dashboard')
-    ->colors([
-        'primary' => '#2D4282',
-        'gray' => Color::Slate,
-        'success' => '#2FB344',
-        'warning' => '#F59F00',
-        'danger' => '#D63939',
-        'info' => '#066FD1',
-    ])
+    ->colors(Theme::colors())   // App\Filament\Shared\Theme — satu palet untuk kedua panel
     ->font('Inter')
     ->brandName('gs.POS')
     ->brandLogo(fn () => view('filament.shared.brand-logo'))
@@ -33,12 +26,16 @@ return $panel
     ->favicon(asset('images/brand/favicon.svg'))
     ->darkMode(true)
     ->sidebarCollapsibleOnDesktop()
-    ->maxContentWidth(MaxWidth::Full)
+    ->maxContentWidth(Width::Full)
     ->viteTheme('resources/css/filament/dashboard/theme.css');
 ```
 
 Panel `/admin` sama, kecuali `->id('admin')`, `->path('admin')`, `->authGuard('admin')`, dan tema
 `resources/css/filament/admin/theme.css`.
+
+> **Palet primary wajib eksplisit (shade 50–950).** Jika hanya hex, Filament menganggapnya shade 500
+> sehingga navy berubah menjadi biru muda dan tombol memakai teks gelap. Di `Theme::colors()`
+> `#2D4282` = shade 600 (tombol/link) dan navy brand `#1B2A55` = shade 800.
 
 ## 2. Struktur `theme.css`
 
@@ -97,8 +94,11 @@ resources/css/filament/
 
 ## 3. Build aset
 
-Node.js tidak tersedia di server (lihat SPEC). Jalankan `npm run build` di lokal, lalu commit hasil
-`public/build`. Pastikan `public/build` **tidak** ada di `.gitignore`.
+- **Tema (Vite/Tailwind v4):** Node.js tidak tersedia di server (lihat SPEC). Jalankan `npm run build`
+  di lokal (Node 20.19+ / 22.12+), lalu commit `public/build`.
+- **Aset bawaan Filament** (`public/js|css|fonts/filament`): tidak di-commit; di-publish otomatis oleh
+  `composer install` lewat hook `post-autoload-dump` → `php artisan filament:upgrade`.
+- **Terjemahan** yang belum ada di Filament ditimpa di `lang/vendor/filament-panels/id/...`.
 
 ## 4. Logo
 

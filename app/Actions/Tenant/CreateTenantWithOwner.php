@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Actions\Tenant;
+
+use App\Actions\Tenant\Data\CreateTenantData;
+use App\Enums\UserRole;
+use App\Models\Admin;
+use App\Models\Outlet;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Support\TenantContext;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+
+final class CreateTenantWithOwner
+{
+    /**
+     * Membuat tenant, outlet pertama, dan owner pertama dalam satu transaksi
+     * (SPEC: setiap tenant wajib punya minimal 1 owner aktif).
+     */
+    public function handle(CreateTenantData $data, ?Admin $by = null): Tenant
+    {
+        $tenant = DB::transaction(function () use ($data): Tenant {
+            $tenant = Tenant::query()->create([
+                'name' => $data->name,
+                'slug' => Str::slug($data->slug),
+                'business_type' => $data->businessType,
+                'status' => $data->status,
+                'subscription_ends_at' => $data->subscriptionEndsAt,
+            ]);
+
+            TenantContext::run($tenant->id, function () use ($data): void {
+                Outlet::query()->create([
+                    'code' => Str::upper($data->outletCode),
+                    'name' => $data->outletName,
+                    'timezone' => $data->outletTimezone,
+                    'tax_rate' => config('pos.outlet_defaults.tax_rate'),
+                    'service_charge_rate' => config('pos.outlet_defaults.service_charge_rate'),
+                    'tax_inclusive' => config('pos.outlet_defaults.tax_inclusive'),
+                    'rounding' => config('pos.outlet_defaults.rounding'),
+                    'discount_limits' => config('pos.outlet_defaults.discount_limits'),
+                ]);
+
+                User::query()->create([
+                    // Owner berlaku untuk seluruh outlet tenant
+                    'outlet_id' => null,
+                    'name' => $data->ownerName,
+                    'email' => Str::lower($data->ownerEmail),
+                    'password' => $data->ownerPassword,
+                    'role' => UserRole::Owner,
+                    'is_active' => true,
+                ]);
+            });
+
+            return $tenant;
+        });
+
+        Log::info('Tenant dibuat', ['tenant_id' => $tenant->id, 'admin_id' => $by?->id]);
+
+        return $tenant;
+    }
+}

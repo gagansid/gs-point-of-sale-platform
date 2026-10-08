@@ -25,4 +25,10 @@ final class AdminFactory extends Factory
             'remember_token' => Str::random(10),
         ];
     }
+
+    /** Admin yang sudah mengaktifkan 2FA (secret contoh, hanya untuk test). */
+    public function withTwoFactor(): self
+    {
+        return $this->state(['app_authentication_secret' => 'JBSWY3DPEHPK3PXP']);
+    }
 }

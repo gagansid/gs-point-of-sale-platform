@@ -39,6 +39,11 @@ return [
         'max_per_page' => 100,
     ],
 
+    'security' => [
+        // Default sebelum super admin mengubahnya di Sistem → Keamanan. Aman secara default: wajib 2FA.
+        'admin_two_factor_required' => (bool) env('POS_ADMIN_2FA_REQUIRED', true),
+    ],
+
     // Rate limit per menit
     'rate_limits' => [
         'auth' => 5,

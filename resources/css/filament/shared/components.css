@@ -1,0 +1,149 @@
+/*
+ * Override komponen Filament agar sesuai standar UI (docs/standards/ui/components/*).
+ * Hanya memakai variabel dari tokens.css — tanpa warna hex baru.
+ */
+
+/* ---------- Latar halaman ---------- */
+.fi-body {
+    background-color: var(--body-bg);
+}
+
+/* ---------- Sidebar gelap (layout.md, design-tokens.md §3) ---------- */
+.fi-sidebar,
+.fi-body-has-topbar .fi-sidebar-header,
+:not(.fi-body-has-topbar) .fi-sidebar-header {
+    background-color: var(--sidebar-bg);
+}
+
+.fi-sidebar {
+    border-inline-end: 1px solid var(--sidebar-border);
+}
+
+.fi-sidebar .fi-sidebar-group-label {
+    color: var(--sidebar-group-label);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.fi-sidebar .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item-btn > .fi-icon,
+.fi-sidebar .fi-sidebar-group-btn > .fi-icon,
+.fi-sidebar .fi-sidebar-group-collapse-btn,
+.fi-sidebar .fi-sidebar-header-controls .fi-icon-btn {
+    color: var(--sidebar-text);
+}
+
+.fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover,
+.fi-sidebar .fi-sidebar-group-btn:hover {
+    background-color: var(--sidebar-hover);
+}
+
+.fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-icon {
+    color: var(--sidebar-text-hover);
+}
+
+/* Item aktif: latar mist transparan + garis kiri 3px */
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
+    background-color: var(--sidebar-active-bg);
+    box-shadow: inset 3px 0 0 var(--brand-mist);
+}
+
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon {
+    color: var(--sidebar-text-hover);
+}
+
+/* ---------- Kontrol: tinggi 36px, radius 8px, font 13px (button.md, form.md) ---------- */
+.fi-btn {
+    min-height: var(--control-h);
+    border-radius: var(--control-radius);
+    font-size: var(--control-font);
+}
+
+.fi-btn.fi-size-sm,
+.fi-btn.fi-size-xs {
+    min-height: var(--control-h-sm);
+}
+
+.fi-input-wrp {
+    border-radius: var(--control-radius);
+}
+
+/* ---------- Badge berbentuk pill berbingkai (badge.md) ---------- */
+.fi-badge {
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px currentColor;
+    font-weight: 600;
+}
+
+/* ---------- Kartu & section (section.md) ---------- */
+.fi-section,
+.fi-ta-ctn,
+.fi-wi-stats-overview-stat {
+    box-shadow: var(--shadow-card);
+}
+
+/* ---------- Angka sejajar (content.md §3) ---------- */
+.is-money,
+.fi-ta-text-item.is-money,
+.fi-in-text.is-money {
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Logo (filament-theme.md §4) ---------- */
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.brand-mark {
+    width: 28px;
+    height: 28px;
+    flex: none;
+}
+
+.brand-word {
+    font-family: var(--font-brand);
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--brand-navy);
+}
+
+.brand-word .w-gs {
+    color: var(--brand-gray);
+}
+
+.brand-tag {
+    margin-inline-start: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-family: Inter, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--brand-navy);
+    background: rgb(27 42 85 / 0.08);
+}
+
+.dark .brand-word,
+.fi-sidebar .brand-word {
+    color: #ffffff;
+}
+
+.dark .brand-word .w-gs,
+.fi-sidebar .brand-word .w-gs {
+    color: var(--brand-mist);
+}
+
+.dark .brand-tag,
+.fi-sidebar .brand-tag {
+    color: var(--brand-mist);
+    background: rgb(184 192 212 / 0.16);
+}

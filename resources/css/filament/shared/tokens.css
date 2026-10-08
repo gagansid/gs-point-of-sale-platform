@@ -1,0 +1,33 @@
+/*
+ * Design tokens — sumber: docs/standards/ui/design-tokens.md (turunan gs-task-tracker).
+ * Nilai baru WAJIB ditambahkan ke dokumen tersebut lebih dulu.
+ */
+:root {
+    --brand-navy: #1b2a55;
+    --brand-gray: #8a919e;
+    --brand-mist: #b8c0d4;
+
+    --body-bg: #f5f7fb;
+    --border-translucent: rgb(4 32 69 / 0.08);
+
+    --sidebar-bg: var(--brand-navy);
+    --sidebar-text: var(--brand-mist);
+    --sidebar-text-hover: #ffffff;
+    --sidebar-hover: rgb(255 255 255 / 0.06);
+    --sidebar-active-bg: rgb(184 192 212 / 0.16);
+    --sidebar-border: rgb(255 255 255 / 0.08);
+    --sidebar-group-label: rgb(184 192 212 / 0.6);
+
+    --control-h: 36px;
+    --control-h-sm: 30px;
+    --control-radius: 8px;
+    --control-font: 13px;
+
+    --shadow-card: 0 0 0 1px var(--border-translucent), 0 2px 4px rgb(30 38 51 / 0.04);
+    --font-brand: 'Nunito', 'Inter', sans-serif;
+}
+
+.dark {
+    --body-bg: #0f1623;
+    --border-translucent: rgb(255 255 255 / 0.08);
+}

@@ -6,9 +6,11 @@ namespace App\Providers;
 
 use App\Auth\TenantUserProvider;
 use App\Enums\UserRole;
+use App\Models\Admin;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Support\TenantContext;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +19,7 @@ use Illuminate\Log\Context\Repository as ContextRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -61,6 +64,13 @@ class AppServiceProvider extends ServiceProvider
         ));
 
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        // Catat waktu login terakhir (audit sederhana) tanpa memicu event model lain
+        Event::listen(function (Login $event): void {
+            if ($event->user instanceof Admin || $event->user instanceof User) {
+                $event->user->forceFill(['last_login_at' => now()])->saveQuietly();
+            }
+        });
 
         // Permission (order.void, ...) diputuskan HANYA oleh role. Ability lain (view, update, ...)
         // diteruskan ke Policy agar aturan bisnis di Policy tidak dilewati owner (ADR 0005).

@@ -9,7 +9,7 @@ Backend POS multi-tenant untuk kafe & UMKM: REST API untuk aplikasi Flutter, das
 ## Kebutuhan lokal
 
 PHP 8.2 (ekstensi `bcmath`, `intl`, `pdo_mysql`, `gd`, `zip`), Composer 2, MySQL 8 / MariaDB 10.6+,
-Node.js (hanya untuk build aset Filament).
+Node.js 20.19+ / 22.12+ (hanya di lokal, untuk build tema Filament).
 
 ## Setup
 
@@ -24,6 +24,7 @@ php artisan serve
 ```
 
 Akun demo lokal tercantum di `database/seeders/DemoTenantSeeder.php`.
+Panel super admin: `/admin`. Wajib 2FA aktif secara default (bisa diubah di Sistem → Keamanan).
 Super admin production dibuat tanpa akun default:
 
 ```bash
@@ -39,3 +40,9 @@ php artisan pos:create-admin --name="Nama" --email=admin@domain.com
 | `composer format` | Memperbaiki format |
 | `composer analyse` | Larastan level 6 |
 | `composer check` | Ketiganya — wajib hijau sebelum commit |
+
+Admin kehilangan aplikasi authenticator dan recovery code (jalankan di server):
+
+```bash
+php artisan pos:admin-reset-2fa admin@domain.com
+```

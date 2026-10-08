@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Aset Filament di-publish otomatis oleh `composer install` (post-autoload-dump: filament:upgrade)
+/public/css/filament
+/public/js/filament
+/public/fonts/filament

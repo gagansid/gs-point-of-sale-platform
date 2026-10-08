@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\BusinessType;
 use App\Enums\TenantStatus;
+use App\Models\Scopes\TenantScope;
 use Carbon\CarbonImmutable;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -60,21 +61,26 @@ final class Tenant extends Model
         return $this->subscription_ends_at === null || $this->subscription_ends_at->isFuture();
     }
 
+    /*
+     * Relasi dari tenant sudah dibatasi oleh foreign key tenant_id, sehingga TenantScope dilepas
+     * agar panel /admin (tanpa tenant context) bisa menghitung & menampilkan datanya.
+     */
+
     /** @return HasMany<Outlet, $this> */
     public function outlets(): HasMany
     {
-        return $this->hasMany(Outlet::class);
+        return $this->hasMany(Outlet::class)->withoutGlobalScope(TenantScope::class);
     }
 
     /** @return HasMany<User, $this> */
     public function users(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class)->withoutGlobalScope(TenantScope::class);
     }
 
     /** @return HasMany<Device, $this> */
     public function devices(): HasMany
     {
-        return $this->hasMany(Device::class);
+        return $this->hasMany(Device::class)->withoutGlobalScope(TenantScope::class);
     }
 }
