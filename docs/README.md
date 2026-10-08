@@ -4,6 +4,7 @@ Mulai dari [`AGENTS.md`](../AGENTS.md) di root project.
 
 ```
 docs/
+├── PROGRESS.md                Status pengerjaan & langkah berikutnya (titik lanjut)
 ├── SPEC.md                    Spesifikasi produk — sumber kebenaran
 ├── standards/                 Acuan wajib
 │   ├── project-structure.md   Lokasi file & penamaan

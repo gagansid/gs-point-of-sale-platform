@@ -12,6 +12,7 @@ Dokumen ini adalah **titik masuk** bagi siapa pun (AI agent atau manusia) yang m
 
 | Pertanyaan | Buka |
 |---|---|
+| **Sampai mana pekerjaan & apa berikutnya?** | [`docs/PROGRESS.md`](docs/PROGRESS.md) |
 | Apa yang dibangun & aturan bisnisnya? | [`docs/SPEC.md`](docs/SPEC.md) |
 | Di mana file X harus diletakkan? | [`docs/standards/project-structure.md`](docs/standards/project-structure.md) |
 | Bagaimana menulis kode PHP/Laravel? | [`docs/standards/coding.md`](docs/standards/coding.md) |
