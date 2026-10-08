@@ -23,6 +23,7 @@ final class ShiftSummary
     /**
      * @return array{
      *     order_count: int,
+     *     open_bill_count: int,
      *     sales_total: string,
      *     payment_methods: list<array{payment_method_id: string, name: string, category: string, count: int, amount: string}>,
      *     opening_cash: string,
@@ -56,6 +57,8 @@ final class ShiftSummary
 
         return [
             'order_count' => (clone $orders)->count(),
+            // Open bill dari shift ini yang belum lunas: terbawa ke shift berikutnya (Q20)
+            'open_bill_count' => $shift->orders()->where('status', OrderStatus::Open)->count(),
             'sales_total' => Money::add(...(clone $orders)->pluck('grand_total')->all()),
             'payment_methods' => $byMethod,
             'opening_cash' => $shift->opening_cash,

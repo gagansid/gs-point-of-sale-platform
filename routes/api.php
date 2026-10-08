@@ -76,5 +76,15 @@ Route::prefix('v1')->name('api.v1.')->middleware('app.version')->group(function 
 
         // ---------- Order & pembayaran ----------
         Route::post('checkout', [OrderController::class, 'checkout'])->name('checkout');
+
+        Route::controller(OrderController::class)->prefix('orders')->name('orders.')->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            // {orderId} bukan route model binding: PUT juga membuat open bill baru
+            Route::put('{orderId}', 'saveOpenBill')->whereUuid('orderId')->name('save');
+            Route::get('{order}', 'show')->name('show');
+            Route::post('{order}/payments', 'addPayment')->name('payments.store');
+            Route::get('{order}/receipt', 'receipt')->name('receipt');
+            Route::post('{order}/void', 'void')->name('void');
+        });
     });
 });

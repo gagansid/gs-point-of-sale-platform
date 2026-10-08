@@ -34,28 +34,6 @@ final readonly class CheckoutData
     /** @param array<string, mixed> $data */
     public static function fromArray(array $data): self
     {
-        $items = [];
-        foreach ($data['items'] ?? [] as $item) {
-            $items[] = [
-                'product_id' => (string) $item['product_id'],
-                'qty' => (int) $item['qty'],
-                'option_ids' => array_values(array_unique(array_map('strval', $item['option_ids'] ?? []))),
-                'notes' => filled($item['notes'] ?? null) ? (string) $item['notes'] : null,
-                'discount' => Money::of((string) ($item['discount'] ?? '0')),
-            ];
-        }
-
-        $payments = [];
-        foreach ($data['payments'] ?? [] as $payment) {
-            $payments[] = [
-                'id' => (string) $payment['id'],
-                'payment_method_id' => (string) $payment['payment_method_id'],
-                'amount' => Money::of((string) $payment['amount']),
-                'tendered' => isset($payment['tendered']) ? Money::of((string) $payment['tendered']) : null,
-                'reference' => filled($payment['reference'] ?? null) ? trim((string) $payment['reference']) : null,
-            ];
-        }
-
         $discount = $data['discount'] ?? null;
 
         return new self(
@@ -65,11 +43,58 @@ final readonly class CheckoutData
             notes: filled($data['notes'] ?? null) ? (string) $data['notes'] : null,
             discountType: is_array($discount) ? DiscountType::from((string) $discount['type']) : null,
             discountValue: is_array($discount) ? Money::of((string) $discount['value']) : '0.00',
-            items: $items,
-            payments: $payments,
-            approval: filled($data['approver_user_id'] ?? null)
-                ? new ApprovalData((string) $data['approver_user_id'], (string) ($data['approver_pin'] ?? ''))
-                : null,
+            items: self::parseItems($data['items'] ?? []),
+            payments: self::parsePayments($data['payments'] ?? []),
+            approval: self::parseApproval($data),
         );
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @return list<array{product_id: string, qty: int, option_ids: list<string>, notes: string|null, discount: string}>
+     */
+    public static function parseItems(array $items): array
+    {
+        $parsed = [];
+        foreach ($items as $item) {
+            $parsed[] = [
+                'product_id' => (string) $item['product_id'],
+                'qty' => (int) $item['qty'],
+                // Duplikat dalam satu item dibuang (validasi tidak memakai "distinct", lihat CheckoutRequest)
+                'option_ids' => array_values(array_unique(array_map('strval', $item['option_ids'] ?? []))),
+                'notes' => filled($item['notes'] ?? null) ? (string) $item['notes'] : null,
+                'discount' => Money::of((string) ($item['discount'] ?? '0')),
+            ];
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $payments
+     * @return list<array{id: string, payment_method_id: string, amount: string, tendered: string|null, reference: string|null}>
+     */
+    public static function parsePayments(array $payments): array
+    {
+        $parsed = [];
+        foreach ($payments as $payment) {
+            $parsed[] = [
+                'id' => (string) $payment['id'],
+                'payment_method_id' => (string) $payment['payment_method_id'],
+                'amount' => Money::of((string) $payment['amount']),
+                'tendered' => isset($payment['tendered']) ? Money::of((string) $payment['tendered']) : null,
+                'reference' => filled($payment['reference'] ?? null) ? trim((string) $payment['reference']) : null,
+            ];
+        }
+
+        return $parsed;
+    }
+
+    /** @param array<string, mixed> $data */
+    public static function parseApproval(array $data): ?ApprovalData
+    {
+        return filled($data['approver_user_id'] ?? null)
+            ? new ApprovalData((string) $data['approver_user_id'], (string) ($data['approver_pin'] ?? ''))
+            : null;
     }
 }

@@ -70,6 +70,8 @@ function deviceToken(Device $device): string
 function freshAuth(): void
 {
     app('auth')->forgetGuards();
+    // Satu instance aplikasi dipakai semua request di test: tenant request sebelumnya tidak boleh terbawa
+    TenantContext::forget();
 }
 
 /**
@@ -78,6 +80,7 @@ function freshAuth(): void
  */
 function posSetup(bool $openShift = true): stdClass
 {
+    TenantContext::forget();
     $pos = new stdClass;
     $pos->outlet = Outlet::factory()->create([
         'code' => 'JKT01', 'tax_rate' => '11.00', 'service_charge_rate' => '5.00',

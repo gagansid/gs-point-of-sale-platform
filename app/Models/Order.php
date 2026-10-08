@@ -44,6 +44,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $tax_inclusive
  * @property string|null $void_reason
  * @property string|null $voided_by
+ * @property string|null $void_approved_by
  * @property string|null $approved_by
  * @property CarbonImmutable|null $completed_at
  * @property CarbonImmutable|null $voided_at
@@ -51,6 +52,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 final class Order extends Model
 {
     use BelongsToTenant, HasUuids;
+
+    /** Default sama dengan database agar order baru di memori sudah punya nilai pembayaran. */
+    protected $attributes = [
+        'paid_total' => '0.00',
+        'change_total' => '0.00',
+        'order_discount' => '0.00',
+    ];
 
     /** Nominal tidak fillable: hanya diisi Action dari hasil OrderCalculator (forceFill). */
     protected $fillable = ['outlet_id', 'shift_id', 'device_id', 'user_id', 'order_type', 'table_label', 'notes'];
