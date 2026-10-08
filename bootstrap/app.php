@@ -7,9 +7,11 @@ use App\Exceptions\BusinessException;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\SetTenantContext;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -28,6 +30,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Limiter "api" didefinisikan di AppServiceProvider (120/menit per token, SPEC Keamanan)
         $middleware->throttleApi();
+
+        // Dipasang di grup route terautentikasi: ['auth:sanctum', 'tenant', ...]
+        $middleware->alias(['tenant' => SetTenantContext::class]);
+
+        // Wajib sebelum route model binding: binding menjalankan query yang dibatasi TenantScope
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: SetTenantContext::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Error bisnis adalah alur normal, bukan bug: jangan memenuhi log/Sentry

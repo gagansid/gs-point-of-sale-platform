@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\ErrorCode;
+use App\Enums\UserRole;
 use App\Exceptions\BusinessException;
 use App\Models\User;
 use Illuminate\Http\Exceptions\PostTooLargeException;
@@ -75,7 +76,8 @@ it('401 UNAUTHENTICATED untuk token palsu', function () {
 });
 
 it('403 FORBIDDEN saat permission ditolak', function () {
-    $this->actingAs(User::factory()->create());
+    // Kasir tidak punya order.void (harus lewat PIN approver)
+    $this->actingAs((new User)->forceFill(['id' => 1, 'role' => UserRole::Cashier]));
 
     assertApiError($this->getJson('/api/_test/forbidden'), 'FORBIDDEN', 403);
 });

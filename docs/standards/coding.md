@@ -149,8 +149,8 @@ enum OrderStatus: string implements HasLabel, HasColor
 - Selalu eager load relasi yang dipakai di Resource (`->with([...])`) — hindari N+1.
   Aktifkan `Model::preventLazyLoading()` di non-production.
 - `lockForUpdate()` untuk: nomor order, stok, saldo order saat tambah payment, void.
-- Query lintas tenant (`withoutGlobalScope('tenant')`) **hanya** di `app/Filament/Admin` dan
-  command sistem, dengan komentar alasannya.
+- Query lintas tenant (`Model::allTenants()` / `Model::forTenant($id)`) **hanya** di `app/Filament/Admin`
+  dan command sistem, dengan komentar alasannya. Seeder/command lain memakai `TenantContext::run()`.
 - Pagination: `->paginate(min($perPage, 100))`.
 
 ## 8. Konfigurasi & secret

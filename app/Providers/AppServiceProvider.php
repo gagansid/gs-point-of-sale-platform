@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Enums\UserRole;
+use App\Models\User;
+use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Log\Context\Repository as ContextRepository;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -18,14 +24,42 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Scoped: direset setiap request & job, sehingga tenant tidak bocor antar request
+        $this->app->scoped(TenantContext::class);
     }
 
     public function boot(): void
     {
+        $this->configureTenancy();
+        $this->configureAuthorization();
         $this->configureModels();
         $this->configureSecurity();
         $this->configureRateLimiting();
+    }
+
+    private function configureTenancy(): void
+    {
+        // Job queue yang dikirim dari request tenant berjalan di tenant yang sama
+        Context::hydrated(function (ContextRepository $context): void {
+            $tenantId = $context->get('tenant_id');
+
+            if (is_string($tenantId) && $tenantId !== '') {
+                TenantContext::set($tenantId);
+            }
+        });
+    }
+
+    private function configureAuthorization(): void
+    {
+        // Permission (order.void, ...) diputuskan HANYA oleh role. Ability lain (view, update, ...)
+        // diteruskan ke Policy agar aturan bisnis di Policy tidak dilewati owner (ADR 0005).
+        Gate::before(function (mixed $user, string $ability): ?bool {
+            if (! $user instanceof User || ! UserRole::isPermission($ability)) {
+                return null;
+            }
+
+            return $user->role?->allows($ability) ?? false;
+        });
     }
 
     private function configureModels(): void

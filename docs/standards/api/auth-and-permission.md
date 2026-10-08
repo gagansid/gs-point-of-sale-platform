@@ -24,7 +24,7 @@ Route::prefix('v1')->middleware(['api', AssignRequestId::class, CheckAppVersion:
     // Terautentikasi
     Route::middleware([
         'auth:sanctum',
-        SetTenantContext::class,       // isi TenantContext dari user token
+        'tenant',                      // SetTenantContext: sebelum route model binding (priority list)
         EnsureTenantActive::class,     // 403 TENANT_SUSPENDED
         EnsureDeviceRegistered::class, // device token masih sah
         'throttle:api',
@@ -36,7 +36,8 @@ Route::prefix('v1')->middleware(['api', AssignRequestId::class, CheckAppVersion:
 
 ## 3. Permission
 
-- Satu-satunya pemetaan: `App\Enums\UserRole::permissions()`. `Gate::before` memanggil `allows()`.
+- Satu-satunya pemetaan: `App\Enums\UserRole::permissions()`. `Gate::before` memanggil `allows()`
+  **hanya** untuk ability di `UserRole::PERMISSIONS`; ability lain (`view`, `update`) diputuskan Policy (ADR 0005).
 - Cek di tiga tempat, sesuai kebutuhan:
 
 | Tempat | Untuk | Contoh |

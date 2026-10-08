@@ -24,8 +24,8 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **Brute force login & PIN** | Rate limit `auth` 5/menit per IP+device, 20/menit per IP; kunci PIN 15 menit setelah 5 salah | `AppServiceProvider`, Action auth | ✅ limiter · ⏳ kunci PIN (langkah Auth) |
 | **Flood / DoS aplikasi** | Rate limit `api` 120/menit per token; batas body 8 MB; pagination maks. 100 | `AppServiceProvider`, `.htaccess`, `config/pos.php` | ✅ Langkah 2 |
 | **DDoS volumetrik** | Cloudflare proxy + "Under Attack mode" | Hosting (§4) | ⏳ Sebelum rilis |
-| **Broken object level authorization (IDOR)** | Global scope tenant + Policy; data tenant lain → 404 | `BelongsToTenant`, Policy | ⏳ Langkah 3 |
-| **Broken function level authorization** | Permission `can()` di FormRequest/Policy, menu tersembunyi | `UserRole`, Filament | ⏳ Langkah 3 |
+| **Broken object level authorization (IDOR)** | Global scope tenant fail-closed + Policy; data tenant lain → 404; tenant_id tidak bisa disusupkan/diubah | `BelongsToTenant`, `SetTenantContext`, Policy | ✅ Langkah 3 (Policy per model menyusul) |
+| **Broken function level authorization** | Permission hanya dari role (`Gate::before`), wildcard dibatasi daftar permission, menu tersembunyi | `UserRole`, `AppServiceProvider`, Filament | ✅ Langkah 3 (menu: langkah 5) |
 | **Mass assignment** | `$fillable` eksplisit; `Model::shouldBeStrict()` di non-production | Model, `AppServiceProvider` | ✅ Langkah 2 |
 | **Manipulasi harga dari client** | Nominal selalu dihitung ulang `OrderCalculator` | SPEC Aturan bisnis | ⏳ Langkah Order |
 | **Replay / transaksi ganda** | ID client sebagai idempotency key + lock | `api/idempotency.md` | ⏳ Langkah Order |

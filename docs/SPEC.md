@@ -83,24 +83,16 @@ Logika bisnis ditulis sekali di kelas Action, lalu dipanggil oleh API controller
 Satu database, setiap tabel bisnis punya `tenant_id` (dan `outlet_id` bila relevan). Trait
 `BelongsToTenant` mengisi `tenant_id` otomatis saat insert dan menambahkan global scope saat query.
 
-```php
-trait BelongsToTenant
-{
-    protected static function bootBelongsToTenant(): void
-    {
-        // Filter otomatis semua query ke tenant user yang login
-        static::addGlobalScope('tenant', function (Builder $query) {
-            if ($tenantId = TenantContext::id()) {
-                $query->where($query->getModel()->getTable() . '.tenant_id', $tenantId);
-            }
-        });
+Isolasi bersifat **fail-closed** (ADR 0005): tanpa tenant context, query tidak mengembalikan data.
+Implementasi: `app/Models/Concerns/BelongsToTenant.php` + `app/Models/Scopes/TenantScope.php`.
 
-        // Isi tenant_id otomatis saat membuat data baru
-        static::creating(function (Model $model) {
-            $model->tenant_id ??= TenantContext::id();
-        });
-    }
-}
+```php
+// Ringkasan perilaku
+TenantContext::set($tenantId);          // dilakukan middleware `tenant` setelah login
+Product::query()->get();                 // hanya produk tenant aktif
+Product::query()->create([...]);         // tenant_id terisi otomatis; tenant lain ditolak
+Product::allTenants()->count();          // lintas tenant — HANYA panel /admin & command sistem
+Product::forTenant($id)->get();          // satu tenant tertentu dari panel /admin
 ```
 
 ### Autentikasi
@@ -179,8 +171,14 @@ enum UserRole: string
     }
 }
 
-// AppServiceProvider::boot()
-Gate::before(fn (User $user, string $ability) => $user->role->allows($ability) ?: null);
+// AppServiceProvider::boot() — permission hanya dari role; ability Policy diteruskan (ADR 0005)
+Gate::before(function (mixed $user, string $ability): ?bool {
+    if (! $user instanceof User || ! UserRole::isPermission($ability)) {
+        return null;
+    }
+
+    return $user->role?->allows($ability) ?? false;
+});
 ```
 
 **Alur PIN approval (🔑):** kasir menekan void atau diskon di atas batas → app meminta PIN →

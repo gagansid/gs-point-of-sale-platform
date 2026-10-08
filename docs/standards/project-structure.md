@@ -69,7 +69,8 @@ gs-point-of-sale-platform/
 │   │   └── Resources/Api/V1/         # OrderResource, OrderItemResource, ShiftResource
 │   │
 │   ├── Models/                       # 1 file per tabel, nama tunggal: Order, OrderItem
-│   │   └── Concerns/                 # BelongsToTenant (HasUuids memakai bawaan Laravel)
+│   │   ├── Concerns/                 # BelongsToTenant (HasUuids memakai bawaan Laravel)
+│   │   └── Scopes/                   # TenantScope (fail-closed, ADR 0005)
 │   │
 │   ├── Policies/                     # Otorisasi per model — memakai permission, bukan role
 │   ├── Providers/
