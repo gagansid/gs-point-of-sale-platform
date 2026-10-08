@@ -51,6 +51,7 @@
 
 - Semua angka dihitung oleh `ReportService` (bukan query di widget) agar sama dengan API laporan.
 - Polling: nonaktif secara default (`$pollingInterval = null`) — shared hosting. Refresh manual.
+- **Tidak lazy** (`protected static bool $isLazy = false`): widget lazy = 1 request HTTP per widget.
 - Cache per tenant 60 detik (driver `database`) untuk widget beranda.
 - Data kosong: tampilkan `Rp0` / `0`, bukan widget kosong.
 

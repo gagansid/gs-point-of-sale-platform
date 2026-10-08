@@ -26,6 +26,25 @@ final class Money
         return bcadd($value, '0', self::SCALE);
     }
 
+    /**
+     * Normalisasi hasil agregat database (SUM). MySQL mengembalikan string desimal yang presisi;
+     * SQLite (test) mengembalikan float — hanya di jalur ini float diubah ke string 2 desimal.
+     */
+    public static function fromDb(mixed $value): string
+    {
+        return match (true) {
+            $value === null, $value === '' => '0.00',
+            is_float($value) => self::of(sprintf('%.2f', $value)),
+            default => self::of((string) $value),
+        };
+    }
+
+    /** $a ÷ $b dibulatkan half-up 2 desimal; 0 bila pembagi 0. */
+    public static function div(string $a, int|string $b): string
+    {
+        return bccomp((string) $b, '0', 2) === 0 ? '0.00' : self::round(bcdiv($a, (string) $b, 6));
+    }
+
     public static function add(string ...$values): string
     {
         return array_reduce($values, fn (string $sum, string $v): string => bcadd($sum, $v, self::SCALE), '0.00');

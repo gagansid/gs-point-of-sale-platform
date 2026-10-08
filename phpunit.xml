@@ -18,6 +18,8 @@
         </include>
     </source>
     <php>
+        <!-- Pembuatan dokumen OpenAPI (Scramble) di ApiDocsTest butuh lebih dari 128 MB -->
+        <ini name="memory_limit" value="512M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_LOCALE" value="id"/>
         <env name="APP_TIMEZONE" value="UTC"/>

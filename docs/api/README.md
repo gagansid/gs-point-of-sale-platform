@@ -9,6 +9,7 @@ Satu file per domain, berisi semua endpoint domain tersebut dengan format
 | Katalog & produk | [`product.md`](product.md) | ✅ 13 endpoint |
 | Shift | [`shift.md`](shift.md) | ✅ 5 endpoint |
 | Order & pembayaran | [`order.md`](order.md) | ✅ 7 endpoint |
-| Laporan & setelan | `report.md` | Belum |
+| Laporan | [`report.md`](report.md) | ✅ 3 endpoint + export Excel di dashboard |
+| Setelan (outlet, karyawan, metode bayar) | `settings.md` | Belum |
 
 File dibuat bersamaan dengan endpoint pertama di domain tersebut.

@@ -552,3 +552,4 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q20 | Open bill lintas shift | Open bill boleh tetap terbuka saat shift ditutup (ditampilkan di ringkasan); saat lunas, order pindah ke shift yang menerima uang. | Diterima | `docs/api/order.md` |
 | Q21 | Visibilitas order | Kasir: order di shift sendiri + semua open bill. Supervisor (view_all tanpa report.view): hari ini. Owner/manager: semua. | Diterima | `docs/api/order.md` |
 | Q22 | Approver void | Kolom `orders.void_approved_by` terpisah dari `approved_by` (approver diskon). | Diterima | Database |
+| Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

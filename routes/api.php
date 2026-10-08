@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\OptionGroupController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\SystemController;
 use Illuminate\Support\Facades\Route;
@@ -85,6 +86,13 @@ Route::prefix('v1')->name('api.v1.')->middleware('app.version')->group(function 
             Route::post('{order}/payments', 'addPayment')->name('payments.store');
             Route::get('{order}/receipt', 'receipt')->name('receipt');
             Route::post('{order}/void', 'void')->name('void');
+        });
+
+        // ---------- Laporan ----------
+        Route::controller(ReportController::class)->prefix('reports')->name('reports.')->group(function (): void {
+            Route::get('summary', 'summary')->name('summary');
+            Route::get('products', 'products')->name('products');
+            Route::get('payment-methods', 'paymentMethods')->name('payment-methods');
         });
     });
 });

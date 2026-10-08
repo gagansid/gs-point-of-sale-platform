@@ -15,7 +15,6 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Enums\Width;
-use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -59,9 +58,7 @@ final class DashboardPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Dashboard/Widgets'), for: 'App\Filament\Dashboard\Widgets')
-            ->widgets([
-                AccountWidget::class,
-            ])
+            // Widget beranda ditemukan otomatis dari app/Filament/Dashboard/Widgets
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

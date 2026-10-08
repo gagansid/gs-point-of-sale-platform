@@ -20,10 +20,9 @@ use App\Http\Requests\Api\V1\Order\VoidOrderRequest;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Http\Resources\Api\V1\ReceiptResource;
 use App\Models\Order;
-use App\Models\Outlet;
 use App\Support\ApiActor;
 use App\Support\ApiResponse;
-use Carbon\CarbonImmutable;
+use App\Support\CurrentOutlet;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -114,9 +113,8 @@ final class OrderController extends Controller
 
         $orders = VisibleOrders::query($user)
             ->when($request->filled('date'), function (Builder $query) use ($request): void {
-                $timezone = (string) (Outlet::query()->orderBy('created_at')->value('timezone') ?? config('pos.default_timezone'));
-                $day = CarbonImmutable::createFromFormat('Y-m-d', $request->string('date')->toString(), $timezone) ?: CarbonImmutable::now($timezone);
-                $query->whereBetween('created_at', [$day->startOfDay()->utc(), $day->endOfDay()->utc()]);
+                $date = $request->string('date')->toString();
+                $query->whereBetween('created_at', CurrentOutlet::utcRange($date, $date));
             })
             ->when($request->filled('status'), fn (Builder $q) => $q->where('status', $request->string('status')->toString()))
             ->when($request->filled('shift_id'), fn (Builder $q) => $q->where('shift_id', $request->string('shift_id')->toString()))

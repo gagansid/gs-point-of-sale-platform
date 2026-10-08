@@ -41,6 +41,7 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **Enumerasi akun / karyawan** | Pesan & waktu respons sama untuk email tak terdaftar vs kata sandi salah; PIN salah vs user lain tenant | `LoginWithPassword`, `LoginWithPin` | ✅ Auth API |
 | **Aplikasi usang / dimodifikasi** | `X-App-Version` wajib semver & ≥ `min_version` (426) | `CheckAppVersion` | ✅ Auth API |
 | **Dokumentasi API bocor** | `/docs/api` hanya local & staging | Gate `viewApiDocs` | ✅ Auth API |
+| **Formula injection di Excel** | Teks pengguna yang diawali `= + - @` diberi awalan `'`; nominal ditulis sebagai angka | `App\Exports\SafeCell` | ✅ Minggu 6 |
 | **Data demo/akun lemah di production** | Seeder demo menolak berjalan di production | `DemoTenantSeeder` | ✅ Langkah 4 |
 | **Dependency rentan (CVE)** | `composer audit` di `composer check` dan CI | CI | ✅ Langkah 2 |
 | **Perintah merusak di production** | `DB::prohibitDestructiveCommands()` | `AppServiceProvider` | ✅ Langkah 2 |

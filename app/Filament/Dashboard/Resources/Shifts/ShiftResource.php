@@ -1,0 +1,60 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Dashboard\Resources\Shifts;
+
+use App\Filament\Dashboard\Resources\Shifts\Pages\ListShifts;
+use App\Filament\Dashboard\Resources\Shifts\Pages\ViewShift;
+use App\Filament\Dashboard\Resources\Shifts\Schemas\ShiftInfolist;
+use App\Filament\Dashboard\Resources\Shifts\Tables\ShiftsTable;
+use App\Models\Shift;
+use BackedEnum;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Table;
+use UnitEnum;
+
+/**
+ * Menu Transaksi → Shift: riwayat shift, selisih kas per kasir, tutup paksa.
+ */
+final class ShiftResource extends Resource
+{
+    protected static ?string $model = Shift::class;
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Transaksi';
+
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $navigationLabel = 'Shift';
+
+    protected static ?string $modelLabel = 'shift';
+
+    protected static ?string $pluralModelLabel = 'shift';
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return ShiftInfolist::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return ShiftsTable::configure($table);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListShifts::route('/'),
+            'view' => ViewShift::route('/{record}'),
+        ];
+    }
+}

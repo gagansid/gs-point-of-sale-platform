@@ -6,10 +6,12 @@ namespace App\Http\Middleware\Filament;
 
 use App\Enums\ErrorCode;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
 use Closure;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
+use Filament\Support\Facades\FilamentTimezone;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -45,6 +47,8 @@ final class SetDashboardTenant
         }
 
         TenantContext::set($user->tenant_id);
+        // Semua tanggal di panel tampil dalam zona outlet (ADR 0001)
+        FilamentTimezone::set(CurrentOutlet::timezone());
 
         return $next($request);
     }

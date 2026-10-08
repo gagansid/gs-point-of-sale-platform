@@ -14,7 +14,7 @@ final class DatabaseSeeder extends Seeder
 
         // Data demo tidak pernah masuk production. Super admin production: php artisan pos:create-admin
         if (app()->environment(['local', 'testing'])) {
-            $this->call(DemoTenantSeeder::class);
+            $this->call([DemoTenantSeeder::class, DemoTransactionsSeeder::class]);
         }
     }
 }
