@@ -6,7 +6,7 @@ Satu file per domain, berisi semua endpoint domain tersebut dengan format
 | Domain | File | Status |
 |---|---|---|
 | Auth & sistem | [`auth.md`](auth.md) | ✅ 7 endpoint |
-| Katalog & produk | `product.md` | Belum |
+| Katalog & produk | [`product.md`](product.md) | ✅ 13 endpoint |
 | Shift | `shift.md` | Belum |
 | Order & pembayaran | `order.md` | Belum |
 | Laporan & setelan | `report.md` | Belum |

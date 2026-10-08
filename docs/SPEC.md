@@ -213,16 +213,17 @@ tabel master memakai soft delete.
 | Akses | `users` | tenant_id, outlet_id, name, email (unik global, boleh kosong untuk kasir), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
 | Akses | `devices` | tenant_id, outlet_id, name, device_uid (unik per tenant), platform, app_version, last_seen_at, revoked_at |
 | Produk | `categories` | tenant_id, name, sort_order |
-| Produk | `products` | tenant_id, category_id, name, sku, barcode, price, cost_price, track_stock, stock_qty, image_path, is_active |
+| Produk | `products` | tenant_id, category_id (nullable), name, sku, barcode, price, cost_price, track_stock, stock_qty, image_path, is_active, is_available (tanda habis, Q12), sort_order |
 | Produk | `option_groups` | tenant_id, name (Ukuran, Gula, Topping), min_select, max_select |
-| Produk | `options` | option_group_id, name, price_delta |
+| Produk | `options` | tenant_id (Q13), option_group_id, name, price_delta, sort_order |
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
 | Transaksi | `shifts` | outlet_id, device_id, opened_by, closed_by, opening_cash, expected_cash, actual_cash, difference, status |
 | Transaksi | `order_sequences` | outlet_id, date, last_number (penomoran order harian) |
 | Transaksi | `orders` | outlet_id, shift_id, order_number, order_type, table_label, status, subtotal, discount_total, service_total, tax_total, rounding, grand_total, paid_total, change_total, void_reason, voided_by, approved_by |
 | Transaksi | `order_items` | order_id, product_id, product_name, unit_price, options_total, qty, discount, line_total, notes |
 | Transaksi | `order_item_options` | order_item_id, option_id, option_name, price_delta |
-| Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit), requires_reference, is_active |
+| Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |
+| Produk | `stock_movements` | tenant_id, product_id, user_id, type (adjustment/sale/void_return), qty_change, qty_after, reason, reference_id — riwayat stok (Q14) |
 | Pembayaran | `payments` | order_id, payment_method_id, category, amount, tendered, change, reference, status |
 | Sistem Laravel | `personal_access_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs` | Bawaan Laravel / Sanctum |
 
@@ -539,3 +540,7 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q9 | Git | Pengerjaan saat ini memakai branch `feature/pos`; model `main`/`develop` ditunda. | Diterima | ADR 0003 |
 | Q10 | `HasUuids` | Memakai trait bawaan Laravel (UUID v7); tidak dibuat di `Models/Concerns`. | Diterima | `docs/standards/project-structure.md` |
 | Q11 | Versi PHP | Tetap PHP 8.2 → Laravel 12, Filament 5, Pest 3. | Diterima | ADR 0004 |
+| Q12 | `is_available` | Kolom terpisah dari `is_active` untuk `PATCH /products/{id}/availability` (habis hari ini ≠ produk nonaktif). | Diterima | Database |
+| Q13 | `options.tenant_id` | Ditambahkan agar semua model bisnis memakai `BelongsToTenant` (CLAUDE.md). | Diterima | Database |
+| Q14 | Riwayat stok | Tabel `stock_movements`; `POST /products/{id}/stock` wajib `id` dari client sebagai idempotency key. | Diterima | `docs/api/product.md` |
+| Q15 | Hapus kategori | Produknya tidak ikut dihapus; menjadi tanpa kategori (`category_id` null). | Diterima | `docs/api/product.md` |

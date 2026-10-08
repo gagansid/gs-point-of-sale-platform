@@ -3,7 +3,11 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CatalogController;
+use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\DeviceController;
+use App\Http\Controllers\Api\V1\OptionGroupController;
+use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\SystemController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,5 +44,23 @@ Route::prefix('v1')->name('api.v1.')->middleware('app.version')->group(function 
         Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
+
+        // ---------- Katalog & produk ----------
+        Route::get('catalog', [CatalogController::class, 'index'])->name('catalog');
+
+        Route::controller(ProductController::class)->prefix('products')->name('products.')->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::get('barcode/{code}', 'barcode')->where('code', '[A-Za-z0-9-]{1,50}')->name('barcode');
+            Route::post('/', 'store')->name('store');
+            Route::put('{product}', 'update')->name('update');
+            Route::delete('{product}', 'destroy')->name('destroy');
+            Route::post('{product}/stock', 'adjustStock')->name('stock');
+            Route::patch('{product}/availability', 'availability')->name('availability');
+        });
+
+        Route::apiResource('categories', CategoryController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('option-groups', OptionGroupController::class)
+            ->only(['store', 'update', 'destroy'])
+            ->parameters(['option-groups' => 'optionGroup']);
     });
 });

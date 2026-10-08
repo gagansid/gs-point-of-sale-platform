@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Tenant;
 
+use App\Actions\Payment\CreateDefaultPaymentMethods;
 use App\Actions\Tenant\Data\CreateTenantData;
 use App\Enums\UserRole;
 use App\Models\Admin;
@@ -17,6 +18,8 @@ use Illuminate\Support\Str;
 
 final class CreateTenantWithOwner
 {
+    public function __construct(private readonly CreateDefaultPaymentMethods $createPaymentMethods) {}
+
     /**
      * Membuat tenant, outlet pertama, dan owner pertama dalam satu transaksi
      * (SPEC: setiap tenant wajib punya minimal 1 owner aktif).
@@ -53,6 +56,8 @@ final class CreateTenantWithOwner
                     'role' => UserRole::Owner,
                     'is_active' => true,
                 ]);
+
+                $this->createPaymentMethods->handle();
             });
 
             return $tenant;
