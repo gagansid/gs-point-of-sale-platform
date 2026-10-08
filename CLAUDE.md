@@ -9,9 +9,9 @@ Alur kerja, Definition of Done, dan peta standar ada di `AGENTS.md`; standar rin
 
 ## Stack
 
-- Laravel (versi terbaru) + MySQL 8 / MariaDB 10.6+
-- Laravel Sanctum (token API per device), Filament (2 panel: `Dashboard`, `Admin`)
-- Pest, Laravel Pint, Larastan
+- PHP 8.2, Laravel 12 + MySQL 8 / MariaDB 10.6+ (ADR 0004 — jangan pakai fitur PHP 8.3+)
+- Laravel Sanctum 4 (token API per device), Filament 5 (2 panel: `Dashboard`, `Admin`)
+- Pest 3, Laravel Pint, Larastan 3 (level 6)
 - Target hosting: shared hosting cPanel. Jangan memakai Redis, Docker, atau proses
   yang berjalan terus-menerus. Queue, cache, dan session memakai driver `database`.
 

@@ -31,7 +31,7 @@ Indonesia tanpa mengubah kode.
 
 | Komponen | Minimal | Lokasi cek di cPanel |
 |---|---|---|
-| PHP | Versi yang disyaratkan Laravel terbaru (8.3+ disarankan) | Select PHP Version / MultiPHP Manager |
+| PHP | 8.2+ (Laravel 12, ADR 0004) | Select PHP Version / MultiPHP Manager |
 | Ekstensi PHP | bcmath, ctype, curl, dom, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, tokenizer, xml, zip | Select PHP Version → Extensions |
 | Database | MySQL 8.0+ atau MariaDB 10.6+ | MySQL Databases / phpMyAdmin |
 | Akses SSH / Terminal | Sangat disarankan | Terminal / SSH Access |
@@ -532,3 +532,4 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q8 | Testing | Test yang bergantung pada lock/JSON/constraint wajib jalan di MySQL (`--group=mysql`). | Diterima | `docs/standards/testing.md` |
 | Q9 | Git | Pengerjaan saat ini memakai branch `feature/pos`; model `main`/`develop` ditunda. | Diterima | ADR 0003 |
 | Q10 | `HasUuids` | Memakai trait bawaan Laravel (UUID v7); tidak dibuat di `Models/Concerns`. | Diterima | `docs/standards/project-structure.md` |
+| Q11 | Versi PHP | Tetap PHP 8.2 → Laravel 12, Filament 5, Pest 3. | Diterima | ADR 0004 |

@@ -1,0 +1,11 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    # Minimal level 6 sesuai SPEC; naikkan bertahap, jangan diturunkan
+    level: 6
+    paths:
+        - app
+        - config
+        - database
+        - routes
