@@ -11,7 +11,7 @@ beforeEach(function () {
     Route::middleware('api')->prefix('api/_test')->group(function () {
         Route::get('ping', fn () => ApiResponse::success());
         Route::get('users/count', fn (Request $r) => ApiResponse::success([
-            'count' => User::query()->where('email', $r->query('email'))->count(),
+            'count' => User::allTenants()->where('email', $r->query('email'))->count(),
         ]));
     });
 });
@@ -85,7 +85,7 @@ describe('SQL injection', function () {
             ->assertOk()
             ->assertJsonPath('data.count', 0);
 
-        expect(User::query()->count())->toBe(3);
+        expect(User::allTenants()->count())->toBe(3);
     })->with([
         "' OR '1'='1",
         "' OR 1=1 --",

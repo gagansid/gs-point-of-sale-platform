@@ -177,7 +177,10 @@ Gate::before(function (mixed $user, string $ability): ?bool {
         return null;
     }
 
-    return $user->role?->allows($ability) ?? false;
+    // Data rusak (role kosong/tidak dikenal) = ditolak, bukan error
+    $role = $user->getAttribute('role');
+
+    return $role instanceof UserRole && $role->allows($ability);
 });
 ```
 
@@ -201,13 +204,13 @@ tabel master memakai soft delete.
 
 | Kelompok | Tabel | Kolom penting |
 |---|---|---|
-| Sistem | `admins` | name, email, password |
+| Sistem | `admins` | name, email, password, last_login_at |
 | Sistem | `app_versions` | platform, min_version, latest_version, force_update |
 | Sistem | `announcements` | title, body, starts_at, ends_at (banner ke semua tenant) |
 | Akses | `tenants` | name, slug, business_type (cafe/retail/other), status (trial/active/suspended), subscription_ends_at |
 | Akses | `outlets` | tenant_id, code, name, address, tax_rate, service_charge_rate, tax_inclusive, rounding, receipt_header, receipt_footer, discount_limits (JSON), timezone (default `Asia/Jakarta`, ADR 0001) |
-| Akses | `users` | tenant_id, outlet_id, name, email, password, pin (hash), role, is_active |
-| Akses | `devices` | tenant_id, outlet_id, name, device_uid, app_version, last_seen_at |
+| Akses | `users` | tenant_id, outlet_id, name, email (unik global, boleh kosong untuk kasir), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
+| Akses | `devices` | tenant_id, outlet_id, name, device_uid (unik per tenant), platform, app_version, last_seen_at, revoked_at |
 | Produk | `categories` | tenant_id, name, sort_order |
 | Produk | `products` | tenant_id, category_id, name, sku, barcode, price, cost_price, track_stock, stock_qty, image_path, is_active |
 | Produk | `option_groups` | tenant_id, name (Ukuran, Gula, Topping), min_select, max_select |
@@ -232,6 +235,9 @@ Nilai enum status (keputusan Q7):
 | `shifts.status` | `open`, `closed`, `force_closed` |
 
 Catatan desain:
+
+- Super admin production dibuat dengan `php artisan pos:create-admin` (kata sandi ditanyakan, tanpa akun default).
+  `DemoTenantSeeder` (tenant, outlet, 4 karyawan, device, admin demo) hanya berjalan di local/testing.
 
 - ID `orders` dan `payments` dibuat oleh Flutter dan berfungsi sebagai idempotency key.
 - `order_items` dan `order_item_options` menyimpan snapshot nama dan harga.

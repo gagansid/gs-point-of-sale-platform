@@ -38,9 +38,12 @@ gs-point-of-sale-platform/
 │   │   ├── Order/                    #   CheckoutOrder, SaveOpenBill, AddPayment, VoidOrder
 │   │   ├── Product/                  #   CreateProduct, UpdateProduct, AdjustStock, ToggleAvailability
 │   │   ├── Shift/                    #   OpenShift, CloseShift, ForceCloseShift
+│   │   ├── Admin/                    #   CreateAdmin
 │   │   ├── Tenant/                   #   CreateTenantWithOwner, SuspendTenant
 │   │   └── User/                     #   CreateUser, UpdateUserPin, DeactivateUser
 │   │
+│   ├── Auth/                         # TenantUserProvider (login tanpa tenant scope, hanya user aktif)
+│   ├── Console/Commands/             # pos:create-admin, command sistem lain
 │   ├── Enums/                        # ★ Semua nilai tetap (status, tipe, role, error code)
 │   │   ├── ErrorCode.php             #   Kode error resmi (cermin tabel di SPEC)
 │   │   ├── UserRole.php              #   Satu-satunya pemetaan role -> permission

@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Auth\TenantUserProvider;
 use App\Enums\UserRole;
+use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Log\Context\Repository as ContextRepository;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -18,7 +22,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Laravel\Sanctum\PersonalAccessToken;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -51,6 +55,13 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureAuthorization(): void
     {
+        Auth::provider('tenant_users', fn (Application $app, array $config): TenantUserProvider => new TenantUserProvider(
+            $app['hash'],
+            $config['model'],
+        ));
+
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
         // Permission (order.void, ...) diputuskan HANYA oleh role. Ability lain (view, update, ...)
         // diteruskan ke Policy agar aturan bisnis di Policy tidak dilewati owner (ADR 0005).
         Gate::before(function (mixed $user, string $ability): ?bool {
@@ -58,7 +69,10 @@ class AppServiceProvider extends ServiceProvider
                 return null;
             }
 
-            return $user->role?->allows($ability) ?? false;
+            // Data rusak (role kosong/tidak dikenal) = ditolak, bukan error
+            $role = $user->getAttribute('role');
+
+            return $role instanceof UserRole && $role->allows($ability);
         });
     }
 

@@ -4,57 +4,80 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use App\Models\Concerns\BelongsToTenant;
+use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
- * Kolom role & tenant_id ditambahkan di migration tabel akses (langkah 4).
+ * Karyawan tenant (owner, manager, supervisor, kasir).
  *
- * @property UserRole|null $role
- * @property string|null $tenant_id
+ * Login mencari user tanpa tenant scope lewat TenantUserProvider & PersonalAccessToken,
+ * karena tenant baru diketahui setelah user ditemukan.
+ *
+ * @property string $id
+ * @property string $tenant_id
+ * @property string|null $outlet_id
+ * @property string $name
+ * @property string|null $email
+ * @property string|null $password
+ * @property string|null $pin
+ * @property int $pin_failed_attempts
+ * @property CarbonImmutable|null $pin_locked_until
+ * @property UserRole $role
+ * @property bool $is_active
+ * @property CarbonImmutable|null $last_login_at
  */
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable;
+    use BelongsToTenant, HasApiTokens, HasFactory, HasUuids, Notifiable, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    /** tenant_id sengaja tidak fillable: selalu dari tenant context (BelongsToTenant). */
     protected $fillable = [
+        'outlet_id',
         'name',
         'email',
         'password',
+        'pin',
+        'role',
+        'is_active',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
+        'pin',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'pin' => 'hashed',
             'role' => UserRole::class,
+            'is_active' => 'boolean',
+            'pin_failed_attempts' => 'integer',
+            'pin_locked_until' => 'immutable_datetime',
+            'last_login_at' => 'immutable_datetime',
         ];
+    }
+
+    public function isPinLocked(): bool
+    {
+        return $this->pin_locked_until !== null && $this->pin_locked_until->isFuture();
+    }
+
+    /** @return BelongsTo<Outlet, $this> */
+    public function outlet(): BelongsTo
+    {
+        return $this->belongsTo(Outlet::class);
     }
 }

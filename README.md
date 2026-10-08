@@ -18,9 +18,16 @@ composer install
 cp .env.example .env
 php artisan key:generate
 # buat database `gspos`, sesuaikan DB_* di .env
-php artisan migrate --seed
+php artisan migrate --seed        # data demo hanya di APP_ENV=local
 npm install && npm run build
 php artisan serve
+```
+
+Akun demo lokal tercantum di `database/seeders/DemoTenantSeeder.php`.
+Super admin production dibuat tanpa akun default:
+
+```bash
+php artisan pos:create-admin --name="Nama" --email=admin@domain.com
 ```
 
 ## Perintah harian

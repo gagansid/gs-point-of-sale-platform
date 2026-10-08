@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Admin;
 use App\Models\User;
 
 return [
@@ -40,9 +41,16 @@ return [
     */
 
     'guards' => [
+        // Owner/manager di panel /dashboard
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+        ],
+
+        // Super admin di panel /admin — tabel & sesi terpisah dari tenant
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'admins',
         ],
     ],
 
@@ -64,15 +72,16 @@ return [
     */
 
     'providers' => [
+        // Mencari user tanpa tenant scope & hanya user aktif (App\Auth\TenantUserProvider)
         'users' => [
-            'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'driver' => 'tenant_users',
+            'model' => User::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => Admin::class,
+        ],
     ],
 
     /*

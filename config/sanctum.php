@@ -39,7 +39,8 @@ return [
     |
     */
 
-    'guard' => ['web'],
+    // API hanya memakai Bearer token (bukan cookie sesi), sehingga tidak rawan CSRF
+    'guard' => [],
 
     /*
     |--------------------------------------------------------------------------

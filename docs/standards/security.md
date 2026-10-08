@@ -36,7 +36,9 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **Log injection** | `X-Request-Id` dari client hanya diterima jika `[A-Za-z0-9-_]{8,64}` | `AssignRequestId` | ✅ Langkah 2 |
 | **Data rahasia di log/session** | `dontFlash` PIN & password; dilarang log PIN/token | `bootstrap/app.php`, `coding.md` §9 | ✅ Langkah 2 |
 | **Password lemah / bocor** | Min. 8, huruf + angka, cek HIBP di production; hash bcrypt | `Password::defaults()` | ✅ Langkah 2 |
-| **Akun admin diambil alih (phishing)** | Guard terpisah, 2FA wajib untuk `/admin`, rate limit login | Filament | ⏳ Langkah 5 |
+| **Akun admin diambil alih (phishing)** | Guard & tabel terpisah, tanpa akun default, kata sandi admin min. 12 + huruf besar/kecil + simbol, 2FA wajib, rate limit login | `pos:create-admin`, Filament | ✅ guard & kata sandi · ⏳ 2FA (langkah 5) |
+| **Karyawan nonaktif masih punya akses** | Provider auth hanya menerima user aktif; sesi lama ikut terputus | `TenantUserProvider` | ✅ Langkah 4 |
+| **Data demo/akun lemah di production** | Seeder demo menolak berjalan di production | `DemoTenantSeeder` | ✅ Langkah 4 |
 | **Dependency rentan (CVE)** | `composer audit` di `composer check` dan CI | CI | ✅ Langkah 2 |
 | **Perintah merusak di production** | `DB::prohibitDestructiveCommands()` | `AppServiceProvider` | ✅ Langkah 2 |
 | **Downgrade ke HTTP** | Redirect HTTPS di `.htaccess`, `URL::forceScheme('https')`, HSTS | `.htaccess`, `SecurityHeaders` | ✅ Langkah 2 |

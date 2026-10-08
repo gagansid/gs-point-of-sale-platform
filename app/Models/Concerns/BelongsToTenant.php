@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Models\Concerns;
 
 use App\Models\Scopes\TenantScope;
+use App\Models\Tenant;
 use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use LogicException;
 
 /**
@@ -64,5 +66,11 @@ trait BelongsToTenant
     public function scopeForTenant(Builder $query, string $tenantId): void
     {
         $query->withoutGlobalScope(TenantScope::class)->where($this->qualifyColumn('tenant_id'), $tenantId);
+    }
+
+    /** @return BelongsTo<Tenant, $this> */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
     }
 }
