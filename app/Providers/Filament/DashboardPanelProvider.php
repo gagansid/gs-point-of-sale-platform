@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Shared\Layout;
 use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\SetDashboardTenant;
-use Filament\Enums\UserMenuPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -31,7 +31,7 @@ final class DashboardPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        return Layout::apply($panel)
             ->id('dashboard')
             ->path('dashboard')
             ->authGuard('web')
@@ -44,18 +44,13 @@ final class DashboardPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/brand/favicon.svg'))
             ->darkMode()
-            // Sidebar ala Untitled UI (design-tokens.md §3): tanpa topbar, logo + pencarian + kartu user di sidebar
-            ->topbar(false)
-            ->userMenu(position: UserMenuPosition::Sidebar)
-            ->sidebarWidth('18.5rem')
-            ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
             ->viteTheme('resources/css/filament/dashboard/theme.css')
             ->navigationGroups([
-                NavigationGroup::make('Transaksi'),
-                NavigationGroup::make('Katalog'),
-                NavigationGroup::make('Laporan'),
-                NavigationGroup::make('Pengaturan'),
+                NavigationGroup::make('Transaksi')->collapsible(false),
+                NavigationGroup::make('Katalog')->collapsible(false),
+                NavigationGroup::make('Laporan')->collapsible(false),
+                NavigationGroup::make('Pengaturan')->collapsible(false),
             ])
             ->discoverResources(in: app_path('Filament/Dashboard/Resources'), for: 'App\Filament\Dashboard\Resources')
             ->discoverPages(in: app_path('Filament/Dashboard/Pages'), for: 'App\Filament\Dashboard\Pages')

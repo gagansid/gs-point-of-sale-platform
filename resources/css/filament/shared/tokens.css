@@ -1,54 +1,73 @@
 /*
- * Design tokens — sumber: docs/standards/ui/design-tokens.md (turunan gs-task-tracker).
- * Nilai baru WAJIB ditambahkan ke dokumen tersebut lebih dulu.
+ * Design tokens — sumber: docs/standards/ui/design-tokens.md (turunan gs-task-tracker:
+ * public/assets/css/gentelella.css + brand.css). Nilai baru WAJIB ditambahkan ke dokumen tersebut lebih dulu.
  */
 :root {
     --brand-navy: #1b2a55;
     --brand-gray: #8a919e;
     --brand-mist: #b8c0d4;
 
-    --body-bg: #f5f7fb;
-    --border-translucent: rgb(4 32 69 / 0.08);
+    --primary: #2d4282;
+    --primary-dk: #1b2a55;
+    --primary-lt: rgb(45 66 130 / 0.07);
 
-    /* Sidebar terang ala Untitled UI (design-tokens.md §3) */
-    --sidebar-bg: #fafafa;
-    --sidebar-border: #e9eaeb;
-    --sidebar-text: #424242;
-    --sidebar-text-active: #0a0a0a;
-    --sidebar-text-muted: #535353;
-    --sidebar-icon: #737373;
-    --sidebar-accent: #5850ec;
-    --sidebar-hover: #f4f4f4;
-    --sidebar-active-bg: #f1f1f1;
-    --sidebar-group-label: #717171;
-    --sidebar-badge-bg: #f0f0f0;
-    --sidebar-badge-text: #343434;
-    --sidebar-card-bg: #ffffff;
+    /* Permukaan & teks */
+    --body-bg: #f5f7fb;
+    --bg-surface: #ffffff;
+    --bg-surface-secondary: #f9fafb;
+    --border-color: #e6e7eb;
+    --border-color-light: #eff0f3;
+    --border-translucent: rgb(4 32 69 / 0.08);
+    --text: #1e2633;
+    --text-secondary: #626d7d;
+    --text-muted: #7e8896;
+    --text-disabled: #c0c7cf;
+
+    /* Sidebar navy */
+    --sidebar-bg: var(--brand-navy);
+    --sidebar-text: var(--brand-mist);
+    --sidebar-text-hover: #ffffff;
+    --sidebar-hover: rgb(255 255 255 / 0.06);
+    --sidebar-active-bg: rgb(184 192 212 / 0.16);
+    --sidebar-border: rgb(255 255 255 / 0.08);
+    --sidebar-group-label: rgb(123 143 163 / 0.5);
+
+    /* Topbar */
+    --topbar-h: 56px;
+    --topbar-bg: rgb(255 255 255 / 0.85);
+
+    --radius: 6px;
+    --radius-sm: 4px;
+    --radius-lg: 8px;
 
     --control-h: 36px;
     --control-h-sm: 30px;
     --control-radius: 8px;
     --control-font: 13px;
 
+    --shadow: rgb(30 38 51 / 0.04) 0 2px 4px 0;
     --shadow-card: 0 0 0 1px var(--border-translucent), 0 2px 4px rgb(30 38 51 / 0.04);
     --font-brand: 'Nunito', 'Inter', sans-serif;
 }
 
 .dark {
-    --body-bg: #0f1623;
-    --border-translucent: rgb(255 255 255 / 0.08);
+    --primary: #b8c0d4;
+    --primary-dk: #8a919e;
+    --primary-lt: rgb(184 192 212 / 0.14);
 
-    --sidebar-bg: #13161b;
-    --sidebar-border: rgb(255 255 255 / 0.08);
-    --sidebar-text: #cecfd2;
-    --sidebar-text-active: #f7f7f7;
-    --sidebar-text-muted: #94979c;
-    --sidebar-icon: #85888e;
-    --sidebar-accent: #8b85ff;
-    --sidebar-hover: rgb(255 255 255 / 0.04);
-    --sidebar-active-bg: rgb(255 255 255 / 0.07);
-    --sidebar-group-label: #94979c;
-    --sidebar-badge-bg: #22262f;
-    --sidebar-badge-text: #cecfd2;
-    --sidebar-card-bg: #1a1d23;
+    --body-bg: #0f1623;
+    --bg-surface: #1a2332;
+    --bg-surface-secondary: #141d2b;
+    --border-color: rgb(255 255 255 / 0.08);
+    --border-color-light: rgb(255 255 255 / 0.05);
+    --border-translucent: rgb(255 255 255 / 0.08);
+    --text: #e6ebf2;
+    --text-secondary: #b3bccb;
+    --text-muted: #8a93a3;
+    --text-disabled: #5a6473;
+
+    --topbar-bg: rgb(20 29 43 / 0.85);
+
+    --shadow: rgb(0 0 0 / 0.4) 0 2px 4px 0;
+    --shadow-card: 0 0 0 1px var(--border-translucent), 0 2px 4px rgb(0 0 0 / 0.3);
 }

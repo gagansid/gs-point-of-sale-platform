@@ -30,10 +30,10 @@ Primary sengaja lebih muda dari navy logo agar tombol tidak terasa berat (sama s
 | Token | Nilai | Pemakaian |
 |---|---|---|
 | `--body-bg` | `#F5F7FB` | Latar halaman |
-| `--surface` | `#FFFFFF` | Kartu, tabel, modal |
-| `--surface-secondary` | `#F9FAFB` | Header tabel, baris zebra, area sekunder |
-| `--border` | `#E6E7EB` | Border kartu & input |
-| `--border-light` | `#EFF0F3` | Pemisah di dalam kartu |
+| `--bg-surface` | `#FFFFFF` | Kartu, tabel, modal |
+| `--bg-surface-secondary` | `#F9FAFB` | Header tabel, baris zebra, area sekunder |
+| `--border-color` | `#E6E7EB` | Border kartu & input |
+| `--border-color-light` | `#EFF0F3` | Pemisah di dalam kartu |
 | `--text` | `#1E2633` | Teks utama |
 | `--text-secondary` | `#626D7D` | Label, teks pendukung |
 | `--text-muted` | `#7E8896` | Hint, placeholder, metadata |
@@ -44,9 +44,9 @@ Primary sengaja lebih muda dari navy logo agar tombol tidak terasa berat (sama s
 | Token | Nilai |
 |---|---|
 | `--body-bg` | `#0F1623` |
-| `--surface` | `#1A2332` |
-| `--surface-secondary` | `#141D2B` |
-| `--border` | `rgba(255,255,255,.08)` |
+| `--bg-surface` | `#1A2332` |
+| `--bg-surface-secondary` | `#141D2B` |
+| `--border-color` | `rgba(255,255,255,.08)` |
 | `--text` | `#E6EBF2` |
 | `--text-secondary` | `#B3BCCB` |
 | `--text-muted` | `#8A93A3` |
@@ -59,34 +59,32 @@ atau **16%** (dark). Hover tombol ikon: alpha **12%**.
 
 ## 3. Sidebar
 
-Gaya terang mengacu Untitled UI (sidebar mengambang, item 16px/600). Dipakai kedua panel;
-`/admin` dibedakan oleh badge "Super Admin" di logo.
-
-| Token | Light | Dark | Pemakaian |
-|---|---|---|---|
-| `--sidebar-bg` | `#FAFAFA` | `#13161B` | Latar sidebar |
-| `--sidebar-border` | `#E9EAEB` | `rgba(255,255,255,.08)` | Garis tepi sidebar & kartu user |
-| `--sidebar-text` | `#424242` | `#CECFD2` | Label item |
-| `--sidebar-text-active` | `#0A0A0A` | `#F7F7F7` | Label item aktif, nama user |
-| `--sidebar-text-muted` | `#535353` | `#94979C` | Email user |
-| `--sidebar-icon` | `#737373` | `#85888E` | Ikon item, tombol grup |
-| `--sidebar-accent` | `#5850EC` | `#8B85FF` | Ikon item aktif |
-| `--sidebar-hover` | `#F4F4F4` | `rgba(255,255,255,.04)` | Hover item |
-| `--sidebar-active-bg` | `#F1F1F1` | `rgba(255,255,255,.07)` | Latar item aktif |
-| `--sidebar-group-label` | `#717171` | `#94979C` | Label grup (12px/600, uppercase) |
-| `--sidebar-badge-bg` | `#F0F0F0` | `#22262F` | Badge angka di item |
-| `--sidebar-badge-text` | `#343434` | `#CECFD2` | Teks badge |
-| `--sidebar-card-bg` | `#FFFFFF` | `#1A1D23` | Kartu user di bawah sidebar |
-
-| Ukuran | Nilai |
+| Token | Nilai |
 |---|---|
-| Lebar | 296px (`18.5rem`); ciut: hanya ikon |
-| Mengambang (≥ `lg`) | jarak 16px dari tepi layar, radius 12px, border 1px |
-| Drawer (< `lg`) | tinggi penuh, radius 12px di sisi kanan |
-| Item | tinggi 42px, padding 9px 14px, radius 6px, jarak 1px, ikon 20px, gap 12px |
-| Label item | Inter 16px / 600, line-height 24px |
-| Label grup | 12px / 600, uppercase, `letter-spacing .02em`, jarak antar-grup 24px |
-| Kartu user | avatar 40px, nama 14px/600, email 14px/400, padding 12px, radius 10px |
+| `--sidebar-bg` | `#1B2A55` |
+| `--sidebar-text` | `#B8C0D4` |
+| `--sidebar-text-hover` | `#FFFFFF` |
+| `--sidebar-hover` | `rgba(255,255,255,.06)` |
+| `--sidebar-active-bg` | `rgba(184,192,212,.16)` |
+| `--sidebar-active-indicator` | `inset 3px 0 0 #B8C0D4` (garis kiri item aktif) |
+| `--sidebar-border` | `rgba(255,255,255,.08)` |
+| `--sidebar-group-label` | `rgba(123,143,163,.5)` |
+| Lebar | 252px (`15.75rem`); ciut 64px (`4rem`), hanya ikon + mark logo |
+| Area logo | tinggi 56px, padding 0 16px, garis bawah `--sidebar-border` |
+| Label grup | 10px / 600, uppercase, `letter-spacing .5px`, padding 16px 12px 4px, tidak bisa diciutkan |
+| Item | 13px / 400 (aktif 500), tinggi 32px, padding 6px 12px, radius 4px, ikon 18px opacity .5 (aktif/hover .85) |
+
+### Topbar & footer
+
+| Elemen | Nilai |
+|---|---|
+| Topbar | tinggi 56px, `rgba(255,255,255,.85)` + blur 12px (dark `rgba(20,29,43,.85)`), garis bawah `--border-color`, padding 0 24px (HP 12px) |
+| Tombol ☰ | 34px, ikon 18px, `--text-secondary` |
+| Pencarian global | lebar 300px, tinggi 36px, latar `--bg-surface-secondary`, radius 6px, 13px, hint `⌘K` (HP: lebar penuh, hint disembunyikan) |
+| Menu akun | nama 14px + avatar 28px + caret 14px dalam pill radius 20px; nama disembunyikan < 600px |
+| Footer | `gs.POS © tahun` kiri, `v{APP_VERSION}` kanan, 12px `--text-muted`, padding 16px 24px, garis atas `--border-color-light` |
+
+Panel `/admin` memakai sidebar `#111827` + badge "Super Admin" agar tidak tertukar dengan `/dashboard`.
 
 ## 4. Tipografi
 
@@ -99,9 +97,11 @@ Gaya terang mengacu Untitled UI (sidebar mengambang, item 16px/600). Dipakai ked
 
 | Skala | Ukuran / berat | Pemakaian |
 |---|---|---|
-| Page title | 20px / 600 | Judul halaman |
+| Page title | 18px / 600 | Judul halaman |
 | Section title | 16px / 600 | Judul kartu/section |
 | Body | 14px / 400 | Teks umum |
+| Sel tabel | 13px / 400, `--text-secondary` | Isi tabel |
+| Header tabel | 11px / 600, uppercase, `letter-spacing .3px`, `--text-muted`, latar `--bg-surface-secondary` | Judul kolom |
 | Control | 13px / 500 | Tombol, input, sel tabel |
 | Small | 12px / 500–600 | Badge, hint, label kolom |
 | Overline | 12px / 600, uppercase, `letter-spacing .04em`, `text-muted` | Judul grup form |
@@ -115,11 +115,11 @@ Skala 4px: `4 · 8 · 12 · 16 · 24 · 32 · 48 · 64`.
 |---|---|
 | Jarak ikon ↔ teks dalam tombol | 6px |
 | Jarak antar tombol bersebelahan | 8px |
-| Padding sel tabel | 12px × 16px |
-| Padding kartu / section | 24px |
+| Padding sel tabel | 12px × 12px (baris ±47px) |
+| Padding kartu / section | 16px (header 12px × 16px, min. 44px) |
 | Jarak antar field form | 16px |
 | Jarak antar section | 24px |
-| Padding halaman | 24px desktop, 12px mobile |
+| Padding halaman | 20px 24px 40px desktop, 12px mobile |
 
 ## 6. Ukuran kontrol
 
@@ -139,7 +139,7 @@ Skala 4px: `4 · 8 · 12 · 16 · 24 · 32 · 48 · 64`.
 | `--radius-sm` | 4px | Elemen kecil di dalam komponen |
 | `--radius` | 6px | Tombol ikon |
 | `--radius-control` | 8px | Tombol, input |
-| `--radius-card` | 12px | Kartu, section, modal |
+| `--radius-lg` | 8px | Kartu, section, tabel (border 1px `--border-color`) |
 | `--radius-pill` | 999px | Badge |
 | `--shadow-card` | `0 0 0 1px rgba(4,32,69,.08), 0 2px 4px rgba(30,38,51,.04)` | Kartu |
 | `--shadow-pop` | `0 8px 24px rgba(30,38,51,.14)` | Dropdown, date picker, modal |

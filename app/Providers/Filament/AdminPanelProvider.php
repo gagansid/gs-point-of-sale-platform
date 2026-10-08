@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Shared\Layout;
 use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\EnsureAdminTwoFactorWhenRequired;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
-use Filament\Enums\UserMenuPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -33,7 +33,7 @@ final class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel
+        return Layout::apply($panel)
             ->default()
             ->id('admin')
             ->path('admin')
@@ -54,17 +54,12 @@ final class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/brand/favicon.svg'))
             ->darkMode()
-            // Sidebar ala Untitled UI (design-tokens.md §3): tanpa topbar, logo + pencarian + kartu user di sidebar
-            ->topbar(false)
-            ->userMenu(position: UserMenuPosition::Sidebar)
-            ->sidebarWidth('18.5rem')
-            ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->navigationGroups([
-                NavigationGroup::make('Pelanggan'),
-                NavigationGroup::make('Aplikasi'),
-                NavigationGroup::make('Sistem'),
+                NavigationGroup::make('Pelanggan')->collapsible(false),
+                NavigationGroup::make('Aplikasi')->collapsible(false),
+                NavigationGroup::make('Sistem')->collapsible(false),
             ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')

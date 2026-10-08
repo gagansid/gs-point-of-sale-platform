@@ -1,290 +1,601 @@
 /*
- * Override komponen Filament agar sesuai standar UI (docs/standards/ui/components/*).
- * Hanya memakai variabel dari tokens.css — tanpa warna hex baru.
+ * Override komponen Filament agar sama dengan gs-task-tracker (docs/standards/ui/*).
+ * Hanya memakai variabel dari tokens.css. CSS Filament tidak memakai @layer, jadi
+ * selektor di sini sengaja menyamai spesifisitas selektor Filament yang ditimpa.
  */
 
-/* ---------- Latar halaman ---------- */
+/* ---------- Dasar: Inter 14px, warna teks & latar (design-tokens.md §4) ---------- */
 .fi-body {
+    --topbar-height: var(--topbar-h);
     background-color: var(--body-bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.4286;
 }
 
-/* ---------- Sidebar terang ala Untitled UI (layout.md, design-tokens.md §3) ---------- */
-.fi-sidebar {
+/* =====================================================================
+ * Sidebar navy 252px, tinggi penuh di samping topbar (layout.md §1)
+ * ===================================================================== */
+.fi-sidebar,
+.fi-body-has-topbar .fi-sidebar,
+.dark .fi-sidebar {
     background-color: var(--sidebar-bg);
-    border-inline-end: 1px solid var(--sidebar-border);
-    border-start-end-radius: 12px;
-    border-end-end-radius: 12px;
-    font-family: Inter, -apple-system, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Drawer (< lg): batasi lebar agar tetap ada celah untuk menutup di HP kecil */
-.fi-sidebar.fi-sidebar-open {
-    max-width: calc(100vw - 48px);
-}
-
-/* >= lg: kartu mengambang 16px dari tepi layar */
 @media (min-width: 64rem) {
-    .fi-sidebar,
-    .fi-sidebar.fi-sidebar-open {
-        top: 16px;
-        height: calc(100dvh - 32px);
-        margin: 16px 0 16px 16px;
-        max-width: none;
-        border: 1px solid var(--sidebar-border);
-        border-radius: 12px;
-        box-shadow: none;
+    /* Filament menaruh sidebar di bawah topbar; tarik ke atas agar setinggi layar */
+    .fi-body-has-topbar .fi-sidebar {
+        top: 0;
+        height: 100dvh;
+        margin-top: calc(-1 * var(--topbar-h));
+        z-index: 31;
+    }
+
+    /* Topbar mulai di kanan sidebar (lebar mengikuti status buka/ciut) */
+    .fi-body:has(.fi-main-sidebar.fi-sidebar-open) .fi-topbar-ctn {
+        margin-inline-start: var(--sidebar-width);
+    }
+
+    .fi-body-has-sidebar-collapsible-on-desktop:has(.fi-main-sidebar:not(.fi-sidebar-open)) .fi-topbar-ctn {
+        margin-inline-start: var(--collapsed-sidebar-width);
     }
 }
 
-/* Header: logo + tombol ciutkan */
-.fi-sidebar .fi-sidebar-header,
-:not(.fi-body-has-topbar) .fi-sidebar .fi-sidebar-header {
-    height: auto;
-    padding: 20px 16px 16px 24px;
+/* Header sidebar = area logo 56px bergaris bawah, tampil juga di desktop */
+.fi-body-has-topbar .fi-sidebar-header,
+.fi-sidebar-header {
+    display: flex;
+    height: var(--topbar-h);
+    padding: 0 16px;
     background: transparent;
+    border-bottom: 1px solid var(--sidebar-border);
+    box-shadow: none;
 }
 
-:not(.fi-body-has-topbar) .fi-sidebar-header .fi-logo {
-    margin-inline-start: 0;
+.fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-header {
+    justify-content: center;
+    padding: 0;
 }
 
-.fi-sidebar .fi-sidebar-header .fi-icon-btn .fi-icon {
-    color: var(--sidebar-icon);
+/* Sidebar ciut: hanya mark logo (Filament menyembunyikan logo lewat x-show) */
+.fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-header-logo-ctn {
+    display: flex !important;
+    flex: none;
 }
 
-/* Tombol ciutkan di kanan logo (Filament merendernya sebelum logo) */
-.fi-sidebar .fi-sidebar-close-collapse-sidebar-btn {
-    order: 1;
-}
-
-/* Pencarian global (dipindah ke sidebar karena topbar dimatikan) */
-.fi-sidebar .fi-sidebar-header-controls {
-    padding-inline: 12px;
-}
-
-.fi-sidebar .fi-sidebar-header-controls::after {
+.fi-sidebar:not(.fi-sidebar-open) .brand-word,
+.fi-sidebar:not(.fi-sidebar-open) .brand-tag {
     display: none;
 }
 
-/* Navigasi */
-.fi-sidebar .fi-sidebar-nav {
-    gap: 24px;
-    padding: 8px 12px 16px;
+.fi-sidebar-nav {
+    gap: 0;
+    padding: 8px 0;
 }
 
-.fi-sidebar .fi-sidebar-nav-groups {
-    gap: 24px;
+.fi-sidebar-nav-groups {
+    gap: 0;
     margin-inline: 0;
 }
 
-.fi-sidebar .fi-sidebar-group {
+.fi-sidebar-group {
     row-gap: 0;
+    padding: 0 8px;
+    margin-bottom: 2px;
 }
 
-.fi-sidebar .fi-sidebar-group-items,
-.fi-sidebar .fi-sidebar-sub-group-items {
+.fi-sidebar-group-items,
+.fi-sidebar-sub-group-items {
     row-gap: 1px;
 }
 
-/* Label grup: overline abu, tombol ciutkan grup di kanan */
-.fi-sidebar .fi-sidebar-group-btn {
-    min-height: 28px;
-    padding: 2px 6px 8px 9px;
+/* Label grup: 10px/600 uppercase */
+.fi-sidebar-group-btn {
+    padding: 16px 12px 4px;
 }
 
 .fi-sidebar .fi-sidebar-group-label {
     color: var(--sidebar-group-label);
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
-    line-height: 18px;
-    letter-spacing: 0.02em;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
 .fi-sidebar .fi-sidebar-group-btn > .fi-icon,
 .fi-sidebar .fi-sidebar-group-collapse-btn,
 .fi-sidebar .fi-sidebar-group-collapse-btn .fi-icon {
-    color: var(--sidebar-icon);
+    color: var(--sidebar-group-label);
 }
 
-/* Item */
-.fi-sidebar .fi-sidebar-item-btn {
-    min-height: 42px;
-    gap: 12px;
-    padding: 9px 14px;
-    border-radius: 6px;
-    transition: background-color 0.1s ease;
-}
-
-.fi-sidebar .fi-sidebar-item-btn > .fi-icon {
+.fi-sidebar .fi-sidebar-group-collapse-btn {
     width: 20px;
     height: 20px;
-    color: var(--sidebar-icon);
+}
+
+/* Item: 13px, tinggi 32px, ikon 18px redup */
+.fi-sidebar-item-btn {
+    min-height: 32px;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    transition: background-color 120ms, color 120ms;
+}
+
+.fi-sidebar .fi-sidebar-item-btn > .fi-icon,
+.fi-sidebar .fi-sidebar-group-dropdown-trigger-btn > .fi-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--sidebar-text);
+    opacity: 0.5;
 }
 
 .fi-sidebar .fi-sidebar-item-label {
     color: var(--sidebar-text);
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 24px;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 20px;
 }
 
-.fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover,
-.fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:focus-visible,
-.fi-sidebar .fi-sidebar-group-dropdown-trigger-btn:hover {
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover,
+.fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:focus-visible,
+.fi-sidebar-group-dropdown-trigger-btn:hover {
     background-color: var(--sidebar-hover);
 }
 
 .fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-sidebar-item-label {
-    color: var(--sidebar-text-active);
+    color: var(--sidebar-text-hover);
 }
 
-.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
-.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn:hover {
+.fi-sidebar .fi-sidebar-item.fi-sidebar-item-has-url > .fi-sidebar-item-btn:hover > .fi-icon {
+    opacity: 0.85;
+}
+
+/* Item aktif: latar mist transparan + garis kiri 3px */
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
+.dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
     background-color: var(--sidebar-active-bg);
-    box-shadow: none;
+    box-shadow: inset 3px 0 0 var(--brand-mist);
 }
 
 .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
-    color: var(--sidebar-text-active);
-}
-
-.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon,
-.fi-sidebar .fi-sidebar-group.fi-active .fi-sidebar-group-dropdown-trigger-btn .fi-icon {
-    color: var(--sidebar-accent);
-}
-
-.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-grouped-border-part {
-    background-color: var(--sidebar-accent);
-}
-
-/* Badge angka: kotak abu netral, bukan pill berbingkai */
-.fi-sidebar .fi-sidebar-item-badge-ctn .fi-badge {
-    min-width: 26px;
-    min-height: 22px;
-    justify-content: center;
-    padding: 2px 8px;
-    border-radius: 6px;
-    box-shadow: none;
-    background-color: var(--sidebar-badge-bg);
-    color: var(--sidebar-badge-text);
-    font-size: 12px;
+    color: var(--sidebar-text-hover);
     font-weight: 500;
 }
 
-/* Footer: kartu user (nama + email), tanpa garis pemisah */
-.fi-sidebar .fi-sidebar-footer {
-    margin: 0;
-    padding: 8px 12px 12px;
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-icon {
+    color: var(--sidebar-text-hover);
+    opacity: 0.85;
+}
+
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-grouped-border-part {
+    background-color: var(--brand-mist);
+}
+
+/* Badge angka di menu */
+.fi-sidebar .fi-sidebar-item-badge-ctn .fi-badge {
+    padding: 1px 6px;
+    border-radius: 3px;
+    box-shadow: none;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+/* Sidebar ciut (64px): ikon di tengah */
+@media (min-width: 64rem) {
+    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-item-btn,
+    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-group-dropdown-trigger-btn {
+        justify-content: center;
+        padding: 8px;
+    }
+}
+
+/* =====================================================================
+ * Topbar 56px: ☰ + pencarian di kiri, menu akun di kanan
+ * ===================================================================== */
+.fi-topbar,
+.dark .fi-topbar {
+    height: var(--topbar-h);
+    min-height: var(--topbar-h);
+    padding: 0 24px;
+    background-color: var(--topbar-bg);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: none;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+/* Logo sudah ada di sidebar; topbar hanya memuat tombol ☰ */
+.fi-topbar-start {
+    margin-inline-end: 12px;
+}
+
+.fi-topbar-start .fi-logo,
+.fi-topbar-start > a {
+    display: none;
+}
+
+.fi-topbar-collapse-sidebar-btn-ctn {
+    width: auto;
+}
+
+.fi-topbar .fi-icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+}
+
+.fi-topbar .fi-icon-btn:hover {
+    background-color: var(--body-bg);
+    color: var(--text);
+}
+
+.fi-topbar .fi-icon-btn .fi-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Pencarian rata kiri, selebar 300px (HP: mengisi ruang kosong) */
+.fi-topbar-end {
+    flex: 1;
+    min-width: 0;
+    gap: 2px;
+}
+
+.fi-topbar .fi-global-search-ctn {
+    flex: 1;
+    min-width: 0;
+    margin-inline-end: auto;
+}
+
+.fi-topbar .fi-global-search {
+    flex: 1;
+    max-width: 300px;
+}
+
+.fi-topbar .fi-global-search-field .fi-input-wrp {
+    height: var(--control-h);
+    border-radius: var(--radius);
+    background-color: var(--bg-surface-secondary);
+    box-shadow: 0 0 0 1px var(--border-color);
+}
+
+.fi-topbar .fi-global-search-field .fi-input {
+    font-size: 13px;
+}
+
+.fi-topbar .fi-global-search-results-ctn {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+}
+
+/* Menu akun: nama + avatar 28px + caret dalam pill */
+.gs-account-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px 4px 10px;
+    border-radius: 20px;
+    color: var(--text-secondary);
+    transition: background-color 120ms, color 120ms;
+}
+
+.gs-account-trigger:hover,
+.fi-dropdown.fi-open .gs-account-trigger {
+    background-color: var(--bg-surface-secondary);
+    color: var(--text);
+}
+
+.gs-account-name {
+    max-width: 180px;
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gs-account-trigger .fi-user-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+}
+
+.gs-account-caret.fi-icon {
+    width: 14px;
+    height: 14px;
+}
+
+@media (max-width: 37.5rem) {
+    .gs-account-name {
+        display: none;
+    }
+}
+
+@media (max-width: 48rem) {
+    .fi-topbar,
+    .dark .fi-topbar {
+        padding: 0 12px;
+    }
+
+    .fi-topbar .fi-global-search {
+        max-width: none;
+    }
+
+    .fi-topbar .fi-global-search-field .fi-input-wrp-suffix {
+        display: none;
+    }
+}
+
+/* =====================================================================
+ * Halaman: padding 20px 24px, judul 18px/600, breadcrumb 13px
+ * ===================================================================== */
+.fi-main {
+    padding: 20px 24px 40px;
+}
+
+.fi-page-header-main-ctn {
+    row-gap: 20px;
+    padding-block: 0;
+}
+
+.fi-header-heading {
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0;
+}
+
+.fi-header .fi-breadcrumbs {
+    margin-bottom: 4px;
+}
+
+.fi-breadcrumbs ol li {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.fi-breadcrumbs ol li a:hover {
+    color: var(--primary);
+}
+
+@media (max-width: 48rem) {
+    .fi-main {
+        padding: 12px;
+    }
+}
+
+/* Footer: "gs.POS © tahun" kiri, versi kanan; menempel di bawah */
+.fi-main-ctn {
+    min-height: calc(100dvh - var(--topbar-h));
+}
+
+.fi-main {
+    flex: 1 0 auto;
+    height: auto;
+}
+
+.gs-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color-light);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* =====================================================================
+ * Card: section, tabel, widget — border 1px, radius 8px, bayangan tipis
+ * ===================================================================== */
+.fi-section:not(.fi-section-not-contained):not(.fi-aside),
+.fi-section:not(.fi-section-not-contained).fi-aside > .fi-section-content-ctn,
+.fi-ta-ctn,
+.fi-wi-stats-overview-stat,
+.fi-wi-chart .fi-section {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-surface);
+    box-shadow: var(--shadow);
+}
+
+.fi-section:not(.fi-section-not-contained):not(.fi-aside) > .fi-section-header {
+    min-height: 44px;
+    padding: 12px 16px;
+}
+
+.fi-section:not(.fi-section-not-contained).fi-section-has-header:not(.fi-collapsed):not(.fi-aside) > .fi-section-content-ctn {
+    border-top-color: var(--border-color-light);
+}
+
+.fi-section:not(.fi-section-not-contained):not(.fi-divided) > .fi-section-content-ctn > .fi-section-content {
+    padding: 16px;
+}
+
+.fi-section:not(.fi-section-not-contained) > .fi-section-content-ctn > .fi-section-footer {
+    padding: 10px 16px;
+    border-top-color: var(--border-color-light);
+}
+
+.fi-section-header-heading {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.fi-section-header-description {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+/* ---------- Tabel (header 11px uppercase, sel 13px) ---------- */
+.fi-ta-ctn .fi-ta-header {
+    padding: 12px 16px;
+    border-bottom-color: var(--border-color-light);
+}
+
+.fi-ta-header-heading {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.fi-ta-header-toolbar {
+    padding: 12px 16px;
+    border-bottom-color: var(--border-color-light);
+}
+
+.fi-ta-table > thead > tr {
+    background-color: var(--bg-surface-secondary);
+}
+
+.fi-ta-table > thead > tr > th {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.fi-ta-header-cell,
+.fi-ta-header-cell .fi-ta-header-cell-sort-btn {
+    padding-block: 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.fi-ta-header-cell .fi-ta-header-cell-sort-btn {
+    padding-block: 0;
+}
+
+.fi-ta-cell {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+/* Baris ±47px seperti gs-task-tracker (bawaan Filament: padding 16px → baris 56px) */
+.fi-ta-cell :is(.fi-ta-text, .fi-ta-icon, .fi-ta-image, .fi-ta-color, .fi-ta-select, .fi-ta-checkbox):not(.fi-inline) {
+    padding-block: 12px;
+}
+
+.fi-ta-cell .fi-ta-text-item,
+.fi-ta-cell .fi-ta-text-item-label,
+.fi-ta-cell .fi-ta-text {
+    font-size: 13px;
+}
+
+.fi-ta-table > tbody {
     border-top: 0;
 }
 
-.fi-sidebar .fi-user-menu-trigger {
-    gap: 12px;
-    padding: 12px;
-    border: 1px solid var(--sidebar-border);
-    border-radius: 10px;
-    background-color: var(--sidebar-card-bg);
-    text-align: start;
-    transition: border-color 0.1s ease;
+.fi-ta-table > tbody > tr {
+    border-color: var(--border-color-light);
+    transition: background-color 80ms;
 }
 
-.fi-sidebar .fi-user-menu-trigger:hover,
-.fi-sidebar .fi-user-menu-trigger:focus-visible {
-    border-color: var(--sidebar-icon);
+.fi-ta-table > tbody > tr:hover {
+    background-color: var(--bg-surface-secondary);
 }
 
-.fi-sidebar .fi-user-menu-trigger .fi-user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+/* ---------- Paginasi: kotak 30px terpisah, aktif = primary ---------- */
+.fi-ta-ctn .fi-pagination {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border-color-light);
 }
 
-.fi-sidebar .fi-user-menu-trigger-text {
-    display: grid;
-    flex: 1;
-    min-width: 0;
-    font-size: 14px;
-    line-height: 20px;
-}
-
-.fi-sidebar .fi-user-menu-trigger-name {
-    overflow: hidden;
-    color: var(--sidebar-text-active);
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.fi-sidebar .fi-user-menu-trigger-email {
-    overflow: hidden;
-    color: var(--sidebar-text-muted);
+.fi-pagination .fi-pagination-overview {
+    color: var(--text-muted);
+    font-size: 13px;
     font-weight: 400;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
-.fi-sidebar .fi-user-menu-trigger > .fi-icon {
-    align-self: flex-start;
-    width: 16px;
-    height: 16px;
-    color: var(--sidebar-icon);
+.fi-pagination .fi-pagination-items {
+    gap: 4px;
+    background: transparent;
+    box-shadow: none;
 }
 
-/* Sidebar diciutkan (desktop): kartu user hanya avatar */
-@media (min-width: 64rem) {
-    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-header {
-        justify-content: center;
-        padding-inline: 0;
-    }
-
-    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav {
-        padding-inline: 12px;
-    }
-
-    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-item-btn {
-        padding-inline: 9px;
-    }
-
-    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-footer {
-        padding-inline: 8px;
-    }
-
-    .fi-sidebar:not(.fi-sidebar-open) .fi-user-menu-trigger {
-        padding: 4px;
-        border-color: transparent;
-        background-color: transparent;
-    }
+.fi-pagination .fi-pagination-item,
+.fi-pagination .fi-pagination-item:first-of-type,
+.fi-pagination .fi-pagination-item:last-of-type {
+    border: 0;
 }
 
-/* ---------- Kontrol: tinggi 36px, radius 8px, font 13px (button.md, form.md) ---------- */
+.fi-pagination .fi-pagination-item .fi-pagination-item-btn,
+.fi-pagination .fi-pagination-item:first-of-type .fi-pagination-item-btn,
+.fi-pagination .fi-pagination-item:last-of-type .fi-pagination-item-btn {
+    min-width: 30px;
+    height: 30px;
+    justify-content: center;
+    align-items: center;
+    padding: 0 8px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-surface);
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.fi-pagination .fi-pagination-item.fi-active .fi-pagination-item-btn {
+    border-color: var(--primary);
+    background-color: var(--primary);
+}
+
+.fi-pagination .fi-pagination-item.fi-active .fi-pagination-item-label {
+    color: #ffffff;
+}
+
+.dark .fi-pagination .fi-pagination-item.fi-active .fi-pagination-item-label {
+    color: var(--brand-navy);
+}
+
+/* ---------- Tab bergaris bawah (tabs-underline) ---------- */
+.fi-tabs-item {
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* =====================================================================
+ * Kontrol: tinggi 36px, radius 8px, font 13px (button.md, form.md)
+ * ===================================================================== */
 .fi-btn {
     min-height: var(--control-h);
     border-radius: var(--control-radius);
     font-size: var(--control-font);
+    font-weight: 500;
 }
 
 .fi-btn.fi-size-sm,
 .fi-btn.fi-size-xs {
     min-height: var(--control-h-sm);
+    font-size: 12.5px;
 }
 
 .fi-input-wrp {
     border-radius: var(--control-radius);
 }
 
-/* ---------- Badge berbentuk pill berbingkai (badge.md) ---------- */
-.fi-badge {
-    border-radius: 999px;
-    box-shadow: inset 0 0 0 1px currentColor;
-    font-weight: 600;
+.fi-input {
+    font-size: var(--control-font);
 }
 
-/* ---------- Kartu & section (section.md) ---------- */
-.fi-section,
-.fi-ta-ctn,
-.fi-wi-stats-overview-stat {
-    box-shadow: var(--shadow-card);
+.fi-fo-field-label-content {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ---------- Badge berbentuk pill berbingkai (badge.md) ---------- */
+.fi-badge {
+    padding: 3px 10px;
+    border-radius: 999px;
+    box-shadow: inset 0 0 0 1px currentColor;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
 }
 
 /* ---------- Angka sejajar (content.md §3) ---------- */
@@ -302,8 +613,8 @@
 }
 
 .brand-mark {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     flex: none;
 }
 
@@ -333,15 +644,18 @@
     background: rgb(27 42 85 / 0.08);
 }
 
-.dark .brand-word {
+.dark .brand-word,
+.fi-sidebar .brand-word {
     color: #ffffff;
 }
 
-.dark .brand-word .w-gs {
+.dark .brand-word .w-gs,
+.fi-sidebar .brand-word .w-gs {
     color: var(--brand-mist);
 }
 
-.dark .brand-tag {
+.dark .brand-tag,
+.fi-sidebar .brand-tag {
     color: var(--brand-mist);
     background: rgb(184 192 212 / 0.16);
 }

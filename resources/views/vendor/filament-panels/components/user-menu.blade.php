@@ -1,6 +1,6 @@
 {{--
     Override gs.POS dari vendor/filament/filament/resources/views/components/user-menu.blade.php (Filament 5.10).
-    Perubahan hanya pada trigger posisi sidebar (lihat komentar "gs.POS"). Bandingkan ulang setiap upgrade Filament
+    Perubahan hanya pada trigger posisi topbar (lihat komentar "gs.POS"). Bandingkan ulang setiap upgrade Filament
     (docs/standards/ui/filament-theme.md §2).
 --}}
 @props([
@@ -57,12 +57,17 @@
 >
     <x-slot name="trigger">
         @if ($position === UserMenuPosition::Topbar)
+            {{-- gs.POS: menu akun ala gs-task-tracker — nama + avatar + caret --}}
             <button
                 aria-label="{{ __('filament-panels::layout.actions.open_user_menu.label') }}"
                 type="button"
-                class="fi-user-menu-trigger"
+                class="fi-user-menu-trigger gs-account-trigger"
             >
+                <span class="gs-account-name">{{ $userName }}</span>
+
                 <x-filament-panels::avatar.user :user="$user" loading="lazy" />
+
+                {{ \Filament\Support\generate_icon_html(Heroicon::ChevronDown, attributes: (new ComponentAttributeBag())->class(['gs-account-caret'])) }}
             </button>
         @else
             <button
@@ -72,22 +77,17 @@
             >
                 <x-filament-panels::avatar.user :user="$user" loading="lazy" />
 
-                {{-- gs.POS: kartu user ala Untitled UI — nama + email, chevron kanan --}}
                 <span
                     @if ($isSidebarCollapsibleOnDesktop)
                         x-show="$store.sidebar.isOpen"
                     @endif
                     class="fi-user-menu-trigger-text"
                 >
-                    <span class="fi-user-menu-trigger-name">{{ $userName }}</span>
-
-                    @if (filled($userEmail = $user?->email))
-                        <span class="fi-user-menu-trigger-email">{{ $userEmail }}</span>
-                    @endif
+                    {{ $userName }}
                 </span>
 
                 {{
-                    \Filament\Support\generate_icon_html(Heroicon::ChevronRight, alias: PanelsIconAlias::USER_MENU_TOGGLE_BUTTON, attributes: new ComponentAttributeBag([
+                    \Filament\Support\generate_icon_html(Heroicon::ChevronUp, alias: PanelsIconAlias::USER_MENU_TOGGLE_BUTTON, attributes: new ComponentAttributeBag([
                         'x-show' => $isSidebarCollapsibleOnDesktop ? '$store.sidebar.isOpen' : null,
                     ]))
                 }}

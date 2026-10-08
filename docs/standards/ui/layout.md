@@ -4,18 +4,21 @@
 
 ```
 ┌────────────┬───────────────────────────────────────────────────────┐
-│ logo   [‹] │ Breadcrumb  Produk › Es Kopi Susu                     │
-│ cari       │ Judul halaman                       [Aksi sekunder] [Aksi utama] │
-│ grup menu  │                                                       │
-│  terang    │ ┌───────────────────────────────────────────────────┐ │
-│  296px     │ │ Konten: tabel / form / widget dalam kartu putih   │ │
+│  logo 56px │ Topbar 56px: [☰] [🔍 Cari… ⌘K]          Nama user (👤) ˅ │
+│  Sidebar   ├───────────────────────────────────────────────────────┤
+│  navy      │ Breadcrumb  Produk › Es Kopi Susu                     │
+│  252px     │ Judul halaman                       [Aksi sekunder] [Aksi utama] │
+│            │                                                       │
+│  logo      │ ┌───────────────────────────────────────────────────┐ │
+│  grup menu │ │ Konten: tabel / form / widget dalam kartu putih   │ │
 │            │ └───────────────────────────────────────────────────┘ │
-│ [👤 user ›]│                                                       │
+│            │ Footer: gs.POS © 2026                          v1.0.0 │
 └────────────┴───────────────────────────────────────────────────────┘
 ```
 
-Tanpa topbar (`->topbar(false)`): logo, tombol ciutkan, pencarian global, dan menu user
-(kartu nama + email) berada di sidebar. Di bawah `lg` tombol ☰ muncul di kiri atas konten.
+Meniru gs-task-tracker: sidebar setinggi layar di kiri, topbar dimulai di kanan sidebar.
+Kerangka diterapkan lewat `App\Filament\Shared\Layout::apply()` di kedua panel. Grup menu
+tidak bisa diciutkan (`NavigationGroup::make(...)->collapsible(false)`).
 
 ## 2. Navigasi `/dashboard`
 
@@ -82,8 +85,8 @@ Aturan:
 
 ## 6. Responsif
 
-- Sidebar mengambang (jarak 16px, radius 12px) di ≥ `lg`; menjadi drawer tinggi penuh di bawah `lg`
-  (tablet & HP) dan dibuka dengan tombol ☰.
+- Sidebar menjadi drawer di bawah `lg` (tablet & HP), dibuka dengan ☰ di topbar; di ≥ `lg` ☰ menciutkan
+  sidebar menjadi 64px (ikon saja).
 - Tabel: kolom prioritas rendah memakai `->toggleable(isToggledHiddenByDefault: true)` atau
   `->visibleFrom('md')`. Kolom nama & nominal selalu terlihat.
 - Toolbar membungkus ke baris baru; kotak pencarian menjadi lebar penuh.

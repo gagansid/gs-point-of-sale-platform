@@ -31,6 +31,12 @@ return [
     'env' => env('APP_ENV', 'production'),
 
     /*
+    | Versi aplikasi yang ditampilkan di footer panel (resources/views/filament/shared/footer.blade.php).
+    */
+
+    'version' => env('APP_VERSION', '1.0.0'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Debug Mode
     |--------------------------------------------------------------------------
