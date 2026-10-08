@@ -29,8 +29,9 @@ Warna netral (`gray`/muted) saat diam; **berwarna hanya saat hover**, sesuai pol
 | Properti | Nilai |
 |---|---|
 | Ukuran | 30×30px, radius 6px |
+| Ikon | Heroicons **outline** 16px (bukan solid): `eye`, `pencil`, `trash`, `ellipsis-vertical` — dipasang global lewat alias ikon di `App\Filament\Shared\Layout` |
 | Warna diam | `text-muted` |
-| Hover | Warna aksi + latar warna aksi alpha 12% |
+| Hover | Warna aksi + latar warna aksi alpha 12% (gray → primary, primary → biru `#066FD1`, danger → merah) |
 | Focus | Outline 2px primary, offset 1px |
 
 ## Perilaku & state

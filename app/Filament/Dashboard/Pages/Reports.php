@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Pages;
 
 use App\Exports\SalesReportExport;
+use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\User;
 use App\Services\Report\ReportService;
 use App\Support\CurrentOutlet;
@@ -27,6 +28,7 @@ use UnitEnum;
 final class Reports extends Page
 {
     use HasFiltersForm;
+    use HasIconBreadcrumbs;
 
     protected string $view = 'filament.dashboard.pages.reports';
 

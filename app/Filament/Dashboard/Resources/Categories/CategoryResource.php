@@ -7,6 +7,7 @@ namespace App\Filament\Dashboard\Resources\Categories;
 use App\Actions\Product\DeleteCategory;
 use App\Actions\Product\SaveCategory;
 use App\Filament\Dashboard\Resources\Categories\Pages\ManageCategories;
+use App\Filament\Shared\Layout;
 use App\Models\Category;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
@@ -17,6 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 /**
@@ -69,8 +71,11 @@ final class CategoryResource extends Resource
                 DeleteAction::make()
                     ->iconButton()
                     ->tooltip('Hapus')
-                    ->modalHeading(fn (Category $record): string => "Hapus kategori {$record->name}?")
-                    ->modalDescription('Produk di kategori ini tidak ikut terhapus; menjadi tanpa kategori')
+                    ->modalHeading('Hapus kategori')
+                    ->modalDescription(fn (Category $record): HtmlString => Layout::confirmText(
+                        'Yakin ingin menghapus <strong>'.e($record->name).'</strong>?',
+                        'Produk di kategori ini tidak ikut terhapus; menjadi tanpa kategori.',
+                    ))
                     ->using(function (Category $record): bool {
                         app(DeleteCategory::class)->handle($record);
 

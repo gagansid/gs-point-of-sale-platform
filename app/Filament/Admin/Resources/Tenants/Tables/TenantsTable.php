@@ -30,8 +30,8 @@ final class TenantsTable
             ->columns([
                 TextColumn::make('name')
                     ->label('Nama bisnis')
-                    ->description(fn (Tenant $record): string => $record->slug)
                     ->weight('medium')
+                    // Slug tidak ditampilkan, tetapi tetap bisa dicari
                     ->searchable(['name', 'slug'])
                     ->sortable(),
                 TextColumn::make('business_type')

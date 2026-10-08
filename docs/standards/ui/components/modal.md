@@ -18,15 +18,26 @@ Mengikuti pola `gs-task-tracker` (`.confirm-dialog`):
 
 ```
 ┌──────────────────────────────────────────────┐
-│ [⚠]  Void order JKT01-261008-0042?           │  ikon 36px dalam kotak radius 10px
-│                                              │
-│ Stok dikembalikan dan transaksi tidak bisa   │  13px muted, rata kiri
+│ [⚠]  Void transaksi                      [×] │  ikon 36px kotak radius 10px, judul 15px/600
+├──────────────────────────────────────────────┤
+│ Yakin ingin membatalkan transaksi            │  pertanyaan 14px, nama data <strong>
+│ **DEMO01-261008-0042**?                      │
+│ Stok dikembalikan dan transaksi tidak bisa   │  catatan 13px muted, rata kiri
 │ dipulihkan.                                  │
 │ Alasan *  [_____________________________]    │  (field opsional)
 │                                              │
+├──────────────────────────────────────────────┤
 │                        [Batal]  [Void order] │  rata kanan, min 96px
 └──────────────────────────────────────────────┘
 ```
+
+Implementasi bersama di `App\Filament\Shared\Layout`:
+
+- Semua modal: `modalAlignment(Start)` + `modalFooterActionsAlignment(End)` (lewat `Action::configureUsing`).
+- Judul = nama aksi ("Hapus kategori"), deskripsi = `Layout::confirmText('Yakin ingin … <strong>'.e($nama).'</strong>?', 'Catatan.')`.
+  **Nama data wajib di-escape dengan `e()`** sebelum dimasukkan ke pertanyaan (HTML); catatan di-escape otomatis.
+- `DeleteAction` / `DeleteBulkAction` mendapat deskripsi baku; ikon modal hapus `exclamation-triangle`.
+- **Keluar** juga lewat modal konfirmasi (ikon `arrow-right-start-on-rectangle`, tombol primary "Keluar").
 
 ## Varian
 
@@ -42,7 +53,7 @@ Mengikuti pola `gs-task-tracker` (`.confirm-dialog`):
 |---|---|
 | Lebar | Konfirmasi `sm` (≈440px); form `md`/`lg` |
 | Posisi | Atas layar, jarak 48px (mobile 16px) |
-| Radius | 12px |
+| Radius | 8px, border 1px `--border-color`, overlay `rgba(15,23,42,.45)` + blur 3px |
 | Padding body | 18px × 24px |
 | Tinggi maks | Layar − 96px; hanya body yang di-scroll, header & footer tetap |
 | Tombol footer | Rata kanan, jarak 8px, min 96px |

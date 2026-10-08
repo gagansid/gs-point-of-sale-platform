@@ -7,12 +7,15 @@ namespace App\Filament\Dashboard\Resources\Products\Pages;
 use App\Actions\Product\Data\ProductData;
 use App\Actions\Product\SaveProduct;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
+use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\User;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
 final class CreateProduct extends CreateRecord
 {
+    use HasIconBreadcrumbs;
+
     protected static string $resource = ProductResource::class;
 
     protected static bool $canCreateAnother = false;

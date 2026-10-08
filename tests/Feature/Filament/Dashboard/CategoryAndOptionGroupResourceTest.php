@@ -24,7 +24,7 @@ beforeEach(function () {
 
 it('menambah, mengubah, dan menghapus kategori tanpa menghapus produknya', function () {
     Livewire::test(ManageCategories::class)
-        ->callAction('create', ['name' => 'Kopi'])
+        ->callAction(TestAction::make('create')->table(), ['name' => 'Kopi'])
         ->assertHasNoFormErrors();
 
     $category = Category::query()->sole();

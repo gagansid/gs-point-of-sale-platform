@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\OptionGroups\Tables;
 
 use App\Actions\Product\DeleteOptionGroup;
+use App\Filament\Shared\Layout;
 use App\Models\OptionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 
 final class OptionGroupsTable
 {
@@ -35,8 +37,11 @@ final class OptionGroupsTable
                 DeleteAction::make()
                     ->iconButton()
                     ->tooltip('Hapus')
-                    ->modalHeading(fn (OptionGroup $record): string => "Hapus grup opsi {$record->name}?")
-                    ->modalDescription('Grup ini dilepas dari semua produk. Riwayat transaksi tidak berubah')
+                    ->modalHeading('Hapus grup opsi')
+                    ->modalDescription(fn (OptionGroup $record): HtmlString => Layout::confirmText(
+                        'Yakin ingin menghapus <strong>'.e($record->name).'</strong>?',
+                        'Grup ini dilepas dari semua produk. Riwayat transaksi tidak berubah.',
+                    ))
                     ->using(function (OptionGroup $record): bool {
                         app(DeleteOptionGroup::class)->handle($record);
 

@@ -61,14 +61,14 @@ atau **16%** (dark). Hover tombol ikon: alpha **12%**.
 
 | Token | Nilai |
 |---|---|
-| `--sidebar-bg` | `#1B2A55` |
+| `--sidebar-bg` | `#2D4282` (= warna tombol primary, shade 600) |
 | `--sidebar-text` | `#B8C0D4` |
 | `--sidebar-text-hover` | `#FFFFFF` |
 | `--sidebar-hover` | `rgba(255,255,255,.06)` |
 | `--sidebar-active-bg` | `rgba(184,192,212,.16)` |
 | `--sidebar-active-indicator` | `inset 3px 0 0 #B8C0D4` (garis kiri item aktif) |
 | `--sidebar-border` | `rgba(255,255,255,.08)` |
-| `--sidebar-group-label` | `rgba(123,143,163,.5)` |
+| `--sidebar-group-label` | `rgba(184,192,212,.6)` |
 | Lebar | 252px (`15.75rem`); ciut 64px (`4rem`), hanya ikon + mark logo |
 | Area logo | tinggi 56px, padding 0 16px, garis bawah `--sidebar-border` |
 | Label grup | 10px / 600, uppercase, `letter-spacing .5px`, padding 16px 12px 4px, tidak bisa diciutkan |
@@ -84,7 +84,7 @@ atau **16%** (dark). Hover tombol ikon: alpha **12%**.
 | Menu akun | nama 14px + avatar 28px + caret 14px dalam pill radius 20px; nama disembunyikan < 600px |
 | Footer | `gs.POS © tahun` kiri, `v{APP_VERSION}` kanan, 12px `--text-muted`, padding 16px 24px, garis atas `--border-color-light` |
 
-Panel `/admin` memakai sidebar `#111827` + badge "Super Admin" agar tidak tertukar dengan `/dashboard`.
+Kedua panel memakai sidebar yang sama; `/admin` dibedakan oleh badge "Super Admin" di logo.
 
 ## 4. Tipografi
 
@@ -140,7 +140,7 @@ Skala 4px: `4 · 8 · 12 · 16 · 24 · 32 · 48 · 64`.
 | `--radius` | 6px | Tombol ikon |
 | `--radius-control` | 8px | Tombol, input |
 | `--radius-lg` | 8px | Kartu, section, tabel (border 1px `--border-color`) |
-| `--radius-pill` | 999px | Badge |
+| `--radius` (badge) | 6px | Badge |
 | `--shadow-card` | `0 0 0 1px rgba(4,32,69,.08), 0 2px 4px rgba(30,38,51,.04)` | Kartu |
 | `--shadow-pop` | `0 8px 24px rgba(30,38,51,.14)` | Dropdown, date picker, modal |
 | `--focus-ring` | `0 0 0 3px primary/15%, 0 0 0 1px primary` | Fokus keyboard semua kontrol |

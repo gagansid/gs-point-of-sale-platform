@@ -61,6 +61,11 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 6. Redirect hanya ke route internal (`redirect()->route()`), tidak ke URL dari input (open redirect = alat phishing).
 7. Rahasia hanya di `.env`; `APP_DEBUG=false` di production.
 8. Setiap endpoint baru: test isolasi tenant dan permission (`testing.md` §2).
+9. `HtmlString` di Filament (deskripsi modal, label breadcrumb) **tidak di-escape** oleh Blade. Data user di dalamnya
+   wajib `e()`: pakai `Layout::confirmText('… <strong>'.e($nama).'</strong>?', $catatan)` (catatan di-escape otomatis);
+   `HasIconBreadcrumbs` meng-escape label sendiri. Diuji di `tests/Feature/Filament/PanelLayoutTest.php`.
+10. Keluar panel lewat modal konfirmasi; aksinya sama dengan `LogoutController` Filament: logout guard,
+    `session()->invalidate()`, `regenerateToken()`, lalu redirect ke halaman login internal.
 
 ## 3. Header keamanan (sudah aktif)
 

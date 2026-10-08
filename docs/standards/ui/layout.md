@@ -60,7 +60,7 @@ ditampilkan lalu ditolak.
 
 | Jenis halaman | Isi | Aksi utama (kanan atas) |
 |---|---|---|
-| **Daftar** (List) | Tabel dengan toolbar: pencarian, filter, tab status | `+ Tambah {objek}` |
+| **Daftar** (List) | Card tabel; header card satu baris: `Daftar {objek}` · pencarian · filter · `+ Tambah {objek}` (trait `HasTableCardHeader`) | di header card, bukan kanan atas halaman |
 | **Form** (Create/Edit) | Section bertumpuk; kolom kanan 360px untuk ringkasan (opsional) | `Simpan` di bawah form, kanan |
 | **Detail** (View) | Infolist dalam section + relasi (tabel item, pembayaran) | Aksi kontekstual (`Cetak ulang`, `Void`) |
 | **Laporan** | Filter rentang tanggal di atas → stat widget → chart → tabel | `Export Excel` |
@@ -70,8 +70,10 @@ Aturan:
 
 - Maksimal **satu** tombol primary per halaman. Aksi lain `gray`/outline.
 - Aksi berbahaya (`Void`, `Hapus`, `Cabut akses`) selalu `danger` + konfirmasi, tidak pernah primary.
-- Judul halaman = nama menu (daftar) atau nama objek (detail/edit), bukan "Edit Product".
-- Breadcrumb aktif di semua halaman selain Beranda.
+- Judul halaman = **breadcrumb** 16px seperti gs-task-tracker: item pertama berikon menu, item terakhir tebal
+  (`🏢 Tenant › Daftar`, `📦 Produk › Americano › Ubah`). Trait `HasIconBreadcrumbs` dipasang di semua halaman;
+  halaman tanpa breadcrumb (Beranda, Laporan, Keamanan) memakai ikon + judul. H1 tetap ada untuk pembaca
+  layar dan tampil di HP (< 640px), tempat breadcrumb disembunyikan Filament.
 
 ## 5. Grid & lebar
 

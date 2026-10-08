@@ -8,6 +8,7 @@ use App\Actions\Product\Data\ProductData;
 use App\Actions\Product\SaveProduct;
 use App\Filament\Dashboard\Resources\Products\Actions\ProductActions;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
+use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Product;
 use App\Models\User;
 use Filament\Resources\Pages\EditRecord;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Model;
 
 final class EditProduct extends EditRecord
 {
+    use HasIconBreadcrumbs;
+
     protected static string $resource = ProductResource::class;
 
     protected static ?string $breadcrumb = 'Ubah';

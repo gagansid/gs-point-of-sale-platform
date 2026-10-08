@@ -28,7 +28,8 @@
         top: 0;
         height: 100dvh;
         margin-top: calc(-1 * var(--topbar-h));
-        z-index: 31;
+        /* Di bawah topbar (z-30) agar overlay modal dari menu akun ikut menutupi sidebar */
+        z-index: 29;
     }
 
     /* Topbar mulai di kanan sidebar (lebar mengikuti status buka/ciut) */
@@ -374,18 +375,67 @@
     letter-spacing: 0;
 }
 
+/*
+ * Breadcrumb = judul halaman (gs-task-tracker .page-breadcrumb): 16px, item pertama berikon 20px,
+ * item terakhir tebal. H1 tetap ada untuk pembaca layar dan tampil di HP (breadcrumb Filament
+ * disembunyikan di bawah sm).
+ */
 .fi-header .fi-breadcrumbs {
-    margin-bottom: 4px;
+    margin-bottom: 0;
+}
+
+.fi-breadcrumbs ol {
+    column-gap: 12px;
 }
 
 .fi-breadcrumbs ol li {
+    column-gap: 12px;
     color: var(--text-secondary);
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 500;
+}
+
+.fi-breadcrumbs ol li .fi-breadcrumbs-item-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fi-breadcrumbs ol li .fi-breadcrumbs-item-label > .fi-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--text);
+}
+
+.fi-breadcrumbs ol li .fi-breadcrumbs-item-separator {
+    width: 14px;
+    height: 14px;
+    color: var(--text-disabled);
 }
 
 .fi-breadcrumbs ol li a:hover {
     color: var(--primary);
+}
+
+.fi-breadcrumbs ol li .fi-breadcrumbs-item-label[aria-current='page'] {
+    color: var(--text);
+    font-weight: 600;
+}
+
+@media (min-width: 40rem) {
+    .fi-header.fi-header-has-breadcrumbs .fi-header-heading {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .fi-header.fi-header-has-breadcrumbs .fi-header-subheading {
+        margin-top: 4px;
+        font-size: 13px;
+    }
 }
 
 @media (max-width: 48rem) {
@@ -456,10 +506,46 @@
     font-size: 12.5px;
 }
 
-/* ---------- Tabel (header 11px uppercase, sel 13px) ---------- */
-.fi-ta-ctn .fi-ta-header {
+/* ---------- Header card tabel: satu baris "Daftar X  [cari] [filter] [+ Tambah]" ---------- */
+.fi-ta-ctn .fi-ta-header-ctn {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
     padding: 12px 16px;
-    border-bottom-color: var(--border-color-light);
+}
+
+.fi-ta-ctn .fi-ta-header-ctn:has(> .fi-ta-header, > .fi-ta-header-toolbar:not([x-cloak])) {
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+/* Judul & aksi header naik menjadi anggota baris yang sama dengan toolbar */
+.fi-ta-ctn .fi-ta-header,
+.fi-ta-ctn .fi-ta-header.fi-ta-header-adaptive-actions-position {
+    display: contents;
+}
+
+.fi-ta-ctn .fi-ta-header > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.fi-ta-ctn .fi-ta-header > .fi-ta-actions {
+    order: 3;
+    margin-inline-start: 0;
+}
+
+.fi-ta-ctn .fi-ta-header-toolbar {
+    order: 2;
+    flex: 0 1 auto;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+}
+
+/* Tanpa judul (tabel di dalam form/relasi): toolbar tetap rata kanan */
+.fi-ta-ctn .fi-ta-header-ctn > .fi-ta-header-toolbar:first-child {
+    flex: 1 1 auto;
 }
 
 .fi-ta-header-heading {
@@ -468,10 +554,32 @@
     font-weight: 600;
 }
 
-.fi-ta-header-toolbar {
-    padding: 12px 16px;
-    border-bottom-color: var(--border-color-light);
+/* Wadah aksi kiri toolbar (aksi massal) kosong: jangan memakan ruang */
+.fi-ta-ctn .fi-ta-header-toolbar > .fi-ta-actions:not(:has(*)) {
+    display: none;
 }
+
+/* HP: baris 1 = judul + tombol tambah, baris 2 = pencarian & filter selebar penuh */
+@media (max-width: 40rem) {
+    .fi-ta-ctn .fi-ta-header > .fi-ta-actions {
+        order: 1;
+    }
+
+    .fi-ta-ctn .fi-ta-header-toolbar {
+        flex: 1 1 100%;
+    }
+
+    .fi-ta-ctn .fi-ta-header-toolbar > div:last-child {
+        flex: 1;
+        margin-inline-start: 0;
+    }
+
+    .fi-ta-ctn .fi-ta-header-toolbar .fi-ta-search-field {
+        flex: 1;
+    }
+}
+
+/* ---------- Tabel (header 11px uppercase, sel 13px) ---------- */
 
 .fi-ta-table > thead > tr {
     background-color: var(--bg-surface-secondary);
@@ -584,6 +692,214 @@
     font-weight: 500;
 }
 
+/* ---------- Tombol aksi baris (gs-task-tracker .act-btn): 30px, ikon garis 16px, abu ---------- */
+.fi-ta-actions .fi-icon-btn,
+.fi-ta-actions .fi-dropdown-trigger .fi-icon-btn {
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.fi-ta-actions .fi-icon-btn > .fi-icon {
+    width: 16px;
+    height: 16px;
+    color: inherit;
+}
+
+.fi-ta-cell .fi-ta-actions {
+    gap: 4px;
+}
+
+/* Hover: warna aksi + latar transparan senada */
+.fi-ta-actions .fi-icon-btn.fi-color-gray:hover {
+    color: var(--primary);
+    background-color: rgb(45 66 130 / 0.12);
+}
+
+.fi-ta-actions .fi-icon-btn.fi-color-primary:hover {
+    color: #066fd1;
+    background-color: rgb(6 111 209 / 0.12);
+}
+
+.fi-ta-actions .fi-icon-btn.fi-color-danger:hover {
+    color: #d63939;
+    background-color: rgb(214 57 57 / 0.12);
+}
+
+.fi-ta-actions .fi-icon-btn.fi-color-warning:hover {
+    color: #f59f00;
+    background-color: rgb(245 159 0 / 0.14);
+}
+
+.fi-ta-actions .fi-icon-btn.fi-color-success:hover {
+    color: #2fb344;
+    background-color: rgb(47 179 68 / 0.12);
+}
+
+.dark .fi-ta-actions .fi-icon-btn.fi-color-gray:hover {
+    color: var(--primary);
+    background-color: var(--primary-lt);
+}
+
+/* =====================================================================
+ * Modal (gs-task-tracker .modal-dialog + .confirm-dialog)
+ * ===================================================================== */
+.fi-modal > .fi-modal-close-overlay,
+.dark .fi-modal > .fi-modal-close-overlay {
+    background-color: rgb(15 23 42 / 0.45);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window,
+.dark .fi-modal > .fi-modal-window-ctn > .fi-modal-window {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-surface);
+    box-shadow: 0 24px 48px rgb(15 23 42 / 0.18), 0 0 0 1px var(--border-translucent);
+}
+
+/* Header: judul 15px/600, garis bawah */
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-header {
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-heading {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+}
+
+.fi-modal:not(.fi-modal-slide-over) > .fi-modal-window-ctn > .fi-modal-window .fi-modal-close-btn {
+    top: 14px;
+    inset-inline-end: 14px;
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-content {
+    padding: 16px 18px;
+}
+
+/* Footer: tombol rata kanan, garis atas */
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-footer,
+.fi-modal.fi-align-start:not(.fi-modal-has-sticky-header) > .fi-modal-window-ctn > .fi-modal-window-has-icon .fi-modal-footer:not(.fi-align-center) {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border-color-light);
+}
+
+.fi-modal .fi-modal-footer .fi-btn {
+    min-width: 96px;
+}
+
+/*
+ * Modal konfirmasi (hapus, keluar, void): header = ikon 36px + judul; deskripsi turun menjadi
+ * isi modal rata kiri di bawah garis header (grid: deskripsi melebar penuh di baris kedua).
+ */
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window.fi-modal-window-has-icon .fi-modal-header {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    column-gap: 12px;
+    padding: 14px 18px 0;
+    border-bottom: 0;
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window.fi-modal-window-has-icon .fi-modal-header > div:last-child {
+    display: contents;
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window.fi-modal-window-has-icon .fi-modal-heading {
+    grid-column: 2;
+    padding-inline-end: 32px;
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window.fi-modal-window-has-icon .fi-modal-description {
+    grid-column: 1 / -1;
+    margin: 14px -18px 0;
+    padding: 18px 24px 4px;
+    border-top: 1px solid var(--border-color-light);
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window.fi-modal-window-has-icon .fi-modal-footer {
+    margin-top: 18px;
+}
+
+/* Konten tambahan modal konfirmasi (mis. alasan void) sejajar dengan teks */
+.fi-modal.fi-align-start:not(.fi-modal-has-sticky-header) > .fi-modal-window-ctn > .fi-modal-window-has-icon .fi-modal-content {
+    padding: 12px 24px 0;
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-icon-ctn {
+    grid-column: 1;
+    margin: 0;
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-icon-bg,
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window.fi-align-start .fi-modal-icon-bg {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 10px;
+    background-color: var(--primary-lt);
+    color: var(--primary);
+}
+
+.fi-modal .fi-modal-icon-bg > .fi-icon {
+    width: 18px;
+    height: 18px;
+    color: inherit;
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-icon-bg.fi-color-danger {
+    background-color: rgb(214 57 57 / 0.08);
+    color: #d63939;
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-icon-bg.fi-color-warning {
+    background-color: rgb(245 159 0 / 0.1);
+    color: #f59f00;
+}
+
+.fi-modal > .fi-modal-window-ctn > .fi-modal-window .fi-modal-icon-bg.fi-color-success {
+    background-color: rgb(47 179 68 / 0.08);
+    color: #2fb344;
+}
+
+.fi-modal .fi-modal-description,
+.fi-modal .gs-confirm-question {
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.fi-modal .gs-confirm-question,
+.fi-modal .gs-confirm-text {
+    display: block;
+    text-wrap: pretty;
+}
+
+.fi-modal .gs-confirm-question {
+    margin-bottom: 6px;
+}
+
+.fi-modal .gs-confirm-question strong {
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.fi-modal .gs-confirm-text {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+}
+
 /* =====================================================================
  * Kontrol: tinggi 36px, radius 8px, font 13px (button.md, form.md)
  * ===================================================================== */
@@ -613,13 +929,13 @@
     font-weight: 500;
 }
 
-/* ---------- Badge berbentuk pill berbingkai (badge.md) ---------- */
+/* ---------- Badge: kotak radius 6px, latar tint lembut + garis tipis (badge.md) ---------- */
 .fi-badge {
-    padding: 3px 10px;
-    border-radius: 999px;
-    box-shadow: inset 0 0 0 1px currentColor;
+    min-height: 22px;
+    padding: 2px 8px;
+    border-radius: var(--radius);
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1.4;
 }
 

@@ -9,17 +9,18 @@
 
 ## Anatomi
 
-`( Selesai )` — pill dengan border 1px warna status, latar warna status alpha 6%, teks warna status.
+`[ Selesai ]` — kotak radius 6px, latar tint lembut warna status (shade 50), garis tipis warna status 10%, teks warna status.
 
 ## Spesifikasi
 
 | Properti | Nilai |
 |---|---|
-| Padding | 3px × 10px |
-| Radius | 999px |
-| Font | 12px / 600 |
-| Border | 1px `currentColor` |
-| Latar | Warna status, alpha 6% (light) / 16% (dark) |
+| Tinggi | 22px |
+| Padding | 2px × 8px |
+| Radius | 6px |
+| Font | 12px / 500 |
+| Border | ring 1px warna status alpha 10% (bawaan Filament) |
+| Latar | Warna status shade 50 (light) / alpha 10% (dark) |
 | Ikon | Opsional, 14px, di kiri |
 
 ## Pemetaan warna baku
@@ -83,8 +84,8 @@ TextEntry::make('status')->badge();
 ```
 
 ```css
-/* components.css — gaya pill seperti gs-task-tracker */
-.fi-badge { border: 1px solid currentColor; border-radius: 999px; padding: 3px 10px; font-weight: 600; }
+/* components.css — badge bersih: warna & ring tetap bawaan Filament, hanya ukuran yang diatur */
+.fi-badge { min-height: 22px; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; }
 ```
 
 ## Do / Don't

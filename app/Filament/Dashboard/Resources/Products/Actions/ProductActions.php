@@ -8,6 +8,7 @@ use App\Actions\Product\AdjustStock;
 use App\Actions\Product\DeleteProduct;
 use App\Actions\Product\SetProductAvailability;
 use App\Exceptions\BusinessException;
+use App\Filament\Shared\Layout;
 use App\Models\Product;
 use App\Models\User;
 use Filament\Actions\Action;
@@ -15,6 +16,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 /**
@@ -70,8 +72,11 @@ final class ProductActions
     public static function delete(): DeleteAction
     {
         return DeleteAction::make()
-            ->modalHeading(fn (Product $record): string => "Hapus produk {$record->name}?")
-            ->modalDescription('Produk hilang dari aplikasi kasir. Riwayat transaksi tetap utuh')
+            ->modalHeading('Hapus produk')
+            ->modalDescription(fn (Product $record): HtmlString => Layout::confirmText(
+                'Yakin ingin menghapus <strong>'.e($record->name).'</strong>?',
+                'Produk hilang dari aplikasi kasir. Riwayat transaksi tetap utuh.',
+            ))
             ->using(function (Product $record): bool {
                 app(DeleteProduct::class)->handle($record);
 

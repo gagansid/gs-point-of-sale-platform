@@ -7,11 +7,14 @@ namespace App\Filament\Dashboard\Resources\OptionGroups\Pages;
 use App\Actions\Product\Data\OptionGroupData;
 use App\Actions\Product\SaveOptionGroup;
 use App\Filament\Dashboard\Resources\OptionGroups\OptionGroupResource;
+use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
 final class CreateOptionGroup extends CreateRecord
 {
+    use HasIconBreadcrumbs;
+
     protected static string $resource = OptionGroupResource::class;
 
     protected static bool $canCreateAnother = false;

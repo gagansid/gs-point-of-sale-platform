@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Pages;
 
 use App\Actions\Admin\SetAdminTwoFactorRequirement;
+use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Admin;
 use App\Support\SystemSettings;
 use BackedEnum;
@@ -21,6 +22,8 @@ use UnitEnum;
  */
 final class SecuritySettings extends Page
 {
+    use HasIconBreadcrumbs;
+
     protected string $view = 'filament.admin.pages.security-settings';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;

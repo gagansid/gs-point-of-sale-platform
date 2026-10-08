@@ -7,6 +7,7 @@ namespace App\Filament\Admin\Resources\Tenants\Pages;
 use App\Actions\Tenant\UpdateTenant;
 use App\Enums\BusinessType;
 use App\Filament\Admin\Resources\Tenants\TenantResource;
+use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Tenant;
 use Carbon\CarbonImmutable;
 use Filament\Actions\ViewAction;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Model;
 
 final class EditTenant extends EditRecord
 {
+    use HasIconBreadcrumbs;
+
     protected static string $resource = TenantResource::class;
 
     protected static ?string $breadcrumb = 'Ubah';

@@ -23,14 +23,14 @@
     --text-muted: #7e8896;
     --text-disabled: #c0c7cf;
 
-    /* Sidebar navy */
-    --sidebar-bg: var(--brand-navy);
+    /* Sidebar = warna tombol primary (Theme::colors() primary 600) */
+    --sidebar-bg: #2d4282;
     --sidebar-text: var(--brand-mist);
     --sidebar-text-hover: #ffffff;
     --sidebar-hover: rgb(255 255 255 / 0.06);
     --sidebar-active-bg: rgb(184 192 212 / 0.16);
     --sidebar-border: rgb(255 255 255 / 0.08);
-    --sidebar-group-label: rgb(123 143 163 / 0.5);
+    --sidebar-group-label: rgb(184 192 212 / 0.6);
 
     /* Topbar */
     --topbar-h: 56px;
