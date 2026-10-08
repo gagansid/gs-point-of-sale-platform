@@ -224,7 +224,7 @@ tabel master memakai soft delete.
 | Transaksi | `order_item_options` | order_item_id, option_id, option_name, price_delta |
 | Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |
 | Produk | `stock_movements` | tenant_id, product_id, user_id, type (adjustment/sale/void_return), qty_change, qty_after, reason, reference_id — riwayat stok (Q14) |
-| Pembayaran | `payments` | order_id, payment_method_id, category, amount, tendered, change, reference, status |
+| Pembayaran | `payments` | tenant_id, order_id, payment_method_id, user_id, category, amount (dipakai membayar), tendered (uang diterima), change, reference (approval code), status |
 | Sistem Laravel | `personal_access_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs` | Bawaan Laravel / Sanctum |
 
 Nilai enum status (keputusan Q7):
@@ -545,3 +545,7 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q13 | `options.tenant_id` | Ditambahkan agar semua model bisnis memakai `BelongsToTenant` (CLAUDE.md). | Diterima | Database |
 | Q14 | Riwayat stok | Tabel `stock_movements`; `POST /products/{id}/stock` wajib `id` dari client sebagai idempotency key. | Diterima | `docs/api/product.md` |
 | Q15 | Hapus kategori | Produknya tidak ikut dihapus; menjadi tanpa kategori (`category_id` null). | Diterima | `docs/api/product.md` |
+| Q16 | Shift per device | `POST /shifts` saat device sudah punya shift terbuka mengembalikan shift itu (idempotent). Tutup biasa hanya oleh pembuka; selain itu tutup paksa. | Diterima | `docs/api/shift.md` |
+| Q17 | Login email di device kasir | Token terikat device bila `device_uid` = device terdaftar, sehingga owner/manager bisa buka shift & checkout. | Diterima | `docs/api/auth.md` |
+| Q18 | Batas diskon | Persen total diskon (item + order) terhadap harga kotor; role dengan `order.discount_over_limit` tidak dibatasi. | Diterima | `docs/api/order.md` |
+| Q19 | Alokasi pembayaran | Non-tunai dialokasikan lebih dulu, tunai menutup sisa + kembalian; checkout wajib lunas. | Diterima | `docs/api/order.md` |

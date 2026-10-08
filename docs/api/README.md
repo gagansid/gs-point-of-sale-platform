@@ -7,8 +7,8 @@ Satu file per domain, berisi semua endpoint domain tersebut dengan format
 |---|---|---|
 | Auth & sistem | [`auth.md`](auth.md) | ✅ 7 endpoint |
 | Katalog & produk | [`product.md`](product.md) | ✅ 13 endpoint |
-| Shift | `shift.md` | Belum |
-| Order & pembayaran | `order.md` | Belum |
+| Shift | [`shift.md`](shift.md) | ✅ 5 endpoint |
+| Order & pembayaran | [`order.md`](order.md) | 🟡 checkout (open bill, void, struk: Minggu 5) |
 | Laporan & setelan | `report.md` | Belum |
 
 File dibuat bersamaan dengan endpoint pertama di domain tersebut.

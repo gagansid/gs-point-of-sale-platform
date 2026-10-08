@@ -27,8 +27,8 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **Broken object level authorization (IDOR)** | Global scope tenant fail-closed + Policy; data tenant lain → 404; tenant_id tidak bisa disusupkan/diubah | `BelongsToTenant`, `SetTenantContext`, Policy | ✅ Langkah 3 (Policy per model menyusul) |
 | **Broken function level authorization** | Permission hanya dari role (`Gate::before`), wildcard dibatasi daftar permission, menu tersembunyi | `UserRole`, `AppServiceProvider`, Filament | ✅ Langkah 3 (menu: langkah 5) |
 | **Mass assignment** | `$fillable` eksplisit; `Model::shouldBeStrict()` di non-production | Model, `AppServiceProvider` | ✅ Langkah 2 |
-| **Manipulasi harga dari client** | Nominal selalu dihitung ulang `OrderCalculator` | SPEC Aturan bisnis | ⏳ Langkah Order |
-| **Replay / transaksi ganda** | ID client sebagai idempotency key + lock | `api/idempotency.md` | ⏳ Langkah Order |
+| **Manipulasi harga dari client** | Nominal selalu dihitung ulang `OrderCalculator`; harga & opsi dari DB; field nominal kiriman diabaikan (ada test) | `CheckoutOrder` | ✅ Minggu 4 |
+| **Replay / transaksi ganda** | ID client sebagai idempotency key + PK sebagai penjaga terakhir; nomor order & stok dengan row lock (diuji 30 checkout paralel di MySQL) | `CheckoutOrder`, `OrderNumberGenerator` | ✅ Minggu 4 |
 | **Kebocoran informasi** | Error 500 tanpa detail (juga saat `APP_DEBUG=true`), tanpa `X-Powered-By`, 405 dijawab 404 | `ApiExceptionRenderer` | ✅ Langkah 2 |
 | **Pencurian token / sesi** | Token per device dengan masa berlaku, bisa dicabut (token kasir terikat device); token user & device tidak bisa saling dipakai; cookie `HttpOnly`, `Secure`, `SameSite`, session terenkripsi | Sanctum, `EnsureUserToken`, `EnsureDeviceToken` | ✅ Auth API |
 | **CSRF** | API memakai Bearer token (tanpa cookie); panel Filament memakai CSRF bawaan Laravel | Bawaan | ✅ |
