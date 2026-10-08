@@ -11,3 +11,4 @@ template: `docs/templates/adr.md`.
 | [0004](0004-php-82-laravel-12.md) | PHP 8.2 dengan Laravel 12 | Diterima |
 | [0005](0005-fail-closed-tenancy-and-permission-gate.md) | Tenant scope fail-closed & Gate hanya untuk permission | Diterima |
 | [0006](0006-admin-2fa-toggle.md) | 2FA super admin yang bisa diaktifkan/dinonaktifkan dari panel | Diterima |
+| [0007](0007-dashboard-tenancy-without-filament-tenancy.md) | Panel /dashboard memakai TenantContext, bukan tenancy Filament | Diterima |

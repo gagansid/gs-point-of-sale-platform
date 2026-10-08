@@ -86,6 +86,15 @@ enum UserRole: string implements HasColor, HasLabel
         };
     }
 
+    /** Role yang boleh membuka panel /dashboard (SPEC: semua menu dashboard untuk O, M). */
+    public function canAccessDashboard(): bool
+    {
+        return match ($this) {
+            self::Owner, self::Manager => true,
+            self::Supervisor, self::Cashier => false,
+        };
+    }
+
     /**
      * Daftar permission yang dimiliki role ini (untuk /auth/me; app menyembunyikan menu).
      *

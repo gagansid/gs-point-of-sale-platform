@@ -4,10 +4,17 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Actions\Payment\CreateDefaultPaymentMethods;
+use App\Actions\Product\Data\OptionGroupData;
+use App\Actions\Product\Data\ProductData;
+use App\Actions\Product\SaveCategory;
+use App\Actions\Product\SaveOptionGroup;
+use App\Actions\Product\SaveProduct;
 use App\Enums\BusinessType;
 use App\Enums\TenantStatus;
 use App\Enums\UserRole;
 use App\Models\Admin;
+use App\Models\Category;
 use App\Models\Device;
 use App\Models\Outlet;
 use App\Models\Tenant;
@@ -78,6 +85,51 @@ final class DemoTenantSeeder extends Seeder
                 'outlet_id' => $outlet->id,
                 'name' => 'Kasir Depan',
             ]);
+
+            app(CreateDefaultPaymentMethods::class)->handle();
+            $this->seedCatalog();
         });
+    }
+
+    /** Katalog contoh kafe; dilewati bila sudah ada (aman dijalankan ulang). */
+    private function seedCatalog(): void
+    {
+        if (Category::query()->exists()) {
+            return;
+        }
+
+        $saveCategory = app(SaveCategory::class);
+        $coffee = $saveCategory->handle(null, 'Kopi')['category'];
+        $nonCoffee = $saveCategory->handle(null, 'Non Kopi')['category'];
+        $food = $saveCategory->handle(null, 'Makanan')['category'];
+
+        $saveGroup = app(SaveOptionGroup::class);
+        $size = $saveGroup->handle(null, OptionGroupData::fromArray([
+            'name' => 'Ukuran', 'min_select' => 1, 'max_select' => 1,
+            'options' => [['name' => 'Regular', 'price_delta' => 0], ['name' => 'Large', 'price_delta' => 5000]],
+        ]))['group'];
+        $sugar = $saveGroup->handle(null, OptionGroupData::fromArray([
+            'name' => 'Gula', 'min_select' => 0, 'max_select' => 1,
+            'options' => [['name' => 'Normal'], ['name' => 'Less sugar'], ['name' => 'Tanpa gula']],
+        ]))['group'];
+
+        $saveProduct = app(SaveProduct::class);
+        $products = [
+            ['Es Kopi Susu', $coffee->id, 22000, [$size->id, $sugar->id], false, 0],
+            ['Americano', $coffee->id, 20000, [$size->id], false, 0],
+            ['Caffe Latte', $coffee->id, 26000, [$size->id, $sugar->id], false, 0],
+            ['Matcha Latte', $nonCoffee->id, 28000, [$size->id, $sugar->id], false, 0],
+            ['Teh Tarik', $nonCoffee->id, 18000, [$sugar->id], false, 0],
+            ['Croissant', $food->id, 24000, [], true, 12],
+            ['Banana Bread', $food->id, 21000, [], true, 0],
+        ];
+
+        foreach ($products as [$name, $categoryId, $price, $groups, $track, $stock]) {
+            $saveProduct->handle(null, ProductData::fromArray([
+                'name' => $name, 'category_id' => $categoryId, 'price' => $price,
+                'cost_price' => (int) ($price * 0.4), 'track_stock' => $track, 'stock_qty' => $stock,
+                'option_group_ids' => $groups,
+            ]));
+        }
     }
 }

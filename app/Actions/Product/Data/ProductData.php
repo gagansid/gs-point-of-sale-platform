@@ -27,6 +27,8 @@ final readonly class ProductData
         public bool $isActive,
         public ?string $imagePath,
         public array $optionGroupIds,
+        // Bedakan "gambar tidak dikirim" (API) dari "gambar dikosongkan" (form dashboard)
+        public bool $imagePathProvided = false,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -47,6 +49,7 @@ final readonly class ProductData
             isActive: (bool) ($data['is_active'] ?? true),
             imagePath: filled($data['image_path'] ?? null) ? (string) $data['image_path'] : null,
             optionGroupIds: array_values(array_map('strval', $data['option_group_ids'] ?? [])),
+            imagePathProvided: array_key_exists('image_path', $data),
         );
     }
 }

@@ -403,7 +403,8 @@ berdasarkan `error.code`, bukan teks `message`. Detail & contoh:
 
 ## Panel dashboard owner (`/dashboard`)
 
-Panel Filament dengan fitur tenancy bawaan; owner hanya melihat data bisnisnya sendiri.
+Panel Filament; owner hanya melihat data bisnisnya sendiri lewat `TenantContext` + `TenantScope`
+(bukan fitur tenancy Filament — ADR 0007). Akses: owner & manager aktif.
 
 | Menu | Fungsi | Role |
 |---|---|---|

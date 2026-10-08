@@ -8,6 +8,8 @@ use App\Enums\UserRole;
 use App\Models\Concerns\BelongsToTenant;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,7 +37,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property bool $is_active
  * @property CarbonImmutable|null $last_login_at
  */
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use BelongsToTenant, HasApiTokens, HasFactory, HasUuids, Notifiable, SoftDeletes;
@@ -68,6 +70,12 @@ class User extends Authenticatable
             'pin_locked_until' => 'immutable_datetime',
             'last_login_at' => 'immutable_datetime',
         ];
+    }
+
+    /** Hanya panel /dashboard, hanya owner & manager aktif. Panel /admin memakai tabel admins. */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $panel->getId() === 'dashboard' && $this->is_active && $this->role->canAccessDashboard();
     }
 
     public function isPinLocked(): bool

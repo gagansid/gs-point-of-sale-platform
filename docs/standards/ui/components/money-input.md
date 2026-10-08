@@ -50,6 +50,10 @@ Prefix `Rp` abu, angka rata kanan, pemisah ribuan titik saat mengetik.
 
 ## Implementasi
 
+> **Jangan memakai `stripCharacters('.')` untuk uang.** Di Filament v5 cast-nya juga berjalan saat
+> data dimuat: `"22000.00"` dari database menjadi `"2200000"` dan **harga tersimpan ×100** saat form
+> disimpan. Pakai `MoneyStateCast` (dikunci oleh test regresi `ProductResourceTest`).
+
 ```php
 final class MoneyInput extends TextInput
 {
@@ -59,11 +63,17 @@ final class MoneyInput extends TextInput
 
         $this->prefix('Rp')
             ->inputMode('numeric')
-            ->extraInputAttributes(['class' => 'text-right tabular-nums'])
             ->mask(RawJs::make('$money($input, \',\', \'.\', 0)'))
-            ->stripCharacters('.')
+            ->stateCast(new MoneyStateCast)   // "22000.00" ⇄ "22.000"
+            ->extraInputAttributes(['class' => 'text-right tabular-nums'])
             ->rule('decimal:0,2')
-            ->minValue(0);
+            ->rule('min:0');
+    }
+
+    // Validasi memakai nilai yang sudah dinormalkan, bukan teks bermask
+    public function mutateStateForValidation(mixed $state): mixed
+    {
+        return parent::mutateStateForValidation((new MoneyStateCast)->get($state));
     }
 }
 

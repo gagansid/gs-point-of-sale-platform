@@ -44,7 +44,7 @@ final class SaveProduct
                 'price' => $data->price,
                 'cost_price' => $data->costPrice,
                 'track_stock' => $data->trackStock,
-                'image_path' => $data->imagePath ?? $product->image_path,
+                'image_path' => $data->imagePathProvided ? $data->imagePath : $product->image_path,
                 'is_active' => $data->isActive,
             ]);
 
