@@ -5,6 +5,10 @@ declare(strict_types=1);
 use App\Exceptions\ApiExceptionRenderer;
 use App\Exceptions\BusinessException;
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\CheckAppVersion;
+use App\Http\Middleware\EnsureDeviceToken;
+use App\Http\Middleware\EnsureTenantActive;
+use App\Http\Middleware\EnsureUserToken;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetTenantContext;
@@ -31,8 +35,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Limiter "api" didefinisikan di AppServiceProvider (120/menit per token, SPEC Keamanan)
         $middleware->throttleApi();
 
-        // Dipasang di grup route terautentikasi: ['auth:sanctum', 'tenant', ...]
-        $middleware->alias(['tenant' => SetTenantContext::class]);
+        // Dipakai di routes/api.php: ['auth:sanctum', 'tenant', 'tenant.active', 'token.user|token.device']
+        $middleware->alias([
+            'tenant' => SetTenantContext::class,
+            'tenant.active' => EnsureTenantActive::class,
+            'token.user' => EnsureUserToken::class,
+            'token.device' => EnsureDeviceToken::class,
+            'app.version' => CheckAppVersion::class,
+        ]);
 
         // Wajib sebelum route model binding: binding menjalankan query yang dibatasi TenantScope
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: SetTenantContext::class);

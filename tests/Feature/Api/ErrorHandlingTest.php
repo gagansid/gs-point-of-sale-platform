@@ -31,17 +31,6 @@ beforeEach(function () {
     });
 });
 
-/**
- * Semua respons gagal wajib berbentuk envelope yang sama.
- */
-function assertApiError($response, string $code, int $status): void
-{
-    $response->assertStatus($status)
-        ->assertJsonStructure(['success', 'message', 'error' => ['code', 'details'], 'meta' => ['request_id']])
-        ->assertJsonPath('success', false)
-        ->assertJsonPath('error.code', $code);
-}
-
 it('422 VALIDATION_ERROR dengan pesan Bahasa Indonesia per field', function () {
     $response = $this->postJson('/api/_test/validation', ['email' => 'bukan-email']);
 

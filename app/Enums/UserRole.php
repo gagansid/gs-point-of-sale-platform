@@ -74,6 +74,28 @@ enum UserRole: string implements HasColor, HasLabel
             ->contains(fn (string $pattern): bool => Str::is($pattern, $permission));
     }
 
+    /**
+     * Role yang boleh login dengan email + kata sandi di aplikasi (SPEC: owner & manager).
+     * Role lain login dengan PIN di device terdaftar.
+     */
+    public function canUsePasswordLogin(): bool
+    {
+        return match ($this) {
+            self::Owner, self::Manager => true,
+            self::Supervisor, self::Cashier => false,
+        };
+    }
+
+    /**
+     * Daftar permission yang dimiliki role ini (untuk /auth/me; app menyembunyikan menu).
+     *
+     * @return list<string>
+     */
+    public function grantedPermissions(): array
+    {
+        return array_values(array_filter(self::PERMISSIONS, fn (string $p): bool => $this->allows($p)));
+    }
+
     /** Apakah ability ini permission role (bukan ability Policy seperti 'view'/'update'). */
     public static function isPermission(string $ability): bool
     {

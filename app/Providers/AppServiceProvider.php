@@ -10,6 +10,9 @@ use App\Models\Admin;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Support\TenantContext;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
@@ -42,6 +45,17 @@ class AppServiceProvider extends ServiceProvider
         $this->configureModels();
         $this->configureSecurity();
         $this->configureRateLimiting();
+        $this->configureApiDocs();
+    }
+
+    private function configureApiDocs(): void
+    {
+        // Dokumentasi OpenAPI (/docs/api) hanya untuk local & staging, tidak pernah di production
+        Gate::define('viewApiDocs', fn (mixed $user = null): bool => $this->app->environment(['local', 'staging']));
+
+        Scramble::configure()->withDocumentTransformers(function (OpenApi $openApi): void {
+            $openApi->secure(SecurityScheme::http('bearer'));
+        });
     }
 
     private function configureTenancy(): void

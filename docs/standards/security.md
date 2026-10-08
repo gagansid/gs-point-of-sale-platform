@@ -21,7 +21,7 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **SQL injection** | Hanya Eloquent/Query Builder dengan binding; raw SQL wajib `?` binding | `coding.md` §7, test `SecurityTest` | ✅ Langkah 2 |
 | **XSS** | Blade `{{ }}` auto-escape; API hanya JSON + CSP `default-src 'none'`; `nosniff` | `SecurityHeaders` | ✅ Langkah 2 |
 | **Clickjacking / phishing pembungkus** | `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'` | `SecurityHeaders` | ✅ Langkah 2 |
-| **Brute force login & PIN** | Rate limit `auth` 5/menit per IP+device, 20/menit per IP; kunci PIN 15 menit setelah 5 salah | `AppServiceProvider`, Action auth | ✅ limiter · ⏳ kunci PIN (langkah Auth) |
+| **Brute force login & PIN** | Rate limit `auth` 5/menit per IP+device, 20/menit per IP; kunci PIN 15 menit setelah 5 salah | `AppServiceProvider`, Action auth | ✅ Auth API (PIN terkunci dengan row lock, `PIN_LOCKED`) |
 | **Flood / DoS aplikasi** | Rate limit `api` 120/menit per token; batas body 8 MB; pagination maks. 100 | `AppServiceProvider`, `.htaccess`, `config/pos.php` | ✅ Langkah 2 |
 | **DDoS volumetrik** | Cloudflare proxy + "Under Attack mode" | Hosting (§4) | ⏳ Sebelum rilis |
 | **Broken object level authorization (IDOR)** | Global scope tenant fail-closed + Policy; data tenant lain → 404; tenant_id tidak bisa disusupkan/diubah | `BelongsToTenant`, `SetTenantContext`, Policy | ✅ Langkah 3 (Policy per model menyusul) |
@@ -30,7 +30,7 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **Manipulasi harga dari client** | Nominal selalu dihitung ulang `OrderCalculator` | SPEC Aturan bisnis | ⏳ Langkah Order |
 | **Replay / transaksi ganda** | ID client sebagai idempotency key + lock | `api/idempotency.md` | ⏳ Langkah Order |
 | **Kebocoran informasi** | Error 500 tanpa detail (juga saat `APP_DEBUG=true`), tanpa `X-Powered-By`, 405 dijawab 404 | `ApiExceptionRenderer` | ✅ Langkah 2 |
-| **Pencurian token / sesi** | Token per device dengan masa berlaku, bisa dicabut; cookie `HttpOnly`, `Secure`, `SameSite`, session terenkripsi | Sanctum, `.env` | ✅ konfigurasi · ⏳ token device |
+| **Pencurian token / sesi** | Token per device dengan masa berlaku, bisa dicabut (token kasir terikat device); token user & device tidak bisa saling dipakai; cookie `HttpOnly`, `Secure`, `SameSite`, session terenkripsi | Sanctum, `EnsureUserToken`, `EnsureDeviceToken` | ✅ Auth API |
 | **CSRF** | API memakai Bearer token (tanpa cookie); panel Filament memakai CSRF bawaan Laravel | Bawaan | ✅ |
 | **CORS disalahgunakan** | Tidak ada origin yang diizinkan secara default | `config/cors.php` | ✅ Langkah 2 |
 | **Log injection** | `X-Request-Id` dari client hanya diterima jika `[A-Za-z0-9-_]{8,64}` | `AssignRequestId` | ✅ Langkah 2 |
@@ -38,6 +38,9 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **Password lemah / bocor** | Min. 8, huruf + angka, cek HIBP di production; hash bcrypt | `Password::defaults()` | ✅ Langkah 2 |
 | **Akun admin diambil alih (phishing)** | Guard & tabel terpisah, tanpa akun default, kata sandi admin min. 12 + huruf besar/kecil + simbol, 2FA (wajib secara default, on/off dengan konfirmasi kata sandi), rate limit login | `pos:create-admin`, Filament, ADR 0006 | ✅ Langkah 5 |
 | **Karyawan nonaktif masih punya akses** | Provider auth hanya menerima user aktif; sesi lama ikut terputus | `TenantUserProvider` | ✅ Langkah 4 |
+| **Enumerasi akun / karyawan** | Pesan & waktu respons sama untuk email tak terdaftar vs kata sandi salah; PIN salah vs user lain tenant | `LoginWithPassword`, `LoginWithPin` | ✅ Auth API |
+| **Aplikasi usang / dimodifikasi** | `X-App-Version` wajib semver & ≥ `min_version` (426) | `CheckAppVersion` | ✅ Auth API |
+| **Dokumentasi API bocor** | `/docs/api` hanya local & staging | Gate `viewApiDocs` | ✅ Auth API |
 | **Data demo/akun lemah di production** | Seeder demo menolak berjalan di production | `DemoTenantSeeder` | ✅ Langkah 4 |
 | **Dependency rentan (CVE)** | `composer audit` di `composer check` dan CI | CI | ✅ Langkah 2 |
 | **Perintah merusak di production** | `DB::prohibitDestructiveCommands()` | `AppServiceProvider` | ✅ Langkah 2 |
