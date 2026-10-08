@@ -1,0 +1,105 @@
+# Standar Keamanan
+
+Target: lolos uji penetrasi (pentest) sebelum rilis ke klien pertama. Acuan: **OWASP Top 10 (2021)**
+dan **OWASP API Security Top 10 (2023)**.
+
+Keamanan dibangun berlapis. Kode aplikasi saja **tidak cukup** untuk serangan seperti DDoS volumetrik
+atau phishing email; lapisan hosting dan operasional (§4–§5) sama wajibnya.
+
+```
+Lapisan 1  Jaringan/DNS   Cloudflare (WAF, anti-DDoS), HTTPS
+Lapisan 2  Web server     .htaccess: HTTPS, file tersembunyi, batas body, method
+Lapisan 3  Aplikasi       Middleware, rate limit, validasi, otorisasi, envelope error
+Lapisan 4  Data           Query terparameter, hash, enkripsi, isolasi tenant
+Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi user
+```
+
+## 1. Pemetaan ancaman → kontrol
+
+| Ancaman | Kontrol | Lokasi | Status |
+|---|---|---|---|
+| **SQL injection** | Hanya Eloquent/Query Builder dengan binding; raw SQL wajib `?` binding | `coding.md` §7, test `SecurityTest` | ✅ Langkah 2 |
+| **XSS** | Blade `{{ }}` auto-escape; API hanya JSON + CSP `default-src 'none'`; `nosniff` | `SecurityHeaders` | ✅ Langkah 2 |
+| **Clickjacking / phishing pembungkus** | `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'` | `SecurityHeaders` | ✅ Langkah 2 |
+| **Brute force login & PIN** | Rate limit `auth` 5/menit per IP+device, 20/menit per IP; kunci PIN 15 menit setelah 5 salah | `AppServiceProvider`, Action auth | ✅ limiter · ⏳ kunci PIN (langkah Auth) |
+| **Flood / DoS aplikasi** | Rate limit `api` 120/menit per token; batas body 8 MB; pagination maks. 100 | `AppServiceProvider`, `.htaccess`, `config/pos.php` | ✅ Langkah 2 |
+| **DDoS volumetrik** | Cloudflare proxy + "Under Attack mode" | Hosting (§4) | ⏳ Sebelum rilis |
+| **Broken object level authorization (IDOR)** | Global scope tenant + Policy; data tenant lain → 404 | `BelongsToTenant`, Policy | ⏳ Langkah 3 |
+| **Broken function level authorization** | Permission `can()` di FormRequest/Policy, menu tersembunyi | `UserRole`, Filament | ⏳ Langkah 3 |
+| **Mass assignment** | `$fillable` eksplisit; `Model::shouldBeStrict()` di non-production | Model, `AppServiceProvider` | ✅ Langkah 2 |
+| **Manipulasi harga dari client** | Nominal selalu dihitung ulang `OrderCalculator` | SPEC Aturan bisnis | ⏳ Langkah Order |
+| **Replay / transaksi ganda** | ID client sebagai idempotency key + lock | `api/idempotency.md` | ⏳ Langkah Order |
+| **Kebocoran informasi** | Error 500 tanpa detail (juga saat `APP_DEBUG=true`), tanpa `X-Powered-By`, 405 dijawab 404 | `ApiExceptionRenderer` | ✅ Langkah 2 |
+| **Pencurian token / sesi** | Token per device dengan masa berlaku, bisa dicabut; cookie `HttpOnly`, `Secure`, `SameSite`, session terenkripsi | Sanctum, `.env` | ✅ konfigurasi · ⏳ token device |
+| **CSRF** | API memakai Bearer token (tanpa cookie); panel Filament memakai CSRF bawaan Laravel | Bawaan | ✅ |
+| **CORS disalahgunakan** | Tidak ada origin yang diizinkan secara default | `config/cors.php` | ✅ Langkah 2 |
+| **Log injection** | `X-Request-Id` dari client hanya diterima jika `[A-Za-z0-9-_]{8,64}` | `AssignRequestId` | ✅ Langkah 2 |
+| **Data rahasia di log/session** | `dontFlash` PIN & password; dilarang log PIN/token | `bootstrap/app.php`, `coding.md` §9 | ✅ Langkah 2 |
+| **Password lemah / bocor** | Min. 8, huruf + angka, cek HIBP di production; hash bcrypt | `Password::defaults()` | ✅ Langkah 2 |
+| **Akun admin diambil alih (phishing)** | Guard terpisah, 2FA wajib untuk `/admin`, rate limit login | Filament | ⏳ Langkah 5 |
+| **Dependency rentan (CVE)** | `composer audit` di `composer check` dan CI | CI | ✅ Langkah 2 |
+| **Perintah merusak di production** | `DB::prohibitDestructiveCommands()` | `AppServiceProvider` | ✅ Langkah 2 |
+| **Downgrade ke HTTP** | Redirect HTTPS di `.htaccess`, `URL::forceScheme('https')`, HSTS | `.htaccess`, `SecurityHeaders` | ✅ Langkah 2 |
+
+## 2. Aturan kode (wajib)
+
+1. **Dilarang** menyisipkan input ke SQL: `DB::raw("... $x")`, `whereRaw("id = $id")`,
+   `orderBy($request->sort)`. Gunakan binding (`whereRaw('id = ?', [$id])`) dan **daftar putih**
+   untuk nama kolom/urutan.
+2. **Dilarang** `{!! !!}` di Blade untuk data dari user. Jika terpaksa, sanitasi dan beri komentar alasan.
+3. Semua input lewat FormRequest dengan aturan **tipe + batas** (`max:` pada string, `max:` pada array
+   — mis. item order maks. 100, opsi per item maks. 20).
+4. Upload file: `image`/`mimes` + `max:` (KB), simpan dengan nama acak di disk non-publik bila sensitif,
+   jangan percaya nama/ekstensi dari client.
+5. Jangan pernah mengembalikan model utuh (`return $user`); selalu lewat API Resource.
+6. Redirect hanya ke route internal (`redirect()->route()`), tidak ke URL dari input (open redirect = alat phishing).
+7. Rahasia hanya di `.env`; `APP_DEBUG=false` di production.
+8. Setiap endpoint baru: test isolasi tenant dan permission (`testing.md` §2).
+
+## 3. Header keamanan (sudah aktif)
+
+| Header | Nilai | Berlaku |
+|---|---|---|
+| `X-Content-Type-Options` | `nosniff` | Semua |
+| `X-Frame-Options` | `DENY` | Semua |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Semua |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=()` | Semua |
+| `Cross-Origin-Opener-Policy` | `same-origin` | Semua |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | HTTPS + production |
+| `Content-Security-Policy` | `default-src 'none'; frame-ancestors 'none'` | `/api/*` |
+| `Cache-Control` | `no-store, private` | `/api/*` tanpa ETag |
+
+CSP untuk panel Filament (butuh skrip Livewire/Alpine) disusun di langkah panel, mulai dalam mode
+`Content-Security-Policy-Report-Only`.
+
+## 4. Hosting cPanel (sebelum rilis)
+
+- [ ] Domain di belakang **Cloudflare** (proxy oranye): WAF managed rules, Bot Fight Mode,
+      rate limiting rule untuk `/api/v1/auth/*`, SSL mode **Full (strict)**.
+- [ ] Jika memakai Cloudflare, set trusted proxies agar IP asli terbaca (rate limit per IP akurat).
+- [ ] AutoSSL aktif; ModSecurity cPanel aktif.
+- [ ] Project di luar `public_html`; document root ke `public/` (SPEC Deploy).
+- [ ] `.env` production: `APP_DEBUG=false`, `APP_ENV=production`, `SESSION_SECURE_COOKIE=true`.
+- [ ] PHP `post_max_size` ≤ 8M, `expose_php=Off`, `display_errors=Off`.
+- [ ] Izin file: folder 755, file 644, `.env` 600.
+- [ ] Backup harian terenkripsi & uji restore.
+
+## 5. Anti-phishing (non-kode)
+
+Phishing menyerang **manusia**, sehingga kontrolnya sebagian besar operasional:
+
+- [ ] Email domain memakai **SPF, DKIM, DMARC** (`p=quarantine` → `p=reject`) agar email palsu atas
+      nama domain ditolak.
+- [ ] Panel hanya di satu domain resmi (`pos.domainanda.com`); umumkan ke klien bahwa login hanya di sana.
+- [ ] Email sistem tidak pernah meminta password/PIN, dan tidak berisi tautan login langsung.
+- [ ] 2FA wajib untuk super admin; disarankan untuk owner.
+- [ ] Notifikasi ke owner saat device baru didaftarkan atau login dari device baru.
+
+## 6. Checklist pra-pentest
+
+- [ ] `composer check` hijau (termasuk `composer audit`).
+- [ ] Semua endpoint punya test permission & isolasi tenant.
+- [ ] Scan otomatis: OWASP ZAP baseline terhadap staging (`/api/v1`, `/dashboard`, `/admin`).
+- [ ] Uji manual: IDOR antar tenant, brute force PIN, manipulasi nominal checkout, replay request,
+      upload file berbahaya, akses `/admin` dengan akun tenant.
+- [ ] Hasil scan & perbaikan dicatat di `docs/security/{YYYY-MM-DD}-pentest.md`.

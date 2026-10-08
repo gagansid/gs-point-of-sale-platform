@@ -118,7 +118,9 @@ Aturan Resource:
 
 ## 5. Pemetaan exception
 
-Seluruh pemetaan exception → envelope ada di `bootstrap/app.php` (lihat `docs/SPEC.md`).
+Pemetaan exception → envelope ada di `App\Exceptions\ApiExceptionRenderer`, didaftarkan di
+`bootstrap/app.php` (kelas terpisah agar dicek Larastan dan mudah diuji). Error di luar daftar resmi:
+method salah → `404 NOT_FOUND`, body terlalu besar / request rusak → `422 VALIDATION_ERROR`.
 Jangan menangkap exception di controller untuk mengubah formatnya.
 
 ## 6. Scramble (OpenAPI)

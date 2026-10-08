@@ -30,7 +30,8 @@ php artisan test --filter=...
 - [ ] Model bisnis memakai `BelongsToTenant`
 - [ ] Respons envelope standar; error code dari daftar resmi
 - [ ] Test: sukses, validasi, permission, isolasi tenant, request ganda
-- [ ] `pint --test`, `phpstan`, `php artisan test` hijau
+- [ ] Aturan keamanan `docs/standards/security.md` §2 dipenuhi
+- [ ] `composer check` hijau
 - [ ] UI sesuai `docs/standards/ui/` (jika ada perubahan UI)
 
 ## Catatan untuk reviewer

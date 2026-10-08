@@ -17,6 +17,7 @@ Dokumen ini adalah **titik masuk** bagi siapa pun (AI agent atau manusia) yang m
 | Bagaimana menulis kode PHP/Laravel? | [`docs/standards/coding.md`](docs/standards/coding.md) |
 | Bagaimana membuat/mendokumentasikan endpoint? | [`docs/standards/api/`](docs/standards/api/README.md) |
 | Bagaimana tampilan panel Filament? | [`docs/standards/ui/`](docs/standards/ui/README.md) |
+| Aturan keamanan & checklist pentest? | [`docs/standards/security.md`](docs/standards/security.md) |
 | Test apa yang wajib ada? | [`docs/standards/testing.md`](docs/standards/testing.md) |
 | Alur issue → branch → PR → rilis? | [`docs/standards/workflow.md`](docs/standards/workflow.md) |
 | Cara menulis dokumentasi & ADR? | [`docs/standards/documentation.md`](docs/standards/documentation.md) |
@@ -36,9 +37,10 @@ Ringkasan dari `CLAUDE.md` + `docs/SPEC.md`. Pelanggaran = PR ditolak.
 5. **ID `orders`/`payments` dari client = idempotency key.** Request ulang → data lama + `meta.idempotent_replay: true`.
 6. **Semua respons API lewat `ApiResponse`**, error bisnis lewat `BusinessException`, kode error hanya dari daftar resmi.
 7. **Uang `DECIMAL(15,2)` di DB, string `"62000.00"` di JSON.** Tidak pernah `float`.
-8. **Tanpa Redis, Docker, atau proses daemon.** Queue/cache/session memakai driver `database`.
-9. **Tidak commit langsung ke `main`/`develop`.**
-10. **Tidak menebak.** Jika spesifikasi tidak menjawab, catat di `docs/SPEC.md` → *Keputusan & pertanyaan terbuka* (status `Terbuka`) dan tanyakan.
+8. **Aman dari input:** tanpa SQL mentah berisi input, tanpa `{!! !!}` untuk data user, semua input divalidasi dengan batas (`security.md` §2).
+9. **Tanpa Redis, Docker, atau proses daemon.** Queue/cache/session memakai driver `database`.
+10. **Tidak commit langsung ke `master`/`main`/`develop`.**
+11. **Tidak menebak.** Jika spesifikasi tidak menjawab, catat di `docs/SPEC.md` → *Keputusan & pertanyaan terbuka* (status `Terbuka`) dan tanyakan.
 
 ---
 
@@ -131,7 +133,8 @@ Sebuah tugas dianggap selesai jika **semua** poin berikut terpenuhi:
 - [ ] Model bisnis baru memakai `BelongsToTenant` + `HasUuids`.
 - [ ] Respons API memakai envelope standar; error memakai kode resmi.
 - [ ] Pest test: sukses, validasi, permission, isolasi tenant, request ganda (bila relevan).
-- [ ] `pint --test`, `phpstan`, `php artisan test` hijau.
+- [ ] Aturan keamanan `docs/standards/security.md` §2 dipenuhi.
+- [ ] `composer check` hijau (Pint, Larastan, Pest, audit dependency).
 - [ ] Endpoint terdokumentasi (`docs/api/` + Scramble terbaca benar).
 - [ ] UI mengikuti `docs/standards/ui/` (token, komponen, teks Bahasa Indonesia, dark mode).
 - [ ] Commit Conventional Commits, branch sesuai konvensi, PR template terisi.

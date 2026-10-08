@@ -31,6 +31,9 @@ jobs:
       - name: Composer install
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      - name: Audit dependency (CVE)
+        run: composer audit --no-dev --abandoned=report
+
       - name: Prepare environment
         run: |
           cp .env.example .env

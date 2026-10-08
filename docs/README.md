@@ -9,6 +9,7 @@ docs/
 │   ├── project-structure.md   Lokasi file & penamaan
 │   ├── coding.md              Gaya PHP/Laravel, Action, uang, enum
 │   ├── testing.md             Jenis test & 5 kasus wajib
+│   ├── security.md            Ancaman → kontrol, aturan kode, checklist pentest
 │   ├── workflow.md            Issue → branch → commit → PR → rilis
 │   ├── documentation.md       Cara menulis dokumen & ADR
 │   ├── api/                   Konvensi, envelope, error code, auth, idempotency, pola kode

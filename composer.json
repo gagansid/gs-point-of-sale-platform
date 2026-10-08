@@ -86,7 +86,11 @@
         "check": [
             "@lint",
             "@analyse",
-            "@test"
+            "@test",
+            "@audit-deps"
+        ],
+        "audit-deps": [
+            "@composer audit --no-dev --abandoned=report"
         ]
     },
     "extra": {

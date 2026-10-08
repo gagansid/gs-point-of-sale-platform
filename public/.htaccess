@@ -1,9 +1,39 @@
+# Pengamanan tingkat web server untuk shared hosting cPanel (docs/standards/security.md §4)
+
+# Jangan tampilkan daftar isi folder
+Options -Indexes
+
+# Tolak akses ke file tersembunyi (.env, .git, .htpasswd, dll.) dan file cadangan/konfigurasi
+<FilesMatch "(^\.|\.(env|log|sql|bak|old|orig|swp|ini|lock|md|yml|yaml|neon|xml|json)$)">
+    Require all denied
+</FilesMatch>
+
+# Batasi ukuran body request (8 MB) — lapisan pertama sebelum PHP memproses
+LimitRequestBody 8388608
+
+<IfModule mod_headers.c>
+    # Sembunyikan versi PHP
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
+        Options -MultiViews
     </IfModule>
 
     RewriteEngine On
+
+    # Paksa HTTPS (SPEC Keamanan), kecuali saat development lokal
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$ [NC]
+    RewriteCond %{HTTP_HOST} !\.(test|localhost)(:\d+)?$ [NC]
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Tolak method HTTP yang tidak dipakai aplikasi (TRACE/TRACK rawan cross-site tracing)
+    RewriteCond %{REQUEST_METHOD} ^(TRACE|TRACK|CONNECT)$ [NC]
+    RewriteRule ^ - [F]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
