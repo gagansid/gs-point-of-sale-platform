@@ -6,6 +6,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\SetDashboardTenant;
+use Filament\Enums\UserMenuPosition;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -43,6 +44,10 @@ final class DashboardPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/brand/favicon.svg'))
             ->darkMode()
+            // Sidebar ala Untitled UI (design-tokens.md §3): tanpa topbar, logo + pencarian + kartu user di sidebar
+            ->topbar(false)
+            ->userMenu(position: UserMenuPosition::Sidebar)
+            ->sidebarWidth('18.5rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
             ->viteTheme('resources/css/filament/dashboard/theme.css')

@@ -10,13 +10,20 @@
     --body-bg: #f5f7fb;
     --border-translucent: rgb(4 32 69 / 0.08);
 
-    --sidebar-bg: var(--brand-navy);
-    --sidebar-text: var(--brand-mist);
-    --sidebar-text-hover: #ffffff;
-    --sidebar-hover: rgb(255 255 255 / 0.06);
-    --sidebar-active-bg: rgb(184 192 212 / 0.16);
-    --sidebar-border: rgb(255 255 255 / 0.08);
-    --sidebar-group-label: rgb(184 192 212 / 0.6);
+    /* Sidebar terang ala Untitled UI (design-tokens.md §3) */
+    --sidebar-bg: #fafafa;
+    --sidebar-border: #e9eaeb;
+    --sidebar-text: #424242;
+    --sidebar-text-active: #0a0a0a;
+    --sidebar-text-muted: #535353;
+    --sidebar-icon: #737373;
+    --sidebar-accent: #5850ec;
+    --sidebar-hover: #f4f4f4;
+    --sidebar-active-bg: #f1f1f1;
+    --sidebar-group-label: #717171;
+    --sidebar-badge-bg: #f0f0f0;
+    --sidebar-badge-text: #343434;
+    --sidebar-card-bg: #ffffff;
 
     --control-h: 36px;
     --control-h-sm: 30px;
@@ -30,4 +37,18 @@
 .dark {
     --body-bg: #0f1623;
     --border-translucent: rgb(255 255 255 / 0.08);
+
+    --sidebar-bg: #13161b;
+    --sidebar-border: rgb(255 255 255 / 0.08);
+    --sidebar-text: #cecfd2;
+    --sidebar-text-active: #f7f7f7;
+    --sidebar-text-muted: #94979c;
+    --sidebar-icon: #85888e;
+    --sidebar-accent: #8b85ff;
+    --sidebar-hover: rgb(255 255 255 / 0.04);
+    --sidebar-active-bg: rgb(255 255 255 / 0.07);
+    --sidebar-group-label: #94979c;
+    --sidebar-badge-bg: #22262f;
+    --sidebar-badge-text: #cecfd2;
+    --sidebar-card-bg: #1a1d23;
 }

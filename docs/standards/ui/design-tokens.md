@@ -59,18 +59,34 @@ atau **16%** (dark). Hover tombol ikon: alpha **12%**.
 
 ## 3. Sidebar
 
-| Token | Nilai |
-|---|---|
-| `--sidebar-bg` | `#1B2A55` |
-| `--sidebar-text` | `#B8C0D4` |
-| `--sidebar-text-hover` | `#FFFFFF` |
-| `--sidebar-hover` | `rgba(255,255,255,.06)` |
-| `--sidebar-active-bg` | `rgba(184,192,212,.16)` |
-| `--sidebar-active-indicator` | `inset 3px 0 0 #B8C0D4` (garis kiri item aktif) |
-| `--sidebar-border` | `rgba(255,255,255,.08)` |
-| Lebar | 252px (ciut: hanya ikon) |
+Gaya terang mengacu Untitled UI (sidebar mengambang, item 16px/600). Dipakai kedua panel;
+`/admin` dibedakan oleh badge "Super Admin" di logo.
 
-Panel `/admin` memakai sidebar `#111827` + badge "Super Admin" agar tidak tertukar dengan `/dashboard`.
+| Token | Light | Dark | Pemakaian |
+|---|---|---|---|
+| `--sidebar-bg` | `#FAFAFA` | `#13161B` | Latar sidebar |
+| `--sidebar-border` | `#E9EAEB` | `rgba(255,255,255,.08)` | Garis tepi sidebar & kartu user |
+| `--sidebar-text` | `#424242` | `#CECFD2` | Label item |
+| `--sidebar-text-active` | `#0A0A0A` | `#F7F7F7` | Label item aktif, nama user |
+| `--sidebar-text-muted` | `#535353` | `#94979C` | Email user |
+| `--sidebar-icon` | `#737373` | `#85888E` | Ikon item, tombol grup |
+| `--sidebar-accent` | `#5850EC` | `#8B85FF` | Ikon item aktif |
+| `--sidebar-hover` | `#F4F4F4` | `rgba(255,255,255,.04)` | Hover item |
+| `--sidebar-active-bg` | `#F1F1F1` | `rgba(255,255,255,.07)` | Latar item aktif |
+| `--sidebar-group-label` | `#717171` | `#94979C` | Label grup (12px/600, uppercase) |
+| `--sidebar-badge-bg` | `#F0F0F0` | `#22262F` | Badge angka di item |
+| `--sidebar-badge-text` | `#343434` | `#CECFD2` | Teks badge |
+| `--sidebar-card-bg` | `#FFFFFF` | `#1A1D23` | Kartu user di bawah sidebar |
+
+| Ukuran | Nilai |
+|---|---|
+| Lebar | 296px (`18.5rem`); ciut: hanya ikon |
+| Mengambang (≥ `lg`) | jarak 16px dari tepi layar, radius 12px, border 1px |
+| Drawer (< `lg`) | tinggi penuh, radius 12px di sisi kanan |
+| Item | tinggi 42px, padding 9px 14px, radius 6px, jarak 1px, ikon 20px, gap 12px |
+| Label item | Inter 16px / 600, line-height 24px |
+| Label grup | 12px / 600, uppercase, `letter-spacing .02em`, jarak antar-grup 24px |
+| Kartu user | avatar 40px, nama 14px/600, email 14px/400, padding 12px, radius 10px |
 
 ## 4. Tipografi
 

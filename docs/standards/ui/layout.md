@@ -4,16 +4,18 @@
 
 ```
 ┌────────────┬───────────────────────────────────────────────────────┐
-│            │ Topbar: [☰]  Nama outlet / tenant       [🔔] [☾] [👤] │
-│  Sidebar   ├───────────────────────────────────────────────────────┤
-│  navy      │ Breadcrumb  Produk › Es Kopi Susu                     │
-│  252px     │ Judul halaman                       [Aksi sekunder] [Aksi utama] │
-│            │                                                       │
-│  logo      │ ┌───────────────────────────────────────────────────┐ │
-│  grup menu │ │ Konten: tabel / form / widget dalam kartu putih   │ │
+│ logo   [‹] │ Breadcrumb  Produk › Es Kopi Susu                     │
+│ cari       │ Judul halaman                       [Aksi sekunder] [Aksi utama] │
+│ grup menu  │                                                       │
+│  terang    │ ┌───────────────────────────────────────────────────┐ │
+│  296px     │ │ Konten: tabel / form / widget dalam kartu putih   │ │
 │            │ └───────────────────────────────────────────────────┘ │
+│ [👤 user ›]│                                                       │
 └────────────┴───────────────────────────────────────────────────────┘
 ```
+
+Tanpa topbar (`->topbar(false)`): logo, tombol ciutkan, pencarian global, dan menu user
+(kartu nama + email) berada di sidebar. Di bawah `lg` tombol ☰ muncul di kiri atas konten.
 
 ## 2. Navigasi `/dashboard`
 
@@ -80,7 +82,8 @@ Aturan:
 
 ## 6. Responsif
 
-- Sidebar menjadi drawer di bawah `lg`.
+- Sidebar mengambang (jarak 16px, radius 12px) di ≥ `lg`; menjadi drawer tinggi penuh di bawah `lg`
+  (tablet & HP) dan dibuka dengan tombol ☰.
 - Tabel: kolom prioritas rendah memakai `->toggleable(isToggledHiddenByDefault: true)` atau
   `->visibleFrom('md')`. Kolom nama & nominal selalu terlihat.
 - Toolbar membungkus ke baris baru; kotak pencarian menjadi lebar penuh.

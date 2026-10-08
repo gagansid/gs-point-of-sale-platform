@@ -25,6 +25,9 @@ return $panel
     ->brandLogoHeight('2rem')
     ->favicon(asset('images/brand/favicon.svg'))
     ->darkMode(true)
+    ->topbar(false)                 // logo, pencarian & menu user pindah ke sidebar
+    ->userMenu(position: UserMenuPosition::Sidebar)
+    ->sidebarWidth('18.5rem')       // 296px, design-tokens.md §3
     ->sidebarCollapsibleOnDesktop()
     ->maxContentWidth(Width::Full)
     ->viteTheme('resources/css/filament/dashboard/theme.css');
@@ -46,8 +49,8 @@ resources/css/filament/
 ├── shared/
 │   ├── tokens.css        # variabel :root & .dark dari design-tokens.md
 │   └── components.css    # override komponen (kontrol, pill, tabel, modal)
-├── dashboard/theme.css   # import shared + sidebar navy
-└── admin/theme.css       # import shared + sidebar gelap + penanda Super Admin
+├── dashboard/theme.css   # import shared
+└── admin/theme.css       # import shared (penanda Super Admin ada di logo)
 ```
 
 ```css
@@ -68,10 +71,10 @@ resources/css/filament/
     --brand-gray: #8A919E;
     --brand-mist: #B8C0D4;
 
-    --sidebar-bg: var(--brand-navy);
-    --sidebar-text: var(--brand-mist);
-    --sidebar-hover: rgb(255 255 255 / .06);
-    --sidebar-active-bg: rgb(184 192 212 / .16);
+    --sidebar-bg: #fafafa;
+    --sidebar-text: #424242;
+    --sidebar-accent: #5850ec;
+    --sidebar-active-bg: #f1f1f1;
 
     --control-h: 36px;
     --control-h-sm: 30px;
@@ -83,10 +86,10 @@ resources/css/filament/
 ```css
 /* resources/css/filament/shared/components.css (potongan) */
 
-/* Sidebar navy seperti gs-task-tracker */
+/* Sidebar terang ala Untitled UI: mengambang di >= lg, drawer di bawahnya */
 .fi-sidebar { background: var(--sidebar-bg); }
-.fi-sidebar-item-label, .fi-sidebar-item-icon { color: var(--sidebar-text); }
-.fi-sidebar-item-active { background: var(--sidebar-active-bg); box-shadow: inset 3px 0 0 var(--brand-mist); }
+.fi-sidebar-item-label { font-size: 16px; font-weight: 600; color: var(--sidebar-text); }
+.fi-sidebar-item.fi-active > .fi-sidebar-item-btn { background: var(--sidebar-active-bg); }
 
 /* Nominal selalu tabular agar kolom angka sejajar */
 .fi-ta-text-item.is-money, .fi-in-text-item.is-money { font-variant-numeric: tabular-nums; }
@@ -100,10 +103,16 @@ resources/css/filament/
   `composer install` lewat hook `post-autoload-dump` → `php artisan filament:upgrade`.
 - **Terjemahan** yang belum ada di Filament ditimpa di `lang/vendor/filament-panels/id/...`.
 
+### Override view Filament
+
+| View | Alasan |
+|---|---|
+| `resources/views/vendor/filament-panels/components/user-menu.blade.php` | Kartu user di sidebar menampilkan nama **dan email** + chevron kanan. Salinan view Filament 5.10; bandingkan dengan `vendor/filament/filament/resources/views/components/user-menu.blade.php` setiap upgrade Filament. |
+
 ## 4. Logo
 
 Wordmark mengikuti pola `gs.TaskTracker`: **`gs`** abu (`--brand-gray`, 800) + **`.POS`** navy (800),
-font Nunito. Di sidebar gelap: `gs` mist, `.POS` putih. File SVG disimpan di
+font Nunito. Di sidebar terang warnanya sama dengan latar terang; di dark mode `gs` mist, `.POS` putih. File SVG disimpan di
 `public/images/brand/` (`logo.svg`, `logo-white.svg`, `favicon.svg`).
 
 ## 5. Checklist perubahan tema

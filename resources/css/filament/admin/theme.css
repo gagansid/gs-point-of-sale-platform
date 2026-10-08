@@ -6,7 +6,4 @@
 @source '../../../../app/Filament/Shared/**/*';
 @source '../../../../resources/views/filament/**/*';
 
-/* Panel /admin: sidebar lebih gelap dari /dashboard agar tidak tertukar (design-tokens.md §3) */
-:root {
-    --sidebar-bg: #111827;
-}
+/* Panel /admin memakai sidebar yang sama dengan /dashboard; pembeda: badge "Super Admin" di logo */
