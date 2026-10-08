@@ -183,11 +183,36 @@
     line-height: 1.6;
 }
 
-/* Sidebar ciut (64px): ikon di tengah */
+/* Sidebar ciut (64px, "rail" gs-task-tracker): item 48 × 36px penuh, ikon tepat di tengah */
 @media (min-width: 64rem) {
+    .fi-body-has-sidebar-collapsible-on-desktop .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav {
+        padding: 8px 0;
+        scrollbar-gutter: auto;
+    }
+
+    /* Filament memberi w-max saat ciut sehingga item hanya selebar ikon dan bergeser ke kiri */
+    .fi-body-has-sidebar-collapsible-on-desktop .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-nav-groups {
+        width: 100%;
+    }
+
+    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-group {
+        margin-bottom: 0;
+    }
+
+    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-group-items {
+        row-gap: 2px;
+    }
+
+    .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-group + .fi-sidebar-group {
+        margin-top: 2px;
+    }
+
     .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-item-btn,
     .fi-sidebar:not(.fi-sidebar-open) .fi-sidebar-group-dropdown-trigger-btn {
+        width: 100%;
+        min-height: 36px;
         justify-content: center;
+        gap: 0;
         padding: 8px;
     }
 }
@@ -616,6 +641,26 @@
     width: 30px;
     height: 30px;
     flex: none;
+}
+
+/* Mark: navy + abu di latar terang (varian "primary" gs-task-tracker) */
+.brand-mark .bm-frame {
+    stroke: var(--brand-navy);
+}
+
+.brand-mark .bm-accent {
+    stroke: var(--brand-gray);
+}
+
+/* Varian "on-dark": sidebar navy/gelap & dark mode */
+.fi-sidebar .brand-mark .bm-frame,
+.dark .brand-mark .bm-frame {
+    stroke: #ffffff;
+}
+
+.fi-sidebar .brand-mark .bm-accent,
+.dark .brand-mark .bm-accent {
+    stroke: var(--brand-mist);
 }
 
 .brand-word {

@@ -86,7 +86,8 @@ Aturan:
 ## 6. Responsif
 
 - Sidebar menjadi drawer di bawah `lg` (tablet & HP), dibuka dengan ☰ di topbar; di ≥ `lg` ☰ menciutkan
-  sidebar menjadi 64px (ikon saja).
+  sidebar menjadi 64px (ikon saja, item 48 × 36px
+  di tengah, mark logo tetap tampil).
 - Tabel: kolom prioritas rendah memakai `->toggleable(isToggledHiddenByDefault: true)` atau
   `->visibleFrom('md')`. Kolom nama & nominal selalu terlihat.
 - Toolbar membungkus ke baris baru; kotak pencarian menjadi lebar penuh.

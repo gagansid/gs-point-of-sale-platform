@@ -108,7 +108,9 @@ resources/css/filament/
 ## 4. Logo
 
 Wordmark mengikuti pola `gs.TaskTracker`: **`gs`** abu (`--brand-gray`, 800) + **`.POS`** navy (800),
-font Nunito. Di sidebar gelap: `gs` mist, `.POS` putih. File SVG disimpan di
+font Nunito. Di sidebar gelap: `gs` mist, `.POS` putih.
+Mark (ikon monitor) **tanpa kotak latar** seperti gs-task-tracker: garis navy + aksen abu di latar terang,
+garis putih + aksen mist di sidebar & dark mode (kelas `.bm-frame` / `.bm-accent`, `components.css`). File SVG disimpan di
 `public/images/brand/` (`logo.svg`, `logo-white.svg`, `favicon.svg`).
 
 ## 5. Checklist perubahan tema
