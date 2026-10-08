@@ -3,9 +3,18 @@
 declare(strict_types=1);
 
 use App\Actions\Auth\IssueUserToken;
+use App\Actions\Payment\CreateDefaultPaymentMethods;
 use App\Models\Device;
+use App\Models\Option;
+use App\Models\OptionGroup;
+use App\Models\Outlet;
+use App\Models\PaymentMethod;
+use App\Models\Product;
+use App\Models\Shift;
 use App\Models\User;
+use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
@@ -61,4 +70,48 @@ function deviceToken(Device $device): string
 function freshAuth(): void
 {
     app('auth')->forgetGuards();
+}
+
+/**
+ * Kasir siap bertransaksi: outlet JKT01 (pajak 11%, service 5%, pembulatan 100, batas diskon
+ * kasir 10%), device, kasir login PIN di device, shift terbuka, katalog contoh, metode bayar bawaan.
+ */
+function posSetup(bool $openShift = true): stdClass
+{
+    $pos = new stdClass;
+    $pos->outlet = Outlet::factory()->create([
+        'code' => 'JKT01', 'tax_rate' => '11.00', 'service_charge_rate' => '5.00',
+        'tax_inclusive' => false, 'rounding' => 100,
+        'discount_limits' => ['cashier' => 10, 'supervisor' => 25],
+    ]);
+    $pos->tenantId = $pos->outlet->tenant_id;
+    $pos->device = Device::factory()->forOutlet($pos->outlet)->create(['device_uid' => 'kasir-1']);
+    $pos->cashier = User::factory()->cashier()->forOutlet($pos->outlet)->create(['name' => 'Budi']);
+    $pos->supervisor = User::factory()->supervisor()->forOutlet($pos->outlet)->create(['name' => 'Sari']);
+    $pos->token = userToken($pos->cashier, $pos->device);
+
+    TenantContext::run($pos->tenantId, function () use ($pos, $openShift): void {
+        app(CreateDefaultPaymentMethods::class)->handle();
+        $pos->methods = PaymentMethod::query()->get()->keyBy(fn ($m) => $m->category->value);
+
+        $pos->size = OptionGroup::factory()->create(['name' => 'Ukuran', 'min_select' => 1, 'max_select' => 1]);
+        $pos->regular = Option::factory()->create(['option_group_id' => $pos->size->id, 'tenant_id' => $pos->tenantId, 'name' => 'Regular', 'price_delta' => '0.00']);
+        $pos->large = Option::factory()->create(['option_group_id' => $pos->size->id, 'tenant_id' => $pos->tenantId, 'name' => 'Large', 'price_delta' => '5000.00']);
+
+        $pos->coffee = Product::factory()->create(['name' => 'Es Kopi Susu', 'price' => '22000.00']);
+        $pos->coffee->optionGroups()->attach($pos->size->id, ['sort_order' => 0]);
+        $pos->croissant = Product::factory()->tracked(10)->create(['name' => 'Croissant', 'price' => '24000.00']);
+
+        if ($openShift) {
+            $pos->shift = Shift::factory()->forDevice($pos->device, $pos->cashier)->create(['opening_cash' => '200000.00']);
+        }
+    });
+
+    return $pos;
+}
+
+/** UUID v7 baru (seperti yang dibuat aplikasi Flutter). */
+function uuid(): string
+{
+    return (string) Str::uuid7();
 }

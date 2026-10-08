@@ -35,3 +35,12 @@ it('memformat Rupiah gaya Indonesia', function (string $value, string $expected)
     ['0', 'Rp0'],
     ['9999999999999.99', 'Rp9.999.999.999.999,99'],
 ]);
+
+it('membulatkan half-up', function (string $value, int $scale, string $expected) {
+    expect(Money::round($value, $scale))->toBe($expected);
+})->with([
+    ['7507.505', 2, '7507.51'],
+    ['7507.504', 2, '7507.50'],
+    ['-0.005', 2, '-0.01'],
+    ['757.5', 0, '758'],
+]);

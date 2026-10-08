@@ -217,9 +217,9 @@ tabel master memakai soft delete.
 | Produk | `option_groups` | tenant_id, name (Ukuran, Gula, Topping), min_select, max_select |
 | Produk | `options` | tenant_id (Q13), option_group_id, name, price_delta, sort_order |
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
-| Transaksi | `shifts` | outlet_id, device_id, opened_by, closed_by, opening_cash, expected_cash, actual_cash, difference, status |
+| Transaksi | `shifts` | tenant_id, outlet_id, device_id, opened_by, closed_by, opening_cash, expected_cash, actual_cash, difference, status, close_note, open_device_key (unik: 1 shift terbuka per device), opened_at, closed_at |
 | Transaksi | `order_sequences` | outlet_id, date, last_number (penomoran order harian) |
-| Transaksi | `orders` | outlet_id, shift_id, order_number, order_type, table_label, status, subtotal, discount_total, service_total, tax_total, rounding, grand_total, paid_total, change_total, void_reason, voided_by, approved_by |
+| Transaksi | `orders` | tenant_id, outlet_id, shift_id, device_id, user_id, order_number, order_type, table_label, status, notes, discount_type, discount_value, order_discount, subtotal, discount_total (item + order), service_total, tax_total, rounding, grand_total, paid_total, change_total, service_rate, tax_rate, tax_inclusive (setelan saat transaksi), void_reason, voided_by, voided_at, approved_by, completed_at |
 | Transaksi | `order_items` | order_id, product_id, product_name, unit_price, options_total, qty, discount, line_total, notes |
 | Transaksi | `order_item_options` | order_item_id, option_id, option_name, price_delta |
 | Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |

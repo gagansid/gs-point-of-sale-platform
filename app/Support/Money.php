@@ -41,6 +41,54 @@ final class Money
         return bcmul($a, (string) $b, self::SCALE);
     }
 
+    /** Pembulatan half-up ke $scale desimal (bcmath memotong, bukan membulatkan). */
+    public static function round(string $value, int $scale = self::SCALE): string
+    {
+        $offset = '0.'.str_repeat('0', $scale).'5';
+        $offset = str_starts_with($value, '-') ? '-'.$offset : $offset;
+
+        return bcadd(bcadd($value, $offset, $scale + 1), '0', $scale);
+    }
+
+    /** $amount × $rate% dibulatkan half-up ke 2 desimal. */
+    public static function percentOf(string $amount, string $rate): string
+    {
+        return self::round(bcdiv(bcmul($amount, $rate, 6), '100', 6));
+    }
+
+    /** Bagian pajak yang sudah termasuk di harga: $gross × rate / (100 + rate). */
+    public static function includedTax(string $gross, string $rate): string
+    {
+        return self::round(bcdiv(bcmul($gross, $rate, 6), bcadd('100', $rate, 6), 6));
+    }
+
+    /** Membulatkan ke kelipatan $step terdekat (half-up), mis. 75757.50 → 75800 untuk step 100. */
+    public static function roundToNearest(string $value, int $step): string
+    {
+        if ($step <= 0) {
+            return self::of($value);
+        }
+
+        $multiplier = self::round(bcdiv($value, (string) $step, 6), 0);
+
+        return bcmul($multiplier, (string) $step, self::SCALE);
+    }
+
+    public static function min(string $a, string $b): string
+    {
+        return self::compare($a, $b) <= 0 ? $a : $b;
+    }
+
+    public static function max(string $a, string $b): string
+    {
+        return self::compare($a, $b) >= 0 ? $a : $b;
+    }
+
+    public static function isPositive(string $value): bool
+    {
+        return self::compare($value, '0') > 0;
+    }
+
     /** -1, 0, atau 1. */
     public static function compare(string $a, string $b): int
     {

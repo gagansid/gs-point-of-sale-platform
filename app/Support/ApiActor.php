@@ -7,6 +7,7 @@ namespace App\Support;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Device;
+use App\Models\PersonalAccessToken;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -38,5 +39,22 @@ final class ApiActor
         $actor = self::resolve($request);
 
         return $actor instanceof User ? $actor : throw BusinessException::of(ErrorCode::Unauthenticated);
+    }
+
+    /**
+     * Device kasir tempat user login (token terikat device). Dibutuhkan shift & checkout.
+     *
+     * @throws BusinessException
+     */
+    public static function userDevice(Request $request): Device
+    {
+        $token = self::user($request)->currentAccessToken();
+        $device = $token instanceof PersonalAccessToken ? $token->device : null;
+
+        if ($device === null || $device->isRevoked()) {
+            throw BusinessException::of(ErrorCode::DeviceNotRegistered, 'Login dari perangkat kasir terdaftar untuk bertransaksi');
+        }
+
+        return $device;
     }
 }

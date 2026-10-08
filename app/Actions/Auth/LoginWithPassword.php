@@ -7,6 +7,7 @@ namespace App\Actions\Auth;
 use App\Actions\Auth\Data\AuthResult;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
+use App\Models\Device;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -41,7 +42,13 @@ final class LoginWithPassword
         }
 
         $expiresAt = now()->addMinutes((int) config('pos.tokens.owner_ttl'));
-        $token = $this->issueToken->handle($user, 'app:'.$deviceUid, $expiresAt);
+        // Login di device kasir terdaftar → token terikat device (bisa buka shift & checkout)
+        $device = Device::forTenant($user->tenant_id)
+            ->where('device_uid', $deviceUid)
+            ->whereNull('revoked_at')
+            ->first();
+
+        $token = $this->issueToken->handle($user, 'app:'.$deviceUid, $expiresAt, $device);
 
         return new AuthResult($user, $token);
     }

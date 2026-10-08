@@ -7,7 +7,9 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\OptionGroupController;
+use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\SystemController;
 use Illuminate\Support\Facades\Route;
 
@@ -62,5 +64,17 @@ Route::prefix('v1')->name('api.v1.')->middleware('app.version')->group(function 
         Route::apiResource('option-groups', OptionGroupController::class)
             ->only(['store', 'update', 'destroy'])
             ->parameters(['option-groups' => 'optionGroup']);
+
+        // ---------- Shift ----------
+        Route::controller(ShiftController::class)->prefix('shifts')->name('shifts.')->group(function (): void {
+            Route::get('current', 'current')->name('current');
+            Route::post('/', 'store')->name('store');
+            Route::post('{shift}/close', 'close')->name('close');
+            Route::get('{shift}/summary', 'summary')->name('summary');
+            Route::post('{shift}/force-close', 'forceClose')->name('force-close');
+        });
+
+        // ---------- Order & pembayaran ----------
+        Route::post('checkout', [OrderController::class, 'checkout'])->name('checkout');
     });
 });
