@@ -6,12 +6,14 @@ namespace App\Filament\Dashboard\Resources\Employees;
 
 use App\Actions\User\Data\EmployeeData;
 use App\Actions\User\SaveEmployee;
+use App\Actions\User\SendEmployeeVerification;
 use App\Actions\User\SetEmployeeActive;
 use App\Actions\User\UnlockEmployeePin;
 use App\Enums\UserRole;
 use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Resources\Employees\Pages\ManageEmployees;
 use App\Filament\Shared\Actions\ActiveStatusActions;
+use App\Filament\Shared\Forms\OutletPickList;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Outlet;
 use App\Models\User;
@@ -22,7 +24,6 @@ use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -35,6 +36,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rules\Password;
 use UnitEnum;
@@ -81,22 +83,12 @@ final class EmployeeResource extends Resource
                     UserRole::Supervisor => 'Kasir + approval void/diskon dengan PIN',
                     default => 'Transaksi di tablet dengan PIN',
                 }),
-            // Outlet yang dipegang (ADR 0010). Owner otomatis semua outlet; disembunyikan bila hanya satu outlet
-            CheckboxList::make('outlet_ids')->label('Outlet')
-                ->options(fn (): array => self::assignableOutlets())
-                ->formatStateUsing(fn (?User $record, mixed $state): array => $record !== null
-                    ? $record->outlets()->pluck('outlets.id')->all()
-                    : (is_array($state) && $state !== [] ? $state : array_filter([CurrentOutlet::get()?->id])))
-                ->required()
-                ->columns(2)
-                ->columnSpanFull()
-                ->helperText('Karyawan hanya bisa login & bertransaksi di perangkat outlet ini')
-                ->visible(fn (Get $get): bool => count(self::assignableOutlets()) > 1
-                    && ! (self::role($get)?->allows('outlet.access_all') ?? false)),
-            TextInput::make('email')->label('Email')->email()->maxLength(150)
+            TextInput::make('email')->label('Email')->email()->maxLength(150)->required()
                 ->unique(User::class, 'email', ignoreRecord: true)
-                ->visible($usesPassword)->required($usesPassword)
-                ->helperText('Untuk login dashboard & aplikasi'),
+                ->placeholder('budi@contoh.com')
+                ->helperText(fn (Get $get): string => $usesPassword($get)
+                    ? 'Untuk login dashboard & aplikasi. Link verifikasi dikirim saat disimpan'
+                    : 'Link verifikasi dikirim ke email ini saat disimpan'),
             TextInput::make('username')->label('Username')->maxLength(30)->minLength(3)
                 // Huruf besar diterima lalu disimpan huruf kecil (sama seperti API)
                 ->regex('/^[A-Za-z0-9._-]+$/')
@@ -133,6 +125,18 @@ final class EmployeeResource extends Resource
                     $usesPassword($get) => 'Opsional: untuk approval void/diskon. 6 digit',
                     default => 'Untuk login di tablet. 6 digit, bukan angka sama/berurutan',
                 }),
+            // Outlet yang dipegang (ADR 0010). Owner otomatis semua outlet; disembunyikan bila hanya satu outlet
+            OutletPickList::make('outlet_ids')
+                ->countedLabel('Outlet')
+                ->outletQuery(fn () => self::assignableOutletQuery())
+                ->formatStateUsing(fn (?User $record, mixed $state): array => $record !== null
+                    ? $record->outlets()->pluck('outlets.id')->all()
+                    : (is_array($state) && $state !== [] ? $state : array_filter([CurrentOutlet::get()?->id])))
+                ->required()
+                ->columnSpanFull()
+                ->helperText('Karyawan hanya bisa login & bertransaksi di perangkat outlet yang dipilih')
+                ->visible(fn (Get $get): bool => count(self::assignableOutlets()) > 1
+                    && ! (self::role($get)?->allows('outlet.access_all') ?? false)),
         ]);
     }
 
@@ -147,6 +151,19 @@ final class EmployeeResource extends Resource
                 TextColumn::make('outlets.name')->label('Outlet')->badge()->color('gray')
                     ->placeholder('Semua outlet')
                     ->visible(fn (): bool => Outlet::query()->count() > 1),
+                // Verifikasi email karyawan (SPEC Q46)
+                TextColumn::make('email_status')->label('Email')->badge()
+                    ->state(fn (User $record): string => match (true) {
+                        $record->email === null => 'Belum diisi',
+                        $record->hasVerifiedEmail() => 'Terverifikasi',
+                        default => 'Belum verifikasi',
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'Terverifikasi' => 'success',
+                        'Belum verifikasi' => 'warning',
+                        default => 'gray',
+                    })
+                    ->tooltip(fn (User $record): ?string => $record->email),
                 TextColumn::make('pin_status')->label('PIN')->badge()
                     ->state(fn (User $record): string => match (true) {
                         $record->isPinLocked() => 'Terkunci',
@@ -177,6 +194,17 @@ final class EmployeeResource extends Resource
                         $action,
                     )),
                 ActionGroup::make([
+                    Action::make('resendVerification')->label('Kirim ulang verifikasi')->icon(Heroicon::OutlinedEnvelope)
+                        ->visible(fn (User $record): bool => $record->email !== null && ! $record->hasVerifiedEmail()
+                            && (auth()->user()?->can('user.manage') ?? false))
+                        ->action(function (User $record): void {
+                            try {
+                                app(SendEmployeeVerification::class)->handle($record);
+                                Notification::make()->success()->title('Link verifikasi dikirim')->body('Ke '.$record->email)->send();
+                            } catch (BusinessException $e) {
+                                Notification::make()->danger()->title($e->getMessage())->send();
+                            }
+                        }),
                     Action::make('unlockPin')->label('Buka kunci PIN')->icon(Heroicon::OutlinedLockOpen)
                         ->visible(fn (User $record): bool => $record->isPinLocked() && (auth()->user()?->can('user.manage') ?? false))
                         ->action(function (User $record): void {
@@ -236,7 +264,8 @@ final class EmployeeResource extends Resource
 
     /**
      * Identitas login sesuai role: owner/manager memakai email, supervisor/kasir memakai username
-     * (kasir web). Isian role lain dikosongkan agar tidak tersimpan sisa sebelum role diganti.
+     * (kasir web) — email tetap wajib untuk semua (SPEC Q46). Username dikosongkan untuk owner/manager
+     * agar tidak tersimpan sisa sebelum role diganti.
      *
      * @param  array<string, mixed>  $data
      * @return array{email: string|null, username: string|null}
@@ -247,7 +276,8 @@ final class EmployeeResource extends Resource
         $usesEmail = $role?->canUsePasswordLogin() ?? false;
 
         return [
-            'email' => $usesEmail ? ($data['email'] ?? null) : null,
+            // Email untuk semua role (SPEC Q46): login owner/manager, verifikasi karyawan
+            'email' => $data['email'] ?? null,
             'username' => $usesEmail ? null : ($data['username'] ?? null),
         ];
     }
@@ -259,7 +289,13 @@ final class EmployeeResource extends Resource
      */
     private static function assignableOutlets(): array
     {
-        return self::actor()?->accessibleOutlets()->active()->pluck('name', 'id')->all() ?? [];
+        return self::assignableOutletQuery()->pluck('name', 'id')->all();
+    }
+
+    /** @return Builder<Outlet> */
+    private static function assignableOutletQuery(): Builder
+    {
+        return self::actor()?->accessibleOutlets()->active() ?? Outlet::query()->whereRaw('1 = 0');
     }
 
     public static function actor(): ?User

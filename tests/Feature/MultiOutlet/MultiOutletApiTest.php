@@ -168,7 +168,7 @@ describe('laporan per outlet', function () {
 
 describe('penugasan karyawan', function () {
     it('owner menugaskan kasir ke beberapa outlet; request ganda tetap satu karyawan', function () {
-        $body = ['id' => uuid(), 'name' => 'Dewi', 'role' => 'cashier', 'pin' => '481920', 'username' => 'dewi',
+        $body = ['id' => uuid(), 'name' => 'Dewi', 'role' => 'cashier', 'email' => 'dewi@kopi.test', 'pin' => '481920', 'username' => 'dewi',
             'password' => 'rahasia123', 'outlet_ids' => [$this->pos->outlet->id, $this->outletB->id]];
         $token = userToken($this->owner);
 

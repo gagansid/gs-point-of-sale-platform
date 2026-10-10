@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\DB;
  *
  * - Owner/manager login email + kata sandi. Supervisor/kasir: PIN (tablet) + username & kata sandi
  *   (kasir web, cadangan bila tablet rusak — SPEC Q35).
+ * - Email wajib untuk semua role (SPEC Q46). Email baru/diganti = belum terverifikasi; link verifikasi
+ *   dikirim ke email itu setelah transaksi tersimpan.
  * - Mengganti PIN, kata sandi, atau role memutus semua sesi karyawan itu (token dihapus).
  * - Owner aktif terakhir tidak boleh diturunkan rolenya (LAST_OWNER_REQUIRED).
  * - Outlet (ADR 0010): owner otomatis semua outlet; role lain minimal satu outlet, dan hanya outlet
@@ -63,8 +65,11 @@ final class SaveEmployee
 
             if ($isNew) {
                 $user->is_active = true;
-                // Dibuat owner yang sudah login = email dipercaya (ADR 0009)
-                $user->forceFill(['email_verified_at' => $data->email !== null ? now() : null]);
+            }
+
+            // Email baru atau diganti → wajib diverifikasi ulang oleh pemilik email (SPEC Q46)
+            if ($user->isDirty('email')) {
+                $user->forceFill(['email_verified_at' => null]);
             }
 
             if ($data->password !== null) {
@@ -90,6 +95,10 @@ final class SaveEmployee
             return $user;
         });
 
+        if ($user->wasChanged('email') || ($user->wasRecentlyCreated && $user->email !== null)) {
+            app(SendEmployeeVerification::class)->handle($user);
+        }
+
         return ['user' => $user->refresh(), 'replayed' => false];
     }
 
@@ -100,11 +109,11 @@ final class SaveEmployee
     {
         $errors = [];
 
-        if ($data->role->canUsePasswordLogin()) {
-            if ($data->email === null) {
-                $errors['email'] = ['Email wajib untuk owner & manager (login dashboard/aplikasi)'];
-            }
+        if ($data->email === null) {
+            $errors['email'] = ['Email wajib diisi (verifikasi karyawan, SPEC Q46)'];
+        }
 
+        if ($data->role->canUsePasswordLogin()) {
             if ($data->password === null && ($employee === null || $employee->password === null)) {
                 $errors['password'] = ['Kata sandi wajib untuk owner & manager'];
             }

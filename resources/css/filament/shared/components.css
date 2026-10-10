@@ -2208,3 +2208,113 @@ select.fi-select-input {
         display: none;
     }
 }
+
+/* ---------- Daftar pilih outlet (OutletPickList, pick-list.md) ---------- */
+.gs-pick-list {
+    container-type: inline-size;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+}
+
+/* Pencarian menyatu dengan kotak: garis bawah saja */
+.gs-pick-list .fi-fo-checkbox-list-search-input-wrp {
+    border: 0;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    box-shadow: none;
+    --tw-ring-shadow: 0 0 #0000;
+}
+
+.gs-pick-list .fi-fo-checkbox-list-options {
+    gap: 0;
+}
+
+/* Filament memberi jarak atas per opsi (grid kolom); di daftar ini baris dipisah garis saja */
+.gs-pick-list .fi-fo-checkbox-list-option-ctn {
+    padding: 0;
+    break-inside: avoid;
+}
+
+.gs-pick-list .fi-fo-checkbox-list-option-ctn + .fi-fo-checkbox-list-option-ctn {
+    border-top: 1px solid var(--border-color-light);
+}
+
+.gs-pick-list .fi-fo-checkbox-list-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    cursor: pointer;
+}
+
+.gs-pick-list .fi-fo-checkbox-list-option:hover {
+    background: var(--bg-surface-secondary);
+}
+
+.gs-pick-list .fi-checkbox-input {
+    margin-top: 0;
+}
+
+/* Teks: nama di kiri, kode outlet rata kanan */
+.gs-pick-list .fi-fo-checkbox-list-option-text {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.gs-pick-list .fi-fo-checkbox-list-option-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    font-weight: 500;
+}
+
+.gs-pick-list .fi-fo-checkbox-list-option-description {
+    flex-shrink: 0;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+/* Kolom sempit (mis. sisi kanan form produk): nama outlet didahulukan, kode disembunyikan */
+@container (max-width: 320px) {
+    .gs-pick-list .fi-fo-checkbox-list-option-description {
+        display: none;
+    }
+}
+
+.gs-pick-avatar {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.gs-pick-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gs-pick-list-count {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.gs-pick-list .fi-fo-checkbox-list-no-search-results-message {
+    padding: 10px 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+}

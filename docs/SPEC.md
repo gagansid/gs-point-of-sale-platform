@@ -218,7 +218,7 @@ tabel master memakai soft delete.
 | Sistem | `system_settings` | key, value (JSON), updated_by — setelan global dari panel `/admin`, mis. wajib 2FA (ADR 0006) |
 | Akses | `tenants` | name, slug, business_type (cafe/retail/other), status (trial/active/suspended), subscription_ends_at, max_outlets (batas outlet aktif SaaS, null = tanpa batas, Q36) |
 | Akses | `outlets` | tenant_id, code, name, address, tax_rate, service_charge_rate, tax_inclusive, rounding, receipt_header, receipt_footer, discount_limits (JSON), timezone (default `Asia/Jakarta`, ADR 0001), is_active (outlet dinonaktifkan, tidak dihapus — Q36) |
-| Akses | `users` | tenant_id, name, email (unik global, boleh kosong untuk kasir), username (unik per tenant, kasir/supervisor — Q35), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
+| Akses | `users` | tenant_id, name, email (unik global, wajib semua role — Q46), email_verified_at, username (unik per tenant, kasir/supervisor — Q35), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
 | Akses | `outlet_user` | outlet_id, user_id — outlet yang dipegang karyawan (Q37); owner tidak perlu baris (otomatis semua outlet) |
 | Akses | `devices` | tenant_id, outlet_id, name, device_uid (unik per tenant), platform, app_version, last_seen_at, revoked_at |
 | Produk | `categories` | tenant_id, name, sort_order, is_active (Q27) |
@@ -605,5 +605,6 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q43 | Opsi habis per outlet | `outlet_option.is_available` (tanpa baris = tersedia). Opsi habis dikirim dengan `is_available=false`; checkout `VALIDATION_ERROR` per item. | Diterima | ADR 0011 |
 | Q44 | Metode bayar per outlet | `outlet_payment_method.is_active`; metode dipakai bila aktif di bisnis dan di outlet device. Nama tetap satu per bisnis. Nonaktif → `VALIDATION_ERROR` per pembayaran. | Diterima | ADR 0011 |
 | Q45 | Outlet baru | Opsi salin menu & metode bayar dari outlet lain (default outlet pertama); tanpa salin = semua produk dijual, semua metode aktif. Tanpa baris per outlet = dijual/tersedia/aktif, jadi data lama tidak perlu disalin. | Diterima | ADR 0011 |
+| Q46 | Email karyawan | Email **wajib untuk semua role** (unik global). Email baru/diganti = belum terverifikasi; link verifikasi (3 hari, tanpa login) dikirim ke email itu; kirim ulang dari Karyawan maks. 3×/10 menit. Belum memblokir akses (dipakai nanti mis. lupa kata sandi kasir web). | Diterima | `docs/api/settings.md` |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

@@ -6,13 +6,13 @@ namespace App\Filament\Dashboard\Resources\Products\Schemas;
 
 use App\Actions\Product\SetProductListing;
 use App\Filament\Shared\Forms\MoneyInput;
+use App\Filament\Shared\Forms\OutletPickList;
 use App\Models\Category;
 use App\Models\OptionGroup;
 use App\Models\Outlet;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -122,12 +122,10 @@ final class ProductForm
                             // Hanya bila ada lebih dari satu outlet; tersembunyi = status dijual tidak diubah (ADR 0011)
                             ->visible(fn (): bool => self::outletOptions() !== [] && Outlet::query()->active()->count() > 1)
                             ->schema([
-                                CheckboxList::make('listed_outlet_ids')
+                                OutletPickList::make('listed_outlet_ids')
                                     ->hiddenLabel()
-                                    ->validationAttribute('outlet')
-                                    ->options(fn (): array => self::outletOptions())
-                                    ->default(fn (): array => array_keys(self::outletOptions()))
-                                    ->bulkToggleable(),
+                                    ->outletQuery(fn () => SetProductListing::manageableOutlets(self::user()))
+                                    ->default(fn (): array => array_keys(self::outletOptions())),
                             ]),
                         Section::make('Status')
                             ->description('Atur tampil atau tidaknya di kasir')
@@ -160,9 +158,14 @@ final class ProductForm
      */
     private static function outletOptions(): array
     {
+        return SetProductListing::manageableOutlets(self::user())->pluck('name', 'id')->all();
+    }
+
+    private static function user(): ?User
+    {
         $user = auth()->user();
 
-        return SetProductListing::manageableOutlets($user instanceof User ? $user : null)->pluck('name', 'id')->all();
+        return $user instanceof User ? $user : null;
     }
 
     /** SKU/barcode unik di antara produk tenant aktif yang belum dihapus. */

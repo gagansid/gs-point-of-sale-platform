@@ -30,8 +30,8 @@ use RuntimeException;
  *   Super admin  admin@demo.test       kata sandi: password
  *   Owner        owner@demo.test       kata sandi: password
  *   Manager      manager@demo.test     kata sandi: password
- *   Supervisor   Sari (PIN 222222)
- *   Kasir        Budi (PIN 123456)
+ *   Supervisor   Sari (PIN 222222; kasir web: sari / password; sari@demo.test)
+ *   Kasir        Budi (PIN 123456; kasir web: budi / password; budi@demo.test)
  */
 final class DemoTenantSeeder extends Seeder
 {
@@ -68,13 +68,14 @@ final class DemoTenantSeeder extends Seeder
             $users = [
                 ['name' => 'Owner Demo', 'email' => 'owner@demo.test', 'role' => UserRole::Owner],
                 ['name' => 'Manager Demo', 'email' => 'manager@demo.test', 'role' => UserRole::Manager],
-                ['name' => 'Sari', 'email' => null, 'role' => UserRole::Supervisor, 'pin' => '222222'],
-                ['name' => 'Budi', 'email' => null, 'role' => UserRole::Cashier, 'pin' => '123456'],
+                // Email wajib untuk semua karyawan (SPEC Q46); username + kata sandi untuk kasir web (Q35)
+                ['name' => 'Sari', 'email' => 'sari@demo.test', 'username' => 'sari', 'role' => UserRole::Supervisor, 'pin' => '222222'],
+                ['name' => 'Budi', 'email' => 'budi@demo.test', 'username' => 'budi', 'role' => UserRole::Cashier, 'pin' => '123456'],
             ];
 
             foreach ($users as $user) {
                 $model = User::query()->firstOrCreate(['name' => $user['name']], [
-                    'password' => $user['email'] !== null ? 'password' : null,
+                    'password' => 'password',
                     'pin' => $user['pin'] ?? null,
                     'is_active' => true,
                     ...$user,
@@ -85,8 +86,15 @@ final class DemoTenantSeeder extends Seeder
                     $model->outlets()->syncWithoutDetaching([$outlet->id]);
                 }
 
+                // Data demo lama (sebelum Q46) belum punya email/username/kata sandi kasir web
+                $model->fill(array_filter([
+                    'email' => $model->email === null ? $user['email'] : null,
+                    'username' => $model->username === null ? ($user['username'] ?? null) : null,
+                    'password' => $model->password === null ? 'password' : null,
+                ]))->save();
+
                 // Akun demo dianggap sudah verifikasi email (ADR 0009)
-                if ($user['email'] !== null && ! $model->hasVerifiedEmail()) {
+                if (! $model->hasVerifiedEmail()) {
                     $model->forceFill(['email_verified_at' => now()])->save();
                 }
             }

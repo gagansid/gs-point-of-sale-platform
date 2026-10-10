@@ -37,8 +37,8 @@ Tanpa subdomain (domain `POS_*` kosong): `/dashboard`, `/admin`, `/api/v1`.
 | Super admin | `admin@demo.test` | `password` | Panel admin (tenant, lead, pendaftaran) |
 | Owner | `owner@demo.test` | `password` | Semua menu dashboard, semua outlet |
 | Manager | `manager@demo.test` | `password` | Dashboard: produk, stok, laporan, transaksi (outlet yang ditugaskan) |
-| Supervisor | Sari (pilih nama di tablet) | PIN `222222` | Kasir + approval void/diskon; tidak bisa dashboard |
-| Kasir | Budi (pilih nama di tablet) | PIN `123456` | Transaksi di tablet; tidak bisa dashboard |
+| Supervisor | Sari (pilih nama di tablet) · kasir web `sari` · `sari@demo.test` | PIN `222222` · kata sandi `password` | Kasir + approval void/diskon; tidak bisa dashboard |
+| Kasir | Budi (pilih nama di tablet) · kasir web `budi` · `budi@demo.test` | PIN `123456` · kata sandi `password` | Transaksi di tablet; tidak bisa dashboard |
 
 Perangkat demo: `device_uid` `demo-device-01` ("Kasir Depan").
 
@@ -75,3 +75,11 @@ Butuh minimal 2 outlet aktif (demo: Kopi Senja Kemang & Kopi Senja Cilandak).
 - API (perangkat outlet itu): `/catalog` tidak berisi produk tidak dijual & QRIS; `options[].is_available`
   false untuk Large; checkout dengan produk/opsi/metode tersebut → `422 VALIDATION_ERROR` per field.
 - Selesai uji: kembalikan centang semua outlet agar data demo seperti semula.
+
+### Email & verifikasi karyawan (SPEC Q46)
+
+- Karyawan → Tambah kasir tanpa email → ditolak "wajib diisi".
+- Tambah kasir dengan email → kolom Email "Belum verifikasi"; email terkirim (lokal: lihat `storage/logs/laravel.log`
+  bila `MAIL_MAILER=log`). Buka linknya → halaman "Email terverifikasi" tanpa tombol dashboard (kasir).
+- Menu baris "Kirim ulang verifikasi": ke-4 kalinya dalam 10 menit ditolak.
+- Dengan 2+ outlet: form karyawan menampilkan daftar pilih outlet (cari, inisial, kode, "(n dipilih)"); 1 outlet = tidak tampil.

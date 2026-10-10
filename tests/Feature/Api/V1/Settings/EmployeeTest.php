@@ -18,17 +18,17 @@ beforeEach(function () {
 
 function employeeBody(array $override = []): array
 {
-    return ['name' => 'Budi', 'role' => 'cashier', 'pin' => '481920', 'username' => 'Budi', 'password' => 'rahasia123', ...$override];
+    return ['name' => 'Budi', 'role' => 'cashier', 'email' => 'budi@kopi.test', 'pin' => '481920', 'username' => 'Budi', 'password' => 'rahasia123', ...$override];
 }
 
 describe('tambah', function () {
-    it('kasir: nama + PIN (tablet) + username & kata sandi (kasir web), tanpa email, terikat outlet', function () {
+    it('kasir: nama + email + PIN (tablet) + username & kata sandi (kasir web), terikat outlet', function () {
         $id = $this->withToken($this->token)->postJson('/api/v1/users', employeeBody(), apiHeaders())
             ->assertCreated()
             ->assertJsonPath('message', 'Karyawan berhasil ditambahkan')
             ->assertJsonPath('data.role', 'cashier')
             ->assertJsonPath('data.has_pin', true)
-            ->assertJsonPath('data.email', null)
+            ->assertJsonPath('data.email', 'budi@kopi.test')
             ->assertJsonPath('data.username', 'budi')
             ->assertJsonPath('data.has_password', true)
             ->assertJsonPath('data.outlet_ids', [$this->outlet->id])
@@ -62,7 +62,8 @@ describe('tambah', function () {
         'kasir tanpa kata sandi' => [['password' => null], 'password'],
         'username tidak valid' => [['username' => 'budi santoso'], 'username'],
         'username dipakai di bisnis sama' => [['username' => 'SARI'], 'username'],
-        'manager tanpa email' => [['role' => 'manager'], 'email'],
+        'manager tanpa email' => [['role' => 'manager', 'email' => null], 'email'],
+        'kasir tanpa email (Q46)' => [['email' => null], 'email'],
         'manager tanpa kata sandi' => [['role' => 'manager', 'email' => 'm@kopi.test', 'password' => null], 'password'],
         'email terpakai' => [['role' => 'manager', 'email' => 'PAKAI@kopi.test', 'password' => 'rahasia123'], 'email'],
         'role tidak dikenal' => [['role' => 'boss'], 'role'],

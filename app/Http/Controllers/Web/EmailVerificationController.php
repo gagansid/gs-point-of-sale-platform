@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\VerifyOwnerEmail;
@@ -15,7 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Verifikasi email owner (ADR 0009, SPEC Q31).
+ * Verifikasi email owner (ADR 0009, SPEC Q31) dan karyawan (SPEC Q46).
  */
 final class EmailVerificationController extends Controller
 {
@@ -33,7 +34,11 @@ final class EmailVerificationController extends Controller
 
         return view('site.email-verified', [
             'name' => $account->name,
-            'continueUrl' => Domains::enabled() ? route('login') : Filament::getPanel('dashboard')->getUrl(),
+            'isOwner' => $account->role === UserRole::Owner,
+            // Tombol dashboard hanya untuk role yang bisa login dashboard (supervisor/kasir tidak)
+            'continueUrl' => $account->role->canUsePasswordLogin()
+                ? (Domains::enabled() ? route('login') : Filament::getPanel('dashboard')->getUrl())
+                : null,
         ]);
     }
 

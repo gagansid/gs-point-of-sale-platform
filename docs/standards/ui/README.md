@@ -46,6 +46,7 @@ sedangkan project ini memakai komponen Filament yang diberi tema.
 | Button | [components/button.md](components/button.md) | `Action`, `<x-filament::button>` |
 | Form & input | [components/form.md](components/form.md) | `TextInput`, `Select`, `Toggle`, ... |
 | Money input | [components/money-input.md](components/money-input.md) | `App\Filament\Shared\Forms\MoneyInput` |
+| Daftar pilih (outlet) | [components/pick-list.md](components/pick-list.md) | `App\Filament\Shared\Forms\OutletPickList` |
 | Table | [components/table.md](components/table.md) | `Table`, `TextColumn`, `Filter` |
 | Row actions | [components/row-actions.md](components/row-actions.md) | `Action::make()->iconButton()` |
 | Badge / pill | [components/badge.md](components/badge.md) | `TextColumn::badge()`, enum `HasColor` |

@@ -8,6 +8,7 @@ use App\Actions\Payment\UpdatePaymentMethod;
 use App\Enums\PaymentCategory;
 use App\Filament\Dashboard\Resources\PaymentMethods\Pages\ManagePaymentMethods;
 use App\Filament\Shared\Actions\ActiveStatusActions;
+use App\Filament\Shared\Forms\OutletPickList;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Outlet;
 use App\Models\PaymentMethod;
@@ -16,7 +17,6 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
@@ -83,10 +83,9 @@ final class PaymentMethodResource extends Resource
             Toggle::make('requires_reference')->label('Wajib nomor referensi')
                 ->helperText('Kasir wajib mengisi kode approval/nomor transaksi dari EDC atau QRIS'),
             // Per outlet (ADR 0011): hanya bila ada lebih dari satu outlet aktif; tunai selalu aktif
-            CheckboxList::make('active_outlet_ids')->label('Aktif di outlet')
-                ->options(fn (): array => Outlet::query()->active()->orderBy('created_at')->pluck('name', 'id')->all())
+            OutletPickList::make('active_outlet_ids')->countedLabel('Aktif di outlet')
+                ->outletQuery(fn () => Outlet::query()->active()->orderBy('created_at'))
                 ->helperText('Mis. matikan Debit di outlet yang belum punya mesin EDC')
-                ->bulkToggleable()
                 ->visible(fn (?PaymentMethod $record): bool => $record?->category !== PaymentCategory::Cash && Outlet::query()->active()->count() > 1),
         ]);
     }

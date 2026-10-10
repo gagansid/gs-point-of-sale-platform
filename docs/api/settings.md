@@ -88,7 +88,7 @@ Test: `tests/Feature/Api/V1/Settings/OutletTest.php`, `tests/Feature/Filament/Da
 | `id` | uuid | Hanya POST; idempotency key |
 | `name` | string | maks. 100; tampil di layar pilih kasir & struk |
 | `role` | enum | `owner`, `manager`, `supervisor`, `cashier` |
-| `email` | string\|null | Wajib untuk owner/manager (login email); unik global, disimpan huruf kecil. Kasir/supervisor boleh kosong |
+| `email` | string | **Wajib semua role** (SPEC Q46); unik global, disimpan huruf kecil. Login owner/manager; email baru/diganti dikirimi link verifikasi |
 | `username` | string\|null | Wajib untuk supervisor/kasir (kasir web, Q35); 3–30, huruf/angka/`._-`, disimpan huruf kecil, unik per bisnis |
 | `password` | string | Wajib saat menambah (semua role); `Password::defaults()` (min. 8, huruf & angka). PUT: kosong = tidak diganti |
 | `pin` | string | 6 digit, **bukan** angka sama (`111111`) atau berurutan (`123456`, `654321`). Wajib untuk supervisor/kasir (login tablet), opsional untuk owner/manager (approval). PUT: kosong = tidak diganti |

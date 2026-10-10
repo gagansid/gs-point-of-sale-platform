@@ -24,13 +24,13 @@ beforeEach(function () {
 it('menambah kasir dengan PIN dari modal', function () {
     Livewire::test(ManageEmployees::class)
         ->callAction(TestAction::make('create')->table(), [
-            'name' => 'Budi', 'role' => UserRole::Cashier->value, 'pin' => '481920', 'username' => 'Budi', 'password' => 'rahasia123',
+            'name' => 'Budi', 'role' => UserRole::Cashier->value, 'email' => 'budi@kopi.test', 'pin' => '481920', 'username' => 'Budi', 'password' => 'rahasia123',
         ])
         ->assertHasNoFormErrors();
 
     $budi = User::query()->where('name', 'Budi')->sole();
     expect($budi->role)->toBe(UserRole::Cashier)
-        ->and($budi->email)->toBeNull()
+        ->and($budi->email)->toBe('budi@kopi.test')
         ->and($budi->username)->toBe('budi')
         ->and(Hash::check('rahasia123', (string) $budi->password))->toBeTrue()
         ->and(Hash::check('481920', (string) $budi->pin))->toBeTrue();
@@ -85,5 +85,6 @@ it('role manager menampilkan email & kata sandi; PIN opsional', function () {
     expect($sari->role)->toBe(UserRole::Manager)
         ->and($sari->email)->toBe('sari@kopi.test')
         ->and($sari->pin)->toBeNull()
-        ->and($sari->hasVerifiedEmail())->toBeTrue();
+        // Email baru menunggu verifikasi pemiliknya (SPEC Q46)
+        ->and($sari->hasVerifiedEmail())->toBeFalse();
 });
