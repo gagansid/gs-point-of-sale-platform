@@ -47,6 +47,7 @@ sedangkan project ini memakai komponen Filament yang diberi tema.
 | Form & input | [components/form.md](components/form.md) | `TextInput`, `Select`, `Toggle`, ... |
 | Money input | [components/money-input.md](components/money-input.md) | `App\Filament\Shared\Forms\MoneyInput` |
 | Daftar pilih (outlet) | [components/pick-list.md](components/pick-list.md) | `App\Filament\Shared\Forms\OutletPickList` |
+| Audit dibuat/diubah | [components/audit-info.md](components/audit-info.md) | `AuditInfo`, `AuditColumns` |
 | Table | [components/table.md](components/table.md) | `Table`, `TextColumn`, `Filter` |
 | Row actions | [components/row-actions.md](components/row-actions.md) | `Action::make()->iconButton()` |
 | Badge / pill | [components/badge.md](components/badge.md) | `TextColumn::badge()`, enum `HasColor` |

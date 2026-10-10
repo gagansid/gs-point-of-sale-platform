@@ -11,6 +11,8 @@ use App\Enums\SalesLeadStatus;
 use App\Enums\TenantStatus;
 use App\Exceptions\BusinessException;
 use App\Filament\Admin\Resources\SalesLeads\Pages\ListSalesLeads;
+use App\Filament\Shared\Columns\AuditColumns;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Admin;
 use App\Models\SalesLead;
@@ -109,6 +111,8 @@ final class SalesLeadResource extends Resource
             TextEntry::make('status')->label('Status')->badge(),
             TextEntry::make('created_at')->label('Masuk')->dateTime('j M Y, H.i'),
             TextEntry::make('notes')->label('Catatan')->placeholder('—')->columnSpanFull(),
+            // Tanggal dibuat & diubah (audit)
+            AuditInfo::make(),
         ]);
     }
 
@@ -133,6 +137,8 @@ final class SalesLeadResource extends Resource
                     ->sortable()->toggleable(),
                 TextColumn::make('status')->label('Status')->badge()->sortable(),
                 TextColumn::make('created_at')->label('Masuk')->since()->dateTimeTooltip('j M Y, H.i')->sortable(),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(created: false),
             ])
             ->filters([
                 SelectFilter::make('business_type')->label('Jenis usaha')->options(BusinessType::class),

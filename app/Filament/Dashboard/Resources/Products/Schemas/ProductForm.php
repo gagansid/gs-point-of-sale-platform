@@ -7,6 +7,7 @@ namespace App\Filament\Dashboard\Resources\Products\Schemas;
 use App\Actions\Product\SetProductListing;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Filament\Shared\Forms\OutletPickList;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Models\Category;
 use App\Models\OptionGroup;
 use App\Models\Outlet;
@@ -135,6 +136,8 @@ final class ProductForm
                                 Toggle::make('is_favorite')->label('Favorit')
                                     ->helperText('Tampil di tab Favorit aplikasi kasir'),
                             ]),
+                        // Tanggal dibuat & diubah (audit); tidak tampil saat menambah
+                        AuditInfo::card(),
                     ]),
             ]);
     }

@@ -7,6 +7,7 @@ namespace App\Filament\Dashboard\Resources\Products\Tables;
 use App\Actions\Product\DeleteProduct;
 use App\Filament\Dashboard\Resources\Products\Actions\ProductActions;
 use App\Filament\Shared\Actions\BulkDeleteAction;
+use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Columns\MoneyColumn;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Category;
@@ -91,6 +92,8 @@ final class ProductsTable
                         default => 'danger',
                     }),
                 IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable()->toggleable(),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(),
             ])
             ->filters([
                 SelectFilter::make('category_id')

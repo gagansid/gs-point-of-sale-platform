@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\Shifts\Schemas;
 
 use App\Filament\Shared\Infolists\MoneyEntry;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Models\Shift;
 use App\Services\Shift\ShiftSummary;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -59,6 +60,8 @@ final class ShiftInfolist
                             MoneyEntry::make('amount')->label('Nominal'),
                         ]),
                 ]),
+                // Tanggal dibuat & diubah (audit)
+                AuditInfo::make(),
             ]);
     }
 }

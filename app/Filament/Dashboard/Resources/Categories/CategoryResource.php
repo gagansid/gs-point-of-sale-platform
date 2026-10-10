@@ -10,7 +10,9 @@ use App\Actions\Product\SetCategoryActive;
 use App\Filament\Dashboard\Resources\Categories\Pages\ManageCategories;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\BulkDeleteAction;
+use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Layout;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Category;
 use BackedEnum;
@@ -63,6 +65,8 @@ final class CategoryResource extends Resource
                 ->label('Aktif')
                 ->default(true)
                 ->helperText('Kategori nonaktif beserta produknya tidak tampil di aplikasi kasir'),
+            // Tanggal dibuat & diubah (audit)
+            AuditInfo::make(),
         ]);
     }
 
@@ -79,6 +83,8 @@ final class CategoryResource extends Resource
                 TextColumn::make('name')->label('Nama kategori')->weight('medium')->searchable()->sortable(),
                 TextColumn::make('products_count')->label('Jumlah produk')->numeric(locale: 'id')->alignEnd()->sortable(),
                 IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable(),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(),
             ])
             ->recordActions([
                 EditAction::make()

@@ -6,6 +6,7 @@ namespace App\Filament\Admin\Resources\Tenants\Schemas;
 
 use App\Enums\BusinessType;
 use App\Enums\TenantStatus;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Models\Tenant;
 use App\Support\Edition;
 use App\Support\SystemSettings;
@@ -134,6 +135,8 @@ final class TenantForm
                             ->rule(Password::defaults())
                             ->helperText('Disarankan dikosongkan: owner menerima email "Atur kata sandi" (berlaku 3 hari) — kata sandi tidak dikirim sebagai teks'),
                     ]),
+                // Tanggal dibuat & diubah (audit)
+                AuditInfo::make(),
             ]);
     }
 }

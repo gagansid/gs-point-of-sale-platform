@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\Shifts\Tables;
 
 use App\Filament\Dashboard\Resources\Shifts\Actions\ForceCloseShiftAction;
 use App\Filament\Dashboard\Resources\Shifts\ShiftResource;
+use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Columns\MoneyColumn;
 use App\Filament\Shared\Filters\DateRangeFilter;
 use App\Filament\Shared\Tables\TableEmptyState;
@@ -54,6 +55,8 @@ final class ShiftsTable
                     ->sortable()
                     ->extraAttributes(['class' => 'is-money']),
                 TextColumn::make('closed_at')->label('Ditutup')->dateTime('j M Y, H.i')->placeholder('—')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(),
             ])
             ->filters([
                 DateRangeFilter::make('opened_at', 'Tanggal dibuka', defaultToday: false),

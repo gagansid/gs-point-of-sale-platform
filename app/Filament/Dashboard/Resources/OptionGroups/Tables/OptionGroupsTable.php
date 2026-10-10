@@ -9,6 +9,7 @@ use App\Actions\Product\SetOptionAvailability;
 use App\Actions\Product\SetOptionGroupActive;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\BulkDeleteAction;
+use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Layout;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\OptionGroup;
@@ -61,6 +62,8 @@ final class OptionGroupsTable
                         ->orderBy('max_select', $direction)),
                 TextColumn::make('products_count')->label('Dipakai produk')->numeric(locale: 'id')->alignEnd()->sortable(),
                 IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable(),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(),
             ])
             ->filters([
                 TernaryFilter::make('required')

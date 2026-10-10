@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\OptionGroups\Schemas;
 
 use App\Filament\Shared\Forms\MoneyInput;
+use App\Filament\Shared\Schemas\AuditInfo;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -90,6 +91,8 @@ final class OptionGroupForm
                             ->addable(false)
                             ->deleteAction(fn (Action $action): Action => $action->tooltip('Hapus opsi')),
                     ]),
+                // Tanggal dibuat & diubah (audit)
+                AuditInfo::make(),
             ]);
     }
 }

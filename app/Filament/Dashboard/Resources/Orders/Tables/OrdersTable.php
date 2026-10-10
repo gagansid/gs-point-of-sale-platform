@@ -8,6 +8,7 @@ use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Filament\Dashboard\Resources\Orders\Actions\VoidOrderAction;
 use App\Filament\Dashboard\Resources\Orders\OrderResource;
+use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Columns\MoneyColumn;
 use App\Filament\Shared\Filters\DateRangeFilter;
 use App\Filament\Shared\Tables\TableEmptyState;
@@ -44,6 +45,8 @@ final class OrdersTable
                 TextColumn::make('status')->label('Status')->badge()->sortable(),
                 MoneyColumn::make('grand_total')->label('Total')->sortable()
                     ->color(fn (Order $record): ?string => $record->status === OrderStatus::Voided ? 'gray' : null),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(created: false),
             ])
             ->filters([
                 DateRangeFilter::make('created_at'),

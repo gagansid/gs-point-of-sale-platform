@@ -2318,3 +2318,61 @@ select.fi-select-input {
     color: var(--text-muted);
     font-size: 13px;
 }
+
+/* ---------- Baris audit dibuat/diubah (AuditInfo, audit-info.md) ---------- */
+.gs-audit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-color);
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.gs-audit-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.gs-audit-item time {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.gs-audit-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.gs-audit--stacked {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding-top: 0;
+    border-top: 0;
+}
+
+/* Kartu Riwayat: label kiri, waktu kanan */
+.gs-audit--stacked .gs-audit-item {
+    display: grid;
+    grid-template-columns: 14px auto 1fr;
+    gap: 6px;
+}
+
+.gs-audit--stacked .gs-audit-item time {
+    text-align: end;
+}
+
+.gs-audit--stacked .gs-audit-sep {
+    display: none;
+}
+
+.gs-audit-sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--text-disabled);
+}

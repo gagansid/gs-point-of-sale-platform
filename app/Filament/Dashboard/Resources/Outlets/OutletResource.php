@@ -8,6 +8,8 @@ use App\Actions\Outlet\SetOutletActive;
 use App\Filament\Dashboard\Pages\OutletSettings;
 use App\Filament\Dashboard\Resources\Outlets\Pages\ManageOutlets;
 use App\Filament\Shared\Actions\ActiveStatusActions;
+use App\Filament\Shared\Columns\AuditColumns;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Outlet;
 use App\Models\User;
@@ -108,6 +110,8 @@ final class OutletResource extends Resource
                 ->native(false)
                 ->visibleOn('create')
                 ->columnSpanFull(),
+            // Tanggal dibuat & diubah (audit)
+            AuditInfo::make(),
         ]);
     }
 
@@ -124,6 +128,8 @@ final class OutletResource extends Resource
                     ->tooltip('Karyawan yang ditugaskan (owner memegang semua outlet)'),
                 TextColumn::make('devices_count')->label('Perangkat')->counts('devices')->alignEnd()->sortable(),
                 IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable(),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(),
             ])
             ->recordActions([
                 Action::make('settings')

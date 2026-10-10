@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\Orders\Schemas;
 
 use App\Enums\OrderStatus;
 use App\Filament\Shared\Infolists\MoneyEntry;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -64,15 +65,19 @@ final class OrderInfolist
                     ]),
                 ]),
 
-                Section::make('Ringkasan')->columnSpan(1)->schema([
-                    MoneyEntry::make('subtotal')->label('Subtotal')->inlineLabel(),
-                    MoneyEntry::make('discount_total')->label('Diskon')->inlineLabel(),
-                    MoneyEntry::make('service_total')->label('Service')->inlineLabel(),
-                    MoneyEntry::make('tax_total')->label(fn (Order $record): string => 'Pajak '.rtrim(rtrim($record->tax_rate, '0'), '.').'%'.($record->tax_inclusive ? ' (termasuk)' : ''))->inlineLabel(),
-                    MoneyEntry::make('rounding')->label('Pembulatan')->inlineLabel(),
-                    MoneyEntry::make('grand_total')->label('Total')->inlineLabel()->weight('bold')->size('lg'),
-                    MoneyEntry::make('paid_total')->label('Dibayar')->inlineLabel(),
-                    MoneyEntry::make('change_total')->label('Kembalian')->inlineLabel(),
+                Grid::make(1)->columnSpan(1)->schema([
+                    Section::make('Ringkasan')->schema([
+                        MoneyEntry::make('subtotal')->label('Subtotal')->inlineLabel(),
+                        MoneyEntry::make('discount_total')->label('Diskon')->inlineLabel(),
+                        MoneyEntry::make('service_total')->label('Service')->inlineLabel(),
+                        MoneyEntry::make('tax_total')->label(fn (Order $record): string => 'Pajak '.rtrim(rtrim($record->tax_rate, '0'), '.').'%'.($record->tax_inclusive ? ' (termasuk)' : ''))->inlineLabel(),
+                        MoneyEntry::make('rounding')->label('Pembulatan')->inlineLabel(),
+                        MoneyEntry::make('grand_total')->label('Total')->inlineLabel()->weight('bold')->size('lg'),
+                        MoneyEntry::make('paid_total')->label('Dibayar')->inlineLabel(),
+                        MoneyEntry::make('change_total')->label('Kembalian')->inlineLabel(),
+                    ]),
+                    // Tanggal dibuat & diubah (audit), mis. setelah void
+                    AuditInfo::card(),
                 ]),
             ]);
     }

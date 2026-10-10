@@ -8,7 +8,9 @@ use App\Actions\Payment\UpdatePaymentMethod;
 use App\Enums\PaymentCategory;
 use App\Filament\Dashboard\Resources\PaymentMethods\Pages\ManagePaymentMethods;
 use App\Filament\Shared\Actions\ActiveStatusActions;
+use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Forms\OutletPickList;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Outlet;
 use App\Models\PaymentMethod;
@@ -87,6 +89,8 @@ final class PaymentMethodResource extends Resource
                 ->outletQuery(fn () => Outlet::query()->active()->orderBy('created_at'))
                 ->helperText('Mis. matikan Debit di outlet yang belum punya mesin EDC')
                 ->visible(fn (?PaymentMethod $record): bool => $record?->category !== PaymentCategory::Cash && Outlet::query()->active()->count() > 1),
+            // Tanggal dibuat & diubah (audit)
+            AuditInfo::make(),
         ]);
     }
 
@@ -109,6 +113,8 @@ final class PaymentMethodResource extends Resource
                     ->tooltip(fn (PaymentMethod $record): string => 'Aktif di: '.(Outlet::query()->whereKey(self::activeOutletIds($record))
                         ->orderBy('created_at')->pluck('name')->implode(', ') ?: 'tidak ada outlet'))
                     ->visible(fn (): bool => Outlet::query()->active()->count() > 1),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(),
             ])
             ->recordActions([
                 EditAction::make()->iconButton()->tooltip('Ubah')->modalWidth('md')

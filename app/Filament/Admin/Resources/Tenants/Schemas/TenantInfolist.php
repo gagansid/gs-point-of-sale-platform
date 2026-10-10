@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Resources\Tenants\Schemas;
 
 use App\Enums\UserRole;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Models\Tenant;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -53,6 +54,8 @@ final class TenantInfolist
                             ->listWithLineBreaks()
                             ->placeholder('—'),
                     ]),
+                // Tanggal dibuat & diubah (audit)
+                AuditInfo::make(),
             ]);
     }
 }

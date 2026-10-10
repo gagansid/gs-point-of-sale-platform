@@ -13,7 +13,9 @@ use App\Enums\UserRole;
 use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Resources\Employees\Pages\ManageEmployees;
 use App\Filament\Shared\Actions\ActiveStatusActions;
+use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Forms\OutletPickList;
+use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Outlet;
 use App\Models\User;
@@ -137,6 +139,8 @@ final class EmployeeResource extends Resource
                 ->helperText('Karyawan hanya bisa login & bertransaksi di perangkat outlet yang dipilih')
                 ->visible(fn (Get $get): bool => count(self::assignableOutlets()) > 1
                     && ! (self::role($get)?->allows('outlet.access_all') ?? false)),
+            // Tanggal dibuat & diubah (audit)
+            AuditInfo::make(),
         ]);
     }
 
@@ -181,6 +185,8 @@ final class EmployeeResource extends Resource
                 TextColumn::make('last_login_at')->label('Login terakhir')->since()->dateTimeTooltip('j M Y, H.i')
                     ->placeholder('Belum pernah')->sortable()->toggleable(),
                 IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable(),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(),
             ])
             ->filters([
                 SelectFilter::make('role')->label('Role')->options(UserRole::class),

@@ -7,6 +7,7 @@ namespace App\Filament\Admin\Resources\Tenants\Tables;
 use App\Enums\BusinessType;
 use App\Filament\Admin\Resources\Tenants\Actions\TenantStatusActions;
 use App\Filament\Admin\Resources\Tenants\TenantResource;
+use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Tenant;
 use Filament\Actions\ActionGroup;
@@ -66,6 +67,8 @@ final class TenantsTable
                     ->date('j M Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
+                ...AuditColumns::make(created: false),
             ])
             ->filters([
                 SelectFilter::make('business_type')->label('Jenis usaha')->options(BusinessType::class),
