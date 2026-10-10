@@ -12,7 +12,7 @@
 ```
 OVERLINE GRUP (opsional)
 Label *
-[ input 36px ...................... ]
+[ input 32px ...................... ]
 Teks bantuan / pesan error (12px)
 ```
 
@@ -39,7 +39,7 @@ Teks bantuan / pesan error (12px)
 
 | Properti | Nilai |
 |---|---|
-| Tinggi input | 36px |
+| Tinggi input | 32px (termasuk select bersearch) |
 | Radius | 8px |
 | Font input | 13px |
 | Border | `--border`; fokus: border primary + ring 3px primary/15% |

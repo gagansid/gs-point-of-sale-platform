@@ -10,7 +10,7 @@
 
 ## Anatomi
 
-`[ikon 15px] Label` — tinggi 36px, padding horizontal 14px, jarak ikon–label 6px, radius 8px.
+`[ikon 16px] Label` — tinggi 32px, padding horizontal 14px, jarak ikon–label 6px, radius 8px.
 
 ## Varian
 
@@ -25,8 +25,8 @@
 
 | Ukuran | Tinggi | Filament | Kapan |
 |---|---|---|---|
-| sm | 30px | `->size('sm')` | Toolbar tabel, header kartu |
-| md | 36px | default | Umum |
+| sm | 28px | `->size('sm')` | Toolbar tabel, header kartu |
+| md | 32px | default | Umum |
 | lg | 40px | `->size('lg')` | Aksi utama form panjang |
 
 ## Spesifikasi

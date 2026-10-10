@@ -100,8 +100,8 @@ Kedua panel memakai sidebar yang sama; `/admin` dibedakan oleh badge "Super Admi
 | Page title | 18px / 600 | Judul halaman |
 | Section title | 16px / 600 | Judul kartu/section |
 | Body | 14px / 400 | Teks umum |
-| Sel tabel | 13px / 400, `--text-secondary` | Isi tabel |
-| Header tabel | 11px / 600, uppercase, `letter-spacing .3px`, `--text-muted`, latar `--bg-surface-secondary` | Judul kolom |
+| Sel tabel | 13px / 400, `--text`, line-height 20px | Isi tabel |
+| Header tabel | 13px / 600, `--text`, tanpa uppercase, latar `--bg-surface` | Judul kolom (gaya list view Odoo) |
 | Control | 13px / 500 | Tombol, input, sel tabel |
 | Small | 12px / 500–600 | Badge, hint, label kolom |
 | Overline | 12px / 600, uppercase, `letter-spacing .04em`, `text-muted` | Judul grup form |
@@ -115,7 +115,7 @@ Skala 4px: `4 · 8 · 12 · 16 · 24 · 32 · 48 · 64`.
 |---|---|
 | Jarak ikon ↔ teks dalam tombol | 6px |
 | Jarak antar tombol bersebelahan | 8px |
-| Padding sel tabel | 12px × 12px (baris ±47px) |
+| Padding sel tabel | 8px × 12px (baris 37px, header 40px) |
 | Padding kartu / section | 16px (header 12px × 16px, min. 44px) |
 | Jarak antar field form | 16px |
 | Jarak antar section | 24px |
@@ -125,12 +125,13 @@ Skala 4px: `4 · 8 · 12 · 16 · 24 · 32 · 48 · 64`.
 
 | Token | Nilai |
 |---|---|
-| `--control-h` | 36px (default tombol, input, select) |
-| `--control-h-sm` | 30px (tombol di tabel/toolbar padat) |
+| `--control-h` | 32px (default tombol, input, select) |
+| `--control-h-sm` | 28px (pager, pilihan per halaman, toolbar padat) |
 | `--control-h-lg` | 40px (aksi utama halaman form) |
 | `--control-radius` | 8px |
 | `--control-font` | 13px |
-| Tombol ikon baris | 30 × 30px, ikon 16px |
+| Tombol ikon baris | 26 × 26px, ikon 16px |
+| Ikon di dalam baris tabel | 16px (IconColumn, ikon teks); ikon badge 12px |
 
 ## 7. Radius & bayangan
 

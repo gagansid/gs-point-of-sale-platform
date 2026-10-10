@@ -31,7 +31,7 @@ final class ProductsTable
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with('category'))
             ->columns([
-                ImageColumn::make('image_path')->label('')->disk('public')->square()->imageSize(40),
+                ImageColumn::make('image_path')->label('')->disk('public')->square()->imageSize(24),
                 TextColumn::make('name')
                     ->label('Nama produk')
                     ->description(fn (Product $record): ?string => $record->sku)

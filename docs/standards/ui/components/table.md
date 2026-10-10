@@ -16,11 +16,11 @@
 ├───────────────────────────────────────────────────────────────────────┤
 │ 🔍 Cari nomor order…        [Filter ▾] [Kolom ▾]                       │
 ├───┬──────────────────┬───────────┬──────────┬────────────┬────────────┤
-│ # │ NOMOR ORDER      │ WAKTU     │ STATUS   │      TOTAL │            │
+│ ☐ │ Nomor order      │ Waktu     │ Status   │      Total │            │
 ├───┼──────────────────┼───────────┼──────────┼────────────┼────────────┤
 │ 1 │ JKT01-261008-042 │ 14.02     │ (Selesai)│   Rp62.000 │  👁  ✎  ⋯  │
 ├───┴──────────────────┴───────────┴──────────┴────────────┴────────────┤
-│ Menampilkan 1–20 dari 135                      ‹ 1 2 3 … 7 ›  [20 ▾]  │
+│ 1–20 dari 135  [20 / hal ▾]                         ‹ 1 2 3 … 7 ›    │
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -36,19 +36,21 @@
 | Boolean aktif | `IconColumn::boolean()` atau `ToggleColumn` | `ToggleColumn` hanya bila perubahan aman & langsung (availability) |
 | Tanggal | `TextColumn::dateTime('j M Y, H.i')` | `->sortable()`, zona outlet |
 | Relasi | `TextColumn('category.name')` | Eager load via `modifyQueryUsing` |
-| Gambar | `ImageColumn` | 40px, `->square()`, radius 8px |
+| Gambar | `ImageColumn` | 24px, `->square()`, radius 4px (baris tetap 37px) |
 | Aksi | Lihat [row-actions.md](row-actions.md) | Selalu kolom terakhir |
 
 ## Spesifikasi
 
 | Properti | Nilai |
 |---|---|
-| Header kolom | 12px, 600, uppercase, `text-muted`, latar `surface-secondary` |
-| Sel | 13px, padding 12×16px |
+| Header card | Min. 52px, padding 10×16px: judul 15px/600 · pencarian 240px · tombol ikon 32px · tombol tambah 32px |
+| Header kolom | Tinggi 40px, 13px/600 `--text`, tanpa uppercase, latar `surface`, garis bawah `--border-color` |
+| Sel | 13px/20px `--text`, padding 8×12px → baris 37px; badge 20px; ikon 16px; tombol aksi 26px |
 | Pemisah baris | 1px `--border-light` |
 | Hover baris | Latar `surface-secondary`; seluruh baris bisa diklik ke detail (`->recordUrl()`) |
-| Pencarian | Lebar 260px (penuh di mobile), placeholder spesifik |
-| Pagination | `[10, 20, 50, 100]`, default 20 — sama dengan API |
+| Pencarian | Lebar 240px, tinggi 32px (penuh di mobile), placeholder spesifik |
+| Baris terpilih | Latar `--primary-lt` |
+| Pagination | `[10, 20, 50, 100]`, default 20 — sama dengan API. Kiri: `1–20 dari 135` + `20 / hal`; kanan: pager 28px `‹ 1 2 ›` selalu tampil (non-aktif bila 1 halaman). Data per halaman diambil dari server (Livewire `gotoPage`). Markup: `resources/views/vendor/filament/components/pagination/index.blade.php`, teks: `lang/vendor/filament/id/components/pagination.php` |
 | Urutan default | Terbaru dulu (`->defaultSort('created_at', 'desc')`) kecuali master (`sort_order`/nama) |
 
 ## Perilaku & state

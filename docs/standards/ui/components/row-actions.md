@@ -9,7 +9,7 @@
 
 ## Anatomi
 
-`[👁] [✎] [⋯]` — tombol ikon 30×30px, ikon 16px, jarak 4px, rata tengah di kolom terakhir.
+`[👁] [✎] [⋯]` — tombol ikon 26×26px, ikon 16px, jarak 2px, rata tengah di kolom terakhir.
 
 ## Varian
 
@@ -28,7 +28,7 @@ Warna netral (`gray`/muted) saat diam; **berwarna hanya saat hover**, sesuai pol
 
 | Properti | Nilai |
 |---|---|
-| Ukuran | 30×30px, radius 6px |
+| Ukuran | 26×26px, radius 6px |
 | Ikon | Heroicons **outline** 16px (bukan solid): `eye`, `pencil`, `trash`, `ellipsis-vertical` — dipasang global lewat alias ikon di `App\Filament\Shared\Layout` |
 | Warna diam | `text-muted` |
 | Hover | Warna aksi + latar warna aksi alpha 12% (gray → primary, primary → biru `#066FD1`, danger → merah) |

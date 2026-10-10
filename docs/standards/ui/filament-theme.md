@@ -72,8 +72,8 @@ resources/css/filament/
     --sidebar-hover: rgb(255 255 255 / .06);
     --sidebar-active-bg: rgb(184 192 212 / .16);
 
-    --control-h: 36px;
-    --control-h-sm: 30px;
+    --control-h: 32px;
+    --control-h-sm: 28px;
     --control-radius: 8px;
     --control-font: 13px;
 }
