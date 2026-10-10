@@ -17,11 +17,14 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Membuat (product = null) atau mengubah produk beserta urutan grup opsinya.
- * Harga & katalog berlaku di semua outlet; stok awal dan stok minimum untuk $outlet (ADR 0010).
+ * Harga berlaku di semua outlet; stok awal dan stok minimum untuk $outlet (ADR 0010).
+ * Outlet tempat produk dijual diatur lewat listedOutletIds (ADR 0011); null = tidak diubah, produk baru dijual di semua outlet.
  * Stok awal hanya saat membuat; perubahan stok berikutnya lewat AdjustStock.
  */
 final class SaveProduct
 {
+    public function __construct(private readonly SetProductListing $listing) {}
+
     /**
      * @return array{product: Product, replayed: bool}
      */
@@ -76,6 +79,10 @@ final class SaveProduct
             }
 
             $this->syncOptionGroups($product, $data->optionGroupIds);
+
+            if ($data->listedOutletIds !== null) {
+                $this->listing->handle($product, $data->listedOutletIds, $by);
+            }
 
             return $product;
         });

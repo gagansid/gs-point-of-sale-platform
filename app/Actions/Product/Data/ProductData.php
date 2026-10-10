@@ -13,6 +13,7 @@ final readonly class ProductData
 {
     /**
      * @param  list<string>  $optionGroupIds  urutan = urutan tampil di aplikasi
+     * @param  list<string>|null  $listedOutletIds  outlet tempat produk dijual; null = tidak diubah (ADR 0011)
      */
     public function __construct(
         public ?string $id,
@@ -31,6 +32,7 @@ final readonly class ProductData
         public array $optionGroupIds,
         // Bedakan "gambar tidak dikirim" (API) dari "gambar dikosongkan" (form dashboard)
         public bool $imagePathProvided = false,
+        public ?array $listedOutletIds = null,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -54,6 +56,7 @@ final readonly class ProductData
             imagePath: filled($data['image_path'] ?? null) ? (string) $data['image_path'] : null,
             optionGroupIds: array_values(array_map('strval', $data['option_group_ids'] ?? [])),
             imagePathProvided: array_key_exists('image_path', $data),
+            listedOutletIds: isset($data['listed_outlet_ids']) ? array_values(array_map('strval', $data['listed_outlet_ids'])) : null,
         );
     }
 }
