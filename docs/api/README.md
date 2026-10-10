@@ -10,7 +10,7 @@ Satu file per domain, berisi semua endpoint domain tersebut dengan format
 | Shift | [`shift.md`](shift.md) | ✅ 5 endpoint |
 | Order & pembayaran | [`order.md`](order.md) | ✅ 7 endpoint |
 | Laporan | [`report.md`](report.md) | ✅ 3 endpoint + export Excel di dashboard |
-| Setelan (outlet, karyawan, metode bayar) | [`settings.md`](settings.md) | 🟡 2 endpoint (outlet); karyawan & metode bayar menyusul |
+| Setelan (outlet, karyawan, metode bayar) | [`settings.md`](settings.md) | 🟡 7 endpoint (outlet, karyawan); metode bayar & perangkat menyusul |
 
 File dibuat bersamaan dengan endpoint pertama di domain tersebut.
 

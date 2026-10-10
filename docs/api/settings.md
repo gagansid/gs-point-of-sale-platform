@@ -7,6 +7,11 @@ Semua endpoint memakai **token user** + header `X-App-Version`. Base URL: [READM
 |---|---|---|---|---|
 | GET | `/v1/outlet` | `outlet.settings` (role; tetap bisa saat hanya-baca) | baca | — |
 | PUT | `/v1/outlet` | `outlet.settings` | ya | `UpdateOutletSettings` |
+| GET | `/v1/users` | `user.manage` (role) | baca | — |
+| GET | `/v1/users/{id}` | `user.manage` (role) | baca | — |
+| POST | `/v1/users` | `user.manage` | `id` opsional | `SaveEmployee` |
+| PUT | `/v1/users/{id}` | `user.manage` | ya | `SaveEmployee`, `SetEmployeeActive` |
+| POST | `/v1/users/{id}/unlock-pin` | `user.manage` | ya | `UnlockEmployeePin` |
 
 Error umum: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `403 SUBSCRIPTION_EXPIRED` (PUT saat trial/langganan
 habis), `403 TENANT_SUSPENDED`, `422 VALIDATION_ERROR`, `426 APP_UPDATE_REQUIRED`.
@@ -50,3 +55,34 @@ menyimpan tarif pajak/service/pembulatan saat transaksi.
 Dashboard: menu **Pengaturan → Profil outlet** (`app.gspos.id/settings/outlet`), hanya owner.
 
 Test: `tests/Feature/Api/V1/Settings/OutletTest.php`, `tests/Feature/Filament/Dashboard/OutletSettingsTest.php`
+
+---
+
+## Karyawan — `/v1/users`
+
+| Field | Tipe | Aturan |
+|---|---|---|
+| `id` | uuid | Hanya POST; idempotency key |
+| `name` | string | maks. 100; tampil di layar pilih kasir & struk |
+| `role` | enum | `owner`, `manager`, `supervisor`, `cashier` |
+| `email` | string\|null | Wajib untuk owner/manager (login email); unik global, disimpan huruf kecil. Kasir/supervisor boleh kosong |
+| `password` | string | Wajib saat menambah owner/manager; `Password::defaults()` (min. 8, huruf & angka). PUT: kosong = tidak diganti |
+| `pin` | string | 6 digit, **bukan** angka sama (`111111`) atau berurutan (`123456`, `654321`). Wajib untuk supervisor/kasir (login tablet), opsional untuk owner/manager (approval). PUT: kosong = tidak diganti |
+| `is_active` | bool | Hanya PUT. `false` = tidak bisa login & semua sesi diputus |
+
+Respons (`EmployeeResource`) **tidak pernah** berisi PIN/kata sandi: `has_pin`, `pin_locked_until`,
+`last_login_at`, `is_active`, `role_label`, `outlet_id` (owner `null`, role lain = outlet bisnis).
+
+Aturan:
+
+- Ganti PIN / kata sandi / role, atau nonaktifkan → **semua token karyawan itu dihapus** (tablet & app
+  langsung keluar). Ganti PIN juga membuka kunci PIN.
+- Owner aktif terakhir tidak bisa diturunkan rolenya atau dinonaktifkan → `409 LAST_OWNER_REQUIRED`.
+- Tidak bisa menonaktifkan akun sendiri → `422 VALIDATION_ERROR` (`details.is_active`).
+- Karyawan tidak dihapus (riwayat transaksi tetap utuh), hanya dinonaktifkan.
+- `GET /v1/users`: filter `search` (nama/email), `role`, `is_active`; pagination `page`, `per_page`.
+
+Dashboard: **Pengaturan → Karyawan** (`app.gspos.id/settings/employees`), hanya owner.
+
+Test: `tests/Feature/Api/V1/Settings/EmployeeTest.php`, `tests/Feature/Filament/Dashboard/EmployeeResourceTest.php`,
+`tests/Unit/SecurePinTest.php`

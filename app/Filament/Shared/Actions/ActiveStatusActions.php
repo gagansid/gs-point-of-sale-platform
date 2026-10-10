@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Shared\Actions;
 
+use App\Exceptions\BusinessException;
 use App\Filament\Shared\Layout;
 use Closure;
 use Filament\Actions\Action;
@@ -47,8 +48,8 @@ final class ActiveStatusActions
                     $note,
                 ))
                 ->modalSubmitActionLabel('Nonaktifkan')
-                ->action(function (Model $record) use ($apply, $object): void {
-                    $apply($record, false);
+                ->action(function (Model $record, Action $action) use ($apply, $object): void {
+                    self::orNotify(fn () => $apply($record, false), $action);
 
                     Notification::make()->success()->title(ucfirst($object).' dinonaktifkan')->send();
                 }),
@@ -56,11 +57,22 @@ final class ActiveStatusActions
                 ->label('Aktifkan')
                 ->icon(Heroicon::OutlinedPlayCircle)
                 ->visible(fn (Model $record): bool => ! $record->getAttribute('is_active') && $canManage())
-                ->action(function (Model $record) use ($apply, $object): void {
-                    $apply($record, true);
+                ->action(function (Model $record, Action $action) use ($apply, $object): void {
+                    self::orNotify(fn () => $apply($record, true), $action);
 
                     Notification::make()->success()->title(ucfirst($object).' diaktifkan')->send();
                 }),
         ];
+    }
+
+    /** Aturan bisnis yang menolak (mis. owner terakhir) tampil sebagai notifikasi, bukan halaman error. */
+    private static function orNotify(Closure $callback, Action $action): void
+    {
+        try {
+            $callback();
+        } catch (BusinessException $e) {
+            Notification::make()->danger()->title($e->getMessage())->send();
+            $action->halt();
+        }
     }
 }

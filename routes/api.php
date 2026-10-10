@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\SystemController;
+use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -101,6 +102,14 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
         Route::controller(OutletController::class)->prefix('outlet')->name('outlet.')->group(function (): void {
             Route::get('/', 'show')->name('show');
             Route::put('/', 'update')->name('update');
+        });
+
+        Route::controller(UserController::class)->prefix('users')->name('users.')->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::get('{user}', 'show')->name('show');
+            Route::put('{user}', 'update')->name('update');
+            Route::post('{user}/unlock-pin', 'unlockPin')->name('unlock-pin');
         });
     });
 });
