@@ -13,3 +13,4 @@ template: `docs/templates/adr.md`.
 | [0006](0006-admin-2fa-toggle.md) | 2FA super admin yang bisa diaktifkan/dinonaktifkan dari panel | Diterima |
 | [0007](0007-dashboard-tenancy-without-filament-tenancy.md) | Panel /dashboard memakai TenantContext, bukan tenancy Filament | Diterima |
 | [0008](0008-subdomain-per-surface.md) | Subdomain terpisah: gspos.id, app., admin., api. | Diterima |
+| [0009](0009-onboarding-and-editions.md) | Onboarding daftar sendiri + sales, edisi SaaS & jual putus | Diterima |

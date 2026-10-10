@@ -391,7 +391,9 @@ berdasarkan `error.code`, bukan teks `message`. Detail & contoh:
 | 401 | `INVALID_PIN` | PIN kasir atau approver salah |
 | 403 | `DEVICE_NOT_REGISTERED` | Device belum terdaftar, dicabut, atau beda tenant |
 | 403 | `FORBIDDEN` | Tidak punya permission |
-| 403 | `TENANT_SUSPENDED` | Langganan berakhir atau tenant diblokir |
+| 403 | `TENANT_SUSPENDED` | Tenant diblokir (ditangguhkan) |
+| 403 | `SUBSCRIPTION_EXPIRED` | Trial/langganan habis: hanya-baca, perubahan & transaksi ditolak (Q32) |
+| 403 | `EMAIL_NOT_VERIFIED` | Checkout/pembayaran sebelum email owner diverifikasi (Q31) |
 | 403 | `APPROVAL_REQUIRED` | Aksi butuh PIN approver |
 | 403 | `SELF_APPROVAL_NOT_ALLOWED` | Approver sama dengan pelaku |
 | 404 | `NOT_FOUND` | Data tidak ditemukan / milik tenant lain |
@@ -570,5 +572,10 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q27 | Status kategori & grup opsi | `categories.is_active`, `option_groups.is_active` (default aktif). Kategori nonaktif tidak dikirim di katalog **beserta produknya**, dan checkout menolak produk tersebut ("Produk tidak tersedia"). Grup opsi nonaktif tidak dikirim dan dilepas dari `option_group_ids` produk di katalog; saat checkout aturannya (min/maks) tidak berlaku dan opsinya ditolak. Diubah dengan `product.manage`. | Diterima | `docs/api/product.md` |
 | Q28 | URL & subdomain | `gspos.id` halaman depan, `app.gspos.id` panel pelanggan (tanpa `/dashboard`), `admin.gspos.id` panel super admin, `api.gspos.id/v1` API. Cookie session per subdomain. File publik `/storage` relatif ke host. | Diterima | ADR 0008 |
 | Q29 | Halaman depan & login | `gspos.id`: halaman penjualan + form hubungi sales (honeypot, 3/menit & 10/jam per IP, IP disimpan sebagai HMAC) → menu Admin "Calon pelanggan". Login owner/manager di `gspos.id/login` → `app.gspos.id` lewat tiket sekali pakai 60 detik; 5 percobaan/menit per email+IP, pesan umum, waktu konstan. | Diterima | ADR 0008 |
+| Q30 | Onboarding | Gabungan: daftar sendiri di `gspos.id/daftar` (bisa dimatikan dari admin) **dan** dibantu sales ("Buat tenant dari lead" + link atur kata sandi). Panduan setup + template menu di beranda `app.`. | Diterima | ADR 0009 |
+| Q31 | Verifikasi email | Daftar sendiri langsung bisa dipakai; checkout & pembayaran ditolak `EMAIL_NOT_VERIFIED` sampai email owner diverifikasi (`users.email_verified_at`). | Diterima | ADR 0009 |
+| Q32 | Trial & akses | Trial default 14 hari, diatur di admin (`system_settings.trial_days`). Habis → **hanya-baca** (`SUBSCRIPTION_EXPIRED`), bukan diblokir; `suspended` tetap diblokir (`TENANT_SUSPENDED`). | Diterima | ADR 0009 |
+| Q33 | Edisi | `POS_EDITION=saas` (banyak tenant, halaman depan, trial) atau `self_hosted` (jual putus: satu tenant via `php artisan pos:install`, tanpa halaman depan/daftar, panel admin dipegang pembeli). Lisensi di luar MVP. | Diterima | ADR 0009 |
+| Q34 | Kata sandi owner | Tidak pernah dikirim sebagai teks: owner dari sales menerima link atur kata sandi; lupa kata sandi di `gspos.id/lupa-sandi`. | Diterima | ADR 0009 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |
