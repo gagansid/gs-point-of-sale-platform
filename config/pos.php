@@ -19,6 +19,9 @@ return [
         'api' => env('POS_API_DOMAIN'),
     ],
 
+    // Edisi (ADR 0009, App\Support\Edition): saas | self_hosted (jual putus, satu bisnis)
+    'edition' => env('POS_EDITION', 'saas'),
+
     // Onboarding (ADR 0009). Nilai awal; super admin mengubahnya di Sistem → Pendaftaran
     'onboarding' => [
         'trial_days' => (int) env('POS_TRIAL_DAYS', 14),

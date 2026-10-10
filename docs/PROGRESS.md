@@ -77,7 +77,7 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | 4 | Panduan setup beranda `app.` (profil outlet → kategori → produk, + verifikasi email bila perlu) + template menu Kafe/Warung (`ApplyMenuTemplate`, hanya katalog kosong). Langkah tablet/kasir menyusul | ✅ |
 | S4 | Pengaturan → Perangkat (daftar tablet + cabut akses) — ditunda ke fase tablet | Ditunda |
 | 5 | "Buat tenant dari lead" + undangan atur kata sandi (3 hari) + `gspos.id/forgot-password` | ✅ |
-| 6 | Edisi `self_hosted`: `POS_EDITION`, `php artisan pos:install`, batas satu tenant | Belum |
+| 6 | Edisi `self_hosted`: `POS_EDITION`, `php artisan pos:install`, batas satu tenant | ✅ |
 
 ### 2. Minggu 7 — panel `/admin` & keamanan
 

@@ -8,6 +8,8 @@ use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\SignupController;
 use App\Http\Controllers\Web\SiteController;
 use App\Support\Domains;
+use App\Support\Edition;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,10 +21,17 @@ use Illuminate\Support\Facades\Route;
  * api.gspos.id/v1. Tanpa subdomain, semua di satu domain dan login memakai /dashboard/login.
  */
 Route::domain(Domains::main())->group(function (): void {
-    Route::get('/', [SiteController::class, 'home'])->name('landing');
-    Route::post('contact-sales', [SiteController::class, 'contact'])
-        ->middleware('throttle:contact')
-        ->name('contact');
+    if (Edition::isSelfHosted()) {
+        // Jual putus: tanpa halaman penjualan, daftar mandiri, maupun hubungi sales (ADR 0009)
+        Route::get('/', fn (): RedirectResponse => redirect()->to(
+            Domains::enabled() ? route('login') : Filament::getPanel('dashboard')->getLoginUrl(),
+        ))->name('landing');
+    } else {
+        Route::get('/', [SiteController::class, 'home'])->name('landing');
+        Route::post('contact-sales', [SiteController::class, 'contact'])
+            ->middleware('throttle:contact')
+            ->name('contact');
+    }
 
     // Lupa kata sandi & undangan owner (SPEC Q34)
     Route::get('forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
@@ -30,9 +39,11 @@ Route::domain(Domains::main())->group(function (): void {
     Route::get('reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
     Route::post('reset-password', [PasswordResetController::class, 'update'])->middleware('throttle:5,1')->name('password.update');
 
-    // Daftar mandiri + verifikasi email (ADR 0009)
-    Route::get('register', [SignupController::class, 'create'])->name('signup');
-    Route::post('register', [SignupController::class, 'store'])->middleware('throttle:signup')->name('signup.store');
+    // Daftar mandiri (hanya SaaS) + verifikasi email (ADR 0009)
+    if (Edition::isSaas()) {
+        Route::get('register', [SignupController::class, 'create'])->name('signup');
+        Route::post('register', [SignupController::class, 'store'])->middleware('throttle:signup')->name('signup.store');
+    }
     Route::get('email/verify/{user}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');

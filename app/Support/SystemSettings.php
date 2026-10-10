@@ -51,7 +51,8 @@ final class SystemSettings
     /** Daftar sendiri di gspos.id/register dibuka. */
     public function signupEnabled(): bool
     {
-        return (bool) $this->get(self::SIGNUP_ENABLED, config('pos.onboarding.signup_enabled'));
+        // Jual putus: tidak ada daftar mandiri (ADR 0009)
+        return Edition::isSaas() && (bool) $this->get(self::SIGNUP_ENABLED, config('pos.onboarding.signup_enabled'));
     }
 
     public function setOnboarding(int $trialDays, bool $signupEnabled, ?Admin $by = null): void

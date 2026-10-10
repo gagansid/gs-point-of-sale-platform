@@ -40,3 +40,7 @@ it('menolak email yang sudah terdaftar dan konfirmasi yang berbeda', function ()
 
     expect(Admin::query()->count())->toBe(1);
 });
+
+it('pos:install ditolak di edisi SaaS', function () {
+    $this->artisan('pos:install')->expectsOutputToContain('hanya untuk edisi jual putus')->assertFailed();
+});

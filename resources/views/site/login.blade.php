@@ -43,7 +43,9 @@
                 <button type="submit" class="site-btn site-btn-primary site-btn-lg site-btn-block">Masuk</button>
             </form>
 
-            <p class="site-auth-foot">Belum punya akun? <a href="{{ route('landing') }}#contact">Hubungi sales</a></p>
+            @if (\App\Support\Edition::isSaas())
+                <p class="site-auth-foot">Belum punya akun? <a href="{{ route('landing') }}#contact">Hubungi sales</a></p>
+            @endif
         </div>
     </main>
 </x-site.layout>

@@ -25,6 +25,8 @@
         <env name="APP_TIMEZONE" value="UTC"/>
         <env name="POS_ADMIN_2FA_REQUIRED" value="true"/>
         <!-- Test memakai satu domain (/dashboard, /admin, /api/v1); mode subdomain diuji di tests/Feature/Routing -->
+        <!-- Edisi SaaS; edisi jual putus diuji di tests/Feature/Edition -->
+        <env name="POS_EDITION" value="saas" force="true"/>
         <env name="POS_MAIN_DOMAIN" value="" force="true"/>
         <env name="POS_APP_DOMAIN" value="" force="true"/>
         <env name="POS_ADMIN_DOMAIN" value="" force="true"/>

@@ -12,6 +12,7 @@ use App\Filament\Admin\Resources\Tenants\Schemas\TenantForm;
 use App\Filament\Admin\Resources\Tenants\Schemas\TenantInfolist;
 use App\Filament\Admin\Resources\Tenants\Tables\TenantsTable;
 use App\Models\Tenant;
+use App\Support\Edition;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -38,6 +39,12 @@ final class TenantResource extends Resource
     protected static ?string $pluralModelLabel = 'tenant';
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    /** Jual putus: tepat satu bisnis, dibuat lewat php artisan pos:install (ADR 0009). */
+    public static function canCreate(): bool
+    {
+        return (Edition::isSaas() || ! Tenant::query()->exists()) && parent::canCreate();
+    }
 
     public static function form(Schema $schema): Schema
     {

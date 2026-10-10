@@ -7,6 +7,7 @@ namespace App\Filament\Admin\Pages;
 use App\Actions\Admin\UpdateOnboardingSettings;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Admin;
+use App\Support\Edition;
 use App\Support\SystemSettings;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -42,6 +43,12 @@ final class OnboardingSettings extends Page
 
     /** @var array<string, mixed>|null */
     public ?array $data = [];
+
+    /** Jual putus: tanpa trial & daftar mandiri (ADR 0009). */
+    public static function canAccess(): bool
+    {
+        return Edition::isSaas() && parent::canAccess();
+    }
 
     public function mount(): void
     {

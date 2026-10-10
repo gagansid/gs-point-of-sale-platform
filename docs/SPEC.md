@@ -479,6 +479,12 @@ Langkah rilis:
 5. `php artisan optimize` dan `php artisan filament:optimize`
 6. Cek `https://api.gspos.id/v1/system/status`, login `https://app.gspos.id`, dan `https://admin.gspos.id`.
 
+**Edisi jual putus** (`POS_EDITION=self_hosted`, ADR 0009): langkah sama, lalu sekali saja
+`php artisan pos:install` (nama bisnis, owner, kata sandi — membuat satu bisnis, outlet, owner
+terverifikasi, metode bayar bawaan; tanpa trial) dan `php artisan pos:create-admin` (akun maintenance
+panel admin, 2FA). Halaman depan, daftar mandiri, hubungi sales, menu Calon pelanggan & Pendaftaran
+otomatis nonaktif; subdomain opsional (boleh satu domain).
+
 Cron (satu saja): `* * * * * cd /home/{user}/gs-point-of-sale-platform && php artisan schedule:run >> /dev/null 2>&1`
 (di beberapa hosting `php` diganti path lengkap, misal `/opt/cpanel/ea-php83/root/usr/bin/php`).
 

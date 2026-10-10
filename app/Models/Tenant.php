@@ -9,6 +9,7 @@ use App\Enums\TenantAccess;
 use App\Enums\TenantStatus;
 use App\Enums\UserRole;
 use App\Models\Scopes\TenantScope;
+use App\Support\Edition;
 use Carbon\CarbonImmutable;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -61,7 +62,8 @@ final class Tenant extends Model
     {
         return match (true) {
             $this->status === TenantStatus::Suspended => TenantAccess::Blocked,
-            $this->subscription_ends_at !== null && ! $this->subscription_ends_at->isFuture() => TenantAccess::ReadOnly,
+            // Jual putus tidak mengenal trial/langganan: hanya penangguhan yang membatasi
+            Edition::isSaas() && $this->subscription_ends_at !== null && ! $this->subscription_ends_at->isFuture() => TenantAccess::ReadOnly,
             default => TenantAccess::Full,
         };
     }
@@ -99,7 +101,7 @@ final class Tenant extends Model
     /** Sisa hari trial yang masih berjalan (dibulatkan ke atas), null bila bukan trial berjalan. */
     public function trialDaysLeft(): ?int
     {
-        if ($this->status !== TenantStatus::Trial || $this->subscription_ends_at === null || ! $this->subscription_ends_at->isFuture()) {
+        if (Edition::isSelfHosted() || $this->status !== TenantStatus::Trial || $this->subscription_ends_at === null || ! $this->subscription_ends_at->isFuture()) {
             return null;
         }
 

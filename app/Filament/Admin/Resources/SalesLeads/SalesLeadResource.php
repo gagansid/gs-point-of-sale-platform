@@ -14,6 +14,7 @@ use App\Filament\Admin\Resources\SalesLeads\Pages\ListSalesLeads;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Admin;
 use App\Models\SalesLead;
+use App\Support\Edition;
 use App\Support\SystemSettings;
 use BackedEnum;
 use Carbon\CarbonImmutable;
@@ -75,6 +76,12 @@ final class SalesLeadResource extends Resource
     public static function canCreate(): bool
     {
         return false;
+    }
+
+    /** Jual putus: tidak ada halaman depan & calon pelanggan (ADR 0009). */
+    public static function canAccess(): bool
+    {
+        return Edition::isSaas() && parent::canAccess();
     }
 
     public static function form(Schema $schema): Schema
