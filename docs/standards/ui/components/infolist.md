@@ -30,6 +30,7 @@ dan grid 2–4 kolom untuk detail lengkap:
 |---|---|---|
 | Grid | `Section::make()->columns(3)` + `TextEntry` | Atribut objek |
 | Ringkasan nominal | `TextEntry::inlineLabel()` + `MoneyEntry` | Rincian total, ringkasan shift |
+| Nota (detail order) | `View` `filament/dashboard/orders/nota` dalam `Section::make()` tanpa judul | Info transaksi + metode bayar → item gaya struk → total → pembayaran dalam satu kartu; tanpa kartu Ringkasan terpisah |
 | Tabel detail ringkas | `View` + `.gs-detail-table` (`filament/dashboard/orders/items`) | Item order + opsi, pembayaran, rekap per metode bayar — satu baris per data, bukan kartu per item |
 | Ringkasan dengan total | `Section::extraAttributes(['class' => 'gs-summary'])` + `extraEntryWrapperAttributes(['class' => 'gs-summary-total'])` | Ringkasan order, kas shift |
 | Relasi besar | Relation manager (tabel) | Order dalam shift |

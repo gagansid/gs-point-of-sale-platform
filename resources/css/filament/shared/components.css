@@ -2544,3 +2544,131 @@ select.fi-select-input {
 .gs-summary .fi-in-entry-has-inline-label > .fi-in-entry-content-col {
     grid-column: 2;
 }
+
+/* ---------- Detail order bergaya nota (orders/nota) ---------- */
+.gs-nota {
+    max-width: 640px;
+    font-size: 13px;
+}
+
+.gs-nota-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.gs-nota-number {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .01em;
+}
+
+.gs-nota-time {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.gs-nota-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px 16px;
+    margin: 16px 0 0;
+}
+
+.gs-nota-meta .is-wide {
+    grid-column: 1 / -1;
+}
+
+.gs-nota-meta dt {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.gs-nota-meta dd {
+    margin: 2px 0 0;
+    font-weight: 500;
+}
+
+.gs-nota-section {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.gs-nota-caption {
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.gs-nota-caption span {
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: var(--bg-surface-secondary);
+}
+
+.gs-nota-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 6px 0;
+}
+
+.gs-nota-line-main {
+    min-width: 0;
+}
+
+.gs-nota-name {
+    font-weight: 500;
+}
+
+.gs-nota-sub,
+.gs-nota-muted {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.gs-nota-amount,
+.gs-nota-row > span:last-child {
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+    white-space: nowrap;
+}
+
+.gs-nota-amount {
+    font-weight: 500;
+}
+
+.gs-nota-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 3px 0;
+}
+
+.gs-nota-totals .gs-nota-row > span:first-child {
+    color: var(--text-secondary);
+}
+
+.gs-nota-grand {
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.gs-nota-totals .gs-nota-grand > span:first-child {
+    color: var(--text);
+}
+
+@media (max-width: 640px) {
+    .gs-nota-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

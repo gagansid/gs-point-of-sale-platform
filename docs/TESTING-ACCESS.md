@@ -83,3 +83,9 @@ Butuh minimal 2 outlet aktif (demo: Kopi Senja Kemang & Kopi Senja Cilandak).
   bila `MAIL_MAILER=log`). Buka linknya → halaman "Email terverifikasi" tanpa tombol dashboard (kasir).
 - Menu baris "Kirim ulang verifikasi": ke-4 kalinya dalam 10 menit ditolak.
 - Dengan 2+ outlet: form karyawan menampilkan daftar pilih outlet (cari, inisial, kode, "(n dipilih)"); 1 outlet = tidak tampil.
+
+### Detail order & cetak ulang struk
+
+- Penjualan → buka satu order → tampilan nota (info, item, total, pembayaran) + kartu Riwayat.
+- "Cetak ulang struk" → tab baru `/orders/{id}/receipt?print=1`, dialog cetak langsung terbuka (desain sementara 80mm).
+- Order void → struk bertanda **BATAL** + alasan.

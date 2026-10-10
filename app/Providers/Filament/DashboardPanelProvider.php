@@ -9,6 +9,7 @@ use App\Filament\Shared\Layout;
 use App\Filament\Shared\Pages\Home;
 use App\Filament\Shared\Theme;
 use App\Http\Controllers\Web\EmailVerificationController;
+use App\Http\Controllers\Web\ReceiptController;
 use App\Http\Controllers\Web\SwitchOutletController;
 use App\Http\Middleware\Filament\SetDashboardTenant;
 use App\Models\User;
@@ -89,6 +90,10 @@ final class DashboardPanelProvider extends PanelProvider
                 Route::post('email/verification-notification', [EmailVerificationController::class, 'resend'])
                     ->middleware('throttle:3,10')
                     ->name('verification.send');
+                // Cetak ulang struk (T3); id dicari lewat query tenant-scoped di controller
+                Route::get('orders/{order}/receipt', ReceiptController::class)
+                    ->where('order', '[0-9a-fA-F-]{36}')
+                    ->name('orders.receipt');
                 // Pemilih outlet sidebar (ADR 0010)
                 Route::post('switch-outlet/{outlet}', SwitchOutletController::class)
                     ->where('outlet', 'all|[0-9a-fA-F-]{36}')

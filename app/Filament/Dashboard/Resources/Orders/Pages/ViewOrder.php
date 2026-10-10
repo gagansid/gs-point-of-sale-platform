@@ -8,7 +8,9 @@ use App\Filament\Dashboard\Resources\Orders\Actions\VoidOrderAction;
 use App\Filament\Dashboard\Resources\Orders\OrderResource;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Order;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Model;
 
 final class ViewOrder extends ViewRecord
@@ -20,7 +22,7 @@ final class ViewOrder extends ViewRecord
     /** Muat relasi sekaligus (hindari N+1; strict mode menolak lazy loading di non-production). */
     protected function resolveRecord(int|string $key): Model
     {
-        return parent::resolveRecord($key)->load(['items.options', 'payments.method', 'user']);
+        return parent::resolveRecord($key)->load(['items.options', 'payments.method', 'user', 'outlet']);
     }
 
     /** Judul = nomor order (layout.md: judul halaman detail = nama objek). */
@@ -33,6 +35,16 @@ final class ViewOrder extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return [VoidOrderAction::make()];
+        return [
+            // Struk sementara di tab baru, dialog cetak langsung terbuka (permission order.reprint)
+            Action::make('reprint')
+                ->label('Cetak ulang struk')
+                ->icon(Heroicon::OutlinedPrinter)
+                ->color('gray')
+                ->url(fn (Order $record): string => route('filament.dashboard.orders.receipt', ['order' => $record->id, 'print' => 1]))
+                ->openUrlInNewTab()
+                ->visible(fn (Order $record): bool => auth()->user()?->can('reprint', $record) ?? false),
+            VoidOrderAction::make(),
+        ];
     }
 }

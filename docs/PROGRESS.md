@@ -133,7 +133,7 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 |---|---|---|
 | T1 | Widget beranda belum di-cache (wajar untuk volume MVP) | Bila beranda melambat |
 | T2 | Gambar produk lama tidak dihapus dari storage saat diganti | Bersama menu Setelan |
-| T3 | Struk hanya data JSON; belum ada cetak/preview dari web | Bila dibutuhkan owner |
+| T3 | Cetak struk dari web: **sementara selesai** — tombol "Cetak ulang struk" di detail order membuka `/dashboard/orders/{id}/receipt` (80mm, data `ReceiptResource`). Desain struk final & printer thermal menyusul | Desain struk |
 | T4 | Node.js lokal 20.18 < syarat Vite 20.19 (build tetap berhasil) | Upgrade Node lokal |
 | T5 | Laravel 12 security fix sampai Feb 2027 → rencanakan PHP 8.3+ & Laravel 13 (ADR 0004) | Sebelum Feb 2027 |
 | T6 | `.env` lokal berisi `POS_ADMIN_2FA_REQUIRED=false` (diubah pemilik repo); test tidak terpengaruh (`phpunit.xml`) | Pastikan **true** di production |
