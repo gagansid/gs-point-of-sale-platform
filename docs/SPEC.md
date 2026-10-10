@@ -15,7 +15,7 @@ Semua bagian memakai model, aturan bisnis, dan database yang sama.
 kasir dengan split payment (cash, QRIS, transfer, debit, kredit dicatat manual), stok sederhana,
 shift, void, dan laporan dasar.
 
-**Fase 2:** mode darurat offline, integrasi payment gateway, multi-outlet, resep, promo, tabel meja,
+**Fase 2:** mode darurat offline, integrasi payment gateway, resep, promo, tabel meja,
 audit log (`spatie/laravel-activitylog`).
 
 **Hosting:** shared hosting cPanel untuk development dan pilot 1–3 klien, lalu pindah ke VPS region
@@ -587,5 +587,11 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q33 | Edisi | `POS_EDITION=saas` (banyak tenant, halaman depan, trial) atau `self_hosted` (jual putus: satu tenant via `php artisan pos:install`, tanpa halaman depan/register, panel admin dipegang pembeli). Lisensi di luar MVP. | Diterima | ADR 0009 |
 | Q34 | Kata sandi owner | Tidak pernah dikirim sebagai teks: owner dari sales menerima link atur kata sandi; lupa kata sandi di `gspos.id/forgot-password` (link 60 menit); undangan owner dari tim/sales berlaku 3 hari di tabel token terpisah (`user_invitation_tokens`). Membuka link = email terverifikasi; semua token lama diputus. | Diterima | ADR 0009 |
 | Q35 | Kasir web | Fase berikutnya ada kasir di web sebagai cadangan bila tablet rusak. Supervisor/kasir wajib **username** (unik per tenant, huruf kecil/angka/`._-`) + **kata sandi** selain PIN; login kasir web = kode bisnis (slug tenant) + username + kata sandi. Owner/manager tetap email + kata sandi. | Diterima | `docs/api/settings.md` |
+| Q36 | Multi-outlet | Dimajukan dari Fase 2: owner menambah outlet (Pengaturan → Outlet), batas `tenants.max_outlets` diatur admin (SaaS). Outlet dinonaktifkan, tidak dihapus. | Diterima | ADR 0010 |
+| Q37 | Penugasan outlet | `outlet_user` banyak-ke-banyak menggantikan `users.outlet_id`. Owner otomatis semua outlet; manager, supervisor, kasir boleh lebih dari satu. | Diterima | ADR 0010 |
+| Q38 | Akses per outlet | Order, shift, laporan, perangkat, stok hanya untuk outlet yang ditugaskan; outlet lain → `404 NOT_FOUND` (fail-closed). | Diterima | ADR 0010 |
+| Q39 | Katalog & harga | Katalog dan harga sama untuk semua outlet. Harga per outlet di luar cakupan. | Diterima | ADR 0010 |
+| Q40 | Stok per outlet | `outlet_product`: `is_available`, `stock_qty`, `min_stock` per outlet; "lacak stok" tetap setting produk. Checkout memotong stok outlet device. | Diterima | ADR 0010 |
+| Q41 | Pemilih outlet dashboard | Topbar: "Semua outlet" atau satu outlet, disimpan di session; laporan/penjualan/shift mengikuti. | Diterima | ADR 0010 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

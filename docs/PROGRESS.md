@@ -25,7 +25,7 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | Domain | Subdomain `app.`/`admin.`/`api.` + halaman depan & login `gspos.id` (ADR 0008), URL berbahasa Inggris | ✅ | `5d3dcf3`, `83aec78`, `c13c37c` |
 | Onboarding | Daftar mandiri + trial, hanya-baca, verifikasi email, checklist + template menu, lead → tenant, lupa kata sandi, edisi jual putus (ADR 0009 langkah 1–6) | ✅ | `abec733` … `3937a7b` |
 | **Setelan** | Profil outlet ✅, Karyawan ✅ (PIN + username/kata sandi kasir web), Metode bayar ✅; Perangkat ditunda ke fase tablet; import produk | 🟡 | `1a1b9d9`, `fa95b7e`, `cd2ac45`, `22f2ed2` |
-| **Berikutnya** | Keputusan multi-outlet (lihat bawah), import produk Excel, kasir web | ⏳ | — |
+| **Berikutnya** | Multi-outlet M2–M6 (ADR 0010), lalu import produk Excel & kasir web | ⏳ | — |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ⏳ | — |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
@@ -83,6 +83,17 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | S4 | Pengaturan → Perangkat (daftar tablet + cabut akses) — ditunda ke fase tablet | Ditunda |
 | 5 | "Buat tenant dari lead" + undangan atur kata sandi (3 hari) + `gspos.id/forgot-password` | ✅ |
 | 6 | Edisi `self_hosted`: `POS_EDITION`, `php artisan pos:install`, batas satu tenant | ✅ |
+
+### 1c. Multi-outlet (ADR 0010, SPEC Q36–Q41) — sebelum kasir web & deploy
+
+| Langkah | Isi | Status |
+|---|---|---|
+| M1 | Keputusan: ADR 0010, SPEC Q36–Q41 | ✅ |
+| M2 | Data: `outlet_user` (migrasi dari `users.outlet_id`), `outlet_product` (stok & tersedia per outlet, migrasi dari produk), `tenants.max_outlets` | Belum |
+| M3 | Akses: outlet yang ditugaskan per user, scope outlet fail-closed, `CurrentOutlet` dari pilihan session (T7) | Belum |
+| M4 | Dashboard: Pengaturan → Outlet (daftar/tambah/nonaktifkan), pemilih outlet di topbar, Karyawan pilih outlet | Belum |
+| M5 | Stok & katalog per outlet: produk (tersedia/stok per outlet), `AdjustStock`, potong stok checkout, `/catalog`, `PinUsers` | Belum |
+| M6 | Laporan & daftar (penjualan, shift, beranda) filter outlet; API `/outlets` | Belum |
 
 ### 2. Minggu 7 — panel `/admin` & keamanan
 

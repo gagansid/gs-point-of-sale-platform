@@ -14,3 +14,4 @@ template: `docs/templates/adr.md`.
 | [0007](0007-dashboard-tenancy-without-filament-tenancy.md) | Panel /dashboard memakai TenantContext, bukan tenancy Filament | Diterima |
 | [0008](0008-subdomain-per-surface.md) | Subdomain terpisah: gspos.id, app., admin., api. | Diterima |
 | [0009](0009-onboarding-and-editions.md) | Onboarding daftar sendiri + sales, edisi SaaS & jual putus | Diterima |
+| [0010](0010-multi-outlet.md) | Multi-outlet: penugasan banyak-ke-banyak, katalog bersama, stok per outlet | Diterima |
