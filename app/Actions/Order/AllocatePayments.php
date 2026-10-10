@@ -14,7 +14,8 @@ use App\Support\Money;
  * Membagi pembayaran ke sisa tagihan (SPEC Pembayaran):
  * - non-tunai dialokasikan dulu dan TIDAK boleh melebihi sisa → PAYMENT_EXCEEDS_BALANCE;
  * - tunai menutup sisanya; kelebihan tunai menjadi kembalian;
- * - metode yang mewajibkan kode approval (debit/kredit) harus mengisi reference.
+ * - metode yang mewajibkan kode approval (debit/kredit) harus mengisi reference;
+ * - metode harus aktif di bisnis dan di outlet order (ADR 0011 / Q44).
  */
 final class AllocatePayments
 {
@@ -24,9 +25,9 @@ final class AllocatePayments
      *
      * @throws BusinessException
      */
-    public function handle(array $payments, string $remaining): array
+    public function handle(array $payments, string $remaining, string $outletId): array
     {
-        $methods = PaymentMethod::query()->active()
+        $methods = PaymentMethod::query()->activeAt($outletId)
             ->whereIn('id', array_column($payments, 'payment_method_id'))
             ->get()
             ->keyBy('id');

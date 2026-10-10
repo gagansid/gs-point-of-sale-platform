@@ -4,6 +4,10 @@
 > `is_low_stock`, dan `is_available` adalah milik **outlet perangkat** tempat token dipakai (login tanpa perangkat:
 > outlet pertama yang dipegang user). Stok awal (POST), `min_stock`, penyesuaian stok, dan tandai habis/tersedia
 > hanya berlaku untuk outlet itu; checkout memotong stok outlet shift.
+>
+> **Menu per outlet (ADR 0011, Q42–Q44):** `/catalog` hanya berisi produk yang **dijual** di outlet perangkat,
+> kategori yang punya produk tersebut, dan metode bayar yang **aktif** di outlet itu. Opsi membawa
+> `is_available` milik outlet perangkat. Status dijual & metode bayar per outlet diatur di dashboard.
 
 Standar: [`docs/standards/api/`](../standards/api/README.md). Skema lengkap: OpenAPI `/docs/api`.
 Semua endpoint memakai **token user** + header `X-App-Version`.
@@ -35,6 +39,10 @@ Seluruh katalog untuk aplikasi kasir dalam satu respons.
 
 - Produk **nonaktif tidak dikirim**, begitu juga kategori/grup opsi nonaktif dan produk di kategori nonaktif. Produk "habis" tetap dikirim dengan `is_available: false`
   (tampilkan abu-abu, tidak bisa dipilih).
+- Produk yang **tidak dijual di outlet perangkat tidak dikirim** (berbeda dengan habis); kategori tanpa produk yang dijual
+  di outlet itu juga tidak dikirim (Q42).
+- `option_groups[].options[].is_available: false` → opsi habis di outlet perangkat: tampilkan abu-abu, tidak bisa dipilih (Q43).
+- `payment_methods` hanya metode yang aktif di bisnis **dan** di outlet perangkat (Q44).
 - `cost_price` hanya dikirim untuk user dengan `product.manage`.
 - `is_favorite: true` → tampilkan di tab **Favorit** layar kasir (ditandai owner/manager di dashboard).
 - Urutan tampil produk = `sort_order` (diatur seret-lepas di dashboard), lalu `name`.
@@ -57,7 +65,7 @@ Seluruh katalog untuk aplikasi kasir dalam satu respons.
     }],
     "option_groups": [{
       "id": "…", "name": "Ukuran", "min_select": 1, "max_select": 1,
-      "options": [{ "id": "…", "name": "Large", "price_delta": "5000.00", "sort_order": 1 }]
+      "options": [{ "id": "…", "name": "Large", "price_delta": "5000.00", "sort_order": 1, "is_available": true }]
     }],
     "payment_methods": [{ "id": "…", "name": "Debit", "category": "debit", "requires_reference": true, "is_active": true }]
   },

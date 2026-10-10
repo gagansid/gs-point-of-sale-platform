@@ -98,7 +98,7 @@ yang dikirim aplikasi diabaikan.
 | 403 | `SELF_APPROVAL_NOT_ALLOWED` / `FORBIDDEN` | Approver = pelaku / approver tanpa wewenang |
 | 404 | `NOT_FOUND` | `id` order milik tenant lain |
 | 409 | `SHIFT_NOT_OPEN` | Device belum membuka shift |
-| 422 | `VALIDATION_ERROR` | Bentuk data, item/opsi tidak valid, reference kosong, pembayaran kurang, `payments[].id` sudah dipakai |
+| 422 | `VALIDATION_ERROR` | Bentuk data, item/opsi tidak valid, reference kosong, pembayaran kurang, `payments[].id` sudah dipakai; produk tidak dijual di outlet (`items.N.product_id`), opsi habis di outlet (`items.N.option_ids`), metode bayar nonaktif di outlet (`payments.N.payment_method_id`) — ADR 0011 |
 | 422 | `PAYMENT_EXCEEDS_BALANCE` | Non-tunai melebihi sisa |
 | 422 | `DISCOUNT_OVER_LIMIT` | Diskon di atas batas tanpa approval |
 | 423 | `PIN_LOCKED` | PIN approver terkunci |

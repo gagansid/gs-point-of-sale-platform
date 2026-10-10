@@ -61,7 +61,7 @@ final class AddPayment
             }
 
             $remaining = Money::sub($locked->grand_total, $locked->paid_total);
-            $allocated = $this->allocatePayments->handle($payments, $remaining);
+            $allocated = $this->allocatePayments->handle($payments, $remaining, $locked->outlet_id);
 
             $this->writer->addPayments($locked, $allocated, $actor);
 

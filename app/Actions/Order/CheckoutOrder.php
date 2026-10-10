@@ -60,7 +60,7 @@ final class CheckoutOrder
         $lines = $this->resolveLines->handle($data->items, $outlet);
         $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval);
         $totals = $priced['totals'];
-        $payments = $this->allocatePayments->handle($data->payments, $totals->grandTotal);
+        $payments = $this->allocatePayments->handle($data->payments, $totals->grandTotal, $outlet->id);
 
         $paid = Money::add(...array_column($payments, 'amount'));
         if (Money::compare($paid, $totals->grandTotal) < 0) {

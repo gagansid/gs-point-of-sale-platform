@@ -9,12 +9,13 @@ use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Option;
 use App\Models\Outlet;
+use App\Models\OutletOption;
 use App\Models\Product;
 use App\Support\Money;
 
 /**
- * Mencocokkan item kiriman aplikasi dengan katalog server: produk aktif & tersedia di outlet, opsi milik
- * grup opsi produk, dan jumlah pilihan per grup sesuai min/max. Harga SELALU dari database.
+ * Mencocokkan item kiriman aplikasi dengan katalog server: produk aktif, dijual & tersedia di outlet, opsi milik
+ * grup opsi produk & tidak habis di outlet (ADR 0011), dan jumlah pilihan per grup sesuai min/max. Harga SELALU dari database.
  * Semua pelanggaran dikumpulkan lalu dilempar sekali sebagai VALIDATION_ERROR per field.
  */
 final class ResolveOrderLines
@@ -39,14 +40,15 @@ final class ResolveOrderLines
             ->get()
             ->keyBy('id');
 
+        $unavailable = OutletOption::unavailableIds($outlet->id);
         $errors = [];
         $lines = [];
 
         foreach ($items as $index => $item) {
             $product = $products->get($item['product_id']);
 
-            // Produk nonaktif atau berada di kategori nonaktif tidak bisa dijual
-            if ($product === null || ! $product->is_active || $product->category?->is_active === false) {
+            // Produk nonaktif, di kategori nonaktif, atau tidak dijual di outlet ini tidak bisa dijual
+            if ($product === null || ! $product->is_active || ! $product->is_listed || $product->category?->is_active === false) {
                 $errors["items.{$index}.product_id"] = ['Produk tidak tersedia'];
 
                 continue;
@@ -70,6 +72,11 @@ final class ResolveOrderLines
             foreach ($item['option_ids'] as $optionId) {
                 if (! isset($allowed[$optionId])) {
                     $errors["items.{$index}.option_ids"] = ["Opsi tidak valid untuk {$product->name}"];
+
+                    continue 2;
+                }
+                if (in_array($optionId, $unavailable, true)) {
+                    $errors["items.{$index}.option_ids"] = ["{$allowed[$optionId]->name} sedang habis"];
 
                     continue 2;
                 }
