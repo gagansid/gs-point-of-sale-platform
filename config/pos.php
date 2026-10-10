@@ -8,6 +8,17 @@ declare(strict_types=1);
  */
 return [
 
+    /*
+     * Subdomain per bagian aplikasi (ADR 0008, App\Support\Domains). Kosongkan POS_APP_DOMAIN
+     * untuk memakai satu domain dengan path /dashboard, /admin, /api/v1.
+     */
+    'domains' => [
+        'main' => env('POS_MAIN_DOMAIN'),
+        'app' => env('POS_APP_DOMAIN'),
+        'admin' => env('POS_ADMIN_DOMAIN'),
+        'api' => env('POS_API_DOMAIN'),
+    ],
+
     // Zona waktu default outlet baru (ADR 0001). Server sendiri selalu UTC.
     'default_timezone' => env('POS_DEFAULT_TIMEZONE', 'Asia/Jakarta'),
 

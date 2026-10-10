@@ -13,3 +13,8 @@ Satu file per domain, berisi semua endpoint domain tersebut dengan format
 | Setelan (outlet, karyawan, metode bayar) | `settings.md` | Belum |
 
 File dibuat bersamaan dengan endpoint pertama di domain tersebut.
+
+**Base URL (ADR 0008):** `https://api.gspos.id` + path di dokumen ini (mis. `GET /v1/catalog` →
+`https://api.gspos.id/v1/catalog`). Lokal: `http://api.gspos.localhost:8000/v1/...`. Instalasi tanpa
+subdomain (`POS_API_DOMAIN` kosong) memakai `/api/v1/...` di domain utama; URL lama `/api/v1/...` di
+domain utama dialihkan 308 ke `api.gspos.id/v1/...` (metode & body tetap).

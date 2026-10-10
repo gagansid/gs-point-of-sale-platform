@@ -15,7 +15,8 @@ use App\Http\Controllers\Api\V1\SystemController;
 use Illuminate\Support\Facades\Route;
 
 /*
- * Prefix /api dan grup "api" (ForceJsonResponse, throttle:api) diatur di bootstrap/app.php.
+ * Domain/prefix (api.gspos.id/v1 atau /api/v1) dan grup "api" (ForceJsonResponse, throttle:api)
+ * diatur di bootstrap/app.php (ADR 0008).
  * Route dikelompokkan per domain, urut sesuai tabel API di docs/SPEC.md.
  *
  * Grup akses:
@@ -23,7 +24,7 @@ use Illuminate\Support\Facades\Route;
  *   token.device    device token (layar PIN, ADR 0002)
  *   token.user      token user (login email/PIN)
  */
-Route::prefix('v1')->name('api.v1.')->middleware('app.version')->group(function (): void {
+Route::name('api.v1.')->middleware('app.version')->group(function (): void {
 
     // ---------- Auth & sistem: publik ----------
     Route::get('system/status', [SystemController::class, 'status'])

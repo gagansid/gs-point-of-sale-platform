@@ -8,6 +8,7 @@ use App\Filament\Shared\Layout;
 use App\Filament\Shared\Pages\Home;
 use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\EnsureAdminTwoFactorWhenRequired;
+use App\Support\Domains;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -36,7 +37,8 @@ final class AdminPanelProvider extends PanelProvider
         return Layout::apply($panel)
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->domain(Domains::admin())
+            ->path(Domains::adminPath())
             ->authGuard('admin')
             ->login()
             ->profile(isSimple: false)

@@ -1,7 +1,8 @@
 # gs-point-of-sale-platform
 
 Backend POS multi-tenant untuk kafe & UMKM: REST API untuk aplikasi Flutter
-(`gs-point-of-sale-app`), dashboard owner (`/dashboard`), dan panel super admin (`/admin`).
+(`gs-point-of-sale-app`, `api.gspos.id/v1`), dashboard owner (`app.gspos.id`), panel super admin
+(`admin.gspos.id`), dan halaman depan (`gspos.id`). Tanpa subdomain: `/api/v1`, `/dashboard`, `/admin` (ADR 0008).
 
 Spesifikasi lengkap ada di `docs/SPEC.md`. Baca bagian yang relevan sebelum mengerjakan fitur.
 Alur kerja, Definition of Done, dan peta standar ada di `AGENTS.md`; standar rinci

@@ -109,7 +109,8 @@ final class Product extends Model
 
     public function imageUrl(): ?string
     {
-        return $this->image_path !== null ? Storage::disk('public')->url($this->image_path) : null;
+        // Absolut untuk aplikasi Flutter; host mengikuti request (mis. https://api.gspos.id/storage/...)
+        return $this->image_path !== null ? url(Storage::disk('public')->url($this->image_path)) : null;
     }
 
     /**

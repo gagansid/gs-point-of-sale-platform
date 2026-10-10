@@ -85,5 +85,5 @@ lanjut, approved_by = approver_user_id
 
 | Panel | Guard | Tabel | Catatan |
 |---|---|---|---|
-| `/dashboard` | `web` | `users` | Filament tenancy; hanya role dengan permission dashboard |
-| `/admin` | `admin` | `admins` | Terpisah total dari tenant; disarankan 2FA |
+| `app.gspos.id` (`/dashboard` tanpa subdomain) | `web` | `users` | TenantContext (ADR 0007); hanya role dengan permission dashboard |
+| `admin.gspos.id` (`/admin` tanpa subdomain) | `admin` | `admins` | Terpisah total dari tenant; 2FA (ADR 0006). Cookie session host-only: login `app.` tidak berlaku di `admin.` (ADR 0008) |

@@ -11,13 +11,13 @@ Semua endpoint memakai **token user yang terikat device kasir** (login PIN, atau
 | GET | `/shifts/{id}/summary` | pembuka shift atau `shift.view_all` | baca | `ShiftSummary` |
 | POST | `/shifts/{id}/force-close` | `shift.force_close` | ya | `CloseShift(force)` |
 
-## `POST /api/v1/shifts`
+## `POST /v1/shifts`
 
 Body `{ "opening_cash": 200000 }`. Device sudah punya shift terbuka → `200` + shift itu
 (`meta.idempotent_replay: true`, pesan "Shift sudah terbuka"), siapa pun yang membukanya.
 Dijamin oleh index unik `shifts.open_device_key` (aman dari request bersamaan).
 
-## `POST /api/v1/shifts/{id}/close` · `/force-close`
+## `POST /v1/shifts/{id}/close` · `/force-close`
 
 | Field | Wajib | Aturan |
 |---|---|---|

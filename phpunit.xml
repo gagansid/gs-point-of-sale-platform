@@ -24,6 +24,12 @@
         <env name="APP_LOCALE" value="id"/>
         <env name="APP_TIMEZONE" value="UTC"/>
         <env name="POS_ADMIN_2FA_REQUIRED" value="true"/>
+        <!-- Test memakai satu domain (/dashboard, /admin, /api/v1); mode subdomain diuji di tests/Feature/Routing -->
+        <env name="POS_MAIN_DOMAIN" value="" force="true"/>
+        <env name="POS_APP_DOMAIN" value="" force="true"/>
+        <env name="POS_ADMIN_DOMAIN" value="" force="true"/>
+        <env name="POS_API_DOMAIN" value="" force="true"/>
+        <env name="APP_URL" value="http://localhost" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

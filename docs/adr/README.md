@@ -12,3 +12,4 @@ template: `docs/templates/adr.md`.
 | [0005](0005-fail-closed-tenancy-and-permission-gate.md) | Tenant scope fail-closed & Gate hanya untuk permission | Diterima |
 | [0006](0006-admin-2fa-toggle.md) | 2FA super admin yang bisa diaktifkan/dinonaktifkan dari panel | Diterima |
 | [0007](0007-dashboard-tenancy-without-filament-tenancy.md) | Panel /dashboard memakai TenantContext, bukan tenancy Filament | Diterima |
+| [0008](0008-subdomain-per-surface.md) | Subdomain terpisah: gspos.id, app., admin., api. | Diterima |

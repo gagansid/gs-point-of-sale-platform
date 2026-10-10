@@ -43,7 +43,9 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            // Relatif ke host yang sedang dibuka (gspos.id / app. / admin. / api. berbagi folder public),
+            // agar pratinjau gambar di app.gspos.id tidak terblokir CORS (ADR 0008)
+            'url' => env('PUBLIC_DISK_URL', '/storage'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,

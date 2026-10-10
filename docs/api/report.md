@@ -20,7 +20,7 @@ dan file Excel.
 - Per metode bayar: hanya pembayaran `paid` pada order selesai.
 - `period` di setiap respons: `{ from, to, timezone }`.
 
-## `GET /api/v1/reports/summary`
+## `GET /v1/reports/summary`
 
 ```json
 {
@@ -44,11 +44,11 @@ dan file Excel.
 }
 ```
 
-## `GET /api/v1/reports/products`
+## `GET /v1/reports/products`
 
 `data.products[]`: `{ product_id, product_name (snapshot transaksi terakhir), qty, revenue }`.
 
-## `GET /api/v1/reports/payment-methods`
+## `GET /v1/reports/payment-methods`
 
 `data.payment_methods[]`: `{ payment_method_id, name, category, count, amount }`.
 

@@ -16,7 +16,7 @@ Komponen bersama (aturan identik di semua alur): `ResolveOrderLines` (item & ops
 (kalkulator + batas diskon), `AllocatePayments` (alokasi & kembalian), `OrderWriter` (item, pembayaran,
 penyelesaian, stok).
 
-## `POST /api/v1/checkout`
+## `POST /v1/checkout`
 
 Buat order + bayar sekaligus. **Server menghitung ulang semua nominal**; field nominal tagihan
 yang dikirim aplikasi diabaikan.
@@ -113,7 +113,7 @@ yang dikirim aplikasi diabaikan.
 
 ---
 
-## `PUT /api/v1/orders/{id}` — open bill (dine-in)
+## `PUT /v1/orders/{id}` — open bill (dine-in)
 
 Upsert berdasarkan `{id}` (UUID v7 dari app). Body sama dengan checkout **tanpa** `payments`;
 `order_type` default `dine_in`.
@@ -125,7 +125,7 @@ Upsert berdasarkan `{id}` (UUID v7 dari app). Body sama dengan checkout **tanpa*
 - Total baru < yang sudah dibayar → `422` (`details.items`).
 - Respons `201` (dibuat) / `200` (diubah).
 
-## `POST /api/v1/orders/{id}/payments` — tambah pembayaran
+## `POST /v1/orders/{id}/payments` — tambah pembayaran
 
 Body `{ "payments": [ { "id", "payment_method_id", "amount", "tendered"?, "reference"? } ] }`.
 
@@ -136,7 +136,7 @@ Body `{ "payments": [ { "id", "payment_method_id", "amount", "tendered"?, "refer
   (diuji 6 pembayaran paralel → hanya yang muat yang diterima).
 - Semua `payments[].id` sudah tercatat di order ini → `200` replay.
 
-## `GET /api/v1/orders`
+## `GET /v1/orders`
 
 Query: `date` (YYYY-MM-DD, **tanggal lokal outlet**), `status` (`open`/`completed`/`voided`),
 `shift_id`, `search` (nomor order / meja), `page`, `per_page`. Urut terbaru.
@@ -151,14 +151,14 @@ Visibilitas (Q21):
 
 Order di luar visibilitas → `403` di detail/struk; order tenant lain → `404`.
 
-## `GET /api/v1/orders/{id}/receipt`
+## `GET /v1/orders/{id}/receipt`
 
 Data struk siap cetak: `outlet` (nama, alamat, header, footer), `order_number`, `order_type_label`,
 `table_label`, `cashier_name`, `created_at` (UTC) + `created_at_local` (`08/10/2026 12.00`, zona outlet),
 `lines` (nama, opsi, qty, harga, diskon, total, catatan), `totals` (dengan **tarif pajak/service saat
 transaksi**), `payments`, `is_void`, `void_reason`.
 
-## `POST /api/v1/orders/{id}/void`
+## `POST /v1/orders/{id}/void`
 
 Body `{ "reason": "…", "approver_user_id"?: uuid, "approver_pin"?: "123456" }`.
 

@@ -23,7 +23,7 @@ GET /devices/{uid}/cashiers (device token) ─▶ POST /auth/pin-login (device t
 
 ---
 
-## `GET /api/v1/system/status`
+## `GET /v1/system/status`
 
 Status sistem, versi minimal app, dan pengumuman aktif. Dipanggil saat app dibuka.
 
@@ -57,7 +57,7 @@ Status sistem, versi minimal app, dan pengumuman aktif. Dipanggil saat app dibuk
 
 ---
 
-## `POST /api/v1/auth/login`
+## `POST /v1/auth/login`
 
 Login owner/manager dengan email + kata sandi.
 
@@ -113,7 +113,7 @@ Login owner/manager dengan email + kata sandi.
 
 ---
 
-## `POST /api/v1/devices`
+## `POST /v1/devices`
 
 Mendaftarkan device kasir ke outlet dan menerbitkan **device token** (ADR 0002).
 
@@ -165,7 +165,7 @@ Mendaftarkan device kasir ke outlet dan menerbitkan **device token** (ADR 0002).
 
 ---
 
-## `GET /api/v1/devices/{uid}/cashiers`
+## `GET /v1/devices/{uid}/cashiers`
 
 Daftar karyawan untuk layar pilih nama sebelum login PIN.
 
@@ -200,7 +200,7 @@ Daftar karyawan untuk layar pilih nama sebelum login PIN.
 
 ---
 
-## `POST /api/v1/auth/pin-login`
+## `POST /v1/auth/pin-login`
 
 Login kasir/supervisor dengan PIN 6 digit di device terdaftar.
 
@@ -245,7 +245,7 @@ Sama dengan `POST /auth/login`; token berlaku maks. 16 jam dan terikat ke device
 
 ---
 
-## `GET /api/v1/auth/me`
+## `GET /v1/auth/me`
 
 User login beserta tenant, outlet, setelan outlet, dan daftar permission. Bentuk `data` sama
 dengan respons login tanpa `token`, `token_type`, `expires_at`.
@@ -256,7 +256,7 @@ dengan respons login tanpa `token`, `token_type`, `expires_at`.
 | 403 | `DEVICE_NOT_REGISTERED` | Token kasir dari device yang sudah dicabut |
 | 403 | `TENANT_SUSPENDED` | Tenant ditangguhkan / langganan habis |
 
-## `POST /api/v1/auth/logout`
+## `POST /v1/auth/logout`
 
 Menghapus token yang sedang dipakai saja (token di device lain tetap aktif). Respons `data: null`.
 

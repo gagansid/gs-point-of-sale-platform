@@ -12,17 +12,25 @@ use App\Http\Middleware\EnsureUserToken;
 use App\Http\Middleware\ForceJsonResponse;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetTenantContext;
+use App\Support\Domains;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
-        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        // API di api.gspos.id/v1, atau /api/v1 bila subdomain tidak diatur (ADR 0008)
+        then: function (): void {
+            Route::middleware('api')
+                ->domain(Domains::api())
+                ->prefix(Domains::apiPrefix())
+                ->group(base_path('routes/api.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Paling awal agar semua log (termasuk error maintenance) punya request_id
