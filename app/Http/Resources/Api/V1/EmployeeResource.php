@@ -23,6 +23,8 @@ final class EmployeeResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'username' => $this->username,
+            'has_password' => $this->password !== null,
             'role' => $this->role->value,
             'role_label' => $this->role->getLabel(),
             'outlet_id' => $this->outlet_id,

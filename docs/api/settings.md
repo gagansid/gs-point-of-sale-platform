@@ -66,12 +66,13 @@ Test: `tests/Feature/Api/V1/Settings/OutletTest.php`, `tests/Feature/Filament/Da
 | `name` | string | maks. 100; tampil di layar pilih kasir & struk |
 | `role` | enum | `owner`, `manager`, `supervisor`, `cashier` |
 | `email` | string\|null | Wajib untuk owner/manager (login email); unik global, disimpan huruf kecil. Kasir/supervisor boleh kosong |
-| `password` | string | Wajib saat menambah owner/manager; `Password::defaults()` (min. 8, huruf & angka). PUT: kosong = tidak diganti |
+| `username` | string\|null | Wajib untuk supervisor/kasir (kasir web, Q35); 3–30, huruf/angka/`._-`, disimpan huruf kecil, unik per bisnis |
+| `password` | string | Wajib saat menambah (semua role); `Password::defaults()` (min. 8, huruf & angka). PUT: kosong = tidak diganti |
 | `pin` | string | 6 digit, **bukan** angka sama (`111111`) atau berurutan (`123456`, `654321`). Wajib untuk supervisor/kasir (login tablet), opsional untuk owner/manager (approval). PUT: kosong = tidak diganti |
 | `is_active` | bool | Hanya PUT. `false` = tidak bisa login & semua sesi diputus |
 
 Respons (`EmployeeResource`) **tidak pernah** berisi PIN/kata sandi: `has_pin`, `pin_locked_until`,
-`last_login_at`, `is_active`, `role_label`, `outlet_id` (owner `null`, role lain = outlet bisnis).
+`last_login_at`, `is_active`, `role_label`, `username`, `has_password`, `outlet_id` (owner `null`, role lain = outlet bisnis).
 
 Aturan:
 

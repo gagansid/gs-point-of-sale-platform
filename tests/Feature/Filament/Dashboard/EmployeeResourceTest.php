@@ -23,23 +23,33 @@ beforeEach(function () {
 
 it('menambah kasir dengan PIN dari modal', function () {
     Livewire::test(ManageEmployees::class)
-        ->callAction(TestAction::make('create')->table(), ['name' => 'Budi', 'role' => UserRole::Cashier->value, 'pin' => '481920'])
+        ->callAction(TestAction::make('create')->table(), [
+            'name' => 'Budi', 'role' => UserRole::Cashier->value, 'pin' => '481920', 'username' => 'Budi', 'password' => 'rahasia123',
+        ])
         ->assertHasNoFormErrors();
 
     $budi = User::query()->where('name', 'Budi')->sole();
     expect($budi->role)->toBe(UserRole::Cashier)
         ->and($budi->email)->toBeNull()
+        ->and($budi->username)->toBe('budi')
+        ->and(Hash::check('rahasia123', (string) $budi->password))->toBeTrue()
         ->and(Hash::check('481920', (string) $budi->pin))->toBeTrue();
 });
 
 it('PIN lemah ditolak di form', function () {
     Livewire::test(ManageEmployees::class)
-        ->callAction(TestAction::make('create')->table(), ['name' => 'Budi', 'role' => UserRole::Cashier->value, 'pin' => '123456'])
+        ->callAction(TestAction::make('create')->table(), ['name' => 'Budi', 'role' => UserRole::Cashier->value, 'pin' => '123456', 'username' => 'budi', 'password' => 'rahasia123'])
         ->assertHasFormErrors(['pin']);
 });
 
+it('kasir wajib username & kata sandi untuk kasir web', function () {
+    Livewire::test(ManageEmployees::class)
+        ->callAction(TestAction::make('create')->table(), ['name' => 'Budi', 'role' => UserRole::Cashier->value, 'pin' => '481920'])
+        ->assertHasFormErrors(['username', 'password']);
+});
+
 it('ubah nama tanpa mengisi ulang PIN', function () {
-    $cashier = User::factory()->cashier()->forOutlet($this->outlet)->create(['pin' => '481920']);
+    $cashier = User::factory()->cashier()->forOutlet($this->outlet)->create(['pin' => '481920', 'username' => 'budi', 'password' => 'rahasia123']);
 
     Livewire::test(ManageEmployees::class)
         ->callAction(TestAction::make('edit')->table($cashier), ['name' => 'Budi Baru'])

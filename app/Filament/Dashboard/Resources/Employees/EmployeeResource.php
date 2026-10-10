@@ -32,6 +32,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rules\Password;
 use UnitEnum;
 
@@ -81,12 +82,33 @@ final class EmployeeResource extends Resource
                 ->unique(User::class, 'email', ignoreRecord: true)
                 ->visible($usesPassword)->required($usesPassword)
                 ->helperText('Untuk login dashboard & aplikasi'),
+            TextInput::make('username')->label('Username')->maxLength(30)->minLength(3)
+                // Huruf besar diterima lalu disimpan huruf kecil (sama seperti API)
+                ->regex('/^[A-Za-z0-9._-]+$/')
+                ->validationMessages(['regex' => 'Username hanya huruf, angka, titik, garis bawah, atau tanda hubung.'])
+                ->rule(fn (?Model $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($record): void {
+                    $taken = User::query()
+                        ->where('username', mb_strtolower(trim((string) $value)))
+                        ->when($record !== null, fn ($query) => $query->whereKeyNot($record->getKey()))
+                        ->exists();
+
+                    if ($taken) {
+                        $fail('Username sudah dipakai karyawan lain.');
+                    }
+                })
+                ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? mb_strtolower(trim($state)) : null)
+                ->visible(fn (Get $get): bool => ! $usesPassword($get))->required(fn (Get $get): bool => ! $usesPassword($get))
+                ->placeholder('budi')
+                ->helperText('Untuk login kasir web (cadangan bila tablet rusak)'),
             TextInput::make('password')->label('Kata sandi')->password()->revealable()
                 ->rule(Password::defaults())->maxLength(255)
-                ->visible($usesPassword)
-                ->required(fn (Get $get, string $operation): bool => $usesPassword($get) && ($operation === 'create' || ! $get('has_password')))
+                ->required(fn (string $operation, Get $get): bool => $operation === 'create' || ! $get('has_password'))
                 ->dehydrated(fn (?string $state): bool => filled($state))
-                ->helperText(fn (string $operation): string => $operation === 'edit' ? 'Kosongkan bila tidak diganti. Mengganti akan mengeluarkan semua sesi' : 'Minimal 8 karakter, huruf & angka'),
+                ->helperText(fn (string $operation, Get $get): string => match (true) {
+                    $operation === 'edit' && (bool) $get('has_password') => 'Kosongkan bila tidak diganti. Mengganti akan mengeluarkan semua sesi',
+                    $usesPassword($get) => 'Untuk login dashboard & aplikasi. Minimal 8 karakter, huruf & angka',
+                    default => 'Untuk login kasir web. Minimal 8 karakter, huruf & angka',
+                }),
             TextInput::make('pin')->label('PIN')->password()->revealable()
                 ->rule(new SecurePin)->length(6)->extraInputAttributes(['inputmode' => 'numeric', 'autocomplete' => 'off'])
                 ->required(fn (Get $get, string $operation): bool => ! $usesPassword($get) && ($operation === 'create' || ! $get('has_pin')))
@@ -104,8 +126,8 @@ final class EmployeeResource extends Resource
         $table = $table
             ->columns([
                 TextColumn::make('name')->label('Nama')->weight('medium')
-                    ->description(fn (User $record): ?string => $record->email)
-                    ->searchable(['name', 'email'])->sortable(),
+                    ->description(fn (User $record): ?string => $record->email ?? ($record->username !== null ? '@'.$record->username : null))
+                    ->searchable(['name', 'email', 'username'])->sortable(),
                 TextColumn::make('role')->label('Role')->badge()->sortable(),
                 TextColumn::make('pin_status')->label('PIN')->badge()
                     ->state(fn (User $record): string => match (true) {
@@ -133,7 +155,7 @@ final class EmployeeResource extends Resource
                         'has_password' => $record->password !== null,
                     ])
                     ->using(fn (User $record, array $data, EditAction $action): User => self::orNotify(
-                        fn (): User => app(SaveEmployee::class)->handle($record, EmployeeData::fromArray([...$data, 'email' => self::emailFor($data)]))['user'],
+                        fn (): User => app(SaveEmployee::class)->handle($record, EmployeeData::fromArray([...$data, ...self::credentialsFor($data)]))['user'],
                         $action,
                     )),
                 ActionGroup::make([
@@ -195,15 +217,21 @@ final class EmployeeResource extends Resource
     }
 
     /**
-     * Email hanya disimpan untuk role login email (kasir boleh tanpa email).
+     * Identitas login sesuai role: owner/manager memakai email, supervisor/kasir memakai username
+     * (kasir web). Isian role lain dikosongkan agar tidak tersimpan sisa sebelum role diganti.
      *
      * @param  array<string, mixed>  $data
+     * @return array{email: string|null, username: string|null}
      */
-    public static function emailFor(array $data): ?string
+    public static function credentialsFor(array $data): array
     {
         $role = $data['role'] instanceof UserRole ? $data['role'] : UserRole::tryFrom((string) ($data['role'] ?? ''));
+        $usesEmail = $role?->canUsePasswordLogin() ?? false;
 
-        return $role?->canUsePasswordLogin() ? ($data['email'] ?? null) : null;
+        return [
+            'email' => $usesEmail ? ($data['email'] ?? null) : null,
+            'username' => $usesEmail ? null : ($data['username'] ?? null),
+        ];
     }
 
     private static function role(Get $get): ?UserRole

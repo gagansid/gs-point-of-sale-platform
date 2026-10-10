@@ -16,7 +16,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Menambah (employee = null) atau mengubah karyawan (SPEC: Karyawan, permission user.manage).
  *
- * - Owner/manager login email + kata sandi; supervisor/kasir login PIN di tablet → PIN wajib.
+ * - Owner/manager login email + kata sandi. Supervisor/kasir: PIN (tablet) + username & kata sandi
+ *   (kasir web, cadangan bila tablet rusak — SPEC Q35).
  * - Mengganti PIN, kata sandi, atau role memutus semua sesi karyawan itu (token dihapus).
  * - Owner aktif terakhir tidak boleh diturunkan rolenya (LAST_OWNER_REQUIRED).
  */
@@ -53,6 +54,7 @@ final class SaveEmployee
                 'name' => $data->name,
                 'role' => $data->role,
                 'email' => $data->email,
+                'username' => $data->username,
                 // Owner berlaku untuk seluruh outlet; role lain terikat outlet (MVP: satu outlet)
                 'outlet_id' => $data->role === UserRole::Owner ? null : CurrentOutlet::getOrFail()->id,
             ]);
@@ -100,8 +102,18 @@ final class SaveEmployee
             if ($data->password === null && ($employee === null || $employee->password === null)) {
                 $errors['password'] = ['Kata sandi wajib untuk owner & manager'];
             }
-        } elseif ($data->pin === null && ($employee === null || $employee->pin === null)) {
-            $errors['pin'] = ['PIN wajib untuk supervisor & kasir (login di tablet)'];
+        } else {
+            if ($data->pin === null && ($employee === null || $employee->pin === null)) {
+                $errors['pin'] = ['PIN wajib untuk supervisor & kasir (login di tablet)'];
+            }
+
+            if ($data->username === null) {
+                $errors['username'] = ['Username wajib untuk supervisor & kasir (login kasir web)'];
+            }
+
+            if ($data->password === null && ($employee === null || $employee->password === null)) {
+                $errors['password'] = ['Kata sandi wajib untuk supervisor & kasir (login kasir web)'];
+            }
         }
 
         if ($errors !== []) {

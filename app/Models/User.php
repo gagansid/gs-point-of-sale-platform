@@ -35,6 +35,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property CarbonImmutable|null $pin_locked_until
  * @property UserRole $role
  * @property CarbonImmutable|null $email_verified_at
+ * @property string|null $username
  * @property bool $is_active
  * @property CarbonImmutable|null $last_login_at
  */
@@ -48,6 +49,7 @@ class User extends Authenticatable implements FilamentUser
         'outlet_id',
         'name',
         'email',
+        'username',
         'password',
         'pin',
         'role',

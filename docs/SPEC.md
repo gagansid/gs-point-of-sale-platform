@@ -216,7 +216,7 @@ tabel master memakai soft delete.
 | Sistem | `system_settings` | key, value (JSON), updated_by — setelan global dari panel `/admin`, mis. wajib 2FA (ADR 0006) |
 | Akses | `tenants` | name, slug, business_type (cafe/retail/other), status (trial/active/suspended), subscription_ends_at |
 | Akses | `outlets` | tenant_id, code, name, address, tax_rate, service_charge_rate, tax_inclusive, rounding, receipt_header, receipt_footer, discount_limits (JSON), timezone (default `Asia/Jakarta`, ADR 0001) |
-| Akses | `users` | tenant_id, outlet_id, name, email (unik global, boleh kosong untuk kasir), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
+| Akses | `users` | tenant_id, outlet_id, name, email (unik global, boleh kosong untuk kasir), username (unik per tenant, kasir/supervisor — Q35), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
 | Akses | `devices` | tenant_id, outlet_id, name, device_uid (unik per tenant), platform, app_version, last_seen_at, revoked_at |
 | Produk | `categories` | tenant_id, name, sort_order, is_active (Q27) |
 | Produk | `products` | tenant_id, category_id (nullable), name, sku, barcode, price, cost_price, track_stock, stock_qty, min_stock (batas stok menipis, Q24), image_path, is_active, is_available (tanda habis, Q12), is_favorite (favorit outlet, Q25), sort_order (urutan tampil kasir) |
@@ -580,5 +580,6 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q32 | Trial & akses | Trial default 14 hari, diatur di admin (`system_settings.trial_days`). Habis → **hanya-baca** (`SUBSCRIPTION_EXPIRED`), bukan diblokir; `suspended` tetap diblokir (`TENANT_SUSPENDED`). | Diterima | ADR 0009 |
 | Q33 | Edisi | `POS_EDITION=saas` (banyak tenant, halaman depan, trial) atau `self_hosted` (jual putus: satu tenant via `php artisan pos:install`, tanpa halaman depan/register, panel admin dipegang pembeli). Lisensi di luar MVP. | Diterima | ADR 0009 |
 | Q34 | Kata sandi owner | Tidak pernah dikirim sebagai teks: owner dari sales menerima link atur kata sandi; lupa kata sandi di `gspos.id/lupa-sandi`. | Diterima | ADR 0009 |
+| Q35 | Kasir web | Fase berikutnya ada kasir di web sebagai cadangan bila tablet rusak. Supervisor/kasir wajib **username** (unik per tenant, huruf kecil/angka/`._-`) + **kata sandi** selain PIN; login kasir web = kode bisnis (slug tenant) + username + kata sandi. Owner/manager tetap email + kata sandi. | Diterima | `docs/api/settings.md` |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

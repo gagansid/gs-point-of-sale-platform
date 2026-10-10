@@ -18,17 +18,19 @@ beforeEach(function () {
 
 function employeeBody(array $override = []): array
 {
-    return ['name' => 'Budi', 'role' => 'cashier', 'pin' => '481920', ...$override];
+    return ['name' => 'Budi', 'role' => 'cashier', 'pin' => '481920', 'username' => 'Budi', 'password' => 'rahasia123', ...$override];
 }
 
 describe('tambah', function () {
-    it('kasir cukup nama + PIN (tanpa email), terikat outlet', function () {
+    it('kasir: nama + PIN (tablet) + username & kata sandi (kasir web), tanpa email, terikat outlet', function () {
         $id = $this->withToken($this->token)->postJson('/api/v1/users', employeeBody(), apiHeaders())
             ->assertCreated()
             ->assertJsonPath('message', 'Karyawan berhasil ditambahkan')
             ->assertJsonPath('data.role', 'cashier')
             ->assertJsonPath('data.has_pin', true)
             ->assertJsonPath('data.email', null)
+            ->assertJsonPath('data.username', 'budi')
+            ->assertJsonPath('data.has_password', true)
             ->assertJsonPath('data.outlet_id', $this->outlet->id)
             ->assertJsonMissingPath('data.pin')
             ->json('data.id');
@@ -40,12 +42,13 @@ describe('tambah', function () {
 
     it('manager wajib email + kata sandi; email disimpan huruf kecil', function () {
         $this->withToken($this->token)->postJson('/api/v1/users', employeeBody([
-            'name' => 'Sari', 'role' => 'manager', 'pin' => null, 'email' => 'SARI@Kopi.test', 'password' => 'rahasia123',
+            'name' => 'Sari', 'role' => 'manager', 'pin' => null, 'username' => null, 'email' => 'SARI@Kopi.test', 'password' => 'rahasia123',
         ]), apiHeaders())->assertCreated()->assertJsonPath('data.email', 'sari@kopi.test');
     });
 
     it('validasi', function (array $override, string $field) {
         User::factory()->create(['email' => 'pakai@kopi.test']);
+        TenantContext::run($this->tenantId, fn () => User::factory()->cashier()->forOutlet($this->outlet)->create(['username' => 'sari']));
 
         $response = $this->withToken($this->token)->postJson('/api/v1/users', employeeBody($override), apiHeaders());
 
@@ -55,8 +58,12 @@ describe('tambah', function () {
         'PIN berurutan' => [['pin' => '123456'], 'pin'],
         'PIN angka sama' => [['pin' => '000000'], 'pin'],
         'kasir tanpa PIN' => [['pin' => null], 'pin'],
-        'manager tanpa email' => [['role' => 'manager', 'password' => 'rahasia123'], 'email'],
-        'manager tanpa kata sandi' => [['role' => 'manager', 'email' => 'm@kopi.test'], 'password'],
+        'kasir tanpa username' => [['username' => null], 'username'],
+        'kasir tanpa kata sandi' => [['password' => null], 'password'],
+        'username tidak valid' => [['username' => 'budi santoso'], 'username'],
+        'username dipakai di bisnis sama' => [['username' => 'SARI'], 'username'],
+        'manager tanpa email' => [['role' => 'manager'], 'email'],
+        'manager tanpa kata sandi' => [['role' => 'manager', 'email' => 'm@kopi.test', 'password' => null], 'password'],
         'email terpakai' => [['role' => 'manager', 'email' => 'PAKAI@kopi.test', 'password' => 'rahasia123'], 'email'],
         'role tidak dikenal' => [['role' => 'boss'], 'role'],
     ]);
@@ -75,7 +82,9 @@ describe('tambah', function () {
 
 describe('ubah & nonaktifkan', function () {
     beforeEach(function () {
-        $this->cashier = TenantContext::run($this->tenantId, fn () => User::factory()->cashier()->forOutlet($this->outlet)->create(['pin' => '481920']));
+        $this->cashier = TenantContext::run($this->tenantId, fn () => User::factory()->cashier()->forOutlet($this->outlet)->create([
+            'pin' => '481920', 'username' => 'budi', 'password' => 'rahasia123',
+        ]));
     });
 
     it('ganti PIN memutus sesi lama & membuka kunci PIN', function () {
@@ -164,4 +173,10 @@ it('tenant hanya-baca: daftar boleh, tambah ditolak', function () {
     $this->withToken($this->token)->getJson('/api/v1/users', apiHeaders())->assertOk();
     freshAuth();
     assertApiError($this->withToken($this->token)->postJson('/api/v1/users', employeeBody(), apiHeaders()), 'SUBSCRIPTION_EXPIRED', 403);
+});
+
+it('username sama boleh di bisnis lain', function () {
+    TenantContext::run(Outlet::factory()->create()->tenant_id, fn () => User::factory()->cashier()->create(['username' => 'budi']));
+
+    $this->withToken($this->token)->postJson('/api/v1/users', employeeBody(), apiHeaders())->assertCreated();
 });

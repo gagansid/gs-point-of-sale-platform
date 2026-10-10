@@ -46,7 +46,7 @@ final class UserController extends Controller
         $users = User::query()
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $like = '%'.addcslashes($search, '%_\\').'%';
-                $query->where(fn (Builder $q) => $q->where('name', 'like', $like)->orWhere('email', 'like', $like));
+                $query->where(fn (Builder $q) => $q->where('name', 'like', $like)->orWhere('email', 'like', $like)->orWhere('username', 'like', $like));
             })
             ->when(filled($validated['role'] ?? null), fn (Builder $q) => $q->where('role', $validated['role']))
             ->when($request->has('is_active'), fn (Builder $q) => $q->where('is_active', $request->boolean('is_active')))
@@ -70,7 +70,8 @@ final class UserController extends Controller
     /**
      * Tambah karyawan.
      *
-     * Owner/manager: email + password wajib. Supervisor/kasir: pin 6 digit wajib (login tablet).
+     * Owner/manager: email + password wajib. Supervisor/kasir: pin 6 digit (tablet) + username &
+     * password (kasir web, SPEC Q35) wajib.
      * `id` opsional sebagai idempotency key.
      */
     public function store(EmployeeRequest $request, SaveEmployee $action): JsonResponse
@@ -99,6 +100,7 @@ final class UserController extends Controller
             'name' => $user->name,
             'role' => $user->role,
             'email' => $user->email,
+            'username' => $user->username,
             ...$request->safe()->except(['is_active']),
         ]);
 

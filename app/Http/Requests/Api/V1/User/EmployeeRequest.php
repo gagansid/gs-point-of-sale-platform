@@ -7,6 +7,7 @@ namespace App\Http\Requests\Api\V1\User;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Rules\SecurePin;
+use App\Support\TenantContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -24,8 +25,10 @@ final class EmployeeRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        if ($this->filled('email')) {
-            $this->merge(['email' => mb_strtolower(trim((string) $this->input('email')))]);
+        foreach (['email', 'username'] as $field) {
+            if ($this->filled($field)) {
+                $this->merge([$field => mb_strtolower(trim((string) $this->input($field)))]);
+            }
         }
     }
 
@@ -34,6 +37,8 @@ final class EmployeeRequest extends FormRequest
     {
         $employee = $this->route('user');
         $isUpdate = $employee instanceof User;
+        // POST ulang dengan id yang sama (idempotency) tidak boleh ditolak "sudah dipakai" oleh dirinya sendiri
+        $ignoreId = $isUpdate ? $employee->id : (is_string($this->input('id')) ? $this->input('id') : null);
         $sometimes = $isUpdate ? 'sometimes' : 'required';
 
         return [
@@ -41,7 +46,10 @@ final class EmployeeRequest extends FormRequest
             'name' => [$sometimes, 'string', 'max:100'],
             'role' => [$sometimes, Rule::enum(UserRole::class)],
             // Unik global (login email lintas tenant), termasuk akun yang dinonaktifkan/dihapus lunak
-            'email' => ['sometimes', 'nullable', 'string', 'email', 'max:150', Rule::unique('users', 'email')->ignore($isUpdate ? $employee->id : null)],
+            'email' => ['sometimes', 'nullable', 'string', 'email', 'max:150', Rule::unique('users', 'email')->ignore($ignoreId)],
+            // Kasir web (SPEC Q35): huruf kecil/angka/._- , unik per tenant
+            'username' => ['sometimes', 'nullable', 'string', 'min:3', 'max:30', 'regex:/^[a-z0-9._-]+$/',
+                Rule::unique('users', 'username')->where('tenant_id', TenantContext::id())->ignore($ignoreId)],
             'password' => ['sometimes', 'nullable', 'string', 'max:255', Password::defaults()],
             'pin' => ['sometimes', 'nullable', 'string', new SecurePin],
             'is_active' => ['sometimes', 'boolean'],
@@ -51,6 +59,12 @@ final class EmployeeRequest extends FormRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['name' => 'nama', 'role' => 'role', 'email' => 'email', 'password' => 'kata sandi', 'pin' => 'PIN'];
+        return ['name' => 'nama', 'role' => 'role', 'email' => 'email', 'username' => 'username', 'password' => 'kata sandi', 'pin' => 'PIN'];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['username.regex' => 'Username hanya huruf kecil, angka, titik, garis bawah, atau tanda hubung.'];
     }
 }

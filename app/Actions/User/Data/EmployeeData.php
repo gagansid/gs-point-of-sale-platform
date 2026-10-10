@@ -17,6 +17,7 @@ final readonly class EmployeeData
         public string $name,
         public UserRole $role,
         public ?string $email,
+        public ?string $username,
         public ?string $password,
         public ?string $pin,
     ) {}
@@ -31,6 +32,7 @@ final readonly class EmployeeData
             name: trim((string) $data['name']),
             role: $role,
             email: filled($data['email'] ?? null) ? mb_strtolower(trim((string) $data['email'])) : null,
+            username: filled($data['username'] ?? null) ? mb_strtolower(trim((string) $data['username'])) : null,
             password: filled($data['password'] ?? null) ? (string) $data['password'] : null,
             pin: filled($data['pin'] ?? null) ? (string) $data['pin'] : null,
         );
