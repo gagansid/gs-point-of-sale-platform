@@ -37,6 +37,11 @@ final class Theme
             'warning' => Color::Amber,
             'danger' => Color::Red,
             'info' => Color::Blue,
+            // Level role (UserRole::getColor): khusus badge role, bukan warna status
+            'role-owner' => Color::Violet,
+            'role-manager' => Color::Blue,
+            'role-supervisor' => Color::Teal,
+            'role-cashier' => Color::Slate,
         ];
     }
 }

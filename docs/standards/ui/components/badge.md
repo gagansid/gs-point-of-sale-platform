@@ -35,7 +35,7 @@ Warna & label **hanya** didefinisikan di enum (`HasColor`, `HasLabel`). Tabel in
 | `PaymentCategory` | `cash` → Tunai · `qris` → QRIS · `transfer` → Transfer · `debit` → Debit · `credit` → Kredit — semua gray |
 | `OrderType` | `takeaway` → Bawa pulang · `dine_in` → Makan di tempat — gray |
 | `TenantStatus` | `trial` → Trial → warning · `active` → Aktif → success · `suspended` → Ditangguhkan → danger |
-| `UserRole` | `owner` → Owner → primary · `manager` → Manager → info · `supervisor` → Supervisor → gray · `cashier` → Kasir → gray |
+| `UserRole` | `owner` → Owner → role-owner (ungu) · `manager` → Manager → role-manager (biru) · `supervisor` → Supervisor → role-supervisor (teal) · `cashier` → Kasir → role-cashier (abu) |
 | Aktif (bool) | Aktif → success · Nonaktif → gray |
 | Stok | ≤ 0 → Habis → danger · ≤ ambang → Menipis → warning |
 
@@ -43,6 +43,8 @@ Warna & label **hanya** didefinisikan di enum (`HasColor`, `HasLabel`). Tabel in
 
 Aturan warna: **success** = beres, **warning** = perlu perhatian, **danger** = gagal/dibatalkan,
 **info** = sedang berjalan, **gray** = informasi netral. Jangan memakai warna lain.
+Pengecualian: **level role** memakai palet `role-*` (didaftarkan di `App\Filament\Shared\Theme`) agar setiap
+level berbeda tanpa meminjam makna warna status.
 
 ## Aksesibilitas
 

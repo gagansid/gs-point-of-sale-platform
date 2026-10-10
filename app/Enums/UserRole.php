@@ -153,10 +153,12 @@ enum UserRole: string implements HasColor, HasLabel
 
     public function getColor(): string
     {
+        // Satu warna per level (palet role-* di Theme): owner → manager → supervisor → kasir
         return match ($this) {
-            self::Owner => 'primary',
-            self::Manager => 'info',
-            self::Supervisor, self::Cashier => 'gray',
+            self::Owner => 'role-owner',
+            self::Manager => 'role-manager',
+            self::Supervisor => 'role-supervisor',
+            self::Cashier => 'role-cashier',
         };
     }
 }

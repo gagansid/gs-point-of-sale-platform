@@ -56,7 +56,10 @@ it('wildcard tidak mengizinkan ability yang tidak dikenal', function (UserRole $
     [UserRole::Supervisor, 'order'],
 ]);
 
-it('punya label Indonesia dan warna badge', function () {
+it('punya label Indonesia dan warna badge berbeda per level', function () {
+    $colors = array_map(fn (UserRole $role): string => $role->getColor(), UserRole::cases());
+
     expect(UserRole::Cashier->getLabel())->toBe('Kasir')
-        ->and(UserRole::Owner->getColor())->toBe('primary');
+        ->and(UserRole::Owner->getColor())->toBe('role-owner')
+        ->and(array_unique($colors))->toHaveCount(count(UserRole::cases()));
 });
