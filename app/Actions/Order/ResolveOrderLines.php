@@ -27,7 +27,12 @@ final class ResolveOrderLines
     public function handle(array $items): array
     {
         $products = Product::query()
-            ->with('optionGroups.options')
+            // Grup opsi nonaktif diabaikan: opsinya ditolak dan aturan wajib-pilihnya tidak berlaku (Q27)
+            ->with([
+                'category:id,is_active',
+                'optionGroups' => fn ($query) => $query->where('option_groups.is_active', true),
+                'optionGroups.options',
+            ])
             ->whereIn('id', array_column($items, 'product_id'))
             ->get()
             ->keyBy('id');
@@ -38,7 +43,8 @@ final class ResolveOrderLines
         foreach ($items as $index => $item) {
             $product = $products->get($item['product_id']);
 
-            if ($product === null || ! $product->is_active) {
+            // Produk nonaktif atau berada di kategori nonaktif tidak bisa dijual
+            if ($product === null || ! $product->is_active || $product->category?->is_active === false) {
                 $errors["items.{$index}.product_id"] = ['Produk tidak tersedia'];
 
                 continue;

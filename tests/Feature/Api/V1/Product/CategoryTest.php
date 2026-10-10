@@ -91,3 +91,16 @@ it('menghapus kategori tanpa menghapus produknya', function () {
     expect(Category::allTenants()->find($category->id))->toBeNull()
         ->and(Product::allTenants()->find($product->id)?->category_id)->toBeNull();
 });
+
+it('menonaktifkan kategori; status tetap bila tidak dikirim', function () {
+    $category = TenantContext::run($this->outlet->tenant_id, fn () => Category::factory()->create());
+
+    $this->withToken($this->token)->putJson("/api/v1/categories/{$category->id}", ['name' => 'Kopi', 'is_active' => false], apiHeaders())
+        ->assertOk()
+        ->assertJsonPath('data.is_active', false);
+
+    freshAuth();
+    $this->withToken($this->token)->putJson("/api/v1/categories/{$category->id}", ['name' => 'Kopi Susu'], apiHeaders())
+        ->assertOk()
+        ->assertJsonPath('data.is_active', false);
+});

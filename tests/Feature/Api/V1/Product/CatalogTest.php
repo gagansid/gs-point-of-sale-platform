@@ -90,3 +90,32 @@ it('tenant baru otomatis punya 5 metode bayar bawaan', function () {
     expect($methods->pluck('category')->map->value->all())->toBe(['cash', 'qris', 'transfer', 'debit', 'credit'])
         ->and($methods->where('requires_reference', true)->pluck('name')->all())->toBe(['Debit', 'Kredit']);
 });
+
+it('kategori & grup opsi nonaktif tidak dikirim; produk di kategori nonaktif ikut disembunyikan (Q27)', function () {
+    TenantContext::run($this->tenantId, function () {
+        $this->category->update(['is_active' => false]);
+        $this->size->update(['is_active' => false]);
+        Product::factory()->create(['name' => 'Air Mineral']);
+    });
+
+    $response = $this->withToken(userToken($this->cashier))->getJson('/api/v1/catalog', apiHeaders())->assertOk();
+
+    expect($response->json('data.categories'))->toBe([])
+        ->and($response->json('data.option_groups'))->toBe([])
+        ->and(array_column($response->json('data.products'), 'name'))->toBe(['Air Mineral']);
+});
+
+it('grup opsi nonaktif dilepas dari option_group_ids produk di katalog', function () {
+    $sugar = TenantContext::run($this->tenantId, function () {
+        $sugar = OptionGroup::factory()->create(['name' => 'Gula', 'is_active' => false]);
+        $this->product->optionGroups()->attach($sugar->id, ['sort_order' => 1]);
+
+        return $sugar;
+    });
+
+    $response = $this->withToken(userToken($this->cashier))->getJson('/api/v1/catalog', apiHeaders())->assertOk();
+    $coffee = collect($response->json('data.products'))->firstWhere('name', 'Es Kopi Susu');
+
+    expect($coffee['option_group_ids'])->toBe([$this->size->id])
+        ->and($coffee['option_group_ids'])->not->toContain($sugar->id);
+});

@@ -37,6 +37,7 @@ final class SaveOptionGroup
                 'name' => $data->name,
                 'min_select' => $data->minSelect,
                 'max_select' => $data->maxSelect,
+                'is_active' => $data->isActive,
             ])->save();
 
             $keep = [];

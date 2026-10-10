@@ -19,6 +19,7 @@ final readonly class OptionGroupData
         public string $name,
         public int $minSelect,
         public int $maxSelect,
+        public bool $isActive,
         public array $options,
     ) {}
 
@@ -39,6 +40,7 @@ final readonly class OptionGroupData
             name: trim((string) $data['name']),
             minSelect: (int) $data['min_select'],
             maxSelect: (int) $data['max_select'],
+            isActive: (bool) ($data['is_active'] ?? true),
             options: $options,
         );
     }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\OptionGroups\Tables;
 
 use App\Actions\Product\DeleteOptionGroup;
+use App\Actions\Product\SetOptionGroupActive;
+use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\BulkDeleteAction;
 use App\Filament\Shared\Layout;
 use App\Filament\Shared\Tables\TableEmptyState;
@@ -14,6 +16,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -41,6 +44,7 @@ final class OptionGroupsTable
                         ->orderBy('min_select', $direction === 'asc' ? 'desc' : 'asc')
                         ->orderBy('max_select', $direction)),
                 TextColumn::make('products_count')->label('Dipakai produk')->numeric(locale: 'id')->alignEnd()->sortable(),
+                IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable(),
             ])
             ->filters([
                 TernaryFilter::make('required')
@@ -63,6 +67,13 @@ final class OptionGroupsTable
             ->recordActions([
                 EditAction::make()->iconButton()->tooltip('Ubah'),
                 ActionGroup::make([
+                    ...ActiveStatusActions::make(
+                        OptionGroup::class,
+                        fn (OptionGroup $group, bool $active) => app(SetOptionGroupActive::class)->handle($group, $active),
+                        'grup opsi',
+                        'Grup tidak tampil di produk mana pun di aplikasi kasir dan tidak lagi wajib dipilih.',
+                        'product.manage',
+                    ),
                     DeleteAction::make()
                         ->modalHeading('Hapus grup opsi')
                         ->modalDescription(fn (OptionGroup $record): HtmlString => Layout::confirmText(

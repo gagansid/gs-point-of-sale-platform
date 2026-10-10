@@ -21,6 +21,7 @@ final class OptionGroupRequest extends FormRequest
             'name' => ['required', 'string', 'max:100'],
             'min_select' => ['required', 'integer', 'min:0', 'max:20'],
             'max_select' => ['required', 'integer', 'min:1', 'max:20', 'gte:min_select'],
+            'is_active' => ['sometimes', 'boolean'],
             'options' => ['required', 'array', 'min:1', 'max:50'],
             'options.*.id' => ['nullable', 'uuid'],
             'options.*.name' => ['required', 'string', 'max:100', 'distinct'],

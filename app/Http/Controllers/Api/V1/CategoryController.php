@@ -30,6 +30,7 @@ final class CategoryController extends Controller
             $request->string('name')->toString(),
             $request->has('sort_order') ? $request->integer('sort_order') : null,
             $request->filled('id') ? $request->string('id')->toString() : null,
+            $request->has('is_active') ? $request->boolean('is_active') : null,
         );
 
         return ApiResponse::success(
@@ -49,6 +50,7 @@ final class CategoryController extends Controller
             $category,
             $request->string('name')->toString(),
             $request->has('sort_order') ? $request->integer('sort_order') : null,
+            isActive: $request->has('is_active') ? $request->boolean('is_active') : null,
         );
 
         return ApiResponse::success(CategoryResource::make($result['category'])->resolve($request), 'Kategori berhasil diperbarui');

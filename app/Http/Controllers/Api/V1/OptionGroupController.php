@@ -43,7 +43,11 @@ final class OptionGroupController extends Controller
      */
     public function update(OptionGroupRequest $request, OptionGroup $optionGroup, SaveOptionGroup $action): JsonResponse
     {
-        $result = $action->handle($optionGroup, OptionGroupData::fromArray($request->safe()->except('id')));
+        $result = $action->handle($optionGroup, OptionGroupData::fromArray([
+            // Status yang tidak dikirim tetap memakai nilai lama
+            'is_active' => $optionGroup->is_active,
+            ...$request->safe()->except('id'),
+        ]));
 
         return ApiResponse::success(OptionGroupResource::make($result['group'])->resolve($request), 'Grup opsi berhasil diperbarui');
     }

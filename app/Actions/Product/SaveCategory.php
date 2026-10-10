@@ -14,15 +14,16 @@ use Illuminate\Support\Facades\DB;
 final class SaveCategory
 {
     /**
+     * @param  bool|null  $isActive  null = tidak berubah (kategori baru: aktif)
      * @return array{category: Category, replayed: bool}
      */
-    public function handle(?Category $category, string $name, ?int $sortOrder = null, ?string $id = null): array
+    public function handle(?Category $category, string $name, ?int $sortOrder = null, ?string $id = null, ?bool $isActive = null): array
     {
         if ($category === null && ($existing = Idempotency::existing(Category::class, $id)) !== null) {
             return ['category' => $existing, 'replayed' => true];
         }
 
-        $category = DB::transaction(function () use ($category, $name, $sortOrder, $id): Category {
+        $category = DB::transaction(function () use ($category, $name, $sortOrder, $id, $isActive): Category {
             $category ??= new Category;
 
             if (! $category->exists && $id !== null) {
@@ -33,6 +34,7 @@ final class SaveCategory
                 'name' => trim($name),
                 // Kategori baru di urutan terakhir bila urutan tidak ditentukan
                 'sort_order' => $sortOrder ?? ($category->exists ? $category->sort_order : (int) Category::query()->max('sort_order') + 1),
+                'is_active' => $isActive ?? ($category->exists ? $category->is_active : true),
             ])->save();
 
             return $category;

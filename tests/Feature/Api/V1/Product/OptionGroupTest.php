@@ -120,3 +120,15 @@ it('menghapus grup opsi melepasnya dari produk', function () {
     expect(OptionGroup::allTenants()->find($group->id))->toBeNull()
         ->and($product->optionGroups()->count())->toBe(0);
 });
+
+it('menonaktifkan grup opsi; status tetap bila tidak dikirim', function () {
+    $id = $this->withToken($this->token)->postJson('/api/v1/option-groups', groupBody(['is_active' => false]), apiHeaders())
+        ->assertCreated()
+        ->assertJsonPath('data.is_active', false)
+        ->json('data.id');
+
+    freshAuth();
+    $this->withToken($this->token)->putJson("/api/v1/option-groups/{$id}", groupBody(['name' => 'Ukuran Gelas']), apiHeaders())
+        ->assertOk()
+        ->assertJsonPath('data.is_active', false);
+});

@@ -3,12 +3,14 @@
 declare(strict_types=1);
 
 use App\Enums\StockMovementType;
+use App\Models\Category;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Support\TenantContext;
 use Illuminate\Support\Carbon;
 use Illuminate\Testing\TestResponse;
 
@@ -164,6 +166,23 @@ describe('validasi & aturan bisnis', function () {
         $owner = User::factory()->owner()->create(['tenant_id' => $this->pos->tenantId]);
 
         assertApiError(checkout($this, cart($this->pos), userToken($owner)), 'DEVICE_NOT_REGISTERED', 403);
+    });
+
+    it('produk di kategori nonaktif ditolak; grup opsi nonaktif diabaikan (Q27)', function () {
+        $category = TenantContext::run($this->pos->tenantId, fn () => Category::factory()->create(['is_active' => false]));
+        $this->pos->croissant->update(['category_id' => $category->id]);
+
+        checkout($this, cart($this->pos))->assertJsonPath('error.details', ['items.1.product_id' => ['Produk tidak tersedia']]);
+
+        // Grup Ukuran (wajib pilih 1) dinonaktifkan: boleh tanpa opsi, opsinya ditolak bila dikirim
+        $this->pos->croissant->update(['category_id' => null]);
+        $this->pos->size->update(['is_active' => false]);
+
+        $withoutOption = cart($this->pos, ['items' => [['product_id' => $this->pos->coffee->id, 'qty' => 1]]]);
+        checkout($this, $withoutOption)->assertCreated();
+
+        $withInactiveOption = cart($this->pos, ['items' => [['product_id' => $this->pos->coffee->id, 'qty' => 1, 'option_ids' => [$this->pos->large->id]]]]);
+        assertApiError(checkout($this, $withInactiveOption), 'VALIDATION_ERROR', 422);
     });
 
     it('menu habis / nonaktif ditolak per item', function () {

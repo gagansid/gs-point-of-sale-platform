@@ -19,6 +19,7 @@ final class OptionGroupResource extends JsonResource
             'name' => $this->name,
             'min_select' => $this->min_select,
             'max_select' => $this->max_select,
+            'is_active' => $this->is_active,
             'options' => OptionResource::collection($this->whenLoaded('options')),
         ];
     }

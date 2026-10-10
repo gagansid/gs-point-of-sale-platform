@@ -21,6 +21,7 @@ final class CategoryRequest extends FormRequest
             'id' => ['sometimes', 'uuid'],
             'name' => ['required', 'string', 'max:100'],
             'sort_order' => ['sometimes', 'integer', 'min:0', 'max:65535'],
+            'is_active' => ['sometimes', 'boolean'],
         ];
     }
 

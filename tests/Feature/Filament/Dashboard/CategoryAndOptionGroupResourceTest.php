@@ -118,3 +118,47 @@ it('filter grup opsi: wajib/opsional dan dipakai/belum', function () {
         ->assertCanSeeTableRecords([$optional])
         ->assertCanNotSeeTableRecords([$required]);
 });
+
+it('status kategori: tab aktif/nonaktif, nonaktifkan berkonfirmasi, aktifkan langsung', function () {
+    $active = Category::factory()->create(['name' => 'Kopi']);
+    $inactive = Category::factory()->create(['is_active' => false]);
+
+    $action = Livewire::test(ManageCategories::class)
+        ->set('activeTab', 'inactive')
+        ->assertCanSeeTableRecords([$inactive])
+        ->assertCanNotSeeTableRecords([$active])
+        ->set('activeTab', 'all')
+        ->assertActionHidden(TestAction::make('activate')->table($active))
+        ->mountAction(TestAction::make('deactivate')->table($active))
+        ->instance()->getMountedAction();
+
+    expect($action?->isConfirmationRequired())->toBeTrue()
+        ->and($active->refresh()->is_active)->toBeTrue();
+
+    Livewire::test(ManageCategories::class)->callAction(TestAction::make('deactivate')->table($active));
+    Livewire::test(ManageCategories::class)->callAction(TestAction::make('activate')->table($inactive));
+
+    expect($active->refresh()->is_active)->toBeFalse()
+        ->and($inactive->refresh()->is_active)->toBeTrue();
+});
+
+it('form grup opsi: tombol Tambah opsi menambah baris tabel lalu tersimpan berurutan', function () {
+    $component = Livewire::test(CreateOptionGroup::class)
+        ->fillForm(['name' => 'Gula', 'min_select' => 0, 'max_select' => 1, 'is_active' => false])
+        ->set('data.options', [])
+        ->callAction(TestAction::make('addOption')->schemaComponent('optionsSection', schema: 'form'))
+        ->callAction(TestAction::make('addOption')->schemaComponent('optionsSection', schema: 'form'));
+
+    $keys = array_keys($component->get('data.options'));
+    expect($keys)->toHaveCount(2);
+
+    $component
+        ->set("data.options.{$keys[0]}.name", 'Normal')
+        ->set("data.options.{$keys[1]}.name", 'Less sugar')
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $group = OptionGroup::query()->where('name', 'Gula')->sole();
+    expect($group->is_active)->toBeFalse()
+        ->and($group->options()->pluck('name')->all())->toBe(['Normal', 'Less sugar']);
+});

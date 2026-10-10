@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\OptionGroup;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -27,12 +28,15 @@ final class GetCatalog
     public function handle(): array
     {
         return [
-            'categories' => Category::query()->orderBy('sort_order')->orderBy('name')->get(),
+            // Kategori/grup opsi nonaktif tidak dikirim; produk di kategori nonaktif ikut disembunyikan (Q27)
+            'categories' => Category::query()->active()->orderBy('sort_order')->orderBy('name')->get(),
             'products' => Product::query()->active()
-                ->with('optionGroups:id')
+                ->where(fn (Builder $query) => $query->whereNull('category_id')
+                    ->orWhereHas('category', fn (Builder $category) => $category->where('is_active', true)))
+                ->with(['optionGroups' => fn ($query) => $query->select('option_groups.id')->where('option_groups.is_active', true)])
                 ->orderBy('sort_order')->orderBy('name')
                 ->get(),
-            'option_groups' => OptionGroup::query()->with('options')->orderBy('sort_order')->orderBy('name')->get(),
+            'option_groups' => OptionGroup::query()->active()->with('options')->orderBy('sort_order')->orderBy('name')->get(),
             'payment_methods' => PaymentMethod::query()->active()->orderBy('sort_order')->get(),
         ];
     }
