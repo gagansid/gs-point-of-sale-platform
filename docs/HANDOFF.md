@@ -1,8 +1,8 @@
 # Catatan Lanjut Pengerjaan
 
-> Dibuat: 2026-10-10 · Branch: `feature/pos` · Commit terakhir: `91c6c84`
-> Status saat ditulis: **multi-outlet M2–M6 selesai tetapi BELUM di-commit** (112 file berubah).
-> Kualitas: 656 test lulus (SQLite), Pint & Larastan level 6 bersih.
+> Diperbarui: 2026-10-10 · Branch: `feature/pos`
+> Status: **multi-outlet (ADR 0010) dan menu per outlet (ADR 0011) selesai & di-commit.**
+> Kualitas: 691 test lulus (SQLite & MySQL `gspos_test`), Pint & Larastan level 6 bersih.
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
 ---
@@ -24,7 +24,7 @@
   template menu, lead → tenant, lupa kata sandi, edisi jual putus + `pos:install`.
 - Setelan: Profil outlet, Karyawan (PIN + username/kata sandi untuk kasir web), Metode pembayaran.
 
-### Multi-outlet (ADR 0010, SPEC Q36–Q41) — selesai, BELUM di-commit
+### Multi-outlet (ADR 0010, SPEC Q36–Q41) — selesai, di-commit (`be9f86c`)
 | Langkah | Isi |
 |---|---|
 | M2 Data | Migrasi `2026_10_11_100000_add_multi_outlet`: `outlet_user`, `outlet_product` (stok, stok minimum, tersedia per outlet), `tenants.max_outlets`, `outlets.is_active`, `stock_movements.outlet_id`. Kolom stok di `products` & `users.outlet_id` dihapus, data lama dipindahkan |
@@ -39,24 +39,34 @@ Keputusan penting:
 - Outlet tidak pernah dihapus; nonaktif = perangkatnya tidak bisa bertransaksi, laporan tetap ada.
 - Dokumentasi sudah diperbarui: SPEC, `docs/api/{auth,settings,product,report,README}.md`, `docs/PROGRESS.md` §1c.
 
+### Menu & metode bayar per outlet (ADR 0011, SPEC Q42–Q45) — selesai, di-commit
+| Langkah | Isi |
+|---|---|
+| P1 Keputusan | Opsi B: katalog bersama, produk dipilih per outlet, **harga tetap sama** (harga per outlet di backlog); metode bayar cukup aktif/nonaktif per outlet; SPEC Q39 diganti |
+| P2 Data | `outlet_product.is_listed`, `outlet_option`, `outlet_payment_method`. **Tanpa baris = dijual/tersedia/aktif** (sama dengan stok outlet), jadi data lama tidak disalin |
+| P3 Action | `SetProductListing` (lewat `SaveProduct`, hanya outlet aktif yang dipegang user), `SetOptionAvailability`, `SetPaymentMethodAtOutlet` (tunai selalu aktif), `CreateOutlet` `copyMenuFrom` |
+| P4 Dashboard | Form produk "Dijual di outlet", badge/filter "Tidak dijual", aksi "Opsi habis" (outlet topbar), metode bayar "Aktif di outlet" + kolom Outlet, tambah outlet "Salin menu & metode bayar dari" |
+| P5 API | `/catalog` per outlet perangkat (+ `options[].is_available`, kategori kosong tidak dikirim); checkout/tambah bayar menolak dengan `VALIDATION_ERROR` per field |
+
+Catatan untuk Flutter: field baru `options[].is_available`; kategori aktif tanpa produk di outlet tidak lagi dikirim.
+
 ---
 
 ## 2. Belum dikerjakan
 
 | Prioritas | Pekerjaan | Catatan |
 |---|---|---|
-| 1 | **Commit multi-outlet** | Contoh pesan: `feat(dashboard): multi-outlet with per-outlet stock and access (ADR 0010)` |
-| 2 | Import produk dari Excel | `maatwebsite/excel`, simpan lewat `SaveProduct` (perlu outlet untuk stok awal), cegah formula injection (`SafeCell`) |
-| 3 | Kasir web | Login: slug bisnis + username + kata sandi (SPEC Q35); cadangan bila tablet rusak; pakai outlet dari pilihan kasir |
-| 4 | Minggu 7 — panel admin | Versi aplikasi, pengumuman, backup, log viewer, queue, rate limit & audit keamanan |
-| 5 | Minggu 8 — deploy | cPanel, uji MySQL ulang (fitur 9–10 Okt & migrasi multi-outlet), uji dengan Flutter, pilot |
+| 1 | Import produk dari Excel | `maatwebsite/excel`, simpan lewat `SaveProduct` (perlu outlet untuk stok awal; kolom "dijual di outlet" opsional), cegah formula injection (`SafeCell`) |
+| 2 | Kasir web | Login: slug bisnis + username + kata sandi (SPEC Q35); cadangan bila tablet rusak; pakai outlet dari pilihan kasir |
+| 3 | Minggu 7 — panel admin | Versi aplikasi, pengumuman, backup, log viewer, queue, rate limit & audit keamanan |
+| 4 | Minggu 8 — deploy | cPanel, uji MySQL ulang (fitur 9–10 Okt & migrasi multi-outlet), uji dengan Flutter, pilot |
 | Ditunda | Menu Perangkat (S4) & aplikasi tablet | Fase tablet/aplikasi kasir |
 
 Utang teknis tersisa (lihat PROGRESS): T1 cache widget beranda, T2 gambar lama tidak terhapus,
 T3 cetak struk dari web, T4 Node lokal, T5 rencana PHP 8.3 + Laravel 13, T6 `POS_ADMIN_2FA_REQUIRED=true` di production.
 
 Ide lanjutan multi-outlet (opsional): stok "Semua outlet" sebagai total, transfer stok antar outlet,
-filter Karyawan per outlet, test migrasi data multi-outlet di MySQL.
+filter Karyawan per outlet, test migrasi data multi-outlet di MySQL, harga & nama metode bayar per outlet (ADR 0011, ditunda).
 
 ---
 

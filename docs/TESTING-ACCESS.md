@@ -59,3 +59,19 @@ Sumber resmi: tabel permission di `docs/SPEC.md` dan `App\Enums\UserRole::permis
 - Owner: tugaskan Budi ke outlet ke-2 di Karyawan → Budi tidak muncul di layar PIN perangkat `DEMO01`.
 - Admin: ubah "Maksimal outlet aktif" bisnis → tambah outlet melebihi batas ditolak.
 - Bisnis hanya-baca: set "Langganan berakhir" ke kemarin di admin → dashboard tampil banner, simpan ditolak.
+
+### Menu & metode bayar per outlet (ADR 0011)
+
+Butuh minimal 2 outlet aktif (demo: Kopi Senja Kemang & Kopi Senja Cilandak).
+
+- Owner: Produk → Ubah → hapus centang satu outlet di "Dijual di outlet" → pilih outlet itu di topbar →
+  daftar produk menampilkan badge "Tidak dijual"; filter "Dijual di outlet ini" berfungsi.
+- Manager (satu outlet): form produk hanya menampilkan outletnya; outlet lain tidak berubah saat disimpan.
+- Grup opsi → menu baris "Opsi habis" → centang Large → badge Large merah (hanya di outlet topbar).
+- Metode pembayaran → Ubah QRIS → hapus centang satu outlet → kolom Outlet "1 dari 2 outlet" (tooltip
+  menyebut outletnya). Tunai tidak punya pilihan outlet.
+- Outlet → Tambah → "Salin menu & metode bayar dari" outlet tadi → produk yang tidak dijual & QRIS nonaktif
+  ikut tersalin; stok dan opsi habis tidak.
+- API (perangkat outlet itu): `/catalog` tidak berisi produk tidak dijual & QRIS; `options[].is_available`
+  false untuk Large; checkout dengan produk/opsi/metode tersebut → `422 VALIDATION_ERROR` per field.
+- Selesai uji: kembalikan centang semua outlet agar data demo seperti semula.
