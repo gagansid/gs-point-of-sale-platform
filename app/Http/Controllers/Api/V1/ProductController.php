@@ -19,6 +19,7 @@ use App\Http\Resources\Api\V1\StockMovementResource;
 use App\Models\Product;
 use App\Support\ApiActor;
 use App\Support\ApiResponse;
+use App\Support\CurrentOutlet;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -38,7 +39,9 @@ final class ProductController extends Controller
     {
         $search = $request->string('search')->trim()->toString();
 
+        // Stok & ketersediaan dari outlet device (ADR 0010)
         $products = Product::query()
+            ->atOutlet(CurrentOutlet::getOrFail()->id)
             ->with('optionGroups:id')
             ->when($search !== '', function (Builder $query) use ($search): void {
                 // LIKE dengan binding; karakter wildcard dari input di-escape
@@ -68,7 +71,7 @@ final class ProductController extends Controller
      */
     public function barcode(Request $request, string $code): JsonResponse
     {
-        $product = Product::query()->active()->with('optionGroups:id')->where('barcode', $code)->firstOrFail();
+        $product = Product::query()->atOutlet(CurrentOutlet::getOrFail()->id)->active()->with('optionGroups:id')->where('barcode', $code)->firstOrFail();
 
         return ApiResponse::success(ProductResource::make($product)->resolve($request));
     }
@@ -80,7 +83,7 @@ final class ProductController extends Controller
      */
     public function store(ProductRequest $request, SaveProduct $action): JsonResponse
     {
-        $result = $action->handle(null, ProductData::fromArray($request->validated()), ApiActor::user($request));
+        $result = $action->handle(null, ProductData::fromArray($request->validated()), CurrentOutlet::getOrFail(), ApiActor::user($request));
 
         return ApiResponse::success(
             ProductResource::make($result['product']->load('optionGroups:id'))->resolve($request),
@@ -97,6 +100,9 @@ final class ProductController extends Controller
      */
     public function update(ProductRequest $request, Product $product, SaveProduct $action): JsonResponse
     {
+        $outlet = CurrentOutlet::getOrFail();
+        $product->loadOutletState($outlet->id);
+
         $data = ProductData::fromArray([
             // Field yang tidak dikirim tetap memakai nilai lama
             'is_active' => $product->is_active,
@@ -107,7 +113,7 @@ final class ProductController extends Controller
             ...$request->safe()->except('id'),
         ]);
 
-        $result = $action->handle($product, $data, ApiActor::user($request));
+        $result = $action->handle($product, $data, $outlet, ApiActor::user($request));
 
         return ApiResponse::success(
             ProductResource::make($result['product']->load('optionGroups:id'))->resolve($request),
@@ -137,6 +143,7 @@ final class ProductController extends Controller
     {
         $result = $action->handle(
             $product,
+            CurrentOutlet::getOrFail(),
             ApiActor::user($request),
             $request->string('id')->toString(),
             $request->integer('qty_change'),
@@ -156,7 +163,7 @@ final class ProductController extends Controller
      */
     public function availability(AvailabilityRequest $request, Product $product, SetProductAvailability $action): JsonResponse
     {
-        $product = $action->handle($product, $request->boolean('is_available'));
+        $product = $action->handle($product, CurrentOutlet::getOrFail(), $request->boolean('is_available'));
 
         return ApiResponse::success(
             ProductResource::make($product)->resolve($request),

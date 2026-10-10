@@ -8,6 +8,7 @@ use App\Filament\Dashboard\Pages\OutletSettings;
 use App\Filament\Dashboard\Resources\Categories\CategoryResource;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
 use App\Models\Category;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Tenant;
 
@@ -22,16 +23,13 @@ final class SetupProgress
      */
     public static function steps(Tenant $tenant): array
     {
-        $outlet = CurrentOutlet::get();
-
         $steps = [
             [
                 'key' => 'outlet',
                 'label' => 'Lengkapi profil outlet',
                 'hint' => 'Alamat, pajak, service charge, dan pembulatan',
-                // Dianggap selesai setelah disimpan sekali (diubah sejak dibuat)
-                'done' => $outlet !== null && $outlet->updated_at !== null && $outlet->created_at !== null
-                    && $outlet->updated_at->greaterThan($outlet->created_at),
+                // Dianggap selesai setelah profil salah satu outlet disimpan sekali (diubah sejak dibuat)
+                'done' => Outlet::query()->whereColumn('updated_at', '>', 'created_at')->exists(),
                 'url' => OutletSettings::getUrl(),
             ],
             [

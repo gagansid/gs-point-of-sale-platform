@@ -40,6 +40,7 @@ final class EditTenant extends EditRecord
             (string) $data['slug'],
             $data['business_type'] instanceof BusinessType ? $data['business_type'] : BusinessType::from((string) $data['business_type']),
             filled($endsAt) ? CarbonImmutable::parse($endsAt) : null,
+            filled($data['max_outlets'] ?? null) ? (int) $data['max_outlets'] : null,
         );
     }
 

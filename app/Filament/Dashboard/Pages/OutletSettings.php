@@ -8,6 +8,7 @@ use App\Actions\Outlet\Data\OutletSettingsData;
 use App\Actions\Outlet\UpdateOutletSettings;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Http\Requests\Api\V1\Outlet\OutletSettingsRequest;
+use App\Models\Outlet;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Timezones;
@@ -26,12 +27,16 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\Url;
 use LogicException;
 use UnitEnum;
 
 /**
- * Pengaturan → Profil outlet (SPEC: Pengaturan Outlet, permission outlet.settings).
+ * Pengaturan → Outlet → Profil outlet (SPEC: Pengaturan Outlet, permission outlet.settings).
  * Melihat cukup role berizin (tetap bisa saat hanya-baca); menyimpan butuh can() (ADR 0009).
+ * Outlet dari ?outlet= (daftar Outlet) atau outlet aktif di topbar; hanya outlet yang boleh
+ * diakses user (lainnya 404, ADR 0010).
  */
 final class OutletSettings extends Page
 {
@@ -49,6 +54,14 @@ final class OutletSettings extends Page
 
     protected static ?int $navigationSort = 1;
 
+    /** Dibuka dari menu Pengaturan → Outlet (aksi "Profil outlet"). */
+    protected static bool $shouldRegisterNavigation = false;
+
+    /** Locked: tidak bisa diganti dari browser setelah mount; akses tetap dicek ulang di outlet(). */
+    #[Locked]
+    #[Url(as: 'outlet')]
+    public ?string $outletId = null;
+
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 
@@ -61,7 +74,8 @@ final class OutletSettings extends Page
 
     public function mount(): void
     {
-        $outlet = CurrentOutlet::getOrFail();
+        $outlet = $this->outlet();
+        $this->outletId = $outlet->id;
         $limits = $outlet->discount_limits ?? config('pos.outlet_defaults.discount_limits');
 
         $this->settingsForm()->fill([
@@ -153,11 +167,27 @@ final class OutletSettings extends Page
         abort_unless(self::canEdit(), 403);
 
         $data = $this->settingsForm()->getState();
-        $outlet = app(UpdateOutletSettings::class)->handle(CurrentOutlet::getOrFail(), OutletSettingsData::fromArray($data));
+        $outlet = app(UpdateOutletSettings::class)->handle($this->outlet(), OutletSettingsData::fromArray($data));
 
         $this->settingsForm()->fill([...$data, 'code' => $outlet->code]);
 
         Notification::make()->success()->title('Setelan outlet disimpan')->send();
+    }
+
+    public function getTitle(): string
+    {
+        return 'Profil outlet · '.$this->outlet()->name;
+    }
+
+    /** Outlet yang diubah: dari URL (dicek aksesnya) atau outlet aktif topbar. */
+    private function outlet(): Outlet
+    {
+        $user = auth()->user();
+        abort_unless($user instanceof User, 403);
+
+        return $this->outletId !== null
+            ? $user->accessibleOutlets()->findOrFail($this->outletId)
+            : CurrentOutlet::getOrFail();
     }
 
     /** Menyimpan: owner & tenant tidak hanya-baca. */

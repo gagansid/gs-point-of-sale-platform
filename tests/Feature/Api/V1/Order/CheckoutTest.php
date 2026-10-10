@@ -66,7 +66,7 @@ describe('sukses', function () {
             ->assertJsonPath('data.payments.0.change', '9100.00')
             ->assertJsonPath('meta.idempotent_replay', false);
 
-        expect(Product::allTenants()->find($this->pos->croissant->id)?->stock_qty)->toBe(9);
+        expect(stockOf($this->pos->croissant->id)->stock_qty)->toBe(9);
 
         $movement = StockMovement::allTenants()->sole();
         expect($movement->type)->toBe(StockMovementType::Sale)
@@ -126,7 +126,7 @@ describe('idempotensi', function () {
 
         expect(Order::allTenants()->count())->toBe(1)
             ->and(Payment::allTenants()->count())->toBe(1)
-            ->and(Product::allTenants()->find($this->pos->croissant->id)?->stock_qty)->toBe(9);
+            ->and(stockOf($this->pos->croissant->id)->stock_qty)->toBe(9);
     });
 
     it('id pembayaran yang sudah dipakai order lain ditolak', function () {
@@ -186,12 +186,12 @@ describe('validasi & aturan bisnis', function () {
     });
 
     it('menu habis / nonaktif ditolak per item', function () {
-        $this->pos->croissant->update(['is_available' => false]);
+        stockOf($this->pos->croissant)->forceFill(['is_available' => false])->save();
         $response = checkout($this, cart($this->pos));
         assertApiError($response, 'VALIDATION_ERROR', 422);
         $response->assertJsonPath('error.details', ['items.1.product_id' => ['Croissant sedang habis']]);
 
-        $this->pos->croissant->update(['is_available' => true, 'is_active' => false]);
+        $this->pos->croissant->update(['is_active' => false]);
         checkout($this, cart($this->pos))->assertJsonPath('error.details', ['items.1.product_id' => ['Produk tidak tersedia']]);
     });
 
@@ -230,7 +230,7 @@ describe('validasi & aturan bisnis', function () {
 
         assertApiError(checkout($this, $body), 'VALIDATION_ERROR', 422);
         expect(Order::allTenants()->count())->toBe(0)
-            ->and(Product::allTenants()->find($this->pos->croissant->id)?->stock_qty)->toBe(10);
+            ->and(stockOf($this->pos->croissant->id)->stock_qty)->toBe(10);
     });
 });
 

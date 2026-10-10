@@ -53,6 +53,9 @@ return [
         'discount_limits' => ['cashier' => 10, 'supervisor' => 25],
     ],
 
+    // Batas outlet aktif bisnis baru di edisi SaaS (ADR 0010); admin bisa mengubah per tenant
+    'default_max_outlets' => (int) env('POS_DEFAULT_MAX_OUTLETS', 1),
+
     // Pagination API: default & batas maksimal per_page
     'pagination' => [
         'per_page' => 20,

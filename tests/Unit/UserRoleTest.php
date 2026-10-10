@@ -30,7 +30,7 @@ function specPermissionMatrix(): array
 it('daftar permission sama dengan tabel di SPEC', function () {
     $spec = array_keys(specPermissionMatrix());
 
-    expect($spec)->toHaveCount(19)
+    expect($spec)->toHaveCount(21)
         ->and(UserRole::PERMISSIONS)->toEqualCanonicalizing($spec);
 });
 

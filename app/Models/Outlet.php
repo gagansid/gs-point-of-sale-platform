@@ -8,9 +8,11 @@ use App\Models\Concerns\BelongsToTenant;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Factories\OutletFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -28,6 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $receipt_header
  * @property string|null $receipt_footer
  * @property array<string, int|float>|null $discount_limits
+ * @property bool $is_active
  */
 final class Outlet extends Model
 {
@@ -46,6 +49,7 @@ final class Outlet extends Model
         'receipt_header',
         'receipt_footer',
         'discount_limits',
+        'is_active',
     ];
 
     protected function casts(): array
@@ -56,6 +60,7 @@ final class Outlet extends Model
             'tax_inclusive' => 'boolean',
             'rounding' => 'integer',
             'discount_limits' => 'array',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -74,10 +79,24 @@ final class Outlet extends Model
         return CarbonImmutable::instance($at ?? now())->setTimezone($this->timezone)->toDateString();
     }
 
-    /** @return HasMany<User, $this> */
-    public function users(): HasMany
+    /**
+     * @param  Builder<self>  $query
+     */
+    public function scopeActive(Builder $query): void
     {
-        return $this->hasMany(User::class);
+        $query->where('is_active', true);
+    }
+
+    /** @return BelongsToMany<User, $this> */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    /** @return HasMany<ProductStock, $this> */
+    public function productStocks(): HasMany
+    {
+        return $this->hasMany(ProductStock::class);
     }
 
     /** @return HasMany<Device, $this> */

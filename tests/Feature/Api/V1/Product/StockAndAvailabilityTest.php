@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\StockMovement;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Support\TenantContext;
 
@@ -45,7 +46,7 @@ describe('penyesuaian stok', function () {
             ->assertJsonPath('meta.idempotent_replay', true)
             ->assertJsonPath('data.product.stock_qty', 7);
 
-        expect(Product::allTenants()->find($this->product->id)?->stock_qty)->toBe(7);
+        expect(stockOf($this->product->id)->stock_qty)->toBe(7);
     });
 
     it('validasi: id wajib, qty tidak boleh 0, alasan wajib', function (array $override, string $field) {
@@ -73,10 +74,11 @@ describe('penyesuaian stok', function () {
     });
 
     it('isolasi: produk tenant lain → 404', function () {
-        $foreign = Product::factory()->tracked()->create();
+        $foreignOutlet = Outlet::factory()->create(['tenant_id' => Tenant::factory()->create()->id]);
+        $foreign = Product::factory()->tracked()->create(['tenant_id' => $foreignOutlet->tenant_id]);
 
         assertApiError($this->withToken($this->token)->postJson("/api/v1/products/{$foreign->id}/stock", adjust(), apiHeaders()), 'NOT_FOUND', 404);
-        expect(Product::allTenants()->find($foreign->id)?->stock_qty)->toBe(10);
+        expect(stockOf($foreign->id)->stock_qty)->toBe(10);
     });
 });
 
@@ -102,7 +104,7 @@ describe('tandai habis / tersedia', function () {
             $this->withToken($this->token)->patchJson("/api/v1/products/{$this->product->id}/availability", ['is_available' => false], apiHeaders())->assertOk();
         }
 
-        expect(Product::allTenants()->find($this->product->id)?->is_available)->toBeFalse();
+        expect(stockOf($this->product->id)->is_available)->toBeFalse();
     });
 
     it('validasi: is_available wajib boolean', function () {

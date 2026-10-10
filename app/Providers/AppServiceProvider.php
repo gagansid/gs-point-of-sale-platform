@@ -9,6 +9,7 @@ use App\Enums\UserRole;
 use App\Models\Admin;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
@@ -36,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Scoped: direset setiap request & job, sehingga tenant tidak bocor antar request
         $this->app->scoped(TenantContext::class);
+        $this->app->scoped(CurrentOutlet::class);
     }
 
     public function boot(): void

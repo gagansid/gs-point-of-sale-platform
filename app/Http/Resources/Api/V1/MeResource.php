@@ -6,6 +6,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Models\Outlet;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,15 +20,15 @@ final class MeResource extends JsonResource
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
-        // MVP 1 outlet per bisnis: owner (outlet_id null) memakai outlet pertama tenant
-        $outlet = $this->outlet_id !== null
-            ? Outlet::forTenant($this->tenant_id)->find($this->outlet_id)
-            : Outlet::forTenant($this->tenant_id)->orderBy('created_at')->first();
+        // Outlet perangkat (ADR 0010); login tanpa perangkat: outlet pertama yang boleh diakses
+        $outlet = CurrentOutlet::selectedId() !== null ? CurrentOutlet::get() : $this->accessibleOutlets()->first();
 
         return [
             'user' => UserResource::make($this->resource)->resolve($request),
             'tenant' => TenantResource::make($this->tenant)->resolve($request),
             'outlet' => $outlet !== null ? OutletResource::make($outlet)->resolve($request) : null,
+            // Outlet aktif yang dipegang user (ADR 0010)
+            'outlets' => OutletSummaryResource::collection($this->accessibleOutlets()->active()->get())->resolve($request),
         ];
     }
 }

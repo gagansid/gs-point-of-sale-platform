@@ -26,12 +26,12 @@ use Illuminate\Support\Facades\Storage;
  * @property string $price
  * @property string|null $cost_price
  * @property bool $track_stock
- * @property int $stock_qty
+ * @property int $stock_qty dari outlet_product, hanya terisi lewat scope atOutlet()
  * @property string|null $image_path
  * @property bool $is_active
- * @property bool $is_available
+ * @property bool $is_available dari outlet_product (atOutlet)
  * @property bool $is_favorite
- * @property int|null $min_stock
+ * @property int|null $min_stock dari outlet_product (atOutlet)
  * @property int $sort_order
  */
 final class Product extends Model
@@ -39,7 +39,7 @@ final class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use BelongsToTenant, HasFactory, HasUuids, SoftDeletes;
 
-    /** stock_qty sengaja tidak fillable: hanya berubah lewat AdjustStock / order (StockMovement). */
+    /** Stok, stok minimum, dan ketersediaan disimpan per outlet di ProductStock (ADR 0010). */
     protected $fillable = [
         'category_id',
         'name',
@@ -50,9 +50,7 @@ final class Product extends Model
         'track_stock',
         'image_path',
         'is_active',
-        'is_available',
         'is_favorite',
-        'min_stock',
         'sort_order',
     ];
 
@@ -71,6 +69,43 @@ final class Product extends Model
         ];
     }
 
+    /**
+     * Menambahkan stock_qty, min_stock, dan is_available milik satu outlet sebagai atribut produk.
+     * Subquery (bukan join) agar kolom products tidak ambigu saat sort/filter.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeAtOutlet(Builder $query, string $outletId): void
+    {
+        if ($query->getQuery()->columns === null) {
+            $query->select('products.*');
+        }
+
+        $row = 'from outlet_product op where op.product_id = products.id and op.outlet_id = ? limit 1';
+
+        // Baris stok belum ada (produk/outlet baru) = stok 0, tersedia
+        $query->selectRaw("coalesce((select op.stock_qty {$row}), 0) as stock_qty", [$outletId])
+            ->selectRaw("(select op.min_stock {$row}) as min_stock", [$outletId])
+            ->selectRaw("coalesce((select op.is_available {$row}), 1) as is_available", [$outletId]);
+    }
+
+    /**
+     * Mengisi stock_qty, min_stock, dan is_available dari outlet tertentu ke instance ini
+     * (setelah route model binding / refresh, yang tidak melewati scope atOutlet).
+     */
+    public function loadOutletState(string $outletId): static
+    {
+        $stock = $this->stocks()->where('outlet_id', $outletId)->first();
+
+        $this->setRawAttributes(array_merge($this->getAttributes(), [
+            'stock_qty' => $stock->stock_qty ?? 0,
+            'min_stock' => $stock?->min_stock,
+            'is_available' => $stock->is_available ?? true,
+        ]), sync: true);
+
+        return $this;
+    }
+
     /** Stok habis/minus untuk produk yang dilacak stoknya (ditandai di dashboard). */
     public function isOutOfStock(): bool
     {
@@ -84,27 +119,52 @@ final class Product extends Model
     }
 
     /**
-     * Padanan query isLowStock().
+     * Padanan query isLowStock() di satu outlet.
      *
      * @param  Builder<self>  $query
      */
-    public function scopeLowStock(Builder $query): void
+    public function scopeLowStock(Builder $query, string $outletId): void
     {
         $query->where('track_stock', true)
-            ->whereNotNull('min_stock')
-            ->where('stock_qty', '>', 0)
-            ->whereColumn('stock_qty', '<=', 'min_stock');
+            ->whereHas('stocks', fn (Builder $stock) => $stock->where('outlet_id', $outletId)
+                ->whereNotNull('min_stock')
+                ->where('stock_qty', '>', 0)
+                ->whereColumn('stock_qty', '<=', 'min_stock'));
     }
 
     /**
-     * Tidak bisa dijual sekarang: ditandai habis atau stok yang dilacak ≤ 0.
+     * Stok yang dilacak ≤ 0 di satu outlet (baris stok belum ada = 0).
      *
      * @param  Builder<self>  $query
      */
-    public function scopeSoldOut(Builder $query): void
+    public function scopeOutOfStock(Builder $query, string $outletId): void
     {
-        $query->where(fn (Builder $q) => $q->where('is_available', false)
-            ->orWhere(fn (Builder $q) => $q->where('track_stock', true)->where('stock_qty', '<=', 0)));
+        $query->where('track_stock', true)
+            ->whereDoesntHave('stocks', fn (Builder $stock) => $stock->where('outlet_id', $outletId)->where('stock_qty', '>', 0));
+    }
+
+    /**
+     * Tidak bisa dijual sekarang di satu outlet: ditandai habis atau stok yang dilacak ≤ 0.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeSoldOut(Builder $query, string $outletId): void
+    {
+        $query->where(fn (Builder $q) => $q
+            ->whereHas('stocks', fn (Builder $stock) => $stock->where('outlet_id', $outletId)->where('is_available', false))
+            ->orWhere(fn (Builder $q) => $q->outOfStock($outletId)));
+    }
+
+    /**
+     * Ketersediaan di satu outlet (padanan is_available dari atOutlet).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeAvailableAt(Builder $query, string $outletId, bool $available = true): void
+    {
+        $available
+            ? $query->whereDoesntHave('stocks', fn (Builder $stock) => $stock->where('outlet_id', $outletId)->where('is_available', false))
+            : $query->whereHas('stocks', fn (Builder $stock) => $stock->where('outlet_id', $outletId)->where('is_available', false));
     }
 
     public function imageUrl(): ?string
@@ -133,6 +193,12 @@ final class Product extends Model
         return $this->belongsToMany(OptionGroup::class, 'product_option_groups')
             ->withPivot('sort_order')
             ->orderByPivot('sort_order');
+    }
+
+    /** @return HasMany<ProductStock, $this> */
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(ProductStock::class);
     }
 
     /** @return HasMany<StockMovement, $this> */

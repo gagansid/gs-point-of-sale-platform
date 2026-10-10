@@ -9,6 +9,7 @@ use App\Actions\Product\SaveProduct;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,7 +29,7 @@ final class CreateProduct extends CreateRecord
     {
         $user = auth()->user();
 
-        return app(SaveProduct::class)->handle(null, ProductData::fromArray($data), $user instanceof User ? $user : null)['product'];
+        return app(SaveProduct::class)->handle(null, ProductData::fromArray($data), CurrentOutlet::getOrFail(), $user instanceof User ? $user : null)['product'];
     }
 
     protected function getCreatedNotificationTitle(): string

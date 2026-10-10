@@ -25,6 +25,7 @@ enum ErrorCode: string
     case ShiftNotOpen = 'SHIFT_NOT_OPEN';
     case OrderAlreadyClosed = 'ORDER_ALREADY_CLOSED';
     case LastOwnerRequired = 'LAST_OWNER_REQUIRED';
+    case OutletLimitReached = 'OUTLET_LIMIT_REACHED';
     case ValidationError = 'VALIDATION_ERROR';
     case PaymentExceedsBalance = 'PAYMENT_EXCEEDS_BALANCE';
     case DiscountOverLimit = 'DISCOUNT_OVER_LIMIT';
@@ -43,7 +44,7 @@ enum ErrorCode: string
             self::SubscriptionExpired, self::EmailNotVerified,
             self::ApprovalRequired, self::SelfApprovalNotAllowed => 403,
             self::NotFound => 404,
-            self::ShiftNotOpen, self::OrderAlreadyClosed, self::LastOwnerRequired => 409,
+            self::ShiftNotOpen, self::OrderAlreadyClosed, self::LastOwnerRequired, self::OutletLimitReached => 409,
             self::ValidationError, self::PaymentExceedsBalance, self::DiscountOverLimit => 422,
             self::PinLocked => 423,
             self::AppUpdateRequired => 426,
@@ -70,6 +71,7 @@ enum ErrorCode: string
             self::ShiftNotOpen => 'Shift belum dibuka',
             self::OrderAlreadyClosed => 'Transaksi sudah selesai atau dibatalkan',
             self::LastOwnerRequired => 'Bisnis wajib memiliki minimal satu owner aktif',
+            self::OutletLimitReached => 'Jumlah outlet aktif sudah mencapai batas paket. Hubungi tim gs.POS untuk menambah outlet',
             self::ValidationError => 'Data tidak valid',
             self::PaymentExceedsBalance => 'Pembayaran melebihi sisa tagihan',
             self::DiscountOverLimit => 'Diskon melebihi batas yang diizinkan',

@@ -27,13 +27,16 @@ final class DeviceController extends Controller
      * Daftarkan device kasir.
      *
      * Permission device.manage (owner). Mengembalikan device_token SATU KALI — simpan di secure
-     * storage. Mendaftarkan ulang device yang sama mencabut device token lama.
+     * storage. Mendaftarkan ulang device yang sama mencabut device token lama. `outlet_id` opsional
+     * (outlet aktif yang dipegang user; default outlet pertama).
      */
     public function store(RegisterDeviceRequest $request, RegisterDevice $action): JsonResponse
     {
+        // Hanya outlet aktif yang dipegang user (ADR 0010); outlet lain → 404
+        $outlets = ApiActor::user($request)->accessibleOutlets()->active();
         $outlet = $request->filled('outlet_id')
-            ? Outlet::query()->findOrFail($request->string('outlet_id')->toString())
-            : Outlet::query()->orderBy('created_at')->firstOrFail();
+            ? $outlets->findOrFail($request->string('outlet_id')->toString())
+            : $outlets->firstOrFail();
 
         $result = $action->handle(
             $outlet,

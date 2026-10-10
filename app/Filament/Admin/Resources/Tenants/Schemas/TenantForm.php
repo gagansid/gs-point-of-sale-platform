@@ -7,6 +7,7 @@ namespace App\Filament\Admin\Resources\Tenants\Schemas;
 use App\Enums\BusinessType;
 use App\Enums\TenantStatus;
 use App\Models\Tenant;
+use App\Support\Edition;
 use App\Support\SystemSettings;
 use App\Support\Timezones;
 use Filament\Forms\Components\DatePicker;
@@ -78,10 +79,16 @@ final class TenantForm
                             // Lama trial dari Sistem → Pendaftaran (ADR 0009)
                             ->default(fn () => now()->addDays(app(SystemSettings::class)->trialDays()))
                             ->minDate(fn (string $operation) => $operation === 'create' ? today() : null),
+                        TextInput::make('max_outlets')
+                            ->label('Maksimal outlet aktif')
+                            ->integer()->minValue(1)->maxValue(1000)
+                            ->placeholder('Tanpa batas')
+                            ->helperText('Sesuai paket langganan (ADR 0010). Kosongkan bila tanpa batas')
+                            ->visible(fn (string $operation): bool => $operation === 'edit' && Edition::isSaas()),
                     ]),
 
                 Section::make('Outlet pertama')
-                    ->description('MVP: satu outlet per bisnis. Kode outlet menjadi awalan nomor order, mis. JKT01-261008-0042')
+                    ->description('Outlet berikutnya ditambah owner di Pengaturan → Outlet. Kode outlet menjadi awalan nomor order, mis. JKT01-261008-0042')
                     ->columns(3)
                     ->visibleOn('create')
                     ->schema([

@@ -57,7 +57,7 @@ final class ManageEmployees extends ManageRecords
                 ->modalWidth('2xl')
                 ->createAnother(false)
                 ->using(fn (array $data, CreateAction $action): User => EmployeeResource::orNotify(
-                    fn (): User => app(SaveEmployee::class)->handle(null, EmployeeData::fromArray([...$data, ...EmployeeResource::credentialsFor($data)]))['user'],
+                    fn (): User => app(SaveEmployee::class)->handle(null, EmployeeData::fromArray([...$data, ...EmployeeResource::credentialsFor($data)]), EmployeeResource::actor())['user'],
                     $action,
                 )),
         ];

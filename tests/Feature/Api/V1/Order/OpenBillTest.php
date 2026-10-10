@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\Product;
 use App\Models\Shift;
 use App\Models\StockMovement;
 use App\Support\TenantContext;
@@ -55,7 +54,7 @@ describe('open bill', function () {
             ->assertJsonPath('data.grand_total', '81600.00')
             ->assertJsonPath('data.paid_total', '0.00');
 
-        expect(Product::allTenants()->find($this->pos->croissant->id)?->stock_qty)->toBe(10)
+        expect(stockOf($this->pos->croissant->id)->stock_qty)->toBe(10)
             ->and(StockMovement::allTenants()->count())->toBe(0);
     });
 
@@ -124,7 +123,7 @@ describe('tambah pembayaran', function () {
             ->assertJsonPath('data.change_total', '8400.00')
             ->assertJsonCount(2, 'data.payments');
 
-        expect(Product::allTenants()->find($this->pos->croissant->id)?->stock_qty)->toBe(8);
+        expect(stockOf($this->pos->croissant->id)->stock_qty)->toBe(8);
     });
 
     it('pembayaran ganda dengan id sama tidak tercatat dua kali', function () {

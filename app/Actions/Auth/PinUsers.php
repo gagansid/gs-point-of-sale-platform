@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Actions\Auth;
 
+use App\Enums\UserRole;
 use App\Models\Device;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Karyawan yang boleh login PIN di sebuah device: aktif, punya PIN, dan terdaftar di outlet
- * device (atau berlaku untuk semua outlet). Dipakai layar pilih nama & login PIN.
+ * Karyawan yang boleh login PIN di sebuah device: aktif, punya PIN, dan ditugaskan di outlet
+ * device (atau memegang semua outlet, ADR 0010). Dipakai layar pilih nama & login PIN.
  */
 final class PinUsers
 {
@@ -21,7 +22,9 @@ final class PinUsers
         return User::query()
             ->where('is_active', true)
             ->whereNotNull('pin')
-            ->where(fn (Builder $q) => $q->whereNull('outlet_id')->orWhere('outlet_id', $device->outlet_id));
+            ->where(fn (Builder $q) => $q
+                ->whereIn('role', UserRole::withPermission('outlet.access_all'))
+                ->orWhereHas('outlets', fn (Builder $outlet) => $outlet->whereKey($device->outlet_id)));
     }
 
     /** @return Collection<int, User> */

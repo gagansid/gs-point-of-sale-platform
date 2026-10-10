@@ -14,6 +14,7 @@ use App\Exceptions\BusinessException;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use App\Support\MenuTemplates;
 use Illuminate\Support\Facades\DB;
 
@@ -40,7 +41,10 @@ final class ApplyMenuTemplate
             'template' => ['Pilih template yang tersedia'],
         ]);
 
-        return DB::transaction(function () use ($template, $by): int {
+        // Template tanpa lacak stok; outlet hanya untuk baris stok awal produk
+        $outlet = CurrentOutlet::getOrFail();
+
+        return DB::transaction(function () use ($template, $by, $outlet): int {
             // Kunci baris kategori/produk: dua klik bersamaan tidak membuat katalog ganda
             if (Category::query()->lockForUpdate()->exists() || Product::query()->lockForUpdate()->exists()) {
                 throw BusinessException::of(ErrorCode::ValidationError, 'Template hanya bisa dipakai saat katalog masih kosong', [
@@ -68,7 +72,7 @@ final class ApplyMenuTemplate
                         'category_id' => $category->id,
                         'price' => (string) $product[1],
                         'option_group_ids' => array_map(fn (string $group): string => $groupIds[$group], $product[2] ?? []),
-                    ]), $by);
+                    ]), $outlet, $by);
                     $created++;
                 }
             }

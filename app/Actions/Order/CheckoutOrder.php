@@ -57,7 +57,7 @@ final class CheckoutOrder
         $shift = self::openShiftOf($device);
         $outlet = Outlet::query()->findOrFail($shift->outlet_id);
 
-        $lines = $this->resolveLines->handle($data->items);
+        $lines = $this->resolveLines->handle($data->items, $outlet);
         $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval);
         $totals = $priced['totals'];
         $payments = $this->allocatePayments->handle($data->payments, $totals->grandTotal);

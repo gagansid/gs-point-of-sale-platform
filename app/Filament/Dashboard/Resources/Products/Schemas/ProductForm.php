@@ -7,6 +7,8 @@ namespace App\Filament\Dashboard\Resources\Products\Schemas;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Models\Category;
 use App\Models\OptionGroup;
+use App\Models\Outlet;
+use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -68,7 +70,9 @@ final class ProductForm
                             ]),
 
                         Section::make('Stok')
-                            ->description('Lacak stok untuk mengurangi otomatis saat terjual dan peringatan stok menipis')
+                            // Stok awal, stok saat ini, dan stok minimum milik outlet aktif (ADR 0010)
+                            ->description(fn (): string => 'Lacak stok untuk mengurangi otomatis saat terjual dan peringatan stok menipis'
+                                .(Outlet::query()->count() > 1 ? '. Angka stok untuk outlet '.CurrentOutlet::getOrFail()->name : ''))
                             ->columns(2)
                             ->schema([
                                 Toggle::make('track_stock')->label('Lacak stok')

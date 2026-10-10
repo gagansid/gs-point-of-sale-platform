@@ -21,6 +21,11 @@ Owner login email ─▶ POST /devices (simpan device_token) ─▶ layar PIN:
 GET /devices/{uid}/cashiers (device token) ─▶ POST /auth/pin-login (device token) ─▶ token kasir
 ```
 
+**Outlet (ADR 0010).** Device terikat satu outlet; katalog, stok, shift, order, dan laporan memakai outlet
+device itu. Setiap request dengan token yang terikat device ditolak `403 FORBIDDEN` bila outlet device
+sudah dinonaktifkan, atau user tidak ditugaskan di outlet itu (mis. baru dipindah outlet). Order/shift
+outlet lain → `404 NOT_FOUND`.
+
 ---
 
 ## `GET /v1/system/status`
@@ -86,11 +91,12 @@ Login owner/manager dengan email + kata sandi.
     "token_type": "Bearer",
     "expires_at": "2026-11-07T07:02:11Z",
     "user": { "id": "…", "name": "Rina", "email": "rina@kopi.test", "role": "owner", "role_label": "Owner",
-              "permissions": ["order.create", "…"], "outlet_id": null, "last_login_at": "…Z" },
+              "permissions": ["order.create", "…"], "outlet_ids": ["…"], "last_login_at": "…Z" },
     "tenant": { "id": "…", "name": "Kopi Senja", "business_type": "cafe", "status": "active", "subscription_ends_at": "…Z" },
     "outlet": { "id": "…", "code": "JKT01", "name": "…", "timezone": "Asia/Jakarta", "tax_rate": "11.00",
                 "service_charge_rate": "5.00", "tax_inclusive": false, "rounding": 100,
-                "receipt_header": null, "receipt_footer": "Terima kasih", "discount_limits": { "cashier": 10, "supervisor": 25 } }
+                "receipt_header": null, "receipt_footer": "Terima kasih", "discount_limits": { "cashier": 10, "supervisor": 25 } },
+    "outlets": [ { "id": "…", "code": "JKT01", "name": "…", "address": "…", "timezone": "Asia/Jakarta", "is_active": true } ]
   },
   "meta": { "request_id": "…" }
 }
@@ -131,7 +137,7 @@ Mendaftarkan device kasir ke outlet dan menerbitkan **device token** (ADR 0002).
 | `device_uid` | string | Ya | `[A-Za-z0-9._:-]`, maks. 100, unik per tenant |
 | `platform` | enum | Tidak | `android`, `ios` |
 | `app_version` | string | Tidak | semver `1.2.3` |
-| `outlet_id` | uuid | Tidak | outlet milik tenant sendiri; kosong = outlet pertama |
+| `outlet_id` | uuid | Tidak | outlet aktif yang dipegang user (bisnis sendiri); kosong = outlet pertama. Outlet lain di bisnis yang sama tapi tidak dipegang → `404` |
 
 ### Respons sukses — `201`
 
@@ -172,7 +178,7 @@ Daftar karyawan untuk layar pilih nama sebelum login PIN.
 | | |
 |---|---|
 | Akses | Device token milik `{uid}` |
-| Isi | Karyawan aktif, punya PIN, di outlet device atau berlaku semua outlet (owner); urut nama |
+| Isi | Karyawan aktif, punya PIN, ditugaskan di outlet device atau memegang semua outlet (owner, ADR 0010); urut nama |
 | Action | `App\Actions\Auth\PinUsers` |
 
 ### Respons sukses — `200`

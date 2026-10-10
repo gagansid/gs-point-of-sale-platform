@@ -6,6 +6,7 @@ use App\Enums\TenantStatus;
 use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Resources\Products\Pages\ListProducts;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
@@ -25,6 +26,8 @@ beforeEach(function () {
     Tenant::query()->whereKey($this->owner->tenant_id)->update(['subscription_ends_at' => now()->subDay()]);
     $this->owner->refresh();
     $this->actingAs($this->owner);
+    // Bisnis selalu punya minimal satu outlet (stok & zona waktu per outlet, ADR 0010)
+    Outlet::factory()->create(['tenant_id' => $this->owner->tenant_id]);
     // Sama seperti SetDashboardTenant untuk request Livewire di test
     TenantContext::set($this->owner->tenant_id, readOnly: true);
 });

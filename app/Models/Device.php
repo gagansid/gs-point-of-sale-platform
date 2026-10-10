@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\AppPlatform;
+use App\Models\Concerns\BelongsToOutlet;
 use App\Models\Concerns\BelongsToTenant;
 use Carbon\CarbonImmutable;
 use Database\Factories\DeviceFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -30,7 +30,7 @@ use Laravel\Sanctum\HasApiTokens;
 final class Device extends Model
 {
     /** @use HasFactory<DeviceFactory> */
-    use BelongsToTenant, HasApiTokens, HasFactory, HasUuids;
+    use BelongsToOutlet, BelongsToTenant, HasApiTokens, HasFactory, HasUuids;
 
     protected $fillable = [
         'outlet_id',
@@ -55,9 +55,8 @@ final class Device extends Model
         return $this->revoked_at !== null;
     }
 
-    /** @return BelongsTo<Outlet, $this> */
-    public function outlet(): BelongsTo
+    public function outletIsActive(): bool
     {
-        return $this->belongsTo(Outlet::class);
+        return Outlet::allTenants()->whereKey($this->outlet_id)->where('is_active', true)->exists();
     }
 }

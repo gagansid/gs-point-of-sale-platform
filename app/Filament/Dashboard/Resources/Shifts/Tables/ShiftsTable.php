@@ -9,7 +9,9 @@ use App\Filament\Dashboard\Resources\Shifts\ShiftResource;
 use App\Filament\Shared\Columns\MoneyColumn;
 use App\Filament\Shared\Filters\DateRangeFilter;
 use App\Filament\Shared\Tables\TableEmptyState;
+use App\Models\Outlet;
 use App\Models\Shift;
+use App\Support\CurrentOutlet;
 use App\Support\Money;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
@@ -29,6 +31,9 @@ final class ShiftsTable
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['openedBy', 'device']))
             ->columns([
                 TextColumn::make('opened_at')->label('Dibuka')->dateTime('j M Y, H.i')->sortable(),
+                // Tampil saat "Semua outlet" dipilih di topbar dan bisnis punya lebih dari satu outlet (ADR 0010)
+                TextColumn::make('outlet.name')->label('Outlet')->badge()->color('gray')->toggleable()
+                    ->visible(fn (): bool => CurrentOutlet::selectedId() === null && Outlet::query()->count() > 1),
                 TextColumn::make('openedBy.name')->label('Kasir')->searchable()->sortable(),
                 TextColumn::make('device.name')->label('Perangkat')->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')->label('Status')->badge()->sortable(),

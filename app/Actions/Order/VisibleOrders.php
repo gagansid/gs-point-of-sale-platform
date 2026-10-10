@@ -21,7 +21,8 @@ final class VisibleOrders
     /** @return Builder<Order> */
     public static function query(User $user): Builder
     {
-        $query = Order::query();
+        // Outlet perangkat (API) atau pilihan topbar (dashboard), ADR 0010
+        $query = CurrentOutlet::scope(Order::query());
 
         if ($user->can('order.view_all')) {
             if (! $user->can('report.view')) {

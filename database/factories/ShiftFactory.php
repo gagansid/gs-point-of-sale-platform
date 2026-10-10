@@ -6,6 +6,7 @@ namespace Database\Factories;
 
 use App\Enums\ShiftStatus;
 use App\Models\Device;
+use App\Models\Outlet;
 use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -21,7 +22,7 @@ final class ShiftFactory extends Factory
             'device_id' => Device::factory(),
             'outlet_id' => fn (array $a): string => Device::allTenants()->findOrFail($a['device_id'])->outlet_id,
             'tenant_id' => fn (array $a): string => Device::allTenants()->findOrFail($a['device_id'])->tenant_id,
-            'opened_by' => fn (array $a): string => User::factory()->cashier()->create(['tenant_id' => $a['tenant_id'], 'outlet_id' => $a['outlet_id']])->id,
+            'opened_by' => fn (array $a): string => User::factory()->cashier()->forOutlet(Outlet::allTenants()->findOrFail($a['outlet_id']))->create()->id,
             'opening_cash' => '200000.00',
             'status' => ShiftStatus::Open,
             'open_device_key' => fn (array $a): string => $a['device_id'],
@@ -35,7 +36,7 @@ final class ShiftFactory extends Factory
             'device_id' => $device->id,
             'outlet_id' => $device->outlet_id,
             'tenant_id' => $device->tenant_id,
-            'opened_by' => $user->id ?? User::factory()->cashier()->create(['tenant_id' => $device->tenant_id, 'outlet_id' => $device->outlet_id])->id,
+            'opened_by' => $user->id ?? User::factory()->cashier()->forOutlet(Outlet::allTenants()->findOrFail($device->outlet_id))->create()->id,
             'open_device_key' => $device->id,
         ]);
     }

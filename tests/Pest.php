@@ -10,8 +10,10 @@ use App\Models\OptionGroup;
 use App\Models\Outlet;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Shift;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
@@ -72,6 +74,7 @@ function freshAuth(): void
     app('auth')->forgetGuards();
     // Satu instance aplikasi dipakai semua request di test: tenant request sebelumnya tidak boleh terbawa
     TenantContext::forget();
+    CurrentOutlet::forget();
 }
 
 /**
@@ -81,6 +84,7 @@ function freshAuth(): void
 function posSetup(bool $openShift = true): stdClass
 {
     TenantContext::forget();
+    CurrentOutlet::forget();
     $pos = new stdClass;
     $pos->outlet = Outlet::factory()->create([
         'code' => 'JKT01', 'tax_rate' => '11.00', 'service_charge_rate' => '5.00',
@@ -117,4 +121,17 @@ function posSetup(bool $openShift = true): stdClass
 function uuid(): string
 {
     return (string) Str::uuid7();
+}
+
+/**
+ * Baris stok produk di satu outlet (ADR 0010); default outlet pertama tenant produk.
+ * Tanpa baris = nilai bawaan (stok 0, tersedia).
+ */
+function stockOf(Product|string $product, ?string $outletId = null): ProductStock
+{
+    $product = $product instanceof Product ? $product : Product::allTenants()->withTrashed()->findOrFail($product);
+    $outletId ??= Outlet::forTenant($product->tenant_id)->orderBy('created_at')->value('id');
+
+    return ProductStock::forTenant($product->tenant_id)->where('outlet_id', $outletId)->where('product_id', $product->id)->first()
+        ?? new ProductStock(['outlet_id' => $outletId, 'product_id' => $product->id]);
 }

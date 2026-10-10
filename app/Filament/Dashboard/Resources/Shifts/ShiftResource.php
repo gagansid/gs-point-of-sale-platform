@@ -9,11 +9,13 @@ use App\Filament\Dashboard\Resources\Shifts\Pages\ViewShift;
 use App\Filament\Dashboard\Resources\Shifts\Schemas\ShiftInfolist;
 use App\Filament\Dashboard\Resources\Shifts\Tables\ShiftsTable;
 use App\Models\Shift;
+use App\Support\CurrentOutlet;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 /**
@@ -43,6 +45,16 @@ final class ShiftResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return ShiftInfolist::configure($schema);
+    }
+
+    /**
+     * Outlet pilihan topbar ("Semua outlet" = semua outlet yang dipegang user), ADR 0010.
+     *
+     * @return Builder<Shift>
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return CurrentOutlet::scope(Shift::query());
     }
 
     public static function table(Table $table): Table

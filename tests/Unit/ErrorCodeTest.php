@@ -14,7 +14,7 @@ it('sama persis dengan daftar error code resmi di SPEC', function () {
     ksort($spec);
     ksort($enum);
 
-    expect($enum)->toBe($spec)->and($enum)->toHaveCount(21);
+    expect($enum)->toBe($spec)->and($enum)->toHaveCount(22);
 });
 
 it('punya pesan Bahasa Indonesia untuk setiap kode', function (ErrorCode $code) {

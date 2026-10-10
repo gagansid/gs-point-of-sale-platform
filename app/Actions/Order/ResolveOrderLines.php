@@ -8,11 +8,12 @@ use App\Actions\Order\Data\ResolvedLine;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Option;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Support\Money;
 
 /**
- * Mencocokkan item kiriman aplikasi dengan katalog server: produk aktif & tersedia, opsi milik
+ * Mencocokkan item kiriman aplikasi dengan katalog server: produk aktif & tersedia di outlet, opsi milik
  * grup opsi produk, dan jumlah pilihan per grup sesuai min/max. Harga SELALU dari database.
  * Semua pelanggaran dikumpulkan lalu dilempar sekali sebagai VALIDATION_ERROR per field.
  */
@@ -24,9 +25,10 @@ final class ResolveOrderLines
      *
      * @throws BusinessException
      */
-    public function handle(array $items): array
+    public function handle(array $items, Outlet $outlet): array
     {
         $products = Product::query()
+            ->atOutlet($outlet->id)
             // Grup opsi nonaktif diabaikan: opsinya ditolak dan aturan wajib-pilihnya tidak berlaku (Q27)
             ->with([
                 'category:id,is_active',

@@ -43,6 +43,8 @@ enum UserRole: string implements HasColor, HasLabel
         'device.manage',
         'payment_method.manage',
         'outlet.settings',
+        'outlet.manage',
+        'outlet.access_all',
     ];
 
     /**
@@ -55,6 +57,7 @@ enum UserRole: string implements HasColor, HasLabel
         'shift.view_all',
         'report.view',
         'report.export',
+        'outlet.access_all',
     ];
 
     public static function isReadPermission(string $permission): bool
@@ -78,6 +81,16 @@ enum UserRole: string implements HasColor, HasLabel
                 'order.discount', 'shift.operate',
             ],
         };
+    }
+
+    /**
+     * Role yang memiliki permission (untuk filter query, mis. user yang memegang semua outlet).
+     *
+     * @return list<self>
+     */
+    public static function withPermission(string $permission): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $role): bool => $role->allows($permission)));
     }
 
     public function allows(string $permission): bool

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\User;
 use Filament\Facades\Filament;
@@ -45,7 +46,9 @@ it('panel pelanggan & admin berada di root subdomain masing-masing', function ()
 });
 
 it('setelah login owner membuka /products langsung tanpa /dashboard', function () {
-    $this->actingAs(User::factory()->owner()->create());
+    $owner = User::factory()->owner()->create();
+    Outlet::factory()->create(['tenant_id' => $owner->tenant_id]);
+    $this->actingAs($owner);
 
     $this->get('http://app.gspos.localhost/products')->assertOk();
     $this->get('http://app.gspos.localhost/dashboard/products')->assertNotFound();

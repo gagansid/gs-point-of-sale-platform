@@ -4,13 +4,18 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Report;
 
+use App\Models\User;
 use App\Support\CurrentOutlet;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Rentang laporan dalam tanggal lokal outlet (inklusif). Default: hari ini. Maks. 366 hari.
+ * outlet_id opsional (ADR 0010): satu outlet yang dipegang user, atau "all" untuk semua outlet
+ * yang dipegang. Tanpa outlet_id: outlet perangkat (bila login di perangkat), selain itu semua.
+ * Outlet di luar penugasan → 404.
  */
 final class ReportRequest extends FormRequest
 {
@@ -27,6 +32,7 @@ final class ReportRequest extends FormRequest
         return [
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'outlet_id' => ['nullable', 'string', 'regex:/^(all|[0-9a-fA-F-]{36})$/'],
         ];
     }
 
@@ -45,6 +51,26 @@ final class ReportRequest extends FormRequest
         }];
     }
 
+    /** Mengarahkan CurrentOutlet ke outlet laporan sebelum angka dihitung. */
+    protected function passedValidation(): void
+    {
+        if (! $this->filled('outlet_id')) {
+            return;
+        }
+
+        $user = $this->user();
+        abort_unless($user instanceof User, 403);
+
+        $outletId = $this->string('outlet_id')->toString();
+        $outletId = $outletId === 'all' ? null : $outletId;
+
+        if ($outletId !== null && ! $user->canAccessOutlet($outletId)) {
+            throw new NotFoundHttpException;
+        }
+
+        CurrentOutlet::set($user, $outletId);
+    }
+
     public function from(): string
     {
         return $this->filled('from') ? $this->string('from')->toString() : CurrentOutlet::today();
@@ -61,9 +87,9 @@ final class ReportRequest extends FormRequest
         return CurrentOutlet::utcRange($this->from(), $this->to());
     }
 
-    /** @return array{from: string, to: string, timezone: string} */
+    /** @return array{from: string, to: string, timezone: string, outlet_id: string|null} */
     public function period(): array
     {
-        return ['from' => $this->from(), 'to' => $this->to(), 'timezone' => CurrentOutlet::timezone()];
+        return ['from' => $this->from(), 'to' => $this->to(), 'timezone' => CurrentOutlet::timezone(), 'outlet_id' => CurrentOutlet::selectedId()];
     }
 }

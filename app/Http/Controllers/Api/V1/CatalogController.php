@@ -11,6 +11,7 @@ use App\Http\Resources\Api\V1\OptionGroupResource;
 use App\Http\Resources\Api\V1\PaymentMethodResource;
 use App\Http\Resources\Api\V1\ProductResource;
 use App\Support\ApiResponse;
+use App\Support\CurrentOutlet;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,7 +28,7 @@ final class CatalogController extends Controller
      */
     public function index(Request $request, GetCatalog $action): Response
     {
-        $catalog = $action->handle();
+        $catalog = $action->handle(CurrentOutlet::getOrFail());
 
         $data = [
             'categories' => CategoryResource::collection($catalog['categories'])->resolve($request),

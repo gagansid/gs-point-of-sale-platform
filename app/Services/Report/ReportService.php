@@ -9,6 +9,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Support\CurrentOutlet;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,7 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Satu-satunya sumber angka laporan (API /reports, widget beranda, halaman Laporan, Excel).
- * Hanya baca; isolasi tenant otomatis lewat TenantScope.
+ * Hanya baca; isolasi tenant otomatis lewat TenantScope, outlet mengikuti CurrentOutlet
+ * (outlet terpilih, atau semua outlet yang boleh diakses — ADR 0010).
  *
  * - Omzet diakui saat order SELESAI (completed_at), bukan saat dibuat.
  * - Order void tidak masuk omzet; dilaporkan terpisah berdasarkan voided_at.
@@ -36,7 +38,7 @@ final class ReportService
                 SUM(service_total) as service_total, SUM(tax_total) as tax_total, SUM(rounding) as rounding_total')
             ->first();
 
-        $voids = Order::query()
+        $voids = CurrentOutlet::scope(Order::query())
             ->where('status', OrderStatus::Voided)
             ->whereBetween('voided_at', [$start, $end])
             ->toBase()
@@ -142,7 +144,7 @@ final class ReportService
     /** @return Builder<Order> */
     private function completed(CarbonImmutable $start, CarbonImmutable $end): Builder
     {
-        return Order::query()
+        return CurrentOutlet::scope(Order::query())
             ->where('status', OrderStatus::Completed)
             ->whereBetween('completed_at', [$start, $end]);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Filament\Dashboard\Resources\Products\Pages\ListProducts;
 use App\Filament\Shared\Layout;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\User;
 use App\Support\TenantContext;
@@ -18,6 +19,8 @@ beforeEach(function () {
     Filament::setCurrentPanel('dashboard');
     $owner = User::factory()->owner()->create();
     $this->actingAs($owner);
+    // Bisnis selalu punya minimal satu outlet (stok & zona waktu per outlet, ADR 0010)
+    Outlet::factory()->create(['tenant_id' => $owner->tenant_id]);
     TenantContext::set($owner->tenant_id);
 });
 

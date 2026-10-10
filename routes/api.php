@@ -100,6 +100,8 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
         });
 
         // ---------- Setelan ----------
+        Route::get('outlets', [OutletController::class, 'index'])->name('outlets.index');
+
         Route::controller(OutletController::class)->prefix('outlet')->name('outlet.')->group(function (): void {
             Route::get('/', 'show')->name('show');
             Route::put('/', 'update')->name('update');

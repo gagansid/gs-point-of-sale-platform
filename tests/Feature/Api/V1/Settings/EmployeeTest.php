@@ -31,7 +31,7 @@ describe('tambah', function () {
             ->assertJsonPath('data.email', null)
             ->assertJsonPath('data.username', 'budi')
             ->assertJsonPath('data.has_password', true)
-            ->assertJsonPath('data.outlet_id', $this->outlet->id)
+            ->assertJsonPath('data.outlet_ids', [$this->outlet->id])
             ->assertJsonMissingPath('data.pin')
             ->json('data.id');
 

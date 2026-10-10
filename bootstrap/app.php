@@ -54,6 +54,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Wajib sebelum route model binding: binding menjalankan query yang dibatasi TenantScope
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: SetTenantContext::class);
+        // Outlet perangkat/user diisi sebelum route model binding: order/shift outlet lain → 404 (ADR 0010)
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureDeviceToken::class);
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureUserToken::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Error bisnis adalah alur normal, bukan bug: jangan memenuhi log/Sentry

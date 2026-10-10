@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property string $id
  * @property string $tenant_id
+ * @property string|null $outlet_id
  * @property string $product_id
  * @property string|null $user_id
  * @property StockMovementType $type
@@ -27,7 +28,7 @@ final class StockMovement extends Model
 {
     use BelongsToTenant, HasUuids;
 
-    protected $fillable = ['id', 'product_id', 'user_id', 'type', 'qty_change', 'qty_after', 'reason', 'reference_id'];
+    protected $fillable = ['id', 'outlet_id', 'product_id', 'user_id', 'type', 'qty_change', 'qty_after', 'reason', 'reference_id'];
 
     protected function casts(): array
     {

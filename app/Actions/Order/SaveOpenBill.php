@@ -48,7 +48,7 @@ final class SaveOpenBill
         $shift = CheckoutOrder::openShiftOf($device);
         $outlet = Outlet::query()->findOrFail($existing->outlet_id ?? $shift->outlet_id);
 
-        $lines = $this->resolveLines->handle($data->items);
+        $lines = $this->resolveLines->handle($data->items, $outlet);
         $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval);
         $totals = $priced['totals'];
 

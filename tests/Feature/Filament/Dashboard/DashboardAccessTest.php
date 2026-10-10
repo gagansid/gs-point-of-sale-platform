@@ -3,11 +3,13 @@
 declare(strict_types=1);
 
 use App\Models\Admin;
+use App\Models\Outlet;
 use App\Models\Tenant;
 use App\Models\User;
 
 it('owner & manager bisa membuka dashboard', function (string $role) {
-    $user = User::factory()->{$role}()->create();
+    $outlet = Outlet::factory()->create(['tenant_id' => Tenant::factory()->create()->id]);
+    $user = User::factory()->{$role}()->forOutlet($outlet)->create();
 
     $this->actingAs($user)->get('/dashboard')->assertOk();
     $this->actingAs($user)->get('/dashboard/products')->assertOk();

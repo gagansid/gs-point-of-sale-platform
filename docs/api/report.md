@@ -6,9 +6,9 @@ dan file Excel.
 
 | Method | Endpoint | Isi |
 |---|---|---|
-| GET | `/reports/summary?from=&to=` | Ringkasan + seri harian |
-| GET | `/reports/products?from=&to=` | Per produk, urut omzet terbesar |
-| GET | `/reports/payment-methods?from=&to=` | Per metode bayar |
+| GET | `/reports/summary?from=&to=&outlet_id=` | Ringkasan + seri harian |
+| GET | `/reports/products?from=&to=&outlet_id=` | Per produk, urut omzet terbesar |
+| GET | `/reports/payment-methods?from=&to=&outlet_id=` | Per metode bayar |
 
 ## Aturan
 
@@ -18,7 +18,10 @@ dan file Excel.
   dilunasi hari ini = omzet hari ini).
 - Order **void** tidak masuk omzet; dilaporkan terpisah (`void_count`, `void_total`, berdasarkan `voided_at`).
 - Per metode bayar: hanya pembayaran `paid` pada order selesai.
-- `period` di setiap respons: `{ from, to, timezone }`.
+- `outlet_id` (opsional, ADR 0010): satu outlet yang dipegang user atau `all` (semua outlet yang dipegang).
+  Tanpa `outlet_id`: outlet perangkat bila login di perangkat, selain itu semua outlet yang dipegang.
+  Outlet di luar penugasan → `404 NOT_FOUND`. Zona waktu tanggal mengikuti outlet terpilih (atau outlet pertama).
+- `period` di setiap respons: `{ from, to, timezone, outlet_id }` (`outlet_id` `null` = semua outlet).
 
 ## `GET /v1/reports/summary`
 
@@ -27,7 +30,7 @@ dan file Excel.
   "success": true,
   "message": "OK",
   "data": {
-    "period": { "from": "2026-10-08", "to": "2026-10-08", "timezone": "Asia/Jakarta" },
+    "period": { "from": "2026-10-08", "to": "2026-10-08", "timezone": "Asia/Jakarta", "outlet_id": null },
     "order_count": 2,
     "revenue": "83900.00",
     "average": "41950.00",
@@ -57,6 +60,7 @@ dan file Excel.
 | HTTP | `error.code` | Kapan |
 |---|---|---|
 | 403 | `FORBIDDEN` | Tanpa `report.view` (supervisor, kasir) |
+| 404 | `NOT_FOUND` | `outlet_id` bukan outlet yang dipegang user |
 | 422 | `VALIDATION_ERROR` | Format tanggal salah, `to` < `from`, rentang > 366 hari |
 
 Test: `tests/Feature/Api/V1/Report/ReportTest.php` (termasuk batas hari 23.30 / 00.30 WIB dan isolasi tenant).

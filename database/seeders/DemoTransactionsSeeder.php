@@ -114,10 +114,11 @@ final class DemoTransactionsSeeder extends Seeder
         ]);
 
         if ($category !== PaymentCategory::Cash) {
+            $outlet = $device->outlet()->firstOrFail();
             $preview = app(PriceOrder::class)->handle(
                 $cashier,
-                $device->outlet()->firstOrFail(),
-                app(ResolveOrderLines::class)->handle($data->items),
+                $outlet,
+                app(ResolveOrderLines::class)->handle($data->items, $outlet),
                 null,
                 '0.00',
                 null,

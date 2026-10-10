@@ -5,16 +5,54 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Models\Category;
+use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Tenant;
 use App\Support\TenantContext;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
+ * stock_qty, is_available, dan min_stock boleh diisi seperti kolom produk (state/create); nilainya
+ * disimpan ke ProductStock untuk setiap outlet tenant (ADR 0010).
+ *
  * @extends Factory<Product>
  */
 final class ProductFactory extends Factory
 {
+    private const STOCK_FIELDS = ['stock_qty', 'is_available', 'min_stock'];
+
+    /** @var \WeakMap<Product, array<string, mixed>>|null */
+    private static ?\WeakMap $pendingStock = null;
+
+    public function configure(): static
+    {
+        return $this
+            ->afterMaking(function (Product $product): void {
+                $stock = array_intersect_key($product->getAttributes(), array_flip(self::STOCK_FIELDS));
+
+                foreach (self::STOCK_FIELDS as $field) {
+                    $product->offsetUnset($field);
+                }
+
+                self::$pendingStock ??= new \WeakMap;
+                self::$pendingStock[$product] = $stock;
+            })
+            ->afterCreating(function (Product $product): void {
+                $stock = self::$pendingStock[$product] ?? [];
+
+                foreach (Outlet::forTenant($product->tenant_id)->pluck('id') as $outletId) {
+                    $row = new ProductStock(['outlet_id' => $outletId, 'product_id' => $product->id]);
+                    $row->forceFill(['tenant_id' => $product->tenant_id, ...$stock])->saveQuietly();
+                }
+
+                $outletId = Outlet::forTenant($product->tenant_id)->orderBy('created_at')->value('id');
+                if (is_string($outletId)) {
+                    $product->loadOutletState($outletId);
+                }
+            });
+    }
+
     public function definition(): array
     {
         return [
@@ -26,11 +64,8 @@ final class ProductFactory extends Factory
             'price' => '25000.00',
             'cost_price' => '9000.00',
             'track_stock' => false,
-            'stock_qty' => 0,
             'is_active' => true,
-            'is_available' => true,
             'is_favorite' => false,
-            'min_stock' => null,
             'sort_order' => 0,
         ];
     }

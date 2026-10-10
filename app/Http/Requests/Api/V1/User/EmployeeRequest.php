@@ -53,13 +53,16 @@ final class EmployeeRequest extends FormRequest
             'password' => ['sometimes', 'nullable', 'string', 'max:255', Password::defaults()],
             'pin' => ['sometimes', 'nullable', 'string', new SecurePin],
             'is_active' => ['sometimes', 'boolean'],
+            // Outlet tenant (dicek lagi di SaveEmployee: aktif & dipegang pemberi tugas). Owner: diabaikan
+            'outlet_ids' => ['sometimes', 'array', 'max:100'],
+            'outlet_ids.*' => ['uuid', 'distinct'],
         ];
     }
 
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['name' => 'nama', 'role' => 'role', 'email' => 'email', 'username' => 'username', 'password' => 'kata sandi', 'pin' => 'PIN'];
+        return ['name' => 'nama', 'role' => 'role', 'email' => 'email', 'username' => 'username', 'password' => 'kata sandi', 'pin' => 'PIN', 'outlet_ids' => 'outlet'];
     }
 
     /** @return array<string, string> */

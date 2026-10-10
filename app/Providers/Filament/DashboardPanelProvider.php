@@ -9,8 +9,10 @@ use App\Filament\Shared\Layout;
 use App\Filament\Shared\Pages\Home;
 use App\Filament\Shared\Theme;
 use App\Http\Controllers\Web\EmailVerificationController;
+use App\Http\Controllers\Web\SwitchOutletController;
 use App\Http\Middleware\Filament\SetDashboardTenant;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use App\Support\Domains;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
@@ -87,6 +89,24 @@ final class DashboardPanelProvider extends PanelProvider
                 Route::post('email/verification-notification', [EmailVerificationController::class, 'resend'])
                     ->middleware('throttle:3,10')
                     ->name('verification.send');
+                // Pemilih outlet topbar (ADR 0010)
+                Route::post('switch-outlet/{outlet}', SwitchOutletController::class)
+                    ->where('outlet', 'all|[0-9a-fA-F-]{36}')
+                    ->name('switch-outlet');
+            })
+            // Pemilih outlet di topbar: hanya bila user memegang lebih dari satu outlet aktif (ADR 0010)
+            ->renderHook(PanelsRenderHook::TOPBAR_START, function (): string {
+                $user = Filament::auth()->user();
+
+                if (! $user instanceof User) {
+                    return '';
+                }
+
+                $outlets = $user->accessibleOutlets()->active()->get(['id', 'name']);
+
+                return $outlets->count() > 1
+                    ? view('filament.dashboard.outlet-switcher', ['outlets' => $outlets, 'selectedId' => CurrentOutlet::selectedId()])->render()
+                    : '';
             })
             // Banner trial / hanya-baca di atas setiap halaman (ADR 0009)
             ->renderHook(PanelsRenderHook::CONTENT_START, function (): string {

@@ -48,7 +48,7 @@ function fetchReport(object $test, string $path, ?User $user = null): TestRespon
 it('ringkasan hari ini memakai tanggal lokal outlet; void dipisah', function () {
     fetchReport($this, 'summary')
         ->assertOk()
-        ->assertJsonPath('data.period', ['from' => '2026-10-08', 'to' => '2026-10-08', 'timezone' => 'Asia/Jakarta'])
+        ->assertJsonPath('data.period', ['from' => '2026-10-08', 'to' => '2026-10-08', 'timezone' => 'Asia/Jakarta', 'outlet_id' => null])
         ->assertJsonPath('data.order_count', 2)
         ->assertJsonPath('data.revenue', '83900.00')
         ->assertJsonPath('data.average', '41950.00')

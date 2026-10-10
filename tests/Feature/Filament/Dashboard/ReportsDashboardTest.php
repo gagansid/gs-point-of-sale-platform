@@ -12,7 +12,6 @@ use App\Filament\Dashboard\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Dashboard\Resources\Shifts\Pages\ListShifts;
 use App\Filament\Dashboard\Widgets\SalesStatsWidget;
 use App\Models\Order;
-use App\Models\Product;
 use App\Models\User;
 use App\Support\TenantContext;
 use Filament\Actions\Testing\TestAction;
@@ -79,7 +78,7 @@ it('void dari dashboard mengembalikan stok', function () {
         ->assertHasNoActionErrors();
 
     expect($this->order->refresh()->status->value)->toBe('voided')
-        ->and(Product::query()->find($this->pos->croissant->id)?->stock_qty)->toBe(10);
+        ->and(stockOf($this->pos->croissant->id)->stock_qty)->toBe(10);
 });
 
 it('tutup paksa shift dari dashboard', function () {

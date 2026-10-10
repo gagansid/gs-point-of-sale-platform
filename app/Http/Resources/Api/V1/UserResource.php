@@ -23,7 +23,7 @@ final class UserResource extends JsonResource
             'role_label' => $this->role->getLabel(),
             // Untuk menampilkan/menyembunyikan menu di app; keputusan akhir tetap di server
             'permissions' => $this->role->grantedPermissions(),
-            'outlet_id' => $this->outlet_id,
+            'outlet_ids' => $this->outletIds(),
             'last_login_at' => Iso::dateTime($this->last_login_at),
         ];
     }

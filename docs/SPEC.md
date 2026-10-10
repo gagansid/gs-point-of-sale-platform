@@ -11,7 +11,7 @@
 REST API untuk aplikasi Flutter, dashboard web untuk owner, dan panel maintenance untuk super admin.
 Semua bagian memakai model, aturan bisnis, dan database yang sama.
 
-**Cakupan MVP:** multi-tenant dengan 1 outlet per bisnis, kategori & produk dengan opsi tambahan,
+**Cakupan MVP:** multi-tenant dengan banyak outlet per bisnis (ADR 0010), kategori & produk dengan opsi tambahan,
 kasir dengan split payment (cash, QRIS, transfer, debit, kredit dicatat manual), stok sederhana,
 shift, void, dan laporan dasar.
 
@@ -145,6 +145,8 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `device.manage` | Perangkat | ✅ | ❌ | ❌ | ❌ |
 | `payment_method.manage` | Metode bayar | ✅ | ❌ | ❌ | ❌ |
 | `outlet.settings` | Pajak, service, pembulatan, struk | ✅ | ❌ | ❌ | ❌ |
+| `outlet.manage` | Tambah & nonaktifkan outlet (Q36) | ✅ | ❌ | ❌ | ❌ |
+| `outlet.access_all` | Otomatis memegang semua outlet (Q37) | ✅ | ❌ | ❌ | ❌ |
 
 ```php
 enum UserRole: string
@@ -214,12 +216,14 @@ tabel master memakai soft delete.
 | Sistem | `announcements` | title, body, starts_at, ends_at (banner ke semua tenant) |
 | Sistem | `sales_leads` | name, business_name, phone, email, city, business_type, message, status (new/contacted/won/lost), notes, ip_hash — form "Hubungi sales" di gspos.id, data platform (tanpa tenant), dikelola di panel admin (Q29) |
 | Sistem | `system_settings` | key, value (JSON), updated_by — setelan global dari panel `/admin`, mis. wajib 2FA (ADR 0006) |
-| Akses | `tenants` | name, slug, business_type (cafe/retail/other), status (trial/active/suspended), subscription_ends_at |
-| Akses | `outlets` | tenant_id, code, name, address, tax_rate, service_charge_rate, tax_inclusive, rounding, receipt_header, receipt_footer, discount_limits (JSON), timezone (default `Asia/Jakarta`, ADR 0001) |
-| Akses | `users` | tenant_id, outlet_id, name, email (unik global, boleh kosong untuk kasir), username (unik per tenant, kasir/supervisor — Q35), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
+| Akses | `tenants` | name, slug, business_type (cafe/retail/other), status (trial/active/suspended), subscription_ends_at, max_outlets (batas outlet aktif SaaS, null = tanpa batas, Q36) |
+| Akses | `outlets` | tenant_id, code, name, address, tax_rate, service_charge_rate, tax_inclusive, rounding, receipt_header, receipt_footer, discount_limits (JSON), timezone (default `Asia/Jakarta`, ADR 0001), is_active (outlet dinonaktifkan, tidak dihapus — Q36) |
+| Akses | `users` | tenant_id, name, email (unik global, boleh kosong untuk kasir), username (unik per tenant, kasir/supervisor — Q35), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
+| Akses | `outlet_user` | outlet_id, user_id — outlet yang dipegang karyawan (Q37); owner tidak perlu baris (otomatis semua outlet) |
 | Akses | `devices` | tenant_id, outlet_id, name, device_uid (unik per tenant), platform, app_version, last_seen_at, revoked_at |
 | Produk | `categories` | tenant_id, name, sort_order, is_active (Q27) |
-| Produk | `products` | tenant_id, category_id (nullable), name, sku, barcode, price, cost_price, track_stock, stock_qty, min_stock (batas stok menipis, Q24), image_path, is_active, is_available (tanda habis, Q12), is_favorite (favorit outlet, Q25), sort_order (urutan tampil kasir) |
+| Produk | `products` | tenant_id, category_id (nullable), name, sku, barcode, price, cost_price, track_stock, image_path, is_active, is_favorite (favorit outlet, Q25), sort_order (urutan tampil kasir) |
+| Produk | `outlet_product` | tenant_id, outlet_id, product_id (unik per outlet), stock_qty, min_stock (batas stok menipis, Q24), is_available (tanda habis, Q12) — stok & ketersediaan per outlet (Q40) |
 | Produk | `option_groups` | tenant_id, name (Ukuran, Gula, Topping), min_select, max_select, is_active (Q27) |
 | Produk | `options` | tenant_id (Q13), option_group_id, name, price_delta, sort_order |
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
@@ -229,7 +233,7 @@ tabel master memakai soft delete.
 | Transaksi | `order_items` | order_id, product_id, product_name, unit_price, options_total, qty, discount, line_total, notes |
 | Transaksi | `order_item_options` | order_item_id, option_id, option_name, price_delta |
 | Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |
-| Produk | `stock_movements` | tenant_id, product_id, user_id, type (adjustment/sale/void_return), qty_change, qty_after, reason, reference_id — riwayat stok (Q14) |
+| Produk | `stock_movements` | tenant_id, outlet_id, product_id, user_id, type (adjustment/sale/void_return), qty_change, qty_after, reason, reference_id — riwayat stok (Q14) |
 | Pembayaran | `payments` | tenant_id, order_id, payment_method_id, user_id, category, amount (dipakai membayar), tendered (uang diterima), change, reference (approval code), status |
 | Sistem Laravel | `personal_access_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs` | Bawaan Laravel / Sanctum |
 
@@ -373,7 +377,8 @@ Contoh `POST /checkout`:
 | GET | `/reports/summary?from=&to=` | O, M | Omzet, jumlah transaksi, rata-rata, diskon, pajak |
 | GET | `/reports/products?from=&to=` | O, M | Penjualan per produk |
 | GET | `/reports/payment-methods?from=&to=` | O, M | Penjualan per metode bayar |
-| GET, PUT | `/outlet` | O | Pajak, service charge, pembulatan, header/footer struk |
+| GET | `/outlets` | Semua | Outlet yang dipegang user (Q37) |
+| GET, PUT | `/outlet` | O | Pajak, service charge, pembulatan, header/footer struk (outlet perangkat) |
 | GET, POST, PUT | `/users`, `/users/{id}` | O | Kelola kasir & manager |
 | GET, PUT | `/payment-methods`, `/payment-methods/{id}` | O | Aktif/nonaktifkan metode bayar |
 
@@ -400,6 +405,7 @@ berdasarkan `error.code`, bukan teks `message`. Detail & contoh:
 | 409 | `SHIFT_NOT_OPEN` | Transaksi tanpa shift terbuka |
 | 409 | `ORDER_ALREADY_CLOSED` | Mengubah order yang sudah selesai/void |
 | 409 | `LAST_OWNER_REQUIRED` | Menonaktifkan/menurunkan role owner aktif terakhir |
+| 409 | `OUTLET_LIMIT_REACHED` | Menambah/mengaktifkan outlet melebihi `tenants.max_outlets` (Q36) |
 | 422 | `VALIDATION_ERROR` | Input tidak valid (detail per field di `error.details`) |
 | 422 | `PAYMENT_EXCEEDS_BALANCE` | Non-tunai melebihi sisa tagihan |
 | 422 | `DISCOUNT_OVER_LIMIT` | Diskon melebihi batas role tanpa approval |

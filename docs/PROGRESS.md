@@ -1,7 +1,7 @@
 # Progres Pengerjaan
 
 > Terakhir diperbarui: 2026-10-10 · Branch: `feature/pos` (ADR 0003) · Commit terakhir: `3937a7b`
-> Status kualitas: **632 test** lulus (SQLite), Pint & Larastan level 6 bersih. Uji MySQL untuk fitur
+> Status kualitas: **656 test** lulus (SQLite), Pint & Larastan level 6 bersih. Uji MySQL untuk fitur
 > 9–10 Okt belum dijalankan ulang.
 
 Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#cara-melanjutkan) dan
@@ -25,11 +25,12 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | Domain | Subdomain `app.`/`admin.`/`api.` + halaman depan & login `gspos.id` (ADR 0008), URL berbahasa Inggris | ✅ | `5d3dcf3`, `83aec78`, `c13c37c` |
 | Onboarding | Daftar mandiri + trial, hanya-baca, verifikasi email, checklist + template menu, lead → tenant, lupa kata sandi, edisi jual putus (ADR 0009 langkah 1–6) | ✅ | `abec733` … `3937a7b` |
 | **Setelan** | Profil outlet ✅, Karyawan ✅ (PIN + username/kata sandi kasir web), Metode bayar ✅; Perangkat ditunda ke fase tablet; import produk | 🟡 | `1a1b9d9`, `fa95b7e`, `cd2ac45`, `22f2ed2` |
-| **Berikutnya** | Multi-outlet M2–M6 (ADR 0010), lalu import produk Excel & kasir web | ⏳ | — |
+| Multi-outlet | Outlet per bisnis (tambah/nonaktifkan, batas paket), penugasan karyawan, stok & ketersediaan per outlet, pemilih outlet topbar, filter laporan, `/outlets` (ADR 0010 M1–M6) | ✅ | — |
+| **Berikutnya** | Import produk Excel & kasir web | ⏳ | — |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ⏳ | — |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
-Endpoint selesai: **44** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q35, ADR 0001–0009.
+Endpoint selesai: **45** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q41, ADR 0001–0010.
 
 ---
 
@@ -89,11 +90,11 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | Langkah | Isi | Status |
 |---|---|---|
 | M1 | Keputusan: ADR 0010, SPEC Q36–Q41 | ✅ |
-| M2 | Data: `outlet_user` (migrasi dari `users.outlet_id`), `outlet_product` (stok & tersedia per outlet, migrasi dari produk), `tenants.max_outlets` | Belum |
-| M3 | Akses: outlet yang ditugaskan per user, scope outlet fail-closed, `CurrentOutlet` dari pilihan session (T7) | Belum |
-| M4 | Dashboard: Pengaturan → Outlet (daftar/tambah/nonaktifkan), pemilih outlet di topbar, Karyawan pilih outlet | Belum |
-| M5 | Stok & katalog per outlet: produk (tersedia/stok per outlet), `AdjustStock`, potong stok checkout, `/catalog`, `PinUsers` | Belum |
-| M6 | Laporan & daftar (penjualan, shift, beranda) filter outlet; API `/outlets` | Belum |
+| M2 | Data: `outlet_user` (migrasi dari `users.outlet_id`), `outlet_product` (stok & tersedia per outlet, migrasi dari produk), `tenants.max_outlets`, `outlets.is_active`, `stock_movements.outlet_id` | ✅ |
+| M3 | Akses: `User::accessibleOutlets()` (owner = `outlet.access_all`), `OutletScope` fail-closed (order/shift/device), `CurrentOutlet` per request (device / session), token di device outlet lain/nonaktif → 403 | ✅ |
+| M4 | Dashboard: Pengaturan → Outlet (`settings/outlets`, `OUTLET_LIMIT_REACHED`), Profil outlet per outlet, pemilih outlet topbar, Karyawan pilih outlet, admin "Maksimal outlet aktif" | ✅ |
+| M5 | Stok & katalog per outlet: `ProductStock` + `Product::atOutlet()`, `AdjustStock`, potong stok checkout, `/catalog`, `PinUsers` | ✅ |
+| M6 | Laporan & daftar (penjualan, shift, beranda) mengikuti outlet topbar; API `GET /outlets`, laporan `?outlet_id=` | ✅ |
 
 ### 2. Minggu 7 — panel `/admin` & keamanan
 
@@ -126,7 +127,7 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | T4 | Node.js lokal 20.18 < syarat Vite 20.19 (build tetap berhasil) | Upgrade Node lokal |
 | T5 | Laravel 12 security fix sampai Feb 2027 → rencanakan PHP 8.3+ & Laravel 13 (ADR 0004) | Sebelum Feb 2027 |
 | T6 | `.env` lokal berisi `POS_ADMIN_2FA_REQUIRED=false` (diubah pemilik repo); test tidak terpengaruh (`phpunit.xml`) | Pastikan **true** di production |
-| T7 | Multi-outlet (fase 2): `CurrentOutlet` masih "outlet pertama" | Fase 2 |
+| T7 | ~~`CurrentOutlet` masih "outlet pertama"~~ — selesai lewat ADR 0010 | ✅ |
 
 ---
 

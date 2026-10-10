@@ -27,7 +27,9 @@ final class EmployeeResource extends JsonResource
             'has_password' => $this->password !== null,
             'role' => $this->role->value,
             'role_label' => $this->role->getLabel(),
-            'outlet_id' => $this->outlet_id,
+            // Owner memegang semua outlet (ADR 0010); role lain hanya outlet yang ditugaskan
+            'all_outlets' => $this->role->allows('outlet.access_all'),
+            'outlet_ids' => $this->outletIds(),
             'is_active' => $this->is_active,
             'has_pin' => $this->pin !== null,
             'pin_locked_until' => Iso::dateTime($this->pin_locked_until),

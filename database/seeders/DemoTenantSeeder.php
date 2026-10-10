@@ -66,10 +66,10 @@ final class DemoTenantSeeder extends Seeder
             ]);
 
             $users = [
-                ['name' => 'Owner Demo', 'email' => 'owner@demo.test', 'role' => UserRole::Owner, 'outlet_id' => null],
-                ['name' => 'Manager Demo', 'email' => 'manager@demo.test', 'role' => UserRole::Manager, 'outlet_id' => $outlet->id],
-                ['name' => 'Sari', 'email' => null, 'role' => UserRole::Supervisor, 'outlet_id' => $outlet->id, 'pin' => '222222'],
-                ['name' => 'Budi', 'email' => null, 'role' => UserRole::Cashier, 'outlet_id' => $outlet->id, 'pin' => '123456'],
+                ['name' => 'Owner Demo', 'email' => 'owner@demo.test', 'role' => UserRole::Owner],
+                ['name' => 'Manager Demo', 'email' => 'manager@demo.test', 'role' => UserRole::Manager],
+                ['name' => 'Sari', 'email' => null, 'role' => UserRole::Supervisor, 'pin' => '222222'],
+                ['name' => 'Budi', 'email' => null, 'role' => UserRole::Cashier, 'pin' => '123456'],
             ];
 
             foreach ($users as $user) {
@@ -79,6 +79,11 @@ final class DemoTenantSeeder extends Seeder
                     'is_active' => true,
                     ...$user,
                 ]);
+
+                // Owner otomatis memegang semua outlet; karyawan lain ditugaskan ke outlet demo (ADR 0010)
+                if ($user['role'] !== UserRole::Owner) {
+                    $model->outlets()->syncWithoutDetaching([$outlet->id]);
+                }
 
                 // Akun demo dianggap sudah verifikasi email (ADR 0009)
                 if ($user['email'] !== null && ! $model->hasVerifiedEmail()) {
@@ -92,12 +97,12 @@ final class DemoTenantSeeder extends Seeder
             ]);
 
             app(CreateDefaultPaymentMethods::class)->handle();
-            $this->seedCatalog();
+            $this->seedCatalog($outlet);
         });
     }
 
     /** Katalog contoh kafe; dilewati bila sudah ada (aman dijalankan ulang). */
-    private function seedCatalog(): void
+    private function seedCatalog(Outlet $outlet): void
     {
         if (Category::query()->exists()) {
             return;
@@ -134,7 +139,7 @@ final class DemoTenantSeeder extends Seeder
                 'name' => $name, 'category_id' => $categoryId, 'price' => $price,
                 'cost_price' => (int) ($price * 0.4), 'track_stock' => $track, 'stock_qty' => $stock,
                 'option_group_ids' => $groups,
-            ]));
+            ]), $outlet);
         }
     }
 }

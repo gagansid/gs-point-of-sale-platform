@@ -2112,3 +2112,39 @@ select.fi-select-input {
     font-size: 12px;
     font-weight: 600;
 }
+
+/* ---------- Pemilih outlet topbar (ADR 0010) ---------- */
+.pos-outlet-switcher__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: var(--control-h);
+    max-width: 240px;
+    padding: 0 10px;
+    border: 1px solid var(--field-border);
+    border-radius: var(--control-radius);
+    background: var(--bg-surface);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s ease;
+}
+
+.pos-outlet-switcher__trigger:hover {
+    border-color: var(--field-border-hover);
+}
+
+.pos-outlet-switcher__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pos-outlet-switcher__icon,
+.pos-outlet-switcher__chevron {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: var(--text-muted);
+}

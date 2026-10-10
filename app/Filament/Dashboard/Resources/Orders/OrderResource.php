@@ -9,11 +9,13 @@ use App\Filament\Dashboard\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Dashboard\Resources\Orders\Schemas\OrderInfolist;
 use App\Filament\Dashboard\Resources\Orders\Tables\OrdersTable;
 use App\Models\Order;
+use App\Support\CurrentOutlet;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 /**
@@ -45,6 +47,16 @@ final class OrderResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return OrderInfolist::configure($schema);
+    }
+
+    /**
+     * Outlet pilihan topbar ("Semua outlet" = semua outlet yang dipegang user), ADR 0010.
+     *
+     * @return Builder<Order>
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        return CurrentOutlet::scope(Order::query());
     }
 
     public static function table(Table $table): Table

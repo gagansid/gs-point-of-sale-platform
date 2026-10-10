@@ -6,6 +6,7 @@ namespace App\Models\Concerns;
 
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
+use App\Models\Scopes\OutletScope;
 use App\Models\Scopes\TenantScope;
 use App\Models\Tenant;
 use App\Support\TenantContext;
@@ -67,7 +68,8 @@ trait BelongsToTenant
      */
     public function scopeAllTenants(Builder $query): void
     {
-        $query->withoutGlobalScope(TenantScope::class);
+        // Lintas tenant juga berarti lintas outlet (OutletScope, ADR 0010)
+        $query->withoutGlobalScopes([TenantScope::class, OutletScope::class]);
     }
 
     /**
@@ -77,7 +79,7 @@ trait BelongsToTenant
      */
     public function scopeForTenant(Builder $query, string $tenantId): void
     {
-        $query->withoutGlobalScope(TenantScope::class)->where($this->qualifyColumn('tenant_id'), $tenantId);
+        $query->withoutGlobalScopes([TenantScope::class, OutletScope::class])->where($this->qualifyColumn('tenant_id'), $tenantId);
     }
 
     /** @return BelongsTo<Tenant, $this> */

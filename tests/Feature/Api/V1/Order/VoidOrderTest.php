@@ -7,7 +7,6 @@ use App\Enums\PaymentStatus;
 use App\Enums\StockMovementType;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\Product;
 use App\Models\StockMovement;
 use Illuminate\Testing\TestResponse;
 
@@ -36,7 +35,7 @@ function checkoutForVoid(object $test, string $token, ?stdClass $pos = null): st
 }
 
 it('kasir void dengan PIN supervisor: stok kembali, pembayaran di-void, approver tercatat', function () {
-    expect(Product::allTenants()->find($this->pos->croissant->id)?->stock_qty)->toBe(8);
+    expect(stockOf($this->pos->croissant->id)->stock_qty)->toBe(8);
 
     voidOrder($this, ['reason' => 'Salah input', 'approver_user_id' => $this->pos->supervisor->id, 'approver_pin' => '123456'])
         ->assertOk()
@@ -47,7 +46,7 @@ it('kasir void dengan PIN supervisor: stok kembali, pembayaran di-void, approver
         ->assertJsonPath('data.void_approved_by', $this->pos->supervisor->id)
         ->assertJsonPath('data.payments.0.status', 'voided');
 
-    expect(Product::allTenants()->find($this->pos->croissant->id)?->stock_qty)->toBe(10)
+    expect(stockOf($this->pos->croissant->id)->stock_qty)->toBe(10)
         ->and(StockMovement::allTenants()->where('type', StockMovementType::VoidReturn)->sole()->qty_change)->toBe(2);
 });
 
@@ -83,7 +82,7 @@ it('void dua kali → hasil sama, stok tidak dikembalikan dua kali', function ()
     voidOrder($this, ['reason' => 'x'], $token)->assertOk();
     voidOrder($this, ['reason' => 'y'], $token)->assertOk()->assertJsonPath('meta.idempotent_replay', true)->assertJsonPath('data.void_reason', 'x');
 
-    expect(Product::allTenants()->find($this->pos->croissant->id)?->stock_qty)->toBe(10);
+    expect(stockOf($this->pos->croissant->id)->stock_qty)->toBe(10);
 });
 
 it('shift sudah ditutup → SHIFT_NOT_OPEN', function () {
@@ -99,7 +98,7 @@ it('void open bill: tanpa pengembalian stok', function () {
 
     voidOrder($this, ['reason' => 'Tamu batal'], userToken($this->pos->supervisor), $billId)->assertOk();
 
-    expect(Product::allTenants()->find($this->pos->croissant->id)?->stock_qty)->toBe(8)
+    expect(stockOf($this->pos->croissant->id)->stock_qty)->toBe(8)
         ->and(StockMovement::allTenants()->where('type', StockMovementType::VoidReturn)->count())->toBe(0);
 });
 

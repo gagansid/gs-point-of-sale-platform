@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Pages;
 
 use App\Exports\SalesReportExport;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
+use App\Models\Outlet;
 use App\Models\User;
 use App\Services\Report\ReportService;
 use App\Support\CurrentOutlet;
@@ -27,6 +28,16 @@ use UnitEnum;
  */
 final class Reports extends Page
 {
+    /** Outlet laporan mengikuti pemilih di topbar (ADR 0010). */
+    public function getSubheading(): ?string
+    {
+        if (Outlet::query()->count() <= 1) {
+            return null;
+        }
+
+        return 'Outlet: '.(CurrentOutlet::selectedId() !== null ? CurrentOutlet::getOrFail()->name : 'Semua outlet');
+    }
+
     use HasFiltersForm;
     use HasIconBreadcrumbs;
 

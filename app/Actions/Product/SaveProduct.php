@@ -7,7 +7,9 @@ namespace App\Actions\Product;
 use App\Actions\Product\Data\ProductData;
 use App\Enums\StockMovementType;
 use App\Models\OptionGroup;
+use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Support\Idempotency;
@@ -15,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Membuat (product = null) atau mengubah produk beserta urutan grup opsinya.
+ * Harga & katalog berlaku di semua outlet; stok awal dan stok minimum untuk $outlet (ADR 0010).
  * Stok awal hanya saat membuat; perubahan stok berikutnya lewat AdjustStock.
  */
 final class SaveProduct
@@ -22,13 +25,13 @@ final class SaveProduct
     /**
      * @return array{product: Product, replayed: bool}
      */
-    public function handle(?Product $product, ProductData $data, ?User $by = null): array
+    public function handle(?Product $product, ProductData $data, Outlet $outlet, ?User $by = null): array
     {
         if ($product === null && ($existing = Idempotency::existing(Product::class, $data->id)) !== null) {
-            return ['product' => $existing, 'replayed' => true];
+            return ['product' => $existing->loadOutletState($outlet->id), 'replayed' => true];
         }
 
-        $product = DB::transaction(function () use ($product, $data, $by): Product {
+        $product = DB::transaction(function () use ($product, $data, $outlet, $by): Product {
             $isNew = $product === null;
             $product ??= new Product;
 
@@ -44,20 +47,25 @@ final class SaveProduct
                 'price' => $data->price,
                 'cost_price' => $data->costPrice,
                 'track_stock' => $data->trackStock,
-                'min_stock' => $data->minStock,
                 'image_path' => $data->imagePathProvided ? $data->imagePath : $product->image_path,
                 'is_active' => $data->isActive,
                 'is_favorite' => $data->isFavorite,
             ]);
 
+            $product->save();
+
+            $stock = ProductStock::for($product->id, $outlet->id, lock: true);
+            $stock->min_stock = $data->minStock;
+
             if ($isNew) {
-                $product->stock_qty = $data->trackStock ? $data->initialStock : 0;
+                $stock->stock_qty = $data->trackStock ? $data->initialStock : 0;
             }
 
-            $product->save();
+            $stock->save();
 
             if ($isNew && $data->trackStock && $data->initialStock !== 0) {
                 StockMovement::query()->create([
+                    'outlet_id' => $outlet->id,
                     'product_id' => $product->id,
                     'user_id' => $by?->id,
                     'type' => StockMovementType::Adjustment,
@@ -72,7 +80,7 @@ final class SaveProduct
             return $product;
         });
 
-        return ['product' => $product->refresh(), 'replayed' => false];
+        return ['product' => $product->refresh()->loadOutletState($outlet->id), 'replayed' => false];
     }
 
     /**

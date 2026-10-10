@@ -7,6 +7,7 @@ use App\Filament\Dashboard\Resources\Products\Pages\EditProduct;
 use App\Filament\Dashboard\Resources\Products\Pages\ListProducts;
 use App\Models\Category;
 use App\Models\OptionGroup;
+use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\Tenant;
@@ -20,6 +21,8 @@ beforeEach(function () {
     Filament::setCurrentPanel('dashboard');
     $this->owner = User::factory()->owner()->create();
     $this->actingAs($this->owner);
+    // Bisnis selalu punya minimal satu outlet (stok & zona waktu per outlet, ADR 0010)
+    Outlet::factory()->create(['tenant_id' => $this->owner->tenant_id]);
     // Request Livewire di test tidak melewati middleware panel: set tenant seperti SetDashboardTenant
     TenantContext::set($this->owner->tenant_id);
 });
@@ -53,7 +56,7 @@ it('menambah produk lewat form dengan harga bermask & grup opsi', function () {
     $product = Product::query()->sole();
     expect($product->price)->toBe('22000.00')
         ->and($product->cost_price)->toBe('8800.00')
-        ->and($product->stock_qty)->toBe(12)
+        ->and(stockOf($product)->stock_qty)->toBe(12)
         ->and($product->optionGroups()->pluck('option_groups.id')->all())->toBe([$sugar->id, $size->id])
         ->and(StockMovement::query()->sole()->reason)->toBe('Stok awal');
 });
@@ -86,7 +89,7 @@ it('menyesuaikan stok dari daftar produk', function () {
         ->callAction(TestAction::make('adjustStock')->table($product), ['qty_change' => -4, 'reason' => 'Rusak'])
         ->assertHasNoFormErrors();
 
-    expect($product->refresh()->stock_qty)->toBe(6)
+    expect(stockOf($product)->stock_qty)->toBe(6)
         ->and(StockMovement::query()->sole()->user_id)->toBe($this->owner->id);
 });
 
@@ -95,7 +98,7 @@ it('menandai produk habis', function () {
 
     Livewire::test(ListProducts::class)->callAction(TestAction::make('markSoldOut')->table($product));
 
-    expect($product->refresh()->is_available)->toBeFalse();
+    expect(stockOf($product)->is_available)->toBeFalse();
 });
 
 it('tandai habis memakai modal konfirmasi; tandai tersedia langsung tanpa modal', function () {
@@ -110,14 +113,14 @@ it('tandai habis memakai modal konfirmasi; tandai tersedia langsung tanpa modal'
 
     expect($action?->isConfirmationRequired())->toBeTrue()
         ->and((string) $action?->getModalDescription())->toContain('Tandai <strong>Es Teh</strong> sebagai habis?')
-        ->and($available->refresh()->is_available)->toBeTrue();
+        ->and(stockOf($available)->is_available)->toBeTrue();
 
     // Regresi: produk habis tidak boleh memunculkan modal "Tandai habis"
     Livewire::test(ListProducts::class)
         ->assertActionHidden(TestAction::make('markSoldOut')->table($soldOut))
         ->callAction(TestAction::make('markAvailable')->table($soldOut));
 
-    expect($soldOut->refresh()->is_available)->toBeTrue();
+    expect(stockOf($soldOut)->is_available)->toBeTrue();
 });
 
 it('form edit tidak bisa membuka produk tenant lain', function () {
@@ -173,9 +176,9 @@ it('aksi massal: tandai habis lalu hapus hanya produk terpilih', function () {
         ->callAction(TestAction::make('bulkMarkSoldOut')->table()->bulk())
         ->assertHasNoActionErrors();
 
-    expect($a->refresh()->is_available)->toBeFalse()
-        ->and($b->refresh()->is_available)->toBeFalse()
-        ->and($c->refresh()->is_available)->toBeTrue();
+    expect(stockOf($a)->is_available)->toBeFalse()
+        ->and(stockOf($b)->is_available)->toBeFalse()
+        ->and(stockOf($c)->is_available)->toBeTrue();
 
     Livewire::test(ListProducts::class)
         ->selectTableRecords([$a, $b])
@@ -192,8 +195,8 @@ it('aksi massal tidak bisa menyentuh produk tenant lain', function () {
         ->selectTableRecords([$mine->id, $foreign->id])
         ->callAction(TestAction::make('bulkMarkSoldOut')->table()->bulk());
 
-    expect($mine->refresh()->is_available)->toBeFalse()
-        ->and(TenantContext::run($foreign->tenant_id, fn () => $foreign->refresh()->is_available))->toBeTrue();
+    expect(stockOf($mine)->is_available)->toBeFalse()
+        ->and(stockOf($foreign)->is_available)->toBeTrue();
 });
 
 it('empty state membedakan belum ada produk dan hasil filter kosong', function () {
@@ -246,9 +249,9 @@ it('menyimpan stok minimum dan favorit dari form', function () {
         ->call('save')
         ->assertHasNoFormErrors();
 
-    expect($product->refresh()->min_stock)->toBe(4)
-        ->and($product->is_favorite)->toBeTrue()
-        ->and($product->isLowStock())->toBeFalse();
+    expect(stockOf($product)->min_stock)->toBe(4)
+        ->and($product->refresh()->is_favorite)->toBeTrue()
+        ->and($product->loadOutletState(stockOf($product)->outlet_id)->isLowStock())->toBeFalse();
 });
 
 it('mengatur urutan tampil di kasir dengan seret-lepas', function () {

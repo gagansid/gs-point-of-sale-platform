@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\DiscountType;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
+use App\Models\Concerns\BelongsToOutlet;
 use App\Models\Concerns\BelongsToTenant;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -51,7 +52,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 final class Order extends Model
 {
-    use BelongsToTenant, HasUuids;
+    use BelongsToOutlet, BelongsToTenant, HasUuids;
 
     /** Default sama dengan database agar order baru di memori sudah punya nilai pembayaran. */
     protected $attributes = [
@@ -103,12 +104,6 @@ final class Order extends Model
     public function shift(): BelongsTo
     {
         return $this->belongsTo(Shift::class);
-    }
-
-    /** @return BelongsTo<Outlet, $this> */
-    public function outlet(): BelongsTo
-    {
-        return $this->belongsTo(Outlet::class);
     }
 
     /** @return BelongsTo<User, $this> */

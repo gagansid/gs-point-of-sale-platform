@@ -71,12 +71,13 @@ final class UserController extends Controller
      * Tambah karyawan.
      *
      * Owner/manager: email + password wajib. Supervisor/kasir: pin 6 digit (tablet) + username &
-     * password (kasir web, SPEC Q35) wajib.
+     * password (kasir web, SPEC Q35) wajib. `outlet_ids`: outlet yang dipegang (non-owner, minimal satu;
+     * default outlet perangkat).
      * `id` opsional sebagai idempotency key.
      */
     public function store(EmployeeRequest $request, SaveEmployee $action): JsonResponse
     {
-        $result = $action->handle(null, EmployeeData::fromArray($request->validated()));
+        $result = $action->handle(null, EmployeeData::fromArray($request->validated()), ApiActor::user($request));
 
         return ApiResponse::success(
             EmployeeResource::make($result['user'])->resolve($request),
@@ -107,7 +108,7 @@ final class UserController extends Controller
         $actor = ApiActor::user($request);
 
         $updated = DB::transaction(function () use ($user, $data, $request, $save, $setActive, $actor): User {
-            $updated = $save->handle($user, $data)['user'];
+            $updated = $save->handle($user, $data, $actor)['user'];
 
             if ($request->has('is_active') && $request->boolean('is_active') !== $updated->is_active) {
                 $updated = $setActive->handle($updated, $request->boolean('is_active'), $actor);

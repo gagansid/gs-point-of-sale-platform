@@ -66,7 +66,7 @@ it('membuat tenant beserta outlet dan owner pertama', function () {
         ->and($outlet->timezone)->toBe('Asia/Jakarta')
         ->and($owner->role)->toBe(UserRole::Owner)
         ->and($owner->email)->toBe('rina@kopipagi.test')
-        ->and($owner->outlet_id)->toBeNull()
+        ->and($owner->outletIds())->toHaveCount(1)
         ->and(Hash::check('rahasia123', (string) $owner->password))->toBeTrue();
 });
 

@@ -16,6 +16,7 @@ use App\Models\Outlet;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Shift;
 use App\Models\StockMovement;
 use App\Models\User;
@@ -122,30 +123,32 @@ final class OrderWriter
     }
 
     /**
-     * Mengubah stok produk ber-track_stock untuk semua item order (jual = kurang, void = kembali).
-     * Baris produk dikunci: transaksi bersamaan tidak saling menimpa. Stok boleh minus (SPEC).
+     * Mengubah stok outlet order untuk produk ber-track_stock (jual = kurang, void = kembali).
+     * Baris stok dikunci: transaksi bersamaan tidak saling menimpa. Stok boleh minus (SPEC).
      */
     public function moveStock(Order $order, ?User $actor, StockMovementType $type): void
     {
         $sign = $type === StockMovementType::Sale ? -1 : 1;
 
         foreach ($order->items()->get() as $item) {
-            $product = Product::query()->withTrashed()->lockForUpdate()->find($item->product_id);
+            $product = Product::query()->withTrashed()->find($item->product_id);
 
             if ($product === null || ! $product->track_stock) {
                 continue;
             }
 
+            $stock = ProductStock::for($product->id, $order->outlet_id, lock: true);
             $change = $sign * $item->qty;
-            $product->stock_qty += $change;
-            $product->save();
+            $stock->stock_qty += $change;
+            $stock->save();
 
             StockMovement::query()->create([
+                'outlet_id' => $order->outlet_id,
                 'product_id' => $product->id,
                 'user_id' => $actor?->id,
                 'type' => $type,
                 'qty_change' => $change,
-                'qty_after' => $product->stock_qty,
+                'qty_after' => $stock->stock_qty,
                 'reference_id' => $order->id,
             ]);
         }

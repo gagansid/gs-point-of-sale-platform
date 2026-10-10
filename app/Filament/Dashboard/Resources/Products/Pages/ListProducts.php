@@ -8,7 +8,9 @@ use App\Filament\Dashboard\Resources\Products\ProductResource;
 use App\Filament\Shared\Concerns\HasCardTabs;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Filament\Shared\Concerns\HasTableCardHeader;
+use App\Models\Outlet;
 use App\Models\Product;
+use App\Support\CurrentOutlet;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -51,14 +53,26 @@ final class ListProducts extends ListRecords
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('is_active', true))
                 ->badge(fn (): int => Product::query()->where('is_active', true)->count()),
             'sold_out' => Tab::make('Habis')
-                ->modifyQueryUsing(fn (Builder $query): Builder => $query->scopes('soldOut'))
-                ->badge(fn (): int => Product::query()->soldOut()->count())
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->scopes(['soldOut' => [self::outletId()]]))
+                ->badge(fn (): int => Product::query()->soldOut(self::outletId())->count())
                 ->badgeColor('danger'),
             'low_stock' => Tab::make('Stok menipis')
-                ->modifyQueryUsing(fn (Builder $query): Builder => $query->scopes('lowStock'))
-                ->badge(fn (): int => Product::query()->lowStock()->count())
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->scopes(['lowStock' => [self::outletId()]]))
+                ->badge(fn (): int => Product::query()->lowStock(self::outletId())->count())
                 ->badgeColor('warning'),
         ];
+    }
+
+    /** Stok & ketersediaan mengikuti outlet aktif di topbar (ADR 0010). */
+    private static function outletId(): string
+    {
+        return CurrentOutlet::getOrFail()->id;
+    }
+
+    public function getSubheading(): ?string
+    {
+        // Hanya relevan bila bisnis punya lebih dari satu outlet
+        return Outlet::query()->count() > 1 ? 'Stok & ketersediaan: '.CurrentOutlet::getOrFail()->name : null;
     }
 
     /**

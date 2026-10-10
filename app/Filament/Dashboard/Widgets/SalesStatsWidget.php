@@ -40,7 +40,8 @@ final class SalesStatsWidget extends StatsOverviewWidget
         $now = $reports->summary(...CurrentOutlet::utcRange($today, $today));
         $before = $reports->summary(...CurrentOutlet::utcRange($yesterday, $yesterday));
 
-        $outOfStock = Product::query()->active()->where('track_stock', true)->where('stock_qty', '<=', 0)->count();
+        $outlet = CurrentOutlet::get();
+        $outOfStock = $outlet !== null ? Product::query()->active()->outOfStock($outlet->id)->count() : 0;
 
         return [
             $this->trend(Stat::make('Omzet hari ini', Money::format($now['revenue'])), $now['revenue'], $before['revenue'])

@@ -12,6 +12,7 @@ use App\Exceptions\BusinessException;
 use App\Filament\Shared\Layout;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteAction;
@@ -35,7 +36,7 @@ final class ProductActions
             ->icon(Heroicon::OutlinedArchiveBox)
             ->visible(fn (Product $record): bool => $record->track_stock && (self::user()?->can('stock.adjust') ?? false))
             ->modalHeading(fn (Product $record): string => "Sesuaikan stok {$record->name}")
-            ->modalDescription(fn (Product $record): string => "Stok saat ini: {$record->stock_qty}")
+            ->modalDescription(fn (Product $record): string => 'Stok saat ini di '.CurrentOutlet::getOrFail()->name.": {$record->stock_qty}")
             ->modalSubmitActionLabel('Simpan')
             ->modalWidth('md')
             ->schema([
@@ -48,7 +49,7 @@ final class ProductActions
             ->action(function (Product $record, array $data, Action $action): void {
                 try {
                     // ID baru per submit; tombol yang ditekan dua kali dicegah Filament (loading state)
-                    app(AdjustStock::class)->handle($record, self::user() ?? abort(403), (string) Str::uuid7(), (int) $data['qty_change'], (string) $data['reason']);
+                    app(AdjustStock::class)->handle($record, CurrentOutlet::getOrFail(), self::user() ?? abort(403), (string) Str::uuid7(), (int) $data['qty_change'], (string) $data['reason']);
                 } catch (BusinessException $e) {
                     Notification::make()->danger()->title($e->getMessage())->send();
                     $action->halt();
@@ -77,7 +78,7 @@ final class ProductActions
             ))
             ->modalSubmitActionLabel('Tandai habis')
             ->action(function (Product $record): void {
-                app(SetProductAvailability::class)->handle($record, false);
+                app(SetProductAvailability::class)->handle($record, CurrentOutlet::getOrFail(), false);
 
                 Notification::make()->success()->title('Menu ditandai habis')->send();
             });
@@ -93,7 +94,7 @@ final class ProductActions
             ->icon(Heroicon::OutlinedCheckCircle)
             ->visible(fn (Product $record): bool => ! $record->is_available && self::canToggleAvailability())
             ->action(function (Product $record): void {
-                app(SetProductAvailability::class)->handle($record, true);
+                app(SetProductAvailability::class)->handle($record, CurrentOutlet::getOrFail(), true);
 
                 Notification::make()->success()->title('Menu ditandai tersedia')->send();
             });
@@ -148,7 +149,8 @@ final class ProductActions
             ->action(
                 function (Collection $records) use ($available): void {
                     $action = app(SetProductAvailability::class);
-                    self::selected($records)->each(fn (Product $product) => $action->handle($product, $available));
+                    $outlet = CurrentOutlet::getOrFail();
+                    self::selected($records)->each(fn (Product $product) => $action->handle($product, $outlet, $available));
 
                     Notification::make()->success()
                         ->title($records->count().' produk ditandai '.($available ? 'tersedia' : 'habis'))

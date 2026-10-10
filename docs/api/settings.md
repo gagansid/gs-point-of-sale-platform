@@ -5,6 +5,7 @@ Semua endpoint memakai **token user** + header `X-App-Version`. Base URL: [READM
 
 | Method | Endpoint | Permission | Idempotent | Action |
 |---|---|---|---|---|
+| GET | `/v1/outlets` | semua role (outlet yang dipegang) | baca | — |
 | GET | `/v1/outlet` | `outlet.settings` (role; tetap bisa saat hanya-baca) | baca | — |
 | PUT | `/v1/outlet` | `outlet.settings` | ya | `UpdateOutletSettings` |
 | GET | `/v1/users` | `user.manage` (role) | baca | — |
@@ -20,9 +21,28 @@ habis), `403 TENANT_SUSPENDED`, `422 VALIDATION_ERROR`, `426 APP_UPDATE_REQUIRED
 
 ---
 
+## `GET /v1/outlets`
+
+Daftar outlet yang dipegang user (ADR 0010, Q37): owner semua outlet bisnis, role lain hanya outlet
+yang ditugaskan. Termasuk outlet nonaktif (`is_active: false`) agar laporan lama tetap bisa dipilih.
+
+```json
+{
+  "success": true,
+  "message": "OK",
+  "data": [
+    { "id": "…", "code": "JKT01", "name": "Kopi Senja Kemang", "address": "…", "timezone": "Asia/Jakarta", "is_active": true }
+  ],
+  "meta": { "request_id": "…", "current_outlet_id": "…" }
+}
+```
+
+`meta.current_outlet_id` = outlet perangkat tempat token dipakai (`null` bila login tanpa perangkat).
+
 ## `GET /v1/outlet` · `PUT /v1/outlet`
 
-MVP satu outlet per bisnis: endpoint selalu memakai outlet tenant pengguna (tidak ada `{id}`).
+Memakai **outlet perangkat** tempat token dipakai (tidak ada `{id}`); login tanpa perangkat = outlet
+pertama yang dipegang user. Outlet lain diubah dari dashboard (Pengaturan → Outlet → Profil outlet).
 
 | Field | Tipe | Aturan |
 |---|---|---|
@@ -54,7 +74,8 @@ menyimpan tarif pajak/service/pembulatan saat transaksi.
 }
 ```
 
-Dashboard: menu **Pengaturan → Profil outlet** (`app.gspos.id/settings/outlet`), hanya owner.
+Dashboard: menu **Pengaturan → Outlet** (`app.gspos.id/settings/outlets`: tambah, nonaktifkan, batas paket
+`OUTLET_LIMIT_REACHED`) → aksi **Profil outlet** (`app.gspos.id/settings/outlet?outlet={id}`), hanya owner.
 
 Test: `tests/Feature/Api/V1/Settings/OutletTest.php`, `tests/Feature/Filament/Dashboard/OutletSettingsTest.php`
 
@@ -72,9 +93,11 @@ Test: `tests/Feature/Api/V1/Settings/OutletTest.php`, `tests/Feature/Filament/Da
 | `password` | string | Wajib saat menambah (semua role); `Password::defaults()` (min. 8, huruf & angka). PUT: kosong = tidak diganti |
 | `pin` | string | 6 digit, **bukan** angka sama (`111111`) atau berurutan (`123456`, `654321`). Wajib untuk supervisor/kasir (login tablet), opsional untuk owner/manager (approval). PUT: kosong = tidak diganti |
 | `is_active` | bool | Hanya PUT. `false` = tidak bisa login & semua sesi diputus |
+| `outlet_ids` | uuid[] | Outlet yang dipegang (ADR 0010). Diabaikan untuk owner (otomatis semua). Role lain minimal satu outlet aktif milik bisnis yang juga dipegang pemberi tugas, selain itu `422`. POST tanpa field = outlet perangkat; PUT tanpa field = tidak berubah. Memindahkan outlet langsung berlaku: token di perangkat outlet lama ditolak `403` |
 
 Respons (`EmployeeResource`) **tidak pernah** berisi PIN/kata sandi: `has_pin`, `pin_locked_until`,
-`last_login_at`, `is_active`, `role_label`, `username`, `has_password`, `outlet_id` (owner `null`, role lain = outlet bisnis).
+`last_login_at`, `is_active`, `role_label`, `username`, `has_password`, `all_outlets` (owner `true`),
+`outlet_ids` (outlet yang boleh diakses; owner = semua outlet).
 
 Aturan:
 

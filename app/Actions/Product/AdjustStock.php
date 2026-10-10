@@ -7,14 +7,16 @@ namespace App\Actions\Product;
 use App\Enums\ErrorCode;
 use App\Enums\StockMovementType;
 use App\Exceptions\BusinessException;
+use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Support\Idempotency;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Penyesuaian stok manual (tambah/kurang + alasan). ID penyesuaian dari client adalah
+ * Penyesuaian stok manual di satu outlet (tambah/kurang + alasan). ID penyesuaian dari client adalah
  * idempotency key: request ganda tidak mengubah stok dua kali.
  */
 final class AdjustStock
@@ -24,10 +26,10 @@ final class AdjustStock
      *
      * @throws BusinessException
      */
-    public function handle(Product $product, User $by, string $id, int $qtyChange, string $reason): array
+    public function handle(Product $product, Outlet $outlet, User $by, string $id, int $qtyChange, string $reason): array
     {
         if (($existing = Idempotency::existing(StockMovement::class, $id)) !== null) {
-            return ['movement' => $existing, 'product' => $product->refresh(), 'replayed' => true];
+            return ['movement' => $existing, 'product' => $product->refresh()->loadOutletState($outlet->id), 'replayed' => true];
         }
 
         if (! $product->track_stock) {
@@ -36,15 +38,16 @@ final class AdjustStock
             ]);
         }
 
-        $movement = DB::transaction(function () use ($product, $by, $id, $qtyChange, $reason): StockMovement {
-            // Kunci baris produk: penyesuaian & penjualan bersamaan tidak saling menimpa
-            $locked = Product::query()->lockForUpdate()->findOrFail($product->id);
+        $movement = DB::transaction(function () use ($product, $outlet, $by, $id, $qtyChange, $reason): StockMovement {
+            // Kunci baris stok outlet: penyesuaian & penjualan bersamaan tidak saling menimpa
+            $locked = ProductStock::for($product->id, $outlet->id, lock: true);
             $locked->stock_qty += $qtyChange;
             $locked->save();
 
             return StockMovement::query()->create([
                 'id' => $id,
-                'product_id' => $locked->id,
+                'outlet_id' => $outlet->id,
+                'product_id' => $product->id,
                 'user_id' => $by->id,
                 'type' => StockMovementType::Adjustment,
                 'qty_change' => $qtyChange,
@@ -53,6 +56,6 @@ final class AdjustStock
             ]);
         });
 
-        return ['movement' => $movement, 'product' => $product->refresh(), 'replayed' => false];
+        return ['movement' => $movement, 'product' => $product->refresh()->loadOutletState($outlet->id), 'replayed' => false];
     }
 }

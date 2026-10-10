@@ -11,12 +11,14 @@ use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -27,7 +29,6 @@ use Laravel\Sanctum\HasApiTokens;
  *
  * @property string $id
  * @property string $tenant_id
- * @property string|null $outlet_id
  * @property string $name
  * @property string|null $email
  * @property string|null $password
@@ -47,7 +48,6 @@ class User extends Authenticatable implements FilamentUser
 
     /** tenant_id sengaja tidak fillable: selalu dari tenant context (BelongsToTenant). */
     protected $fillable = [
-        'outlet_id',
         'name',
         'email',
         'username',
@@ -110,9 +110,49 @@ class User extends Authenticatable implements FilamentUser
         return $this->pin_locked_until !== null && $this->pin_locked_until->isFuture();
     }
 
-    /** @return BelongsTo<Outlet, $this> */
-    public function outlet(): BelongsTo
+    /**
+     * Outlet yang ditugaskan (outlet_user). Owner (outlet.access_all) tidak perlu ditugaskan:
+     * pakai accessibleOutlets() untuk keputusan akses.
+     *
+     * @return BelongsToMany<Outlet, $this>
+     */
+    public function outlets(): BelongsToMany
     {
-        return $this->belongsTo(Outlet::class);
+        return $this->belongsToMany(Outlet::class)->withTimestamps();
+    }
+
+    /**
+     * Outlet yang boleh diakses user (ADR 0010): owner semua outlet tenant, role lain hanya yang
+     * ditugaskan. Fail-closed: tanpa penugasan = tidak ada outlet.
+     *
+     * @return Builder<Outlet>
+     */
+    public function accessibleOutlets(): Builder
+    {
+        // forTenant: juga dipakai sebelum tenant context terisi (respons login)
+        $query = Outlet::forTenant($this->tenant_id)->orderBy('created_at');
+
+        return $this->hasPermission('outlet.access_all')
+            ? $query
+            : $query->whereIn('id', DB::table('outlet_user')->where('user_id', $this->id)->select('outlet_id'));
+    }
+
+    /** @var list<string>|null */
+    private ?array $outletIdsCache = null;
+
+    /** @return list<string> ID outlet yang boleh diakses (di-cache per instance/request). */
+    public function outletIds(): array
+    {
+        return $this->outletIdsCache ??= $this->accessibleOutlets()->pluck('id')->values()->all();
+    }
+
+    public function canAccessOutlet(?string $outletId): bool
+    {
+        return $outletId !== null && in_array($outletId, $this->outletIds(), true);
+    }
+
+    public function forgetOutletIds(): void
+    {
+        $this->outletIdsCache = null;
     }
 }

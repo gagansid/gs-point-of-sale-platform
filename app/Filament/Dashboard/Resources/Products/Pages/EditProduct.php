@@ -11,6 +11,7 @@ use App\Filament\Dashboard\Resources\Products\ProductResource;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -47,7 +48,7 @@ final class EditProduct extends EditRecord
 
         $user = auth()->user();
 
-        return app(SaveProduct::class)->handle($record, ProductData::fromArray($data), $user instanceof User ? $user : null)['product'];
+        return app(SaveProduct::class)->handle($record, ProductData::fromArray($data), CurrentOutlet::getOrFail(), $user instanceof User ? $user : null)['product'];
     }
 
     protected function getSavedNotificationTitle(): string

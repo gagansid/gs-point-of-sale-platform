@@ -13,13 +13,16 @@ use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Resources\Employees\Pages\ManageEmployees;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Tables\TableEmptyState;
+use App\Models\Outlet;
 use App\Models\User;
 use App\Rules\SecurePin;
+use App\Support\CurrentOutlet;
 use BackedEnum;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -78,6 +81,18 @@ final class EmployeeResource extends Resource
                     UserRole::Supervisor => 'Kasir + approval void/diskon dengan PIN',
                     default => 'Transaksi di tablet dengan PIN',
                 }),
+            // Outlet yang dipegang (ADR 0010). Owner otomatis semua outlet; disembunyikan bila hanya satu outlet
+            CheckboxList::make('outlet_ids')->label('Outlet')
+                ->options(fn (): array => self::assignableOutlets())
+                ->formatStateUsing(fn (?User $record, mixed $state): array => $record !== null
+                    ? $record->outlets()->pluck('outlets.id')->all()
+                    : (is_array($state) && $state !== [] ? $state : array_filter([CurrentOutlet::get()?->id])))
+                ->required()
+                ->columns(2)
+                ->columnSpanFull()
+                ->helperText('Karyawan hanya bisa login & bertransaksi di perangkat outlet ini')
+                ->visible(fn (Get $get): bool => count(self::assignableOutlets()) > 1
+                    && ! (self::role($get)?->allows('outlet.access_all') ?? false)),
             TextInput::make('email')->label('Email')->email()->maxLength(150)
                 ->unique(User::class, 'email', ignoreRecord: true)
                 ->visible($usesPassword)->required($usesPassword)
@@ -129,6 +144,9 @@ final class EmployeeResource extends Resource
                     ->description(fn (User $record): ?string => $record->email ?? ($record->username !== null ? '@'.$record->username : null))
                     ->searchable(['name', 'email', 'username'])->sortable(),
                 TextColumn::make('role')->label('Role')->badge()->sortable(),
+                TextColumn::make('outlets.name')->label('Outlet')->badge()->color('gray')
+                    ->placeholder('Semua outlet')
+                    ->visible(fn (): bool => Outlet::query()->count() > 1),
                 TextColumn::make('pin_status')->label('PIN')->badge()
                     ->state(fn (User $record): string => match (true) {
                         $record->isPinLocked() => 'Terkunci',
@@ -155,7 +173,7 @@ final class EmployeeResource extends Resource
                         'has_password' => $record->password !== null,
                     ])
                     ->using(fn (User $record, array $data, EditAction $action): User => self::orNotify(
-                        fn (): User => app(SaveEmployee::class)->handle($record, EmployeeData::fromArray([...$data, ...self::credentialsFor($data)]))['user'],
+                        fn (): User => app(SaveEmployee::class)->handle($record, EmployeeData::fromArray([...$data, ...self::credentialsFor($data)]), self::actor())['user'],
                         $action,
                     )),
                 ActionGroup::make([
@@ -232,6 +250,23 @@ final class EmployeeResource extends Resource
             'email' => $usesEmail ? ($data['email'] ?? null) : null,
             'username' => $usesEmail ? null : ($data['username'] ?? null),
         ];
+    }
+
+    /**
+     * Outlet aktif yang boleh ditugaskan: hanya outlet yang juga dipegang pemberi tugas.
+     *
+     * @return array<string, string>
+     */
+    private static function assignableOutlets(): array
+    {
+        return self::actor()?->accessibleOutlets()->active()->pluck('name', 'id')->all() ?? [];
+    }
+
+    public static function actor(): ?User
+    {
+        $user = auth()->user();
+
+        return $user instanceof User ? $user : null;
     }
 
     private static function role(Get $get): ?UserRole

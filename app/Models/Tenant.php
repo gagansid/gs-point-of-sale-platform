@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property BusinessType $business_type
  * @property TenantStatus $status
  * @property CarbonImmutable|null $subscription_ends_at
+ * @property int|null $max_outlets batas outlet aktif (SaaS, diatur admin); null = tanpa batas
  */
 final class Tenant extends Model
 {
@@ -40,6 +41,7 @@ final class Tenant extends Model
         'business_type',
         'status',
         'subscription_ends_at',
+        'max_outlets',
     ];
 
     protected function casts(): array
@@ -48,6 +50,7 @@ final class Tenant extends Model
             'business_type' => BusinessType::class,
             'status' => TenantStatus::class,
             'subscription_ends_at' => 'immutable_datetime',
+            'max_outlets' => 'integer',
         ];
     }
 
@@ -66,6 +69,14 @@ final class Tenant extends Model
             Edition::isSaas() && $this->subscription_ends_at !== null && ! $this->subscription_ends_at->isFuture() => TenantAccess::ReadOnly,
             default => TenantAccess::Full,
         };
+    }
+
+    /**
+     * Batas outlet aktif yang berlaku (ADR 0010). Edisi jual putus tidak dibatasi.
+     */
+    public function outletLimit(): ?int
+    {
+        return Edition::isSaas() ? $this->max_outlets : null;
     }
 
     /** Boleh login & melihat data (tidak diblokir). Hanya-baca tetap boleh login. */

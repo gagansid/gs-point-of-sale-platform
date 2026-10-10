@@ -9,7 +9,9 @@ use App\Actions\Outlet\UpdateOutletSettings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Outlet\OutletSettingsRequest;
 use App\Http\Resources\Api\V1\OutletResource;
+use App\Http\Resources\Api\V1\OutletSummaryResource;
 use App\Models\User;
+use App\Support\ApiActor;
 use App\Support\ApiResponse;
 use App\Support\CurrentOutlet;
 use Dedoc\Scramble\Attributes\Group;
@@ -20,9 +22,25 @@ use Illuminate\Http\Request;
 final class OutletController extends Controller
 {
     /**
+     * Daftar outlet.
+     *
+     * Outlet yang dipegang user (owner: semua outlet bisnis), termasuk yang nonaktif (`is_active`).
+     * `meta.current_outlet_id` = outlet perangkat. Untuk pemilih outlet laporan (ADR 0010).
+     */
+    public function index(Request $request): JsonResponse
+    {
+        $user = ApiActor::user($request);
+
+        return ApiResponse::success(
+            OutletSummaryResource::collection($user->accessibleOutlets()->get())->resolve($request),
+            meta: ['current_outlet_id' => CurrentOutlet::selectedId()],
+        );
+    }
+
+    /**
      * Setelan outlet.
      *
-     * Permission outlet.settings (owner). MVP: satu outlet per bisnis.
+     * Permission outlet.settings (owner). Outlet perangkat; login tanpa perangkat: outlet pertama.
      */
     public function show(Request $request): JsonResponse
     {

@@ -11,6 +11,7 @@ use App\Filament\Shared\Columns\MoneyColumn;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\CurrentOutlet;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -93,13 +94,18 @@ final class ProductsTable
                     ->preload()
                     ->relationship('optionGroups', 'name'),
                 TernaryFilter::make('is_active')->label('Status')->trueLabel('Aktif')->falseLabel('Nonaktif'),
-                TernaryFilter::make('is_available')->label('Ketersediaan')->trueLabel('Tersedia')->falseLabel('Habis'),
+                TernaryFilter::make('is_available')->label('Ketersediaan')->trueLabel('Tersedia')->falseLabel('Habis')
+                    ->queries(
+                        true: fn (Builder $query) => $query->scopes(['availableAt' => [CurrentOutlet::getOrFail()->id, true]]),
+                        false: fn (Builder $query) => $query->scopes(['availableAt' => [CurrentOutlet::getOrFail()->id, false]]),
+                        blank: fn (Builder $query) => $query,
+                    ),
                 TernaryFilter::make('is_favorite')->label('Favorit')->trueLabel('Favorit')->falseLabel('Bukan favorit'),
                 TernaryFilter::make('track_stock')->label('Lacak stok')->trueLabel('Dilacak')->falseLabel('Tidak dilacak'),
                 self::priceRangeFilter(),
                 Filter::make('out_of_stock')
                     ->label('Stok habis (≤ 0)')
-                    ->query(fn (Builder $query) => $query->where('track_stock', true)->where('stock_qty', '<=', 0)),
+                    ->query(fn (Builder $query) => $query->scopes(['outOfStock' => [CurrentOutlet::getOrFail()->id]])),
             ])
             ->recordActions([
                 EditAction::make()->iconButton()->tooltip('Ubah'),

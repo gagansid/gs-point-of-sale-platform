@@ -1,5 +1,10 @@
 # API — Katalog & produk
 
+> **Multi-outlet (ADR 0010, Q39–Q40):** katalog & harga sama untuk semua outlet. `stock_qty`, `min_stock`,
+> `is_low_stock`, dan `is_available` adalah milik **outlet perangkat** tempat token dipakai (login tanpa perangkat:
+> outlet pertama yang dipegang user). Stok awal (POST), `min_stock`, penyesuaian stok, dan tandai habis/tersedia
+> hanya berlaku untuk outlet itu; checkout memotong stok outlet shift.
+
 Standar: [`docs/standards/api/`](../standards/api/README.md). Skema lengkap: OpenAPI `/docs/api`.
 Semua endpoint memakai **token user** + header `X-App-Version`.
 
