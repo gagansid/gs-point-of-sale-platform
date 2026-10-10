@@ -36,7 +36,7 @@
                 <button type="submit" class="site-btn site-btn-primary site-btn-lg site-btn-block">Masuk</button>
             </form>
 
-            <p class="site-auth-foot">Belum punya akun? <a href="{{ route('landing') }}#kontak">Hubungi sales</a></p>
+            <p class="site-auth-foot">Belum punya akun? <a href="{{ route('landing') }}#contact">Hubungi sales</a></p>
         </div>
     </main>
 </x-site.layout>

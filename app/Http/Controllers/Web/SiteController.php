@@ -37,7 +37,7 @@ final class SiteController extends Controller
             $action->handle(SalesLeadData::fromArray($request->validated()), $request->ip());
         }
 
-        return redirect()->to(route('landing').'#kontak')
+        return redirect()->to(route('landing').'#contact')
             ->with('contact_sent', true);
     }
 }

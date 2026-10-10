@@ -36,7 +36,7 @@
             <strong>Masa {{ $tenant->status === \App\Enums\TenantStatus::Trial ? 'trial' : 'langganan' }} berakhir {{ $tenant->subscription_ends_at?->translatedFormat('j F Y') }}.</strong>
             Data tetap aman dan bisa dilihat, tetapi transaksi & perubahan data dinonaktifkan sampai berlangganan.
         </div>
-        <a class="gs-banner-action" href="{{ route('landing') }}#kontak" target="_blank" rel="noopener">Hubungi tim gs.POS</a>
+        <a class="gs-banner-action" href="{{ route('landing') }}#contact" target="_blank" rel="noopener">Hubungi tim gs.POS</a>
     </div>
 @elseif ($daysLeft !== null)
     <div class="gs-banner gs-banner-info" role="status">
@@ -45,6 +45,6 @@
             <strong>Trial tersisa {{ $daysLeft }} hari</strong> (sampai {{ $tenant->subscription_ends_at?->translatedFormat('j F Y') }}).
             Setelah itu data hanya bisa dilihat sampai Anda berlangganan.
         </div>
-        <a class="gs-banner-action" href="{{ route('landing') }}#kontak" target="_blank" rel="noopener">Berlangganan</a>
+        <a class="gs-banner-action" href="{{ route('landing') }}#contact" target="_blank" rel="noopener">Berlangganan</a>
     </div>
 @endif

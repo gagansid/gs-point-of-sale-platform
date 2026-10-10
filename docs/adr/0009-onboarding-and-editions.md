@@ -30,7 +30,7 @@ Kami memilih **C** dan dua **edisi** dalam satu kode.
 
 **Onboarding (edisi SaaS):**
 
-1. **Daftar sendiri** di `gspos.id/daftar` (bisa dimatikan dari admin): membuat tenant (status
+1. **Daftar sendiri** di `gspos.id/register` (bisa dimatikan dari admin): membuat tenant (status
    `trial`), outlet, owner, metode bayar bawaan lewat `CreateTenantWithOwner`, lalu langsung masuk
    `app.gspos.id` lewat tiket login (ADR 0008).
 2. **Lama trial diatur dari admin** (`system_settings.trial_days`, default **14**). Trial =

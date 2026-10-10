@@ -139,7 +139,7 @@ it('daftar di gspos.id langsung masuk ke app. lewat tiket', function () {
     Notification::fake();
     RateLimiter::clear('signup-h:127.0.0.1');
 
-    $location = (string) $this->post('http://gspos.localhost/daftar', [
+    $location = (string) $this->post('http://gspos.localhost/register', [
         'business_name' => 'Warung Bu Sri', 'business_type' => 'retail', 'name' => 'Sri',
         'email' => 'sri@warung.test', 'password' => 'rahasia123', 'password_confirmation' => 'rahasia123',
     ])->assertStatus(303)->headers->get('Location');

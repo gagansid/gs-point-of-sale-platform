@@ -18,7 +18,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
 /**
- * Daftar mandiri di gspos.id/daftar (ADR 0009, SPEC Q30–Q32): tenant trial + outlet + owner
+ * Daftar mandiri di gspos.id/register (ADR 0009, SPEC Q30–Q32): tenant trial + outlet + owner
  * (belum terverifikasi) + metode bayar bawaan lewat CreateTenantWithOwner, lalu kirim link verifikasi.
  */
 final class RegisterTenant

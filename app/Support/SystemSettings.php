@@ -48,7 +48,7 @@ final class SystemSettings
         return max(self::TRIAL_DAYS_MIN, min(self::TRIAL_DAYS_MAX, $days));
     }
 
-    /** Daftar sendiri di gspos.id/daftar dibuka. */
+    /** Daftar sendiri di gspos.id/register dibuka. */
     public function signupEnabled(): bool
     {
         return (bool) $this->get(self::SIGNUP_ENABLED, config('pos.onboarding.signup_enabled'));

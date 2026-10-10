@@ -24,7 +24,7 @@ use LogicException;
 use UnitEnum;
 
 /**
- * Sistem → Pendaftaran (ADR 0009): lama trial tenant baru & buka/tutup daftar sendiri di gspos.id/daftar.
+ * Sistem → Pendaftaran (ADR 0009): lama trial tenant baru & buka/tutup daftar sendiri di gspos.id/register.
  */
 final class OnboardingSettings extends Page
 {

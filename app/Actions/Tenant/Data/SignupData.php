@@ -7,7 +7,7 @@ namespace App\Actions\Tenant\Data;
 use App\Enums\BusinessType;
 
 /**
- * Isi form daftar mandiri gspos.id/daftar (sudah tervalidasi SignupRequest).
+ * Isi form daftar mandiri gspos.id/register (sudah tervalidasi SignupRequest).
  */
 final readonly class SignupData
 {

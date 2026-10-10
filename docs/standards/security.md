@@ -71,7 +71,7 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
     hanya lewat tiket sekali pakai (acak 64, disimpan sebagai hash, 60 detik, `Cache::pull`). Parameter
     `next` hanya path relatif (`DashboardLoginTicket::safePath`: tolak URL absolut, `//`, `\`, karakter kontrol).
     Diuji di `tests/Feature/Routing/CentralLoginTest.php`.
-13. Daftar mandiri `gspos.id/daftar` (ADR 0009): CSRF, honeypot, throttle `signup` 5/jam & 20/hari per IP
+13. Daftar mandiri `gspos.id/register` (ADR 0009): CSRF, honeypot, throttle `signup` 5/jam & 20/hari per IP
     (kiriman bot ikut dihitung), email unik global (huruf kecil), `Password::defaults()` + konfirmasi.
     Owner baru **belum terverifikasi**: checkout & pembayaran ditolak `EMAIL_NOT_VERIFIED`. Link verifikasi =
     `URL::temporarySignedRoute` 3 hari + `sha1(email)` (link lama mati bila email diganti), throttle 6/menit;

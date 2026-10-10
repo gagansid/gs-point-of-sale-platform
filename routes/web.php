@@ -19,14 +19,14 @@ use Illuminate\Support\Facades\Route;
  */
 Route::domain(Domains::main())->group(function (): void {
     Route::get('/', [SiteController::class, 'home'])->name('landing');
-    Route::post('hubungi-sales', [SiteController::class, 'contact'])
+    Route::post('contact-sales', [SiteController::class, 'contact'])
         ->middleware('throttle:contact')
         ->name('contact');
 
     // Daftar mandiri + verifikasi email (ADR 0009)
-    Route::get('daftar', [SignupController::class, 'create'])->name('signup');
-    Route::post('daftar', [SignupController::class, 'store'])->middleware('throttle:signup')->name('signup.store');
-    Route::get('verifikasi-email/{user}/{hash}', [EmailVerificationController::class, 'verify'])
+    Route::get('register', [SignupController::class, 'create'])->name('signup');
+    Route::post('register', [SignupController::class, 'store'])->middleware('throttle:signup')->name('signup.store');
+    Route::get('email/verify/{user}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 

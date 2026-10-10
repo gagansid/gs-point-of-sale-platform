@@ -19,7 +19,7 @@ use Illuminate\View\View;
  */
 final class EmailVerificationController extends Controller
 {
-    /** gspos.id/verifikasi-email/{user}/{hash}: link bertanda tangan dari email, tanpa login. */
+    /** gspos.id/email/verify/{user}/{hash}: link bertanda tangan dari email, tanpa login. */
     public function verify(Request $request, string $user, string $hash): View
     {
         // Lintas tenant: belum ada tenant context di domain utama; id dari link bertanda tangan
@@ -37,7 +37,7 @@ final class EmailVerificationController extends Controller
         ]);
     }
 
-    /** app.gspos.id/verifikasi-email/kirim-ulang (login, dibatasi): kirim ulang link ke diri sendiri. */
+    /** app.gspos.id/email/verification-notification (login, dibatasi): kirim ulang link ke diri sendiri. */
     public function resend(Request $request): RedirectResponse
     {
         $user = $request->user();

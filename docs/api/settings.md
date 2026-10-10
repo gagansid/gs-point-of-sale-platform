@@ -47,6 +47,6 @@ menyimpan tarif pajak/service/pembulatan saat transaksi.
 }
 ```
 
-Dashboard: menu **Pengaturan → Profil outlet** (`app.gspos.id/pengaturan/outlet`), hanya owner.
+Dashboard: menu **Pengaturan → Profil outlet** (`app.gspos.id/settings/outlet`), hanya owner.
 
 Test: `tests/Feature/Api/V1/Settings/OutletTest.php`, `tests/Feature/Filament/Dashboard/OutletSettingsTest.php`

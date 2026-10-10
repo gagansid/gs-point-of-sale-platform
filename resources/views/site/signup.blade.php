@@ -1,4 +1,4 @@
-{{-- gspos.id/daftar: daftar mandiri → trial (ADR 0009). --}}
+{{-- gspos.id/register: daftar mandiri → trial (ADR 0009). --}}
 <x-site.layout title="Coba gratis — gs.POS">
     <main class="site-auth">
         <div class="site-auth-card site-auth-card-wide">
@@ -7,7 +7,7 @@
             @if (! $open)
                 <h1>Pendaftaran sedang ditutup</h1>
                 <p class="site-auth-sub">Tim kami siap membantu menyiapkan akun Anda.</p>
-                <a href="{{ route('landing') }}#kontak" class="site-btn site-btn-primary site-btn-lg site-btn-block">Hubungi sales</a>
+                <a href="{{ route('landing') }}#contact" class="site-btn site-btn-primary site-btn-lg site-btn-block">Hubungi sales</a>
                 <p class="site-auth-foot">Sudah punya akun? <a href="{{ $loginUrl }}">Masuk</a></p>
             @else
                 <h1>Coba gratis {{ $trialDays }} hari</h1>
@@ -54,7 +54,7 @@
                     <p class="site-form-note">Kami mengirim link verifikasi ke email Anda. Kasir bisa bertransaksi setelah email terverifikasi.</p>
                 </form>
 
-                <p class="site-auth-foot">Sudah punya akun? <a href="{{ $loginUrl }}">Masuk</a> · Butuh bantuan? <a href="{{ route('landing') }}#kontak">Hubungi sales</a></p>
+                <p class="site-auth-foot">Sudah punya akun? <a href="{{ $loginUrl }}">Masuk</a> · Butuh bantuan? <a href="{{ route('landing') }}#contact">Hubungi sales</a></p>
             @endif
         </div>
     </main>

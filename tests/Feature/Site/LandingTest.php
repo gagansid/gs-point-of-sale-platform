@@ -25,7 +25,7 @@ it('halaman depan menampilkan fitur, tombol masuk, dan form hubungi sales', func
 });
 
 it('form hubungi sales menyimpan calon pelanggan', function () {
-    $this->post('/hubungi-sales', leadBody(['message' => 'Dua kasir']))
+    $this->post('/contact-sales', leadBody(['message' => 'Dua kasir']))
         ->assertRedirect()
         ->assertSessionHas('contact_sent', true);
 
@@ -38,7 +38,7 @@ it('form hubungi sales menyimpan calon pelanggan', function () {
 });
 
 it('validasi form hubungi sales', function (array $override, string $field) {
-    $this->post('/hubungi-sales', leadBody($override))->assertSessionHasErrors($field);
+    $this->post('/contact-sales', leadBody($override))->assertSessionHasErrors($field);
 
     expect(SalesLead::query()->count())->toBe(0);
 })->with([
@@ -50,16 +50,16 @@ it('validasi form hubungi sales', function (array $override, string $field) {
 ]);
 
 it('honeypot: bot mendapat respons sukses tapi tidak disimpan', function () {
-    $this->post('/hubungi-sales', leadBody(['website' => 'http://spam.test']))->assertSessionHas('contact_sent', true);
+    $this->post('/contact-sales', leadBody(['website' => 'http://spam.test']))->assertSessionHas('contact_sent', true);
 
     expect(SalesLead::query()->count())->toBe(0);
 });
 
 it('form dibatasi 3 kiriman per menit per IP', function () {
     foreach (range(1, 3) as $_) {
-        $this->post('/hubungi-sales', leadBody())->assertRedirect();
+        $this->post('/contact-sales', leadBody())->assertRedirect();
     }
 
-    $this->post('/hubungi-sales', leadBody())->assertStatus(429);
+    $this->post('/contact-sales', leadBody())->assertStatus(429);
     expect(SalesLead::query()->count())->toBe(3);
 });

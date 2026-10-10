@@ -84,7 +84,7 @@ final class DashboardPanelProvider extends PanelProvider
             ])
             // Kirim ulang link verifikasi email owner (ADR 0009); route di dalam panel = wajib login
             ->authenticatedRoutes(function (): void {
-                Route::post('verifikasi-email/kirim-ulang', [EmailVerificationController::class, 'resend'])
+                Route::post('email/verification-notification', [EmailVerificationController::class, 'resend'])
                     ->middleware('throttle:3,10')
                     ->name('verification.send');
             })

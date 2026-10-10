@@ -49,14 +49,14 @@ it('manager tidak melihat menu Profil outlet', function () {
     $this->actingAs(User::factory()->manager()->create(['tenant_id' => $this->outlet->tenant_id]));
 
     expect(OutletSettings::canAccess())->toBeFalse();
-    $this->get('/dashboard/pengaturan/outlet')->assertForbidden();
+    $this->get('/dashboard/settings/outlet')->assertForbidden();
 });
 
 it('tenant hanya-baca: halaman tampil tanpa tombol simpan', function () {
     Tenant::query()->whereKey($this->owner->tenant_id)->update(['subscription_ends_at' => now()->subDay()]);
     $this->owner->refresh();
 
-    $this->get('/dashboard/pengaturan/outlet')->assertOk()->assertSee('Kopi Senja')->assertDontSee('Simpan</span>', escape: false);
+    $this->get('/dashboard/settings/outlet')->assertOk()->assertSee('Kopi Senja')->assertDontSee('Simpan</span>', escape: false);
 
     Livewire::test(OutletSettings::class)->call('save')->assertForbidden();
 });

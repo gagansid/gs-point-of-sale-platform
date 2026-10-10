@@ -45,7 +45,7 @@ final class OutletSettings extends Page
 
     protected static ?string $title = 'Profil outlet';
 
-    protected static ?string $slug = 'pengaturan/outlet';
+    protected static ?string $slug = 'settings/outlet';
 
     protected static ?int $navigationSort = 1;
 

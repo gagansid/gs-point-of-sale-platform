@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
- * Daftar mandiri gspos.id/daftar (ADR 0009): tenant trial dibuat, lalu owner langsung masuk ke
+ * Daftar mandiri gspos.id/register (ADR 0009): tenant trial dibuat, lalu owner langsung masuk ke
  * panel (lewat tiket sekali pakai bila memakai subdomain, ADR 0008).
  */
 final class SignupController extends Controller

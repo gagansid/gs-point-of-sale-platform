@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 
 /*
- * Daftar mandiri gspos.id/daftar + verifikasi email (ADR 0009, SPEC Q30–Q32). Mode satu domain.
+ * Daftar mandiri gspos.id/register + verifikasi email (ADR 0009, SPEC Q30–Q32). Mode satu domain.
  */
 beforeEach(function () {
     Notification::fake();
@@ -35,14 +35,14 @@ function signupBody(array $override = []): array
 it('menampilkan form daftar dengan lama trial dari setelan', function () {
     app(SystemSettings::class)->setOnboarding(30, true);
 
-    $this->get('/daftar')->assertOk()->assertSee('Coba gratis 30 hari');
+    $this->get('/register')->assertOk()->assertSee('Coba gratis 30 hari');
     $this->get('/')->assertSee('Coba gratis 30 hari');
 });
 
 it('daftar membuat tenant trial, outlet, owner belum terverifikasi, metode bayar, lalu langsung masuk', function () {
     $this->freezeTime();
 
-    $this->post('/daftar', signupBody())->assertRedirect('/dashboard');
+    $this->post('/register', signupBody())->assertRedirect('/dashboard');
 
     $tenant = Tenant::query()->sole();
     $owner = User::allTenants()->where('tenant_id', $tenant->id)->sole();
@@ -62,9 +62,9 @@ it('daftar membuat tenant trial, outlet, owner belum terverifikasi, metode bayar
 });
 
 it('slug unik bila nama bisnis sama', function () {
-    $this->post('/daftar', signupBody());
+    $this->post('/register', signupBody());
     auth('web')->logout();
-    $this->post('/daftar', signupBody(['email' => 'lain@kopisenja.test']));
+    $this->post('/register', signupBody(['email' => 'lain@kopisenja.test']));
 
     expect(Tenant::query()->pluck('slug')->all())->toHaveCount(2)
         ->and(Tenant::query()->where('slug', 'like', 'kopi-senja-%')->count())->toBe(1);
@@ -73,7 +73,7 @@ it('slug unik bila nama bisnis sama', function () {
 it('validasi daftar', function (array $override, string $field) {
     User::factory()->create(['email' => 'pakai@kopi.test']);
 
-    $this->post('/daftar', signupBody($override))->assertSessionHasErrors($field);
+    $this->post('/register', signupBody($override))->assertSessionHasErrors($field);
     expect(Tenant::query()->count())->toBe(1); // hanya tenant milik user factory
 })->with([
     'email terdaftar (beda huruf besar)' => [['email' => 'PAKAI@kopi.test'], 'email'],
@@ -86,24 +86,24 @@ it('validasi daftar', function (array $override, string $field) {
 it('pendaftaran ditutup admin: form diganti pesan, kiriman diabaikan', function () {
     app(SystemSettings::class)->setOnboarding(14, false);
 
-    $this->get('/daftar')->assertOk()->assertSee('Pendaftaran sedang ditutup');
+    $this->get('/register')->assertOk()->assertSee('Pendaftaran sedang ditutup');
     $this->get('/')->assertDontSee('Coba gratis');
-    $this->post('/daftar', signupBody())->assertRedirect('/daftar');
+    $this->post('/register', signupBody())->assertRedirect('/register');
 
     expect(Tenant::query()->count())->toBe(0);
 });
 
 it('honeypot & batas 5 pendaftaran per jam per IP', function () {
-    $this->post('/daftar', signupBody(['website' => 'http://spam.test']))->assertRedirect('/');
+    $this->post('/register', signupBody(['website' => 'http://spam.test']))->assertRedirect('/');
     expect(Tenant::query()->count())->toBe(0);
 
     // Kiriman bot juga dihitung: tersisa 4 dari batas 5 per jam
     foreach (range(1, 4) as $i) {
         auth('web')->logout();
-        $this->post('/daftar', signupBody(['email' => "u{$i}@kopi.test"]))->assertRedirect();
+        $this->post('/register', signupBody(['email' => "u{$i}@kopi.test"]))->assertRedirect();
     }
 
-    $this->post('/daftar', signupBody(['email' => 'u5@kopi.test']))->assertStatus(429);
+    $this->post('/register', signupBody(['email' => 'u5@kopi.test']))->assertStatus(429);
     expect(Tenant::query()->count())->toBe(4);
 });
 
@@ -122,7 +122,7 @@ describe('verifikasi email', function () {
         $url = VerifyOwnerEmail::url($this->owner);
 
         $this->get(str_replace(sha1('budi@kopi.test'), sha1('lain@kopi.test'), $url))->assertForbidden();
-        $this->get("/verifikasi-email/{$this->owner->id}/".sha1('budi@kopi.test'))->assertForbidden();
+        $this->get("/email/verify/{$this->owner->id}/".sha1('budi@kopi.test'))->assertForbidden();
 
         $this->travel(VerifyOwnerEmail::VALID_DAYS + 1)->days();
         $this->get($url)->assertForbidden();
@@ -133,7 +133,7 @@ describe('verifikasi email', function () {
     it('owner belum terverifikasi bisa kirim ulang link dari dashboard', function () {
         $this->actingAs($this->owner);
 
-        $this->post('/dashboard/verifikasi-email/kirim-ulang')->assertRedirect();
+        $this->post('/dashboard/email/verification-notification')->assertRedirect();
         Notification::assertSentTo($this->owner, VerifyOwnerEmail::class);
     });
 

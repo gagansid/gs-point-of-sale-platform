@@ -18,9 +18,9 @@
             <a href="{{ route('landing') }}" aria-label="gs.POS beranda"><x-site.logo /></a>
 
             <nav class="site-nav" aria-label="Menu utama">
-                <a href="#fitur">Fitur</a>
-                <a href="#cara-kerja">Cara kerja</a>
-                <a href="#kontak">Kontak</a>
+                <a href="#features">Fitur</a>
+                <a href="#how-it-works">Cara kerja</a>
+                <a href="#contact">Kontak</a>
             </nav>
 
             <div class="site-header-actions">
@@ -28,7 +28,7 @@
                 @if ($signupEnabled)
                     <a href="{{ route('signup') }}" class="site-btn site-btn-primary">Coba gratis</a>
                 @else
-                    <a href="#kontak" class="site-btn site-btn-primary">Hubungi sales</a>
+                    <a href="#contact" class="site-btn site-btn-primary">Hubungi sales</a>
                 @endif
             </div>
         </div>
@@ -50,9 +50,9 @@
                             <a href="{{ route('signup') }}" class="site-btn site-btn-primary site-btn-lg">
                                 Coba gratis {{ $trialDays }} hari <x-site.icon name="arrow" class="size-4" />
                             </a>
-                            <a href="#kontak" class="site-btn site-btn-outline site-btn-lg">Jadwalkan demo</a>
+                            <a href="#contact" class="site-btn site-btn-outline site-btn-lg">Jadwalkan demo</a>
                         @else
-                            <a href="#kontak" class="site-btn site-btn-primary site-btn-lg">
+                            <a href="#contact" class="site-btn site-btn-primary site-btn-lg">
                                 Jadwalkan demo <x-site.icon name="arrow" class="size-4" />
                             </a>
                             <a href="{{ $loginUrl }}" class="site-btn site-btn-outline site-btn-lg">Sudah punya akun? Masuk</a>
@@ -87,7 +87,7 @@
         </section>
 
         {{-- ---------- Fitur ---------- --}}
-        <section id="fitur" class="site-section">
+        <section id="features" class="site-section">
             <div class="site-container">
                 <div class="site-section-head">
                     <span class="site-eyebrow">Fitur</span>
@@ -121,7 +121,7 @@
         </section>
 
         {{-- ---------- Cara kerja ---------- --}}
-        <section id="cara-kerja" class="site-section site-section-muted">
+        <section id="how-it-works" class="site-section site-section-muted">
             <div class="site-container">
                 <div class="site-section-head">
                     <span class="site-eyebrow">Cara kerja</span>
@@ -137,7 +137,7 @@
         </section>
 
         {{-- ---------- Hubungi sales ---------- --}}
-        <section id="kontak" class="site-section">
+        <section id="contact" class="site-section">
             <div class="site-container site-contact">
                 <div>
                     <span class="site-eyebrow">Hubungi sales</span>
