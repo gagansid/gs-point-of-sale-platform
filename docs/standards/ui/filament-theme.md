@@ -74,7 +74,7 @@ resources/css/filament/
 
     --control-h: 32px;
     --control-h-sm: 28px;
-    --control-radius: 8px;
+    --control-radius: 6px;
     --control-font: 13px;
 }
 ```

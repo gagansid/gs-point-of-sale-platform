@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\View\ActionsIconAlias;
 use Filament\Facades\Filament;
+use Filament\Pages\BasePage;
 use Filament\Panel;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Icons\Heroicon;
@@ -71,6 +72,9 @@ final class Layout
      */
     public static function configureActions(): void
     {
+        // Tombol form tambah/ubah rata kanan (bar sticky di components.css)
+        BasePage::alignFormActionsEnd();
+
         Action::configureUsing(fn (Action $action): Action => $action
             ->modalAlignment(Alignment::Start)
             ->modalFooterActionsAlignment(Alignment::End));

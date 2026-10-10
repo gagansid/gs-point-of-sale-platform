@@ -128,7 +128,9 @@ Skala 4px: `4 · 8 · 12 · 16 · 24 · 32 · 48 · 64`.
 | `--control-h` | 32px (default tombol, input, select) |
 | `--control-h-sm` | 28px (pager, pilihan per halaman, toolbar padat) |
 | `--control-h-lg` | 40px (aksi utama halaman form) |
-| `--control-radius` | 8px |
+| `--control-radius` | 6px (tombol & field) |
+| `--field-border` / `--field-border-hover` | `#DCDEE3` / `#C4C8CF` (garis field) |
+| `--field-focus-ring` | primary 14% (halo fokus 3px) |
 | `--control-font` | 13px |
 | Tombol ikon baris | 26 × 26px, ikon 14px (setara visual ikon status 16px) |
 | Ikon di dalam baris tabel | 16px (IconColumn, ikon teks); ikon badge 12px |

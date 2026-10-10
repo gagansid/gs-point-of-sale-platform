@@ -477,17 +477,20 @@
     box-shadow: var(--shadow);
 }
 
+/*
+ * Section/card: judul + deskripsi di atas isi tanpa garis pemisah (lebih lega), padding 20px.
+ */
 .fi-section:not(.fi-section-not-contained):not(.fi-aside) > .fi-section-header {
-    min-height: 44px;
-    padding: 12px 16px;
+    min-height: 0;
+    padding: 16px 20px 0;
 }
 
 .fi-section:not(.fi-section-not-contained).fi-section-has-header:not(.fi-collapsed):not(.fi-aside) > .fi-section-content-ctn {
-    border-top-color: var(--border-color-light);
+    border-top: 0;
 }
 
 .fi-section:not(.fi-section-not-contained):not(.fi-divided) > .fi-section-content-ctn > .fi-section-content {
-    padding: 16px;
+    padding: 16px 20px 20px;
 }
 
 .fi-section:not(.fi-section-not-contained) > .fi-section-content-ctn > .fi-section-footer {
@@ -497,13 +500,153 @@
 
 .fi-section-header-heading {
     color: var(--text);
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
+    line-height: 20px;
 }
 
 .fi-section-header-description {
+    margin-top: 2px;
     color: var(--text-muted);
     font-size: 12.5px;
+    line-height: 18px;
+}
+
+/*
+ * Bar tombol form tambah/ubah ("Batal" · "Simpan") menempel di bawah layar, rata kanan.
+ * position: sticky (bukan fixed bawaan Filament) agar tidak menimpa sidebar. Dipasang di grid footer
+ * form (anak terakhir <form>), bukan kolom tombolnya: kolom berada di grid setinggi tombol saja.
+ */
+.fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin: 0 -24px -40px;
+    padding: 12px 24px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--topbar-bg);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+@media (max-width: 48rem) {
+    .fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
+        margin: 0 -12px -12px;
+        padding: 10px 12px;
+    }
+}
+
+/* ---------- Upload gambar (FilePond): panel persegi bergaris putus-putus, tombol bulat putih ---------- */
+.fi-fo-file-upload .filepond--root {
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-surface-secondary);
+    box-shadow: none;
+    font-family: inherit;
+}
+
+.fi-fo-file-upload .filepond--panel-root {
+    border: 1px dashed var(--field-border-hover);
+    border-radius: var(--radius-lg);
+    background-color: transparent;
+    transition: border-color 120ms, background-color 120ms;
+}
+
+.fi-fo-file-upload .filepond--root:hover .filepond--panel-root,
+.fi-fo-file-upload .filepond--root[data-hopper-state='drag-over'] .filepond--panel-root {
+    border-color: var(--primary);
+    background-color: var(--primary-lt);
+}
+
+/* Sudah ada gambar: garis utuh tipis */
+.fi-fo-file-upload .filepond--root:has(.filepond--item) .filepond--panel-root {
+    border-style: solid;
+    border-color: var(--border-color);
+    background-color: transparent;
+}
+
+.gs-upload-idle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    line-height: 18px;
+    text-align: center;
+}
+
+.gs-upload-idle > svg {
+    width: 28px;
+    height: 28px;
+    color: var(--text-disabled);
+}
+
+/* Panel persegi kosong: ajakan unggah tepat di tengah (bawaan Filament: menempel di atas) */
+.fi-fo-file-upload .filepond--root:not(:has(.filepond--item)) .filepond--drop-label {
+    height: 100% !important;
+    min-height: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.fi-fo-file-upload .filepond--drop-label,
+.fi-fo-file-upload .filepond--drop-label label {
+    color: var(--text-muted) !important;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.fi-fo-file-upload .filepond--label-action {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* Pratinjau: tanpa nama/ukuran file dan tanpa gradasi gelap di atas gambar */
+.fi-fo-file-upload .filepond--file-info,
+.fi-fo-file-upload .filepond--file-status {
+    display: none;
+}
+
+.fi-fo-file-upload .filepond--item-panel {
+    border-radius: var(--radius);
+    background-color: var(--bg-surface-secondary);
+}
+
+.fi-fo-file-upload .filepond--image-preview-overlay {
+    opacity: 0 !important;
+}
+
+.fi-fo-file-upload .filepond--image-preview-wrapper {
+    border-radius: var(--radius);
+}
+
+/* Tombol hapus (✕) & edit (✎): bulat putih 28px, kursor pointer, hover berwarna */
+.fi-fo-file-upload .filepond--file-action-button,
+.fi-fo-file-upload .filepond--file-action-button.filepond--action-edit-item {
+    width: 28px;
+    height: 28px;
+    background-color: rgb(255 255 255 / 0.94);
+    box-shadow: 0 1px 3px rgb(15 23 42 / 0.2);
+    color: var(--text);
+    cursor: pointer;
+    transition: background-color 120ms, color 120ms, transform 120ms;
+}
+
+.fi-fo-file-upload .filepond--file-action-button:hover,
+.fi-fo-file-upload .filepond--file-action-button:focus-visible {
+    background-color: #ffffff;
+    color: var(--primary);
+    transform: scale(1.06);
+}
+
+.fi-fo-file-upload .filepond--file-action-button.filepond--action-remove-item:hover {
+    color: #d63939;
+}
+
+.fi-fo-file-upload .filepond--file-action-button svg {
+    width: 20px;
+    height: 20px;
 }
 
 /*
@@ -1061,8 +1204,6 @@
     min-height: var(--control-h-sm);
     height: var(--control-h-sm);
     border-radius: var(--radius);
-    box-shadow: none;
-    border: 1px solid var(--border-color);
 }
 
 .gs-pagination .gs-pagination-per-page select.fi-select-input {
@@ -1388,9 +1529,48 @@
     font-size: 12.5px;
 }
 
+/*
+ * Field form: garis 1px tipis tanpa bayangan (bawaan Filament: ring 1px + shadow-sm yang membuat
+ * tepi tampak tebal), fokus = garis primary 1px + halo lembut 3px (bawaan: ring 2px).
+ * Selektor .fi-body + rantai :not() menyamai spesifisitas aturan focus-within Filament.
+ */
 .fi-input-wrp {
     min-height: var(--control-h);
     border-radius: var(--control-radius);
+}
+
+.fi-body .fi-input-wrp,
+.fi-body .fi-input-wrp.fi-disabled {
+    box-shadow: 0 0 0 1px var(--field-border);
+    transition: box-shadow 120ms;
+}
+
+.fi-body .fi-input-wrp:not(.fi-disabled):hover {
+    box-shadow: 0 0 0 1px var(--field-border-hover);
+}
+
+.fi-body .fi-input-wrp:not(.fi-disabled):not(:has(.fi-ac-action:focus)):focus-within {
+    box-shadow: 0 0 0 1px var(--primary), 0 0 0 4px var(--field-focus-ring);
+}
+
+.fi-body .fi-input-wrp.fi-invalid,
+.fi-body .fi-input-wrp.fi-invalid:not(.fi-disabled):hover {
+    box-shadow: 0 0 0 1px #d63939;
+}
+
+.fi-body .fi-input-wrp.fi-invalid:not(.fi-disabled):not(:has(.fi-ac-action:focus)):focus-within {
+    box-shadow: 0 0 0 1px #d63939, 0 0 0 4px rgb(214 57 57 / 0.14);
+}
+
+.fi-body .fi-input-wrp.fi-disabled {
+    background-color: var(--bg-surface-secondary);
+}
+
+/* Pemisah prefix/suffix ("Rp") senada dengan garis field */
+.fi-input-wrp .fi-input-wrp-prefix:not(.fi-inline),
+.fi-input-wrp .fi-input-wrp-suffix:not(.fi-inline) {
+    border-color: var(--border-color-light);
+    color: var(--text-muted);
 }
 
 .fi-input,
@@ -1417,9 +1597,44 @@ select.fi-select-input {
     line-height: 20px;
 }
 
+/*
+ * Hierarki teks field: label 12.5px/500 · isi 13px · bantuan & error 12px (bawaan Filament: 14px,
+ * sehingga pesan error lebih besar dari labelnya). Jarak label→field 6px, field→pesan 4px.
+ */
+.fi-fo-field {
+    row-gap: 6px;
+}
+
+.fi-fo-field .fi-fo-field-content-col {
+    row-gap: 4px;
+}
+
 .fi-fo-field-label-content {
-    font-size: 12px;
+    color: var(--text);
+    font-size: 12.5px;
     font-weight: 500;
+    line-height: 18px;
+}
+
+/* Tanda wajib (*) */
+.fi-fo-field-label-required-mark {
+    color: #d63939;
+    font-weight: 500;
+}
+
+.fi-fo-field .fi-fo-field-wrp-error-message {
+    color: #d63939;
+    font-size: 12px;
+    line-height: 16px;
+}
+
+/* Teks bantuan field (helperText) & teks di bawah toggle/checkbox */
+.fi-fo-field .fi-fo-field-content-col > .fi-sc-text,
+.fi-fo-field .fi-sc-text,
+.fi-fo-field .fi-fo-field-label-ctn + .fi-sc-text {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 16px;
 }
 
 /* ---------- Badge: kotak radius 6px, latar tint lembut + garis tipis (badge.md) ---------- */
@@ -1512,4 +1727,171 @@ select.fi-select-input {
 .fi-sidebar .brand-tag {
     color: var(--brand-mist);
     background: rgb(184 192 212 / 0.16);
+}
+
+/* =====================================================================
+ * Repeater tabel ringkas (mis. Opsi di grup opsi): gaya sama dengan tabel daftar.
+ * Satu baris per item: ↑↓ · kolom isian · hapus. Input tanpa garis seperti sel spreadsheet,
+ * garis/halo muncul saat hover/fokus.
+ * ===================================================================== */
+.fi-fo-table-repeater > table {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: none;
+}
+
+.fi-fo-table-repeater > table > thead > tr > th {
+    height: 36px;
+    padding: 0 12px;
+    border-color: var(--border-color-light);
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: start;
+}
+
+.fi-fo-table-repeater > table > tbody > tr > td {
+    border-color: var(--border-color-light) !important;
+}
+
+.fi-fo-table-repeater > table > tbody > tr:hover {
+    background-color: var(--bg-surface-secondary);
+}
+
+/* Isian di sel: tanpa garis; garis tipis saat hover, garis primary + halo saat fokus */
+.fi-body .fi-fo-table-repeater.fi-compact .fi-input-wrp {
+    min-height: 34px;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none;
+}
+
+.fi-body .fi-fo-table-repeater.fi-compact .fi-input-wrp:not(.fi-disabled):hover {
+    box-shadow: inset 0 0 0 1px var(--field-border);
+}
+
+.fi-body .fi-fo-table-repeater.fi-compact .fi-input-wrp:not(.fi-disabled):not(:has(.fi-ac-action:focus)):focus-within {
+    background-color: var(--bg-surface) !important;
+    box-shadow: inset 0 0 0 1px var(--primary), 0 0 0 3px var(--field-focus-ring);
+}
+
+.fi-body .fi-fo-table-repeater.fi-compact .fi-input-wrp.fi-invalid {
+    box-shadow: inset 0 0 0 1px #d63939;
+}
+
+.fi-fo-table-repeater.fi-compact .fi-input-wrp-prefix:not(.fi-inline) {
+    border-inline-end: 0;
+}
+
+/* Tombol ↑↓ & hapus: ikon kecil abu, hapus merah saat hover */
+.fi-fo-table-repeater .fi-fo-table-repeater-actions {
+    gap: 2px;
+}
+
+.fi-fo-table-repeater .fi-fo-table-repeater-actions .fi-icon-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius);
+    color: var(--text-muted);
+}
+
+.fi-fo-table-repeater .fi-fo-table-repeater-actions .fi-icon-btn > .fi-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.fi-fo-table-repeater .fi-fo-table-repeater-actions .fi-icon-btn:not(.fi-disabled):hover {
+    background-color: var(--primary-lt);
+    color: var(--primary);
+}
+
+.fi-fo-table-repeater .fi-fo-table-repeater-actions .fi-icon-btn.fi-color-danger {
+    color: var(--text-muted);
+}
+
+.fi-fo-table-repeater .fi-fo-table-repeater-actions .fi-icon-btn.fi-color-danger:hover {
+    background-color: rgb(214 57 57 / 0.1);
+    color: #d63939;
+}
+
+.fi-fo-table-repeater .fi-fo-table-repeater-actions .fi-icon-btn.fi-disabled {
+    opacity: 0.35;
+}
+
+/*
+ * Repeater tabel tetap berbentuk tabel di semua lebar (bawaan Filament: di bawah container @xl ±576px
+ * berubah menjadi tumpukan kartu yang boros tempat). Aturan @xl Filament ditiru tanpa container query;
+ * bila wadah terlalu sempit, tabel bisa digeser ke samping.
+ */
+.fi-fo-table-repeater {
+    overflow-x: auto;
+}
+
+.fi-fo-table-repeater > table {
+    display: table;
+    min-width: 300px;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+}
+
+.fi-fo-table-repeater > table > thead {
+    display: table-header-group;
+}
+
+.fi-fo-table-repeater > table > tbody {
+    display: table-row-group;
+}
+
+.fi-fo-table-repeater > table > tbody > tr {
+    display: table-row;
+    padding: 0;
+}
+
+.fi-fo-table-repeater > table > tbody > tr > td,
+.fi-fo-table-repeater > table > tbody > tr > td.fi-hidden {
+    display: table-cell;
+    padding: 4px 0;
+    vertical-align: middle;
+}
+
+.fi-fo-table-repeater > table > tbody > tr > td:not(:last-of-type) {
+    border-inline-end: 1px solid var(--border-color-light);
+}
+
+.fi-fo-table-repeater > table > tbody > tr:not(:last-child) > td {
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.fi-fo-table-repeater > table > tbody > tr > td .fi-fo-field {
+    row-gap: 0;
+}
+
+.fi-fo-table-repeater > table > tbody > tr > td .fi-fo-field-label-content {
+    display: none;
+}
+
+.fi-fo-table-repeater .fi-fo-table-repeater-actions {
+    padding: 4px 8px;
+}
+
+.fi-fo-table-repeater .fi-fo-field-wrp-error-message {
+    padding: 0 12px 6px;
+}
+
+/* Layar sempit: kolom harga menyempit agar nama opsi tetap lega */
+@media (max-width: 40rem) {
+    .fi-fo-table-repeater > table > thead > tr > th[style*='width'] {
+        width: 112px !important;
+    }
+
+    .fi-fo-table-repeater .fi-fo-table-repeater-actions {
+        padding: 4px;
+    }
+
+    .fi-fo-table-repeater > table > thead > tr > th {
+        padding: 0 8px;
+    }
 }

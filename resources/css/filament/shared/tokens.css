@@ -42,8 +42,13 @@
 
     --control-h: 32px;
     --control-h-sm: 28px;
-    --control-radius: 8px;
+    --control-radius: 6px;
     --control-font: 13px;
+
+    /* Field form: garis 1px tanpa bayangan; fokus = garis primary + halo 3px */
+    --field-border: #dcdee3;
+    --field-border-hover: #c4c8cf;
+    --field-focus-ring: rgb(45 66 130 / 0.14);
 
     --shadow: rgb(30 38 51 / 0.04) 0 2px 4px 0;
     --shadow-card: 0 0 0 1px var(--border-translucent), 0 2px 4px rgb(30 38 51 / 0.04);
@@ -67,6 +72,10 @@
     --text-disabled: #5a6473;
 
     --topbar-bg: rgb(20 29 43 / 0.85);
+
+    --field-border: rgb(255 255 255 / 0.14);
+    --field-border-hover: rgb(255 255 255 / 0.24);
+    --field-focus-ring: rgb(184 192 212 / 0.2);
 
     --shadow: rgb(0 0 0 / 0.4) 0 2px 4px 0;
     --shadow-card: 0 0 0 1px var(--border-translucent), 0 2px 4px rgb(0 0 0 / 0.3);
