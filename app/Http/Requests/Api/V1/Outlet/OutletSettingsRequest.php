@@ -34,6 +34,7 @@ final class OutletSettingsRequest extends FormRequest
             'rounding' => ['integer', Rule::in(UpdateOutletSettings::ROUNDING_OPTIONS)],
             'receipt_header' => ['nullable', 'string', 'max:500'],
             'receipt_footer' => ['nullable', 'string', 'max:500'],
+            'receipt_show_rounding' => ['boolean'],
             'discount_limits' => ['array:cashier,supervisor'],
             'discount_limits.cashier' => ['required_with:discount_limits', 'numeric', 'min:0', 'max:100'],
             'discount_limits.supervisor' => ['required_with:discount_limits', 'numeric', 'min:0', 'max:100'],
@@ -60,6 +61,7 @@ final class OutletSettingsRequest extends FormRequest
             'rounding' => 'pembulatan',
             'receipt_header' => 'header struk',
             'receipt_footer' => 'footer struk',
+            'receipt_show_rounding' => 'tampilkan pembulatan di struk',
             'discount_limits.cashier' => 'batas diskon kasir',
             'discount_limits.supervisor' => 'batas diskon supervisor',
         ];

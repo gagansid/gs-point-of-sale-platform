@@ -67,6 +67,10 @@
     stroke: var(--site-gray);
 }
 
+.site-logo .bm-dot {
+    fill: var(--site-primary);
+}
+
 .site-logo-word {
     color: var(--site-navy);
     font-family: 'Nunito', var(--font-sans);
@@ -76,7 +80,7 @@
 }
 
 .site-logo-word .w-gs {
-    color: var(--site-gray);
+    color: var(--site-primary);
 }
 
 .site-logo-light .bm-frame {
@@ -85,6 +89,10 @@
 
 .site-logo-light .bm-accent {
     stroke: var(--site-mist);
+}
+
+.site-logo-light .bm-dot {
+    fill: #ffffff;
 }
 
 .site-logo-light .site-logo-word {

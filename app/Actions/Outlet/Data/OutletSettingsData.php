@@ -26,6 +26,8 @@ final readonly class OutletSettingsData
         public ?string $receiptHeader,
         public ?string $receiptFooter,
         public array $discountLimits,
+        // Q48: baris pembulatan di struk (bawaan tidak, digabung ke total)
+        public bool $receiptShowRounding = false,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -48,6 +50,7 @@ final readonly class OutletSettingsData
                 'cashier' => 0 + ($limits['cashier'] ?? 0),
                 'supervisor' => 0 + ($limits['supervisor'] ?? 0),
             ],
+            receiptShowRounding: (bool) ($data['receipt_show_rounding'] ?? false),
         );
     }
 }

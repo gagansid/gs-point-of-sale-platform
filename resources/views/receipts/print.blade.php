@@ -92,7 +92,8 @@
         @if (Money::isPositive($t['tax_total']))
             <div class="row"><span>Pajak {{ $rate($t['tax_rate']) }}%{{ $t['tax_inclusive'] ? ' (termasuk)' : '' }}</span><span>{{ $rp($t['tax_total']) }}</span></div>
         @endif
-        @if (Money::compare($t['rounding'], '0') !== 0)
+        {{-- Q48: bawaan pembulatan digabung ke total (tanpa baris) --}}
+        @if ($receipt['outlet']['show_rounding'] && Money::compare($t['rounding'], '0') !== 0)
             <div class="row"><span>Pembulatan</span><span>{{ $rp($t['rounding']) }}</span></div>
         @endif
         <div class="row bold big"><span>TOTAL</span><span>{{ $rp($t['grand_total']) }}</span></div>

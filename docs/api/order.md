@@ -158,6 +158,10 @@ Data struk siap cetak: `outlet` (nama, alamat, header, footer), `order_number`, 
 `lines` (nama, opsi, qty, harga, diskon, total, catatan), `totals` (dengan **tarif pajak/service saat
 transaksi**), `payments`, `is_void`, `void_reason`.
 
+`outlet.show_rounding` (SPEC Q48): `false` (bawaan) → **jangan cetak baris pembulatan**; `totals.grand_total`
+sudah termasuk pembulatan. `true` → cetak baris "Pembulatan" dari `totals.rounding` bila tidak nol.
+Struk web (`/dashboard/orders/{id}/receipt`) mengikuti aturan yang sama.
+
 ## `POST /v1/orders/{id}/void`
 
 Body `{ "reason": "…", "approver_user_id"?: uuid, "approver_pin"?: "123456" }`.

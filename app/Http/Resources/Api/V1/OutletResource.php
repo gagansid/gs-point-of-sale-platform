@@ -30,6 +30,7 @@ final class OutletResource extends JsonResource
             'rounding' => $this->rounding,
             'receipt_header' => $this->receipt_header,
             'receipt_footer' => $this->receipt_footer,
+            'receipt_show_rounding' => $this->receipt_show_rounding,
             'discount_limits' => $this->discount_limits,
         ];
     }

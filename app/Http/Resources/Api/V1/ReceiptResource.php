@@ -33,6 +33,8 @@ final class ReceiptResource extends JsonResource
                 'address' => $outlet->address,
                 'header' => $outlet->receipt_header,
                 'footer' => $outlet->receipt_footer,
+                // Q48: false = baris pembulatan tidak dicetak (sudah termasuk di total)
+                'show_rounding' => $outlet->receipt_show_rounding,
             ],
             'order_id' => $this->id,
             'order_number' => $this->order_number,

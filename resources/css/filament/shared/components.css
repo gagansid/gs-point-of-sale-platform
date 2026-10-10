@@ -1676,6 +1676,10 @@ select.fi-select-input {
     stroke: var(--brand-gray);
 }
 
+.brand-mark .bm-dot {
+    fill: var(--brand-primary);
+}
+
 /* Varian "on-dark": sidebar navy/gelap & dark mode */
 .fi-sidebar .brand-mark .bm-frame,
 .dark .brand-mark .bm-frame {
@@ -1685,6 +1689,11 @@ select.fi-select-input {
 .fi-sidebar .brand-mark .bm-accent,
 .dark .brand-mark .bm-accent {
     stroke: var(--brand-mist);
+}
+
+.fi-sidebar .brand-mark .bm-dot,
+.dark .brand-mark .bm-dot {
+    fill: #ffffff;
 }
 
 .brand-word {
@@ -1698,7 +1707,7 @@ select.fi-select-input {
 }
 
 .brand-word .w-gs {
-    color: var(--brand-gray);
+    color: var(--brand-primary);
 }
 
 .brand-tag {

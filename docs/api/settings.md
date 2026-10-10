@@ -54,6 +54,7 @@ pertama yang dipegang user. Outlet lain diubah dari dashboard (Pengaturan → Ou
 | `service_charge_rate` | desimal | 0–100 (persen) |
 | `rounding` | int | `0` (tanpa), `100`, `500`, `1000` — pembulatan grand total ke Rp terdekat |
 | `receipt_header`, `receipt_footer` | string\|null | maks. 500 |
+| `receipt_show_rounding` | boolean | Tampilkan baris pembulatan di struk (SPEC Q48). Bawaan `false`: pembulatan sudah termasuk di total |
 | `discount_limits` | object | `{ "cashier": 10, "supervisor": 25 }` persen 0–100, keduanya wajib bila dikirim (Q18) |
 | `code` | — | **Tidak bisa diubah** (awalan nomor order); diabaikan bila dikirim |
 
@@ -68,7 +69,7 @@ menyimpan tarif pajak/service/pembulatan saat transaksi.
     "id": "…", "code": "JKT01", "name": "Kopi Senja Dago", "address": "Jl. Dago 1",
     "timezone": "Asia/Jakarta", "tax_rate": "11.00", "service_charge_rate": "5.00",
     "tax_inclusive": false, "rounding": 100, "receipt_header": "Kopi Senja",
-    "receipt_footer": "Terima kasih", "discount_limits": { "cashier": 10, "supervisor": 25 }
+    "receipt_footer": "Terima kasih", "receipt_show_rounding": false, "discount_limits": { "cashier": 10, "supervisor": 25 }
   },
   "meta": { "request_id": "…" }
 }

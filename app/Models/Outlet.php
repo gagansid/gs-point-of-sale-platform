@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $rounding
  * @property string|null $receipt_header
  * @property string|null $receipt_footer
+ * @property bool $receipt_show_rounding baris pembulatan tampil di struk (Q48)
  * @property array<string, int|float>|null $discount_limits
  * @property bool $is_active
  */
@@ -49,6 +50,7 @@ final class Outlet extends Model
         'rounding',
         'receipt_header',
         'receipt_footer',
+        'receipt_show_rounding',
         'discount_limits',
         'is_active',
     ];
@@ -59,6 +61,7 @@ final class Outlet extends Model
             'tax_rate' => 'decimal:2',
             'service_charge_rate' => 'decimal:2',
             'tax_inclusive' => 'boolean',
+            'receipt_show_rounding' => 'boolean',
             'rounding' => 'integer',
             'discount_limits' => 'array',
             'is_active' => 'boolean',

@@ -79,7 +79,7 @@ final class OutletSettings extends Page
         $limits = $outlet->discount_limits ?? config('pos.outlet_defaults.discount_limits');
 
         $this->settingsForm()->fill([
-            ...$outlet->only(['code', 'name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer']),
+            ...$outlet->only(['code', 'name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer', 'receipt_show_rounding']),
             'discount_limits' => ['cashier' => $limits['cashier'] ?? 0, 'supervisor' => $limits['supervisor'] ?? 0],
         ]);
     }
@@ -124,13 +124,16 @@ final class OutletSettings extends Page
                         ]),
 
                     Section::make('Struk')
-                        ->description('Teks di bagian atas & bawah struk')
+                        ->description('Teks di bagian atas & bawah struk, dan baris yang dicetak')
                         ->columns(2)
                         ->schema([
                             Textarea::make('receipt_header')->label('Header struk')->rows(3)->rules($rules['receipt_header'])
                                 ->placeholder('Jl. Merdeka No. 1, Bandung'),
                             Textarea::make('receipt_footer')->label('Footer struk')->rows(3)->rules($rules['receipt_footer'])
                                 ->placeholder('Terima kasih, sampai jumpa lagi'),
+                            Toggle::make('receipt_show_rounding')->label('Tampilkan pembulatan di struk')
+                                ->helperText('Mati: pembulatan sudah termasuk di Total, tanpa baris tersendiri')
+                                ->columnSpanFull(),
                         ]),
                 ]),
 

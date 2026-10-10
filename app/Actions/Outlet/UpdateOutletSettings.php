@@ -29,6 +29,7 @@ final class UpdateOutletSettings
             'rounding' => $data->rounding,
             'receipt_header' => $data->receiptHeader,
             'receipt_footer' => $data->receiptFooter,
+            'receipt_show_rounding' => $data->receiptShowRounding,
             'discount_limits' => $data->discountLimits,
         ])->save());
 
