@@ -8,6 +8,7 @@ use App\Enums\BusinessType;
 use App\Enums\TenantStatus;
 use App\Models\Tenant;
 use App\Support\SystemSettings;
+use App\Support\Timezones;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -25,11 +26,7 @@ use Illuminate\Validation\Rules\Password;
 final class TenantForm
 {
     /** Zona waktu Indonesia yang didukung (ADR 0001). */
-    public const TIMEZONES = [
-        'Asia/Jakarta' => 'WIB — Asia/Jakarta',
-        'Asia/Makassar' => 'WITA — Asia/Makassar',
-        'Asia/Jayapura' => 'WIT — Asia/Jayapura',
-    ];
+    public const TIMEZONES = Timezones::OPTIONS;
 
     public static function configure(Schema $schema): Schema
     {

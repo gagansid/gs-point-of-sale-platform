@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\OptionGroupController;
 use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\OutletController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ShiftController;
@@ -94,6 +95,12 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('summary', 'summary')->name('summary');
             Route::get('products', 'products')->name('products');
             Route::get('payment-methods', 'paymentMethods')->name('payment-methods');
+        });
+
+        // ---------- Setelan ----------
+        Route::controller(OutletController::class)->prefix('outlet')->name('outlet.')->group(function (): void {
+            Route::get('/', 'show')->name('show');
+            Route::put('/', 'update')->name('update');
         });
     });
 });

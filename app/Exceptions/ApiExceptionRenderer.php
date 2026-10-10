@@ -47,7 +47,9 @@ final class ApiExceptionRenderer
             $e instanceof AuthenticationException => ApiResponse::error(ErrorCode::Unauthenticated),
 
             $e instanceof AuthorizationException,
-            $e instanceof AccessDeniedHttpException => ApiResponse::error(ErrorCode::Forbidden),
+            // abort(403) menghasilkan HttpException biasa, bukan AccessDeniedHttpException
+            $e instanceof AccessDeniedHttpException,
+            $e instanceof HttpExceptionInterface && $e->getStatusCode() === 403 => ApiResponse::error(ErrorCode::Forbidden),
 
             // Method salah dijawab 404: endpoint "tidak ada" untuk method tersebut, sekaligus
             // menyulitkan pemetaan endpoint oleh penyerang

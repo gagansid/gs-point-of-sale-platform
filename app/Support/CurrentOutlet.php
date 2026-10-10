@@ -18,6 +18,12 @@ final class CurrentOutlet
         return Outlet::query()->orderBy('created_at')->first();
     }
 
+    /** Untuk endpoint/menu yang butuh outlet: tenant tanpa outlet = data rusak → 404. */
+    public static function getOrFail(): Outlet
+    {
+        return self::get() ?? abort(404);
+    }
+
     public static function timezone(): string
     {
         return self::get()->timezone ?? (string) config('pos.default_timezone');
