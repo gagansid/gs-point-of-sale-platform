@@ -46,6 +46,23 @@ enum UserRole: string implements HasColor, HasLabel
     ];
 
     /**
+     * Permission yang tetap berlaku saat tenant hanya-baca (ADR 0009): hanya melihat/mencetak ulang.
+     */
+    public const READ_PERMISSIONS = [
+        'order.view_own',
+        'order.view_all',
+        'order.reprint',
+        'shift.view_all',
+        'report.view',
+        'report.export',
+    ];
+
+    public static function isReadPermission(string $permission): bool
+    {
+        return in_array($permission, self::READ_PERMISSIONS, true);
+    }
+
+    /**
      * Pola permission per role. Wildcard: 'order.*' mencakup 'order.void'.
      *
      * @return list<string>

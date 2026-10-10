@@ -87,3 +87,17 @@ lanjut, approved_by = approver_user_id
 |---|---|---|---|
 | `app.gspos.id` (`/dashboard` tanpa subdomain) | `web` | `users` | TenantContext (ADR 0007); hanya role dengan permission dashboard |
 | `admin.gspos.id` (`/admin` tanpa subdomain) | `admin` | `admins` | Terpisah total dari tenant; 2FA (ADR 0006). Cookie session host-only: login `app.` tidak berlaku di `admin.` (ADR 0008) |
+
+## 7. Mode hanya-baca (ADR 0009, SPEC Q32)
+
+Trial/langganan habis → `Tenant::access()` = `ReadOnly`. Tiga lapis:
+
+| Lapis | Perilaku |
+|---|---|
+| API (`EnsureTenantActive`) | GET boleh; POST/PUT/PATCH/DELETE → 403 `SUBSCRIPTION_EXPIRED` (kecuali `auth.pin-login`, `auth.logout`) |
+| Permission (`Gate::before`) | Permission yang mengubah data ditolak; hanya `UserRole::READ_PERMISSIONS` (lihat order/shift/laporan, cetak ulang) yang tetap berlaku |
+| Model (`BelongsToTenant`) | `saving`/`deleting` model tenant → `SUBSCRIPTION_EXPIRED` bila `TenantContext::isReadOnly()`. Query massal (`->update()`) tidak tercakup — jangan jadikan satu-satunya pengaman |
+
+**`can()` vs `hasPermission()`:** `$user->can('product.manage')` = boleh melakukan **sekarang**
+(ikut kunci hanya-baca). `$user->hasPermission('product.manage')` = role punya izin, dipakai
+**hanya** di Policy `viewAny`/`view` agar data tetap bisa dilihat saat hanya-baca.

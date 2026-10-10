@@ -73,6 +73,17 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /** Hanya panel /dashboard, hanya owner & manager aktif. Panel /admin memakai tabel admins. */
+    /**
+     * Role memiliki permission, tanpa memperhitungkan kunci hanya-baca (ADR 0009). Hanya untuk
+     * keputusan MELIHAT (viewAny/view di Policy); untuk melakukan aksi selalu pakai $user->can().
+     */
+    public function hasPermission(string $permission): bool
+    {
+        $role = $this->getAttribute('role');
+
+        return $role instanceof UserRole && $role->allows($permission);
+    }
+
     public function canAccessPanel(Panel $panel): bool
     {
         return $panel->getId() === 'dashboard' && $this->is_active && $this->role->canAccessDashboard();

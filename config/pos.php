@@ -19,6 +19,12 @@ return [
         'api' => env('POS_API_DOMAIN'),
     ],
 
+    // Onboarding (ADR 0009). Nilai awal; super admin mengubahnya di Sistem → Pendaftaran
+    'onboarding' => [
+        'trial_days' => (int) env('POS_TRIAL_DAYS', 14),
+        'signup_enabled' => (bool) env('POS_SIGNUP_ENABLED', true),
+    ],
+
     // Zona waktu default outlet baru (ADR 0001). Server sendiri selalu UTC.
     'default_timezone' => env('POS_DEFAULT_TIMEZONE', 'Asia/Jakarta'),
 

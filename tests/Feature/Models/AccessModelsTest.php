@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\TenantAccess;
 use App\Enums\UserRole;
 use App\Models\Announcement;
 use App\Models\AppVersion;
@@ -24,12 +25,25 @@ describe('tenant', function () {
         'tanpa batas' => fn () => Tenant::factory()->make(['subscription_ends_at' => null]),
     ])->with([true]);
 
-    it('tidak aktif jika suspended atau langganan habis', function (Tenant $tenant) {
-        expect($tenant->isActive())->toBeFalse();
-    })->with([
-        'suspended' => fn () => Tenant::factory()->suspended()->make(),
-        'kedaluwarsa' => fn () => Tenant::factory()->expired()->make(),
-    ]);
+    it('diblokir hanya jika suspended; langganan habis menjadi hanya-baca (Q32)', function () {
+        $suspended = Tenant::factory()->suspended()->make();
+        $expired = Tenant::factory()->expired()->make();
+
+        expect($suspended->access())->toBe(TenantAccess::Blocked)
+            ->and($suspended->isActive())->toBeFalse()
+            ->and($expired->access())->toBe(TenantAccess::ReadOnly)
+            ->and($expired->isActive())->toBeTrue()
+            ->and($expired->isReadOnly())->toBeTrue()
+            ->and(Tenant::factory()->make()->access())->toBe(TenantAccess::Full);
+    });
+
+    it('menghitung sisa hari trial', function () {
+        $this->freezeTime();
+
+        expect(Tenant::factory()->trial()->make(['subscription_ends_at' => now()->addDays(3)->subHour()])->trialDaysLeft())->toBe(3)
+            ->and(Tenant::factory()->make()->trialDaysLeft())->toBeNull()
+            ->and(Tenant::factory()->expired()->make()->trialDaysLeft())->toBeNull();
+    });
 });
 
 describe('outlet', function () {

@@ -7,6 +7,7 @@ namespace App\Filament\Admin\Resources\Tenants\Schemas;
 use App\Enums\BusinessType;
 use App\Enums\TenantStatus;
 use App\Models\Tenant;
+use App\Support\SystemSettings;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -74,10 +75,11 @@ final class TenantForm
                             ->visibleOn('create'),
                         DatePicker::make('subscription_ends_at')
                             ->label('Langganan berakhir')
-                            ->helperText('Kosongkan bila tanpa batas. Setelah tanggal ini tenant otomatis tidak bisa memakai sistem')
+                            ->helperText('Kosongkan bila tanpa batas. Setelah tanggal ini bisnis otomatis hanya-baca (bisa login & lihat data, tidak bisa transaksi)')
                             ->native(false)
                             ->displayFormat('j M Y')
-                            ->default(now()->addDays(14))
+                            // Lama trial dari Sistem → Pendaftaran (ADR 0009)
+                            ->default(fn () => now()->addDays(app(SystemSettings::class)->trialDays()))
                             ->minDate(fn (string $operation) => $operation === 'create' ? today() : null),
                     ]),
 

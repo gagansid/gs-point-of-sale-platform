@@ -16,6 +16,15 @@ final class SystemSettings
 {
     public const ADMIN_TWO_FACTOR_REQUIRED = 'security.admin_two_factor_required';
 
+    public const TRIAL_DAYS = 'onboarding.trial_days';
+
+    public const SIGNUP_ENABLED = 'onboarding.signup_enabled';
+
+    /** Batas lama trial yang bisa diatur admin (hari). */
+    public const TRIAL_DAYS_MIN = 1;
+
+    public const TRIAL_DAYS_MAX = 90;
+
     private const CACHE_PREFIX = 'system_settings:';
 
     /**
@@ -29,6 +38,26 @@ final class SystemSettings
     public function setAdminTwoFactorRequired(bool $required, ?Admin $by = null): void
     {
         $this->set(self::ADMIN_TWO_FACTOR_REQUIRED, $required, $by);
+    }
+
+    /** Lama trial tenant baru (ADR 0009, default 14 hari). */
+    public function trialDays(): int
+    {
+        $days = (int) $this->get(self::TRIAL_DAYS, config('pos.onboarding.trial_days'));
+
+        return max(self::TRIAL_DAYS_MIN, min(self::TRIAL_DAYS_MAX, $days));
+    }
+
+    /** Daftar sendiri di gspos.id/daftar dibuka. */
+    public function signupEnabled(): bool
+    {
+        return (bool) $this->get(self::SIGNUP_ENABLED, config('pos.onboarding.signup_enabled'));
+    }
+
+    public function setOnboarding(int $trialDays, bool $signupEnabled, ?Admin $by = null): void
+    {
+        $this->set(self::TRIAL_DAYS, $trialDays, $by);
+        $this->set(self::SIGNUP_ENABLED, $signupEnabled, $by);
     }
 
     private function get(string $key, mixed $default): mixed

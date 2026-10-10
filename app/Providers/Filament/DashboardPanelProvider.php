@@ -9,7 +9,9 @@ use App\Filament\Shared\Layout;
 use App\Filament\Shared\Pages\Home;
 use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\SetDashboardTenant;
+use App\Models\User;
 use App\Support\Domains;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -18,6 +20,7 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Enums\Width;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -77,6 +80,12 @@ final class DashboardPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            // Banner trial / hanya-baca di atas setiap halaman (ADR 0009)
+            ->renderHook(PanelsRenderHook::CONTENT_START, function (): string {
+                $user = Filament::auth()->user();
+
+                return $user instanceof User ? view('filament.dashboard.subscription-banner', ['tenant' => $user->tenant])->render() : '';
+            })
             // Persistent: juga berjalan di request Livewire (aksi tabel, simpan form)
             ->authMiddleware([
                 SetDashboardTenant::class,

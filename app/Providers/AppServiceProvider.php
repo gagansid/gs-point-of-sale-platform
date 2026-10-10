@@ -96,7 +96,13 @@ class AppServiceProvider extends ServiceProvider
             // Data rusak (role kosong/tidak dikenal) = ditolak, bukan error
             $role = $user->getAttribute('role');
 
-            return $role instanceof UserRole && $role->allows($ability);
+            if (! $role instanceof UserRole || ! $role->allows($ability)) {
+                return false;
+            }
+
+            // Trial/langganan habis (ADR 0009): permission yang mengubah data ditolak; melihat tetap
+            // lewat User::hasPermission() di Policy
+            return UserRole::isReadPermission($ability) || ! ($user->tenant?->isReadOnly() ?? false);
         });
     }
 

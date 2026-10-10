@@ -11,7 +11,9 @@ Di kode, daftar tersebut dicerminkan oleh enum `App\Enums\ErrorCode` (value = ko
 | 401 | `INVALID_PIN` | Action `LoginWithPin`, `VerifyApproval` |
 | 403 | `DEVICE_NOT_REGISTERED` | Middleware `EnsureDeviceRegistered`, Action `LoginWithPin` |
 | 403 | `FORBIDDEN` | Framework (`AuthorizationException`) — dari `can()` / Policy / FormRequest |
-| 403 | `TENANT_SUSPENDED` | Middleware `EnsureTenantActive` |
+| 403 | `TENANT_SUSPENDED` | Middleware `EnsureTenantActive` (tenant ditangguhkan) |
+| 403 | `SUBSCRIPTION_EXPIRED` | `EnsureTenantActive` (request yang mengubah data saat trial/langganan habis) & `BelongsToTenant` (pengaman model) — ADR 0009 |
+| 403 | `EMAIL_NOT_VERIFIED` | Checkout/pembayaran sebelum email owner diverifikasi — ADR 0009 |
 | 403 | `APPROVAL_REQUIRED` | Action (void/diskon tanpa permission & tanpa PIN approver) |
 | 403 | `SELF_APPROVAL_NOT_ALLOWED` | Action `VerifyApproval` |
 | 404 | `NOT_FOUND` | Framework (`ModelNotFoundException`) — termasuk data tenant lain |

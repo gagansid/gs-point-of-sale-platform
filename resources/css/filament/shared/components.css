@@ -1895,3 +1895,79 @@ select.fi-select-input {
         padding: 0 8px;
     }
 }
+
+/* =====================================================================
+ * Banner status langganan (ADR 0009): trial berjalan (info) / hanya-baca (warning)
+ * ===================================================================== */
+.gs-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    border: 1px solid;
+    border-radius: var(--radius-lg);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.gs-banner strong {
+    font-weight: 600;
+}
+
+.gs-banner-icon {
+    width: 18px;
+    height: 18px;
+    flex: none;
+}
+
+.gs-banner-action {
+    flex: none;
+    margin-inline-start: auto;
+    padding: 5px 12px;
+    border-radius: var(--radius);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.gs-banner-info {
+    border-color: rgb(45 66 130 / 0.18);
+    background-color: var(--primary-lt);
+    color: var(--text);
+}
+
+.gs-banner-info .gs-banner-icon,
+.gs-banner-info .gs-banner-action {
+    color: var(--primary);
+}
+
+.gs-banner-info .gs-banner-action {
+    background-color: var(--bg-surface);
+    box-shadow: 0 0 0 1px rgb(45 66 130 / 0.2);
+}
+
+.gs-banner-warning {
+    border-color: rgb(245 159 0 / 0.35);
+    background-color: rgb(245 159 0 / 0.08);
+    color: var(--text);
+}
+
+.gs-banner-warning .gs-banner-icon {
+    color: #b97500;
+}
+
+.gs-banner-warning .gs-banner-action {
+    background-color: #f59f00;
+    color: #ffffff;
+}
+
+@media (max-width: 40rem) {
+    .gs-banner {
+        flex-wrap: wrap;
+    }
+
+    .gs-banner-action {
+        margin-inline-start: 30px;
+    }
+}

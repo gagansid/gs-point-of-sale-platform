@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models\Concerns;
 
+use App\Enums\ErrorCode;
+use App\Exceptions\BusinessException;
 use App\Models\Scopes\TenantScope;
 use App\Models\Tenant;
 use App\Support\TenantContext;
@@ -40,6 +42,16 @@ trait BelongsToTenant
                 throw new LogicException(static::class.' tidak boleh dibuat untuk tenant lain');
             }
         });
+
+        // Pengaman terakhir mode hanya-baca (ADR 0009): simpan/hapus data tenant ditolak walau
+        // ada jalur yang lupa dicek di UI/permission. Query massal (->update()) tidak melewati event ini.
+        $guardReadOnly = static function (): void {
+            if (TenantContext::isReadOnly()) {
+                throw BusinessException::of(ErrorCode::SubscriptionExpired);
+            }
+        };
+        static::saving($guardReadOnly);
+        static::deleting($guardReadOnly);
 
         static::updating(function (self $model): void {
             if ($model->isDirty('tenant_id')) {

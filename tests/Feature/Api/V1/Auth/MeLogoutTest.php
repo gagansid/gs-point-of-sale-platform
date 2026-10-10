@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\TenantStatus;
 use App\Models\Device;
 use App\Models\Outlet;
 use App\Models\Tenant;
@@ -40,9 +41,25 @@ it('karyawan yang dinonaktifkan langsung kehilangan akses', function () {
 });
 
 it('tenant ditangguhkan → 403 TENANT_SUSPENDED', function () {
-    Tenant::query()->whereKey($this->outlet->tenant_id)->update(['subscription_ends_at' => now()->subDay()]);
+    Tenant::query()->whereKey($this->outlet->tenant_id)->update(['status' => TenantStatus::Suspended]);
 
     assertApiError($this->withToken($this->token)->getJson('/api/v1/auth/me', apiHeaders()), 'TENANT_SUSPENDED', 403);
+});
+
+it('langganan habis → hanya-baca: GET boleh, perubahan 403 SUBSCRIPTION_EXPIRED, logout boleh (Q32)', function () {
+    Tenant::query()->whereKey($this->outlet->tenant_id)->update(['subscription_ends_at' => now()->subDay()]);
+
+    $this->withToken($this->token)->getJson('/api/v1/auth/me', apiHeaders())->assertOk();
+
+    freshAuth();
+    assertApiError(
+        $this->withToken($this->token)->postJson('/api/v1/categories', ['name' => 'Baru'], apiHeaders()),
+        'SUBSCRIPTION_EXPIRED',
+        403,
+    );
+
+    freshAuth();
+    $this->withToken($this->token)->postJson('/api/v1/auth/logout', [], apiHeaders())->assertOk();
 });
 
 it('logout menghapus token yang sedang dipakai saja', function () {

@@ -19,6 +19,8 @@ final class TenantContext
 {
     private ?string $tenantId = null;
 
+    private bool $readOnly = false;
+
     public static function id(): ?string
     {
         return self::instance()->tenantId;
@@ -39,16 +41,27 @@ final class TenantContext
         return self::id() ?? throw new LogicException('Tenant context belum di-set');
     }
 
-    public static function set(string $tenantId): void
+    /**
+     * @param  bool  $readOnly  trial/langganan habis (ADR 0009): simpan & hapus data tenant ditolak
+     */
+    public static function set(string $tenantId, bool $readOnly = false): void
     {
         self::instance()->tenantId = $tenantId;
+        self::instance()->readOnly = $readOnly;
         Context::add('tenant_id', $tenantId);
     }
 
     public static function forget(): void
     {
         self::instance()->tenantId = null;
+        self::instance()->readOnly = false;
         Context::forget('tenant_id');
+    }
+
+    /** Tenant aktif sedang hanya-baca (dipakai BelongsToTenant sebagai pengaman terakhir). */
+    public static function isReadOnly(): bool
+    {
+        return self::instance()->tenantId !== null && self::instance()->readOnly;
     }
 
     /**

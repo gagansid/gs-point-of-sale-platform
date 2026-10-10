@@ -46,7 +46,8 @@ final class SetDashboardTenant
             return redirect()->to(Filament::getLoginUrl());
         }
 
-        TenantContext::set($user->tenant_id);
+        // Trial/langganan habis: panel hanya-baca (ADR 0009); simpan/hapus data ditolak di BelongsToTenant
+        TenantContext::set($user->tenant_id, readOnly: $user->tenant->isReadOnly());
         // Semua tanggal di panel tampil dalam zona outlet (ADR 0001)
         FilamentTimezone::set(CurrentOutlet::timezone());
 

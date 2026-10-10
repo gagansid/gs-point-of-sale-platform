@@ -10,17 +10,18 @@ use App\Models\User;
 /**
  * Akses OptionGroup (panel /dashboard). Memakai permission, tidak pernah role (ADR 0005).
  * Pengecekan tenant adalah pertahanan berlapis di atas TenantScope.
+ * Melihat memakai hasPermission (tetap bisa saat hanya-baca), mengubah memakai can() (ADR 0009).
  */
 final class OptionGroupPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can('product.manage');
+        return $user->hasPermission('product.manage');
     }
 
     public function view(User $user, OptionGroup $model): bool
     {
-        return $this->owns($user, $model) && $user->can('product.manage');
+        return $this->owns($user, $model) && $user->hasPermission('product.manage');
     }
 
     public function create(User $user): bool

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\BusinessType;
+use App\Enums\TenantAccess;
 use App\Enums\TenantStatus;
 use App\Models\Scopes\TenantScope;
 use Carbon\CarbonImmutable;
@@ -52,13 +53,38 @@ final class Tenant extends Model
      * Boleh memakai sistem: bukan suspended dan langganan/trial belum berakhir.
      * Dipakai middleware EnsureTenantActive (403 TENANT_SUSPENDED).
      */
+    /**
+     * Tingkat akses (ADR 0009): ditangguhkan = diblokir; masa trial/langganan habis = hanya-baca.
+     */
+    public function access(): TenantAccess
+    {
+        return match (true) {
+            $this->status === TenantStatus::Suspended => TenantAccess::Blocked,
+            $this->subscription_ends_at !== null && ! $this->subscription_ends_at->isFuture() => TenantAccess::ReadOnly,
+            default => TenantAccess::Full,
+        };
+    }
+
+    /** Boleh login & melihat data (tidak diblokir). Hanya-baca tetap boleh login. */
     public function isActive(): bool
     {
-        if ($this->status === TenantStatus::Suspended) {
-            return false;
+        return $this->access() !== TenantAccess::Blocked;
+    }
+
+    /** Trial/langganan habis: perubahan data ditolak SUBSCRIPTION_EXPIRED. */
+    public function isReadOnly(): bool
+    {
+        return $this->access() === TenantAccess::ReadOnly;
+    }
+
+    /** Sisa hari trial yang masih berjalan (dibulatkan ke atas), null bila bukan trial berjalan. */
+    public function trialDaysLeft(): ?int
+    {
+        if ($this->status !== TenantStatus::Trial || $this->subscription_ends_at === null || ! $this->subscription_ends_at->isFuture()) {
+            return null;
         }
 
-        return $this->subscription_ends_at === null || $this->subscription_ends_at->isFuture();
+        return (int) ceil(now()->diffInSeconds($this->subscription_ends_at) / 86400);
     }
 
     /*

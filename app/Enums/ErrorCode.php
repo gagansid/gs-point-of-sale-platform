@@ -17,6 +17,8 @@ enum ErrorCode: string
     case Forbidden = 'FORBIDDEN';
     case DeviceNotRegistered = 'DEVICE_NOT_REGISTERED';
     case TenantSuspended = 'TENANT_SUSPENDED';
+    case SubscriptionExpired = 'SUBSCRIPTION_EXPIRED';
+    case EmailNotVerified = 'EMAIL_NOT_VERIFIED';
     case ApprovalRequired = 'APPROVAL_REQUIRED';
     case SelfApprovalNotAllowed = 'SELF_APPROVAL_NOT_ALLOWED';
     case NotFound = 'NOT_FOUND';
@@ -38,6 +40,7 @@ enum ErrorCode: string
         return match ($this) {
             self::Unauthenticated, self::InvalidPin => 401,
             self::Forbidden, self::DeviceNotRegistered, self::TenantSuspended,
+            self::SubscriptionExpired, self::EmailNotVerified,
             self::ApprovalRequired, self::SelfApprovalNotAllowed => 403,
             self::NotFound => 404,
             self::ShiftNotOpen, self::OrderAlreadyClosed, self::LastOwnerRequired => 409,
@@ -58,7 +61,9 @@ enum ErrorCode: string
             self::InvalidPin => 'PIN salah',
             self::Forbidden => 'Anda tidak memiliki akses',
             self::DeviceNotRegistered => 'Perangkat belum terdaftar atau aksesnya sudah dicabut',
-            self::TenantSuspended => 'Langganan tidak aktif, hubungi admin',
+            self::TenantSuspended => 'Bisnis ditangguhkan, hubungi tim gs.POS',
+            self::SubscriptionExpired => 'Masa trial/langganan berakhir. Data hanya bisa dilihat; hubungi tim gs.POS untuk berlangganan',
+            self::EmailNotVerified => 'Verifikasi email owner terlebih dahulu sebelum bertransaksi',
             self::ApprovalRequired => 'Aksi ini membutuhkan PIN atasan',
             self::SelfApprovalNotAllowed => 'Approval tidak boleh oleh diri sendiri',
             self::NotFound => 'Data tidak ditemukan',
