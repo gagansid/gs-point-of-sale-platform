@@ -2337,33 +2337,57 @@ select.fi-select-input {
     gap: 5px;
 }
 
-.gs-audit-item time {
+.gs-audit-value {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 4px;
+}
+
+.gs-audit-value time {
     color: var(--text-secondary);
     font-weight: 500;
+}
+
+.gs-audit-by,
+.gs-audit-empty {
+    color: var(--text-muted);
 }
 
 .gs-audit-icon {
     width: 14px;
     height: 14px;
+    flex-shrink: 0;
 }
 
+/* Kartu Riwayat: ikon + label kiri, waktu & pelaku kanan (dua baris) */
 .gs-audit--stacked {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+    gap: 10px;
     padding-top: 0;
     border-top: 0;
 }
 
-/* Kartu Riwayat: label kiri, waktu kanan */
 .gs-audit--stacked .gs-audit-item {
     display: grid;
     grid-template-columns: 14px auto 1fr;
+    align-items: start;
     gap: 6px;
 }
 
-.gs-audit--stacked .gs-audit-item time {
+.gs-audit--stacked .gs-audit-icon {
+    margin-top: 1px;
+}
+
+.gs-audit--stacked .gs-audit-value {
+    flex-direction: column;
+    align-items: flex-end;
     text-align: end;
+}
+
+.gs-audit--stacked .gs-audit-by {
+    font-size: 12px;
 }
 
 .gs-audit--stacked .gs-audit-sep {
@@ -2375,4 +2399,148 @@ select.fi-select-input {
     height: 3px;
     border-radius: 999px;
     background: var(--text-disabled);
+}
+
+.gs-audit-sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--text-disabled);
+}
+
+/* ---------- Infolist: label kecil abu, nilai 13.5px (infolist.md) ---------- */
+.fi-in-entry-label {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.fi-in-entry .fi-in-text-item,
+.fi-in-entry .fi-in-text {
+    font-size: 13.5px;
+}
+
+.fi-in-entry:not(.fi-in-entry-has-inline-label) {
+    row-gap: 4px;
+}
+
+/* Ringkasan nominal: baris rapat, Total dipisah garis & ditebalkan */
+.gs-summary .fi-section-content > .fi-sc,
+.gs-summary .fi-sc {
+    row-gap: 10px;
+}
+
+.gs-summary .fi-in-entry-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.gs-summary-total {
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.gs-summary-total .fi-in-entry-label {
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.gs-summary-total .fi-in-text-item,
+.gs-summary-total .fi-in-text {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.gs-summary-after {
+    padding-top: 10px;
+    border-top: 1px dashed var(--border-color);
+}
+
+/* ---------- Tabel detail ringkas (item & pembayaran order) ---------- */
+.gs-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.gs-detail-table th {
+    padding: 0 10px 8px;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    text-align: start;
+}
+
+.gs-detail-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border-color-light);
+    color: var(--text);
+    vertical-align: top;
+}
+
+.gs-detail-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.gs-detail-table th:first-child,
+.gs-detail-table td:first-child {
+    padding-inline-start: 0;
+}
+
+.gs-detail-table th:last-child,
+.gs-detail-table td:last-child {
+    padding-inline-end: 0;
+}
+
+.gs-detail-table .is-num {
+    width: 1%;
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+    white-space: nowrap;
+}
+
+.gs-detail-table .is-end {
+    width: 1%;
+    text-align: end;
+    white-space: nowrap;
+}
+
+.gs-detail-table .fi-badge {
+    display: inline-flex;
+    width: max-content;
+}
+
+.gs-detail-table .is-strong {
+    font-weight: 600;
+}
+
+.gs-detail-name {
+    font-weight: 500;
+}
+
+.gs-detail-sub {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.gs-detail-empty {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* Ringkasan: label selebar isinya, nilai rata kanan (bawaan Filament: label 1/3 lebar sehingga terpotong) */
+.gs-summary .fi-in-entry-has-inline-label {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 16px;
+}
+
+.gs-summary .fi-in-entry-has-inline-label > .fi-in-entry-label-col {
+    grid-column: 1;
+}
+
+.gs-summary .fi-in-entry-has-inline-label > .fi-in-entry-content-col {
+    grid-column: 2;
 }

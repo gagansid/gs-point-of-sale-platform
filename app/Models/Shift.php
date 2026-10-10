@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\ShiftStatus;
 use App\Models\Concerns\BelongsToOutlet;
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\RecordsAuthor;
 use Carbon\CarbonImmutable;
 use Database\Factories\ShiftFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -35,7 +36,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 final class Shift extends Model
 {
     /** @use HasFactory<ShiftFactory> */
-    use BelongsToOutlet, BelongsToTenant, HasFactory, HasUuids;
+    use BelongsToOutlet, BelongsToTenant, HasFactory, HasUuids, RecordsAuthor;
 
     protected $fillable = ['outlet_id', 'device_id', 'opened_by', 'opening_cash', 'status', 'opened_at'];
 

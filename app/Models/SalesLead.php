@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\SalesLeadStatus;
+use App\Models\Concerns\RecordsAuthor;
 use Database\Factories\SalesLeadFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,7 +32,7 @@ use Illuminate\Support\Carbon;
 final class SalesLead extends Model
 {
     /** @use HasFactory<SalesLeadFactory> */
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, RecordsAuthor;
 
     protected $fillable = ['name', 'business_name', 'phone', 'email', 'city', 'business_type', 'message', 'status', 'notes', 'ip_hash'];
 
@@ -46,5 +47,15 @@ final class SalesLead extends Model
         $digits = (string) preg_replace('/\D/', '', $this->phone);
 
         return str_starts_with($digits, '0') ? '62'.substr($digits, 1) : $digits;
+    }
+
+    /**
+     * Data platform: pembuat/pengubah = super admin (RecordsAuthor).
+     *
+     * @return class-string<Admin>
+     */
+    public static function authorModel(): string
+    {
+        return Admin::class;
     }
 }

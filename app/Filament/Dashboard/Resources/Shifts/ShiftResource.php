@@ -13,9 +13,12 @@ use App\Support\CurrentOutlet;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Facades\FilamentTimezone;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /**
@@ -60,6 +63,22 @@ final class ShiftResource extends Resource
     public static function table(Table $table): Table
     {
         return ShiftsTable::configure($table);
+    }
+
+    public static function hasRecordTitle(): bool
+    {
+        return true;
+    }
+
+    /** Judul data di breadcrumb/judul halaman: "Budi · 10 Okt 2026, 08.00" (zona outlet). */
+    public static function getRecordTitle(?Model $record): string|Htmlable|null
+    {
+        if (! $record instanceof Shift) {
+            return parent::getRecordTitle($record);
+        }
+
+        return ($record->openedBy->name ?? 'Shift').' · '
+            .$record->opened_at->copy()->setTimezone(FilamentTimezone::get())->translatedFormat('j M Y, H.i');
     }
 
     public static function getPages(): array

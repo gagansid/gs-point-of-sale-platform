@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\RecordsAuthor;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Factories\OutletFactory;
@@ -35,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class Outlet extends Model
 {
     /** @use HasFactory<OutletFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasUuids, RecordsAuthor, SoftDeletes;
 
     protected $fillable = [
         'code',

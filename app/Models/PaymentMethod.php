@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\PaymentCategory;
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\RecordsAuthor;
 use Database\Factories\PaymentMethodFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -26,7 +27,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class PaymentMethod extends Model
 {
     /** @use HasFactory<PaymentMethodFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasUuids, RecordsAuthor, SoftDeletes;
 
     protected $fillable = ['name', 'category', 'requires_reference', 'is_active', 'sort_order'];
 

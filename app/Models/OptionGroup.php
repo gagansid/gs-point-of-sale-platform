@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\RecordsAuthor;
 use Database\Factories\OptionGroupFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -28,7 +29,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class OptionGroup extends Model
 {
     /** @use HasFactory<OptionGroupFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasUuids, RecordsAuthor, SoftDeletes;
 
     protected $fillable = ['name', 'min_select', 'max_select', 'sort_order', 'is_active'];
 

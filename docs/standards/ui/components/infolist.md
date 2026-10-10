@@ -30,7 +30,8 @@ dan grid 2–4 kolom untuk detail lengkap:
 |---|---|---|
 | Grid | `Section::make()->columns(3)` + `TextEntry` | Atribut objek |
 | Ringkasan nominal | `TextEntry::inlineLabel()` + `MoneyEntry` | Rincian total, ringkasan shift |
-| Daftar berulang | `RepeatableEntry` | Item order + opsi, pembayaran |
+| Tabel detail ringkas | `View` + `.gs-detail-table` (`filament/dashboard/orders/items`) | Item order + opsi, pembayaran, rekap per metode bayar — satu baris per data, bukan kartu per item |
+| Ringkasan dengan total | `Section::extraAttributes(['class' => 'gs-summary'])` + `extraEntryWrapperAttributes(['class' => 'gs-summary-total'])` | Ringkasan order, kas shift |
 | Relasi besar | Relation manager (tabel) | Order dalam shift |
 
 ## Spesifikasi
@@ -38,7 +39,7 @@ dan grid 2–4 kolom untuk detail lengkap:
 | Properti | Nilai |
 |---|---|
 | Label | 12px / 500, `text-muted` (uppercase hanya di grid) |
-| Nilai | 14px / 500, `--text` |
+| Nilai | 13.5px, `--text` |
 | Nilai kosong | `—` warna `text-disabled` |
 | Baris total | 16px / 600, garis pemisah di atasnya |
 | Nominal | Rata kanan, tabular |
@@ -81,3 +82,9 @@ public static function infolist(Infolist $infolist): Infolist
 |---|---|
 | Tampilkan snapshot nama & harga dari `order_items` | Mengambil harga produk saat ini untuk order lama |
 | `—` untuk nilai kosong | Sel kosong tanpa penanda |
+
+## Breadcrumb halaman satu data
+
+`Menu › Detail › Nama data` (halaman lihat) dan `Menu › Ubah › Nama data` (halaman ubah), diatur
+`HasIconBreadcrumbs`. Resource tanpa kolom judul memakai `getRecordTitle()` + `hasRecordTitle()`
+(mis. shift: "Budi · 10 Okt 2026, 08.00").

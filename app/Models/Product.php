@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\RecordsAuthor;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -38,7 +39,7 @@ use Illuminate\Support\Facades\Storage;
 final class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasUuids, RecordsAuthor, SoftDeletes;
 
     /** Stok, stok minimum, dan ketersediaan disimpan per outlet di ProductStock (ADR 0010). */
     protected $fillable = [

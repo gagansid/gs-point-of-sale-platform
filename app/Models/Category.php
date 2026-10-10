@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\RecordsAuthor;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class Category extends Model
 {
     /** @use HasFactory<CategoryFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasUuids, RecordsAuthor, SoftDeletes;
 
     protected $fillable = ['name', 'sort_order', 'is_active'];
 

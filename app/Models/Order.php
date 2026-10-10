@@ -9,6 +9,7 @@ use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Models\Concerns\BelongsToOutlet;
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\RecordsAuthor;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -52,7 +53,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 final class Order extends Model
 {
-    use BelongsToOutlet, BelongsToTenant, HasUuids;
+    use BelongsToOutlet, BelongsToTenant, HasUuids, RecordsAuthor;
 
     /** Default sama dengan database agar order baru di memori sudah punya nilai pembayaran. */
     protected $attributes = [

@@ -21,6 +21,12 @@ final class ViewShift extends ViewRecord
         return parent::resolveRecord($key)->load(['openedBy', 'closedBy', 'device']);
     }
 
+    /** Judul = "Shift {pembuka} · {waktu buka}" (layout.md: judul halaman detail = nama objek). */
+    public function getTitle(): string
+    {
+        return 'Shift '.ShiftResource::getRecordTitle($this->getRecord());
+    }
+
     protected function getHeaderActions(): array
     {
         return [ForceCloseShiftAction::make()];

@@ -8,6 +8,7 @@ use App\Enums\BusinessType;
 use App\Enums\TenantAccess;
 use App\Enums\TenantStatus;
 use App\Enums\UserRole;
+use App\Models\Concerns\RecordsAuthor;
 use App\Models\Scopes\TenantScope;
 use App\Support\Edition;
 use Carbon\CarbonImmutable;
@@ -33,7 +34,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class Tenant extends Model
 {
     /** @use HasFactory<TenantFactory> */
-    use HasFactory, HasUuids, SoftDeletes;
+    use HasFactory, HasUuids, RecordsAuthor, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -140,5 +141,15 @@ final class Tenant extends Model
     public function devices(): HasMany
     {
         return $this->hasMany(Device::class)->withoutGlobalScope(TenantScope::class);
+    }
+
+    /**
+     * Data platform: pembuat/pengubah = super admin (RecordsAuthor).
+     *
+     * @return class-string<Admin>
+     */
+    public static function authorModel(): string
+    {
+        return Admin::class;
     }
 }

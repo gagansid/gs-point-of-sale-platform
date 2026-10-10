@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\RecordsAuthor;
 use App\Notifications\ResetUserPassword;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
@@ -44,7 +45,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use BelongsToTenant, HasApiTokens, HasFactory, HasUuids, Notifiable, SoftDeletes;
+    use BelongsToTenant, HasApiTokens, HasFactory, HasUuids, Notifiable, RecordsAuthor, SoftDeletes;
 
     /** tenant_id sengaja tidak fillable: selalu dari tenant context (BelongsToTenant). */
     protected $fillable = [
