@@ -82,7 +82,7 @@
         @if ($extremeLinks && ! $isSimple)
             <x-filament::pagination.item
                 :aria-label="__('filament::components/pagination.actions.first.label')"
-                :icon="$isRtl ? Heroicon::ChevronDoubleRight : Heroicon::ChevronDoubleLeft"
+                :icon="$isRtl ? Heroicon::OutlinedChevronDoubleRight : Heroicon::OutlinedChevronDoubleLeft"
                 :icon-alias="$isRtl ? SupportIconAlias::PAGINATION_FIRST_BUTTON_RTL : SupportIconAlias::PAGINATION_FIRST_BUTTON"
                 :disabled="$paginator->onFirstPage()"
                 rel="first"
@@ -93,7 +93,7 @@
 
         <x-filament::pagination.item
             :aria-label="__('filament::components/pagination.actions.previous.label')"
-            :icon="$isRtl ? Heroicon::ChevronRight : Heroicon::ChevronLeft"
+            :icon="$isRtl ? Heroicon::OutlinedChevronRight : Heroicon::OutlinedChevronLeft"
             :icon-alias="$isRtl ? SupportIconAlias::PAGINATION_PREVIOUS_BUTTON_RTL : SupportIconAlias::PAGINATION_PREVIOUS_BUTTON"
             :disabled="$previousAction === null"
             rel="prev"
@@ -123,7 +123,7 @@
 
         <x-filament::pagination.item
             :aria-label="__('filament::components/pagination.actions.next.label')"
-            :icon="$isRtl ? Heroicon::ChevronLeft : Heroicon::ChevronRight"
+            :icon="$isRtl ? Heroicon::OutlinedChevronLeft : Heroicon::OutlinedChevronRight"
             :icon-alias="$isRtl ? SupportIconAlias::PAGINATION_NEXT_BUTTON_RTL : SupportIconAlias::PAGINATION_NEXT_BUTTON"
             :disabled="$nextAction === null"
             rel="next"
@@ -134,7 +134,7 @@
         @if ($extremeLinks && ! $isSimple)
             <x-filament::pagination.item
                 :aria-label="__('filament::components/pagination.actions.last.label')"
-                :icon="$isRtl ? Heroicon::ChevronDoubleLeft : Heroicon::ChevronDoubleRight"
+                :icon="$isRtl ? Heroicon::OutlinedChevronDoubleLeft : Heroicon::OutlinedChevronDoubleRight"
                 :icon-alias="$isRtl ? SupportIconAlias::PAGINATION_LAST_BUTTON_RTL : SupportIconAlias::PAGINATION_LAST_BUTTON"
                 :disabled="! $paginator->hasMorePages()"
                 rel="last"

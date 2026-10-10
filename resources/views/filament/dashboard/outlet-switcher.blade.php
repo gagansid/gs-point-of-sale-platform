@@ -16,7 +16,7 @@
                     <span class="pos-outlet-switcher__caption">Outlet</span>
                     <span class="pos-outlet-switcher__label">{{ $label }}</span>
                 </span>
-                <x-filament::icon icon="heroicon-m-chevron-up-down" class="pos-outlet-switcher__chevron" />
+                <x-filament::icon icon="heroicon-o-chevron-up-down" class="pos-outlet-switcher__chevron" />
             </button>
         </x-slot>
 
@@ -25,7 +25,7 @@
                 tag="form"
                 method="post"
                 :action="route('filament.dashboard.switch-outlet', ['outlet' => 'all'])"
-                :icon="$selectedId === null ? 'heroicon-m-check' : 'heroicon-o-squares-2x2'"
+                :icon="$selectedId === null ? 'heroicon-o-check' : 'heroicon-o-squares-2x2'"
                 :color="$selectedId === null ? 'primary' : 'gray'"
             >
                 Semua outlet
@@ -36,7 +36,7 @@
                     tag="form"
                     method="post"
                     :action="route('filament.dashboard.switch-outlet', ['outlet' => $outlet->id])"
-                    :icon="$selectedId === $outlet->id ? 'heroicon-m-check' : 'heroicon-o-building-storefront'"
+                    :icon="$selectedId === $outlet->id ? 'heroicon-o-check' : 'heroicon-o-building-storefront'"
                     :color="$selectedId === $outlet->id ? 'primary' : 'gray'"
                 >
                     {{ $outlet->name }}

@@ -26,7 +26,7 @@
                 <li @class(['gs-setup-step', 'is-done' => $step['done']])>
                     <span class="gs-setup-mark" aria-hidden="true">
                         @if ($step['done'])
-                            <x-filament::icon icon="heroicon-m-check" />
+                            <x-filament::icon icon="heroicon-o-check" />
                         @else
                             {{ $index + 1 }}
                         @endif

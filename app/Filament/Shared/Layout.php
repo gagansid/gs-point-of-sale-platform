@@ -7,7 +7,6 @@ namespace App\Filament\Shared;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\View\ActionsIconAlias;
 use Filament\Facades\Filament;
 use Filament\Pages\BasePage;
 use Filament\Panel;
@@ -16,9 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\FiltersResetActionPosition;
 use Filament\Tables\Table;
-use Filament\Tables\View\TablesIconAlias;
 use Filament\Tables\View\TablesRenderHook;
-use Filament\View\PanelsIconAlias;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\HtmlString;
 use Livewire\Livewire;
@@ -36,21 +33,8 @@ final class Layout
             ->sidebarWidth('15.75rem')
             ->collapsedSidebarWidth('4rem')
             ->sidebarCollapsibleOnDesktop()
-            ->icons([
-                // Tombol ciutkan memakai ikon ☰ seperti gs-task-tracker (bawaan Filament: chevron)
-                PanelsIconAlias::SIDEBAR_COLLAPSE_BUTTON => Heroicon::OutlinedBars3,
-                PanelsIconAlias::SIDEBAR_EXPAND_BUTTON => Heroicon::OutlinedBars3,
-                // Ikon aksi baris bergaris tipis (bawaan Filament: solid)
-                ActionsIconAlias::VIEW_ACTION => Heroicon::OutlinedEye,
-                ActionsIconAlias::EDIT_ACTION => Heroicon::OutlinedPencil,
-                ActionsIconAlias::DELETE_ACTION => Heroicon::OutlinedTrash,
-                ActionsIconAlias::ACTION_GROUP => Heroicon::OutlinedEllipsisVertical,
-                ActionsIconAlias::DELETE_ACTION_MODAL => Heroicon::OutlinedExclamationTriangle,
-                // Kolom yang bisa diurutkan selalu menampilkan ikon ↕; ↑/↓ saat aktif
-                TablesIconAlias::HEADER_CELL_SORT_BUTTON => Heroicon::ChevronUpDown,
-                TablesIconAlias::HEADER_CELL_SORT_ASC_BUTTON => Heroicon::ChevronUp,
-                TablesIconAlias::HEADER_CELL_SORT_DESC_BUTTON => Heroicon::ChevronDown,
-            ])
+            // Ikon Filament versi outline (tipis), seragam dengan ikon sidebar — lihat Icons
+            ->icons(Icons::aliases())
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->globalSearchFieldKeyBindingSuffix()
             ->userMenuItems([

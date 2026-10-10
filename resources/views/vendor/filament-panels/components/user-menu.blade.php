@@ -67,7 +67,7 @@
 
                 <x-filament-panels::avatar.user :user="$user" loading="lazy" />
 
-                {{ \Filament\Support\generate_icon_html(Heroicon::ChevronDown, attributes: (new ComponentAttributeBag())->class(['gs-account-caret'])) }}
+                {{ \Filament\Support\generate_icon_html(Heroicon::OutlinedChevronDown, attributes: (new ComponentAttributeBag())->class(['gs-account-caret'])) }}
             </button>
         @else
             <button
@@ -87,7 +87,7 @@
                 </span>
 
                 {{
-                    \Filament\Support\generate_icon_html(Heroicon::ChevronUp, alias: PanelsIconAlias::USER_MENU_TOGGLE_BUTTON, attributes: new ComponentAttributeBag([
+                    \Filament\Support\generate_icon_html(Heroicon::OutlinedChevronUp, alias: PanelsIconAlias::USER_MENU_TOGGLE_BUTTON, attributes: new ComponentAttributeBag([
                         'x-show' => $isSidebarCollapsibleOnDesktop ? '$store.sidebar.isOpen' : null,
                     ]))
                 }}

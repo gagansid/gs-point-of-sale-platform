@@ -10,7 +10,12 @@
 ## Set ikon
 
 **Heroicons** (bawaan Filament), gaya **outline** di semua tempat. Gaya `solid`/`mini` hanya untuk
-indikator kecil di dalam badge.
+indikator kecil di dalam badge dan penanda status yang bisa di-toggle (mis. bintang favorit terisi).
+
+Ikon bawaan Filament (pencarian, filter, urut kolom, paginasi, mata kata sandi, tutup modal, menu akun,
+notifikasi, dll.) banyak yang mini/solid sehingga terlihat tebal; semuanya dipetakan ke outline di
+`App\Filament\Shared\Icons::aliases()` (dipasang di `Layout::apply()`). Ikon Filament baru yang terlihat
+tebal → tambahkan aliasnya di sana, jangan menimpa per halaman.
 
 Penulisan: `'heroicon-o-{nama}'`. Untuk ikon yang dipakai ulang, gunakan enum Filament
 `Heroicon::OutlinedCube` (jika tersedia di versi terpasang) agar typo tertangkap Larastan.
