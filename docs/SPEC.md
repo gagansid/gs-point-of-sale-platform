@@ -213,7 +213,7 @@ tabel master memakai soft delete.
 | Akses | `users` | tenant_id, outlet_id, name, email (unik global, boleh kosong untuk kasir), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
 | Akses | `devices` | tenant_id, outlet_id, name, device_uid (unik per tenant), platform, app_version, last_seen_at, revoked_at |
 | Produk | `categories` | tenant_id, name, sort_order |
-| Produk | `products` | tenant_id, category_id (nullable), name, sku, barcode, price, cost_price, track_stock, stock_qty, image_path, is_active, is_available (tanda habis, Q12), sort_order |
+| Produk | `products` | tenant_id, category_id (nullable), name, sku, barcode, price, cost_price, track_stock, stock_qty, min_stock (batas stok menipis, Q24), image_path, is_active, is_available (tanda habis, Q12), is_favorite (favorit outlet, Q25), sort_order (urutan tampil kasir) |
 | Produk | `option_groups` | tenant_id, name (Ukuran, Gula, Topping), min_select, max_select |
 | Produk | `options` | tenant_id (Q13), option_group_id, name, price_delta, sort_order |
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
@@ -311,7 +311,7 @@ Standar teknis: [`docs/standards/api/`](standards/api/README.md).
 | Method | Endpoint | Role | Fungsi |
 |---|---|---|---|
 | GET | `/catalog` | Semua | Kategori, produk, opsi, metode bayar dalam satu respons (ETag) |
-| GET | `/products?search=&category_id=` | Semua | Cari produk |
+| GET | `/products?search=&category_id=&sort=` | Semua | Cari produk; `sort=price` naik, `sort=-price` turun (kolom allowlist) |
 | GET | `/products/barcode/{code}` | Semua | Cari produk via barcode |
 | POST, PUT, DELETE | `/categories`, `/categories/{id}` | O, M | Kelola kategori |
 | POST, PUT, DELETE | `/products`, `/products/{id}` | O, M | Kelola produk |
@@ -552,4 +552,7 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q20 | Open bill lintas shift | Open bill boleh tetap terbuka saat shift ditutup (ditampilkan di ringkasan); saat lunas, order pindah ke shift yang menerima uang. | Diterima | `docs/api/order.md` |
 | Q21 | Visibilitas order | Kasir: order di shift sendiri + semua open bill. Supervisor (view_all tanpa report.view): hari ini. Owner/manager: semua. | Diterima | `docs/api/order.md` |
 | Q22 | Approver void | Kolom `orders.void_approved_by` terpisah dari `approved_by` (approver diskon). | Diterima | Database |
+| Q24 | Stok menipis | Batas per produk `products.min_stock` (nullable). Menipis = `track_stock` dan 0 < stok ≤ `min_stock`; stok ≤ 0 = habis. API: `min_stock`, `is_low_stock`. Dashboard: tab "Stok menipis" + warna kuning. | Diterima | `docs/api/product.md` |
+| Q25 | Produk favorit | Tanda per produk untuk seluruh tenant (`products.is_favorite`), bukan per pengguna; aplikasi kasir menampilkan tab Favorit. Diubah dengan `product.manage`. | Diterima | `docs/api/product.md` |
+| Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

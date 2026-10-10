@@ -31,6 +31,10 @@ Seluruh katalog untuk aplikasi kasir dalam satu respons.
 - Produk **nonaktif tidak dikirim**. Produk "habis" tetap dikirim dengan `is_available: false`
   (tampilkan abu-abu, tidak bisa dipilih).
 - `cost_price` hanya dikirim untuk user dengan `product.manage`.
+- `is_favorite: true` → tampilkan di tab **Favorit** layar kasir (ditandai owner/manager di dashboard).
+- Urutan tampil produk = `sort_order` (diatur seret-lepas di dashboard), lalu `name`.
+- `min_stock` & `is_low_stock` hanya bermakna bila `track_stock: true` (selain itu `null` / `false`).
+  `is_low_stock` = stok > 0 dan ≤ `min_stock`; stok ≤ 0 tetap dianggap habis.
 - **ETag:** simpan header `ETag`, kirim kembali sebagai `If-None-Match`. Jika katalog tidak
   berubah → `304` tanpa body (pakai cache lokal).
 
@@ -42,8 +46,8 @@ Seluruh katalog untuk aplikasi kasir dalam satu respons.
     "categories": [{ "id": "…", "name": "Kopi", "sort_order": 1 }],
     "products": [{
       "id": "…", "category_id": "…", "name": "Es Kopi Susu", "sku": "KOP-01", "barcode": null,
-      "price": "22000.00", "track_stock": false, "stock_qty": null,
-      "is_active": true, "is_available": true, "image_url": null,
+      "price": "22000.00", "track_stock": false, "stock_qty": null, "min_stock": null, "is_low_stock": false,
+      "is_active": true, "is_available": true, "is_favorite": true, "image_url": null,
       "option_group_ids": ["…ukuran", "…gula"], "updated_at": "2026-10-08T07:02:11Z"
     }],
     "option_groups": [{
@@ -65,7 +69,12 @@ Test: `tests/Feature/Api/V1/Product/CatalogTest.php`
 ## `GET /api/v1/products`
 
 Query: `search` (nama/SKU/barcode; `%` dan `_` dicari apa adanya), `category_id`, `is_active`,
-`page`, `per_page` (default 20, maks. 100). Respons daftar + `meta.pagination`.
+`sort`, `page`, `per_page` (default 20, maks. 100). Respons daftar + `meta.pagination`.
+
+`sort` = nama kolom untuk urutan naik, awalan `-` untuk turun (`sort=price`, `sort=-price`).
+Kolom yang diizinkan: `name`, `price`, `stock_qty`, `sort_order`, `created_at`, `updated_at`;
+nilai lain → `422 VALIDATION_ERROR`. Tanpa `sort`: `sort_order` lalu `name`. Seri dipecah dengan `id`
+agar urutan antar halaman stabil.
 
 ## `GET /api/v1/products/barcode/{code}`
 
@@ -86,7 +95,9 @@ Produk **aktif** dengan barcode tersebut. `code`: `[A-Za-z0-9-]`, maks. 50. Tida
 | `cost_price` | uang | Tidak | ≥ 0 |
 | `track_stock` | bool | Tidak | default `false` |
 | `stock_qty` | int | Tidak | **Hanya POST** = stok awal; di PUT → 422 |
+| `min_stock` | int\|null | Tidak | 0–1.000.000; batas peringatan "stok menipis"; `null` = tanpa peringatan |
 | `is_active` | bool | Tidak | default `true` |
+| `is_favorite` | bool | Tidak | default `false`; tampil di tab Favorit kasir |
 | `option_group_ids` | uuid[] | Tidak | maks. 20, grup tenant sendiri, urutan = urutan tampil |
 
 PUT: field yang tidak dikirim tetap memakai nilai lama. Respons `201` (baru), `200` (replay/ubah)

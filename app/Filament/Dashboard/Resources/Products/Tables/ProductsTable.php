@@ -8,18 +8,23 @@ use App\Filament\Dashboard\Resources\Products\Actions\ProductActions;
 use App\Filament\Shared\Columns\MoneyColumn;
 use App\Models\Category;
 use App\Models\Product;
+use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\CreateAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Number;
 
 /**
  * Daftar produk (table.md): stok ≤ 0 ditandai merah, status habis sebagai badge.
@@ -31,14 +36,24 @@ final class ProductsTable
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with('category'))
             ->columns([
-                ImageColumn::make('image_path')->label('')->disk('public')->square()->imageSize(24),
+                // Bintang favorit: klik untuk menandai/melepas (tampil di tab "Favorit" aplikasi kasir)
+                IconColumn::make('is_favorite')
+                    ->label('')
+                    ->icon(fn (bool $state): Heroicon => $state ? Heroicon::Star : Heroicon::OutlinedStar)
+                    ->color(fn (bool $state): string => $state ? 'warning' : 'gray')
+                    ->tooltip(fn (Product $record): string => $record->is_favorite ? 'Lepas dari favorit' : 'Jadikan favorit')
+                    ->action(ProductActions::toggleFavorite())
+                    ->extraCellAttributes(['class' => 'gs-ta-cell-favorite']),
+                ImageColumn::make('image_path')->label('Gambar')->disk('public')->square()->imageSize(24)
+                    // Disembunyikan bawaan: kolom kosong membuat jarak checkbox ↔ nama terlalu jauh
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')
                     ->label('Nama produk')
                     ->description(fn (Product $record): ?string => $record->sku)
                     ->weight('medium')
                     ->searchable(['name', 'sku', 'barcode'])
                     ->sortable(),
-                TextColumn::make('category.name')->label('Kategori')->placeholder('—')->toggleable(),
+                TextColumn::make('category.name')->label('Kategori')->placeholder('—')->sortable()->toggleable(),
                 MoneyColumn::make('price')->label('Harga')->sortable(),
                 TextColumn::make('stock_qty')
                     ->label('Stok')
@@ -46,41 +61,109 @@ final class ProductsTable
                     ->placeholder('—')
                     ->numeric(locale: 'id')
                     ->alignEnd()
-                    ->color(fn (Product $record): ?string => $record->isOutOfStock() ? 'danger' : null)
-                    ->weight(fn (Product $record) => $record->isOutOfStock() ? 'semibold' : null),
+                    ->sortable()
+                    // Merah = habis (≤ 0), kuning = menipis (≤ stok minimum)
+                    ->color(fn (Product $record): ?string => match (true) {
+                        $record->isOutOfStock() => 'danger',
+                        $record->isLowStock() => 'warning',
+                        default => null,
+                    })
+                    ->icon(fn (Product $record): ?Heroicon => $record->isLowStock() ? Heroicon::OutlinedExclamationTriangle : null)
+                    ->iconPosition('after')
+                    ->tooltip(fn (Product $record): ?string => $record->isLowStock() ? "Stok menipis (minimum {$record->min_stock})" : null)
+                    ->weight(fn (Product $record) => $record->isOutOfStock() || $record->isLowStock() ? 'semibold' : null),
                 TextColumn::make('is_available')
                     ->label('Ketersediaan')
                     ->badge()
+                    ->sortable()
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Tersedia' : 'Habis')
                     ->color(fn (bool $state): string => $state ? 'success' : 'danger'),
-                IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->toggleable(),
+                IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable()->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('category_id')
                     ->label('Kategori')
+                    ->multiple()
                     ->options(fn (): array => Category::query()->orderBy('sort_order')->pluck('name', 'id')->all()),
+                SelectFilter::make('option_groups')
+                    ->label('Grup opsi')
+                    ->multiple()
+                    ->preload()
+                    ->relationship('optionGroups', 'name'),
                 TernaryFilter::make('is_active')->label('Status')->trueLabel('Aktif')->falseLabel('Nonaktif'),
+                TernaryFilter::make('is_available')->label('Ketersediaan')->trueLabel('Tersedia')->falseLabel('Habis'),
+                TernaryFilter::make('is_favorite')->label('Favorit')->trueLabel('Favorit')->falseLabel('Bukan favorit'),
+                TernaryFilter::make('track_stock')->label('Lacak stok')->trueLabel('Dilacak')->falseLabel('Tidak dilacak'),
+                self::priceRangeFilter(),
                 Filter::make('out_of_stock')
                     ->label('Stok habis (≤ 0)')
                     ->query(fn (Builder $query) => $query->where('track_stock', true)->where('stock_qty', '<=', 0)),
             ])
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
+            ->filtersFormColumns(['default' => 1, 'sm' => 2, 'lg' => 4])
             ->recordActions([
                 EditAction::make()->iconButton()->tooltip('Ubah'),
                 ActionGroup::make([
                     ProductActions::adjustStock(),
-                    ProductActions::toggleAvailability(),
+                    ProductActions::markSoldOut(),
+                    ProductActions::markAvailable(),
                     ProductActions::delete(),
                 ])->tooltip('Aksi lain'),
             ])
-            ->defaultSort('name')
-            ->paginated([10, 20, 50, 100])
-            ->defaultPaginationPageOption(20)
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    ProductActions::bulkSetAvailability(false),
+                    ProductActions::bulkSetAvailability(true),
+                    ProductActions::bulkDelete(),
+                ])->label('Aksi massal'),
+            ])
+            // Urutan bawaan = urutan tampil di kasir; Filament menambahkan id sebagai pemecah seri
+            ->defaultSort(fn (Builder $query): Builder => $query->orderBy('sort_order')->orderBy('name'))
+            ->reorderable('sort_order')
+            ->reorderRecordsTriggerAction(fn (Action $action, bool $isReordering): Action => $action
+                ->tooltip($isReordering ? 'Selesai mengatur urutan' : 'Atur urutan tampil di kasir'))
             ->persistFiltersInSession()
             ->emptyStateIcon(Heroicon::OutlinedCube)
-            ->emptyStateHeading('Belum ada produk')
-            ->emptyStateDescription('Tambahkan produk pertama untuk mulai berjualan')
-            ->emptyStateActions([
-                CreateAction::make()->label('Tambah produk')->icon(Heroicon::OutlinedPlus),
-            ]);
+            // Tombol tambah sudah ada di header card; empty state hanya menjelaskan keadaan
+            ->emptyStateHeading(fn (Table $table): string => self::isNarrowed($table) ? 'Tidak ada produk yang cocok' : 'Belum ada produk')
+            ->emptyStateDescription(fn (Table $table): string => self::isNarrowed($table)
+                ? 'Ubah kata kunci atau atur ulang filter'
+                : 'Tambahkan produk pertama lewat tombol + di kanan atas');
+    }
+
+    /**
+     * Rentang harga jual (Rp). Nilai kosong diabaikan; indikator menampilkan nominal terformat.
+     */
+    private static function priceRangeFilter(): Filter
+    {
+        return Filter::make('price_range')
+            ->schema([
+                TextInput::make('price_min')->label('Harga dari')->prefix('Rp')->integer()->minValue(0),
+                TextInput::make('price_max')->label('Harga sampai')->prefix('Rp')->integer()->minValue(0),
+            ])
+            ->columns(2)
+            ->columnSpan(['default' => 1, 'sm' => 2])
+            ->query(fn (Builder $query, array $data): Builder => $query
+                ->when(filled($data['price_min'] ?? null), fn (Builder $q) => $q->where('price', '>=', (int) $data['price_min']))
+                ->when(filled($data['price_max'] ?? null), fn (Builder $q) => $q->where('price', '<=', (int) $data['price_max'])))
+            ->indicateUsing(function (array $data): array {
+                $indicators = [];
+
+                if (filled($data['price_min'] ?? null)) {
+                    $indicators[] = Indicator::make('Harga ≥ Rp'.Number::format((int) $data['price_min'], locale: 'id'))->removeField('price_min');
+                }
+
+                if (filled($data['price_max'] ?? null)) {
+                    $indicators[] = Indicator::make('Harga ≤ Rp'.Number::format((int) $data['price_max'], locale: 'id'))->removeField('price_max');
+                }
+
+                return $indicators;
+            });
+    }
+
+    /** Daftar sedang dipersempit pencarian/filter (bukan tenant tanpa produk). */
+    private static function isNarrowed(Table $table): bool
+    {
+        return $table->isFiltered() || $table->getLivewire()->hasTableSearch();
     }
 }

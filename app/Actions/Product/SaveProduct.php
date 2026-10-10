@@ -44,8 +44,10 @@ final class SaveProduct
                 'price' => $data->price,
                 'cost_price' => $data->costPrice,
                 'track_stock' => $data->trackStock,
+                'min_stock' => $data->minStock,
                 'image_path' => $data->imagePathProvided ? $data->imagePath : $product->image_path,
                 'is_active' => $data->isActive,
+                'is_favorite' => $data->isFavorite,
             ]);
 
             if ($isNew) {

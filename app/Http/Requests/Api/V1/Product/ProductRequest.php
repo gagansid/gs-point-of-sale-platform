@@ -35,7 +35,10 @@ final class ProductRequest extends FormRequest
             'track_stock' => ['sometimes', 'boolean'],
             // Stok awal hanya saat membuat; perubahan berikutnya lewat POST /products/{id}/stock
             'stock_qty' => [$ignoreId === null ? 'sometimes' : 'prohibited', 'integer', 'min:-1000000', 'max:1000000'],
+            // Batas peringatan "stok menipis"; null = tanpa peringatan
+            'min_stock' => ['sometimes', 'nullable', 'integer', 'min:0', 'max:1000000'],
             'is_active' => ['sometimes', 'boolean'],
+            'is_favorite' => ['sometimes', 'boolean'],
             'option_group_ids' => ['sometimes', 'array', 'max:20'],
             'option_group_ids.*' => ['uuid', 'distinct', self::tenantExists('option_groups')],
         ];
@@ -50,6 +53,7 @@ final class ProductRequest extends FormRequest
             'option_group_ids.*' => 'grup opsi',
             'stock_qty' => 'stok',
             'track_stock' => 'lacak stok',
+            'min_stock' => 'stok minimum',
         ];
     }
 

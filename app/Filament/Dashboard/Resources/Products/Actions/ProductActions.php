@@ -7,15 +7,19 @@ namespace App\Filament\Dashboard\Resources\Products\Actions;
 use App\Actions\Product\AdjustStock;
 use App\Actions\Product\DeleteProduct;
 use App\Actions\Product\SetProductAvailability;
+use App\Actions\Product\SetProductFavorite;
 use App\Exceptions\BusinessException;
 use App\Filament\Shared\Layout;
 use App\Models\Product;
 use App\Models\User;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
@@ -54,17 +58,56 @@ final class ProductActions
             });
     }
 
-    public static function toggleAvailability(): Action
+    /**
+     * Tandai habis: menu hilang dari kasir, jadi wajib konfirmasi. Hanya tampil untuk produk tersedia.
+     */
+    public static function markSoldOut(): Action
     {
-        return Action::make('toggleAvailability')
-            ->label(fn (Product $record): string => $record->is_available ? 'Tandai habis' : 'Tandai tersedia')
-            ->icon(fn (Product $record): Heroicon => $record->is_available ? Heroicon::OutlinedNoSymbol : Heroicon::OutlinedCheckCircle)
-            ->visible(fn (): bool => self::user()?->can('product.toggle_available') ?? false)
+        return Action::make('markSoldOut')
+            ->label('Tandai habis')
+            ->icon(Heroicon::OutlinedNoSymbol)
+            ->visible(fn (Product $record): bool => $record->is_available && self::canToggleAvailability())
+            ->requiresConfirmation()
+            ->modalIcon(Heroicon::OutlinedNoSymbol)
+            ->modalIconColor('warning')
+            ->modalHeading('Tandai habis')
+            ->modalDescription(fn (Product $record): HtmlString => Layout::confirmText(
+                'Tandai <strong>'.e($record->name).'</strong> sebagai habis?',
+                'Menu tidak bisa dipesan di aplikasi kasir sampai ditandai tersedia lagi.',
+            ))
+            ->modalSubmitActionLabel('Tandai habis')
             ->action(function (Product $record): void {
-                app(SetProductAvailability::class)->handle($record, ! $record->is_available);
+                app(SetProductAvailability::class)->handle($record, false);
+
+                Notification::make()->success()->title('Menu ditandai habis')->send();
+            });
+    }
+
+    /**
+     * Tandai tersedia: mengembalikan menu ke kasir, langsung tanpa modal. Hanya tampil untuk produk habis.
+     */
+    public static function markAvailable(): Action
+    {
+        return Action::make('markAvailable')
+            ->label('Tandai tersedia')
+            ->icon(Heroicon::OutlinedCheckCircle)
+            ->visible(fn (Product $record): bool => ! $record->is_available && self::canToggleAvailability())
+            ->action(function (Product $record): void {
+                app(SetProductAvailability::class)->handle($record, true);
+
+                Notification::make()->success()->title('Menu ditandai tersedia')->send();
+            });
+    }
+
+    public static function toggleFavorite(): Action
+    {
+        return Action::make('toggleFavorite')
+            ->visible(fn (): bool => self::user()?->can('product.manage') ?? false)
+            ->action(function (Product $record): void {
+                app(SetProductFavorite::class)->handle($record, ! $record->is_favorite);
 
                 Notification::make()->success()
-                    ->title($record->is_available ? 'Menu ditandai tersedia' : 'Menu ditandai habis')
+                    ->title($record->is_favorite ? 'Ditambahkan ke favorit' : 'Dihapus dari favorit')
                     ->send();
             });
     }
@@ -82,6 +125,80 @@ final class ProductActions
 
                 return true;
             });
+    }
+
+    /**
+     * Tandai habis/tersedia untuk produk terpilih. Query rekaman terpilih sudah dibatasi tenant (global scope).
+     */
+    public static function bulkSetAvailability(bool $available): BulkAction
+    {
+        return BulkAction::make($available ? 'bulkMarkAvailable' : 'bulkMarkSoldOut')
+            ->label($available ? 'Tandai tersedia' : 'Tandai habis')
+            ->icon($available ? Heroicon::OutlinedCheckCircle : Heroicon::OutlinedNoSymbol)
+            ->visible(fn (): bool => self::user()?->can('product.toggle_available') ?? false)
+            ->requiresConfirmation()
+            ->modalIcon($available ? Heroicon::OutlinedCheckCircle : Heroicon::OutlinedNoSymbol)
+            ->modalIconColor($available ? 'success' : 'warning')
+            ->modalHeading($available ? 'Tandai tersedia' : 'Tandai habis')
+            ->modalDescription(fn (Collection $records): HtmlString => Layout::confirmText(
+                ($available ? 'Tandai tersedia' : 'Tandai habis').' <strong>'.$records->count().' produk</strong> terpilih?',
+                $available ? 'Menu bisa dipesan lagi di aplikasi kasir.' : 'Menu tidak bisa dipesan di aplikasi kasir sampai ditandai tersedia lagi.',
+            ))
+            ->modalSubmitActionLabel($available ? 'Tandai tersedia' : 'Tandai habis')
+            ->action(
+                function (Collection $records) use ($available): void {
+                    $action = app(SetProductAvailability::class);
+                    self::selected($records)->each(fn (Product $product) => $action->handle($product, $available));
+
+                    Notification::make()->success()
+                        ->title($records->count().' produk ditandai '.($available ? 'tersedia' : 'habis'))
+                        ->send();
+                },
+            )
+            ->deselectRecordsAfterCompletion();
+    }
+
+    public static function bulkDelete(): BulkAction
+    {
+        return BulkAction::make('bulkDelete')
+            ->label('Hapus')
+            ->icon(Heroicon::OutlinedTrash)
+            ->color('danger')
+            ->visible(fn (): bool => self::user()?->can('product.manage') ?? false)
+            ->requiresConfirmation()
+            ->modalIcon(Heroicon::OutlinedExclamationTriangle)
+            ->modalHeading('Hapus produk')
+            ->modalDescription(fn (Collection $records): HtmlString => Layout::confirmText(
+                'Yakin ingin menghapus <strong>'.$records->count().' produk</strong> terpilih?',
+                'Produk hilang dari aplikasi kasir. Riwayat transaksi tetap utuh.',
+            ))
+            ->modalSubmitActionLabel('Hapus')
+            ->action(
+                function (Collection $records): void {
+                    $action = app(DeleteProduct::class);
+                    self::selected($records)->each(fn (Product $product) => $action->handle($product));
+
+                    Notification::make()->success()->title($records->count().' produk dihapus')->send();
+                },
+            )
+            ->deselectRecordsAfterCompletion();
+    }
+
+    /**
+     * Muat ulang rekaman terpilih lewat query Product (global scope tenant ikut berlaku lagi)
+     * sehingga aksi massal hanya pernah menyentuh produk tenant sendiri.
+     *
+     * @param  Collection<int, Model>  $records
+     * @return Collection<int, Product>
+     */
+    private static function selected(Collection $records): Collection
+    {
+        return Product::query()->whereKey($records->modelKeys())->get();
+    }
+
+    private static function canToggleAvailability(): bool
+    {
+        return self::user()?->can('product.toggle_available') ?? false;
     }
 
     private static function user(): ?User

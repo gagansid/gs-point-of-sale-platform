@@ -30,7 +30,9 @@ final class ProductController extends Controller
     /**
      * Cari produk.
      *
-     * Filter: search (nama/SKU/barcode), category_id, is_active. Pagination page & per_page (maks. 100).
+     * Filter: search (nama/SKU/barcode), category_id, is_active. Urutan: sort = kolom (naik) atau -kolom (turun),
+     * kolom: name, price, stock_qty, sort_order, created_at, updated_at; default sort_order lalu name.
+     * Pagination page & per_page (maks. 100).
      */
     public function index(ProductIndexRequest $request): JsonResponse
     {
@@ -47,8 +49,13 @@ final class ProductController extends Controller
             })
             ->when($request->filled('category_id'), fn (Builder $q) => $q->where('category_id', $request->string('category_id')->toString()))
             ->when($request->has('is_active'), fn (Builder $q) => $q->where('is_active', $request->boolean('is_active')))
-            ->orderBy('sort_order')
-            ->orderBy('name')
+            ->when(
+                $request->sort(),
+                fn (Builder $q, array $sort) => $q->orderBy($sort[0], $sort[1]),
+                fn (Builder $q) => $q->orderBy('sort_order')->orderBy('name'),
+            )
+            // Pemecah seri agar urutan antar halaman stabil
+            ->orderBy('id')
             ->paginate(min($request->integer('per_page', (int) config('pos.pagination.per_page')), (int) config('pos.pagination.max_per_page')));
 
         return ApiResponse::paginated($products, ProductResource::class);
@@ -93,7 +100,9 @@ final class ProductController extends Controller
         $data = ProductData::fromArray([
             // Field yang tidak dikirim tetap memakai nilai lama
             'is_active' => $product->is_active,
+            'is_favorite' => $product->is_favorite,
             'track_stock' => $product->track_stock,
+            'min_stock' => $product->min_stock,
             'option_group_ids' => $product->optionGroups()->pluck('option_groups.id')->all(),
             ...$request->safe()->except('id'),
         ]);

@@ -31,8 +31,12 @@ final class ProductResource extends JsonResource
             'cost_price' => $this->when($canSeeCost, $this->cost_price),
             'track_stock' => $this->track_stock,
             'stock_qty' => $this->track_stock ? $this->stock_qty : null,
+            'min_stock' => $this->track_stock ? $this->min_stock : null,
+            'is_low_stock' => $this->isLowStock(),
             'is_active' => $this->is_active,
             'is_available' => $this->is_available,
+            // Ditampilkan di tab "Favorit" layar kasir
+            'is_favorite' => $this->is_favorite,
             'image_url' => $this->imageUrl(),
             // Urutan = urutan tampil grup opsi di aplikasi
             'option_group_ids' => $this->whenLoaded('optionGroups', fn () => $this->optionGroups->pluck('id')->values()->all()),

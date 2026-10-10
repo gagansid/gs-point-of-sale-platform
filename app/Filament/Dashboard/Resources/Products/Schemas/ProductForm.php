@@ -75,6 +75,11 @@ final class ProductForm
                                     ->disabled()->dehydrated(false)
                                     ->helperText('Ubah lewat aksi Sesuaikan stok di daftar produk')
                                     ->visible(fn (Get $get, string $operation): bool => $operation === 'edit' && (bool) $get('track_stock')),
+                                TextInput::make('min_stock')->label('Stok minimum')
+                                    ->integer()->minValue(0)->maxValue(1000000)
+                                    ->placeholder('Tanpa peringatan')
+                                    ->helperText('Stok ≤ angka ini ditandai "stok menipis"')
+                                    ->visible(fn (Get $get): bool => (bool) $get('track_stock')),
                             ]),
                     ]),
 
@@ -97,6 +102,8 @@ final class ProductForm
                             ->schema([
                                 Toggle::make('is_active')->label('Aktif')->default(true)
                                     ->helperText('Produk nonaktif tidak tampil di aplikasi kasir'),
+                                Toggle::make('is_favorite')->label('Favorit')
+                                    ->helperText('Tampil di tab Favorit aplikasi kasir'),
                             ]),
                     ]),
             ]);

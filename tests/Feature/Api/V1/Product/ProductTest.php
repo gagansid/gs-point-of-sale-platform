@@ -51,6 +51,33 @@ describe('daftar & barcode', function () {
             ->assertJsonPath('meta.pagination.last_page', 3);
     });
 
+    it('mengurutkan produk dengan sort naik (kolom) dan turun (-kolom)', function () {
+        TenantContext::run($this->tenantId, function () {
+            Product::factory()->create(['name' => 'Latte', 'price' => 28000]);
+            Product::factory()->create(['name' => 'Americano', 'price' => 20000]);
+            Product::factory()->create(['name' => 'Mocha', 'price' => 30000]);
+        });
+        // Produk tenant lain tidak ikut walau harganya paling tinggi
+        Product::factory()->create(['name' => 'Tenant Lain', 'price' => 99000]);
+
+        $this->withToken($this->token)->getJson('/api/v1/products?sort=price', apiHeaders())
+            ->assertOk()
+            ->assertJsonPath('data.*.name', ['Americano', 'Latte', 'Mocha']);
+
+        freshAuth();
+        $this->withToken($this->token)->getJson('/api/v1/products?sort=-price', apiHeaders())
+            ->assertOk()
+            ->assertJsonPath('data.*.name', ['Mocha', 'Latte', 'Americano']);
+    });
+
+    it('sort di luar allowlist ditolak', function (string $sort) {
+        assertApiError(
+            $this->withToken($this->token)->getJson('/api/v1/products?sort='.urlencode($sort), apiHeaders()),
+            'VALIDATION_ERROR',
+            422,
+        );
+    })->with(['kolom tidak dikenal' => 'cost_price', 'injeksi SQL' => 'name;drop table products', 'tanda ganda' => '--price']);
+
     it('karakter wildcard di pencarian tidak dianggap pola', function () {
         TenantContext::run($this->tenantId, fn () => Product::factory()->count(2)->create());
 
@@ -172,6 +199,28 @@ describe('ubah & hapus', function () {
             ->assertJsonPath('data.track_stock', true)
             ->assertJsonPath('data.option_group_ids', [$this->size->id]);
     });
+
+    it('mengatur stok minimum & favorit; field yang tidak dikirim tetap', function () {
+        $this->withToken($this->token)->putJson("/api/v1/products/{$this->product->id}", ['name' => 'Latte', 'price' => '25000', 'min_stock' => 12, 'is_favorite' => true], apiHeaders())
+            ->assertOk()
+            ->assertJsonPath('data.min_stock', 12)
+            ->assertJsonPath('data.is_low_stock', true)
+            ->assertJsonPath('data.is_favorite', true);
+
+        freshAuth();
+        $this->withToken($this->token)->putJson("/api/v1/products/{$this->product->id}", ['name' => 'Latte', 'price' => '26000'], apiHeaders())
+            ->assertOk()
+            ->assertJsonPath('data.min_stock', 12)
+            ->assertJsonPath('data.is_favorite', true);
+    });
+
+    it('validasi stok minimum', function (mixed $minStock) {
+        assertApiError(
+            $this->withToken($this->token)->putJson("/api/v1/products/{$this->product->id}", ['name' => 'Latte', 'price' => '25000', 'min_stock' => $minStock], apiHeaders()),
+            'VALIDATION_ERROR',
+            422,
+        );
+    })->with(['negatif' => -1, 'pecahan' => 1.5, 'teks' => 'banyak']);
 
     it('stok tidak bisa diubah lewat endpoint ubah produk', function () {
         assertApiError(

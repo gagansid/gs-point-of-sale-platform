@@ -29,6 +29,8 @@ final class ProductFactory extends Factory
             'stock_qty' => 0,
             'is_active' => true,
             'is_available' => true,
+            'is_favorite' => false,
+            'min_stock' => null,
             'sort_order' => 0,
         ];
     }

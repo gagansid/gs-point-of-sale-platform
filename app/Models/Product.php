@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\Storage;
  * @property string|null $image_path
  * @property bool $is_active
  * @property bool $is_available
+ * @property bool $is_favorite
+ * @property int|null $min_stock
  * @property int $sort_order
  */
 final class Product extends Model
@@ -49,6 +51,8 @@ final class Product extends Model
         'image_path',
         'is_active',
         'is_available',
+        'is_favorite',
+        'min_stock',
         'sort_order',
     ];
 
@@ -61,6 +65,8 @@ final class Product extends Model
             'stock_qty' => 'integer',
             'is_active' => 'boolean',
             'is_available' => 'boolean',
+            'is_favorite' => 'boolean',
+            'min_stock' => 'integer',
             'sort_order' => 'integer',
         ];
     }
@@ -69,6 +75,36 @@ final class Product extends Model
     public function isOutOfStock(): bool
     {
         return $this->track_stock && $this->stock_qty <= 0;
+    }
+
+    /** Stok masih ada tapi sudah di bawah/sama dengan batas minimum (peringatan "stok menipis"). */
+    public function isLowStock(): bool
+    {
+        return $this->track_stock && $this->min_stock !== null && $this->stock_qty > 0 && $this->stock_qty <= $this->min_stock;
+    }
+
+    /**
+     * Padanan query isLowStock().
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeLowStock(Builder $query): void
+    {
+        $query->where('track_stock', true)
+            ->whereNotNull('min_stock')
+            ->where('stock_qty', '>', 0)
+            ->whereColumn('stock_qty', '<=', 'min_stock');
+    }
+
+    /**
+     * Tidak bisa dijual sekarang: ditandai habis atau stok yang dilacak ≤ 0.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeSoldOut(Builder $query): void
+    {
+        $query->where(fn (Builder $q) => $q->where('is_available', false)
+            ->orWhere(fn (Builder $q) => $q->where('track_stock', true)->where('stock_qty', '<=', 0)));
     }
 
     public function imageUrl(): ?string
