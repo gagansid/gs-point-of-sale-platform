@@ -20,6 +20,7 @@ final class PaymentMethodResource extends JsonResource
             'category' => $this->category->value,
             'requires_reference' => $this->requires_reference,
             'is_active' => $this->is_active,
+            'sort_order' => $this->sort_order,
         ];
     }
 }

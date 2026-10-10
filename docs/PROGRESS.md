@@ -72,7 +72,8 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | 2 | Setelan admin (`trial_days`, `signup_enabled`); tingkat akses tenant penuh/hanya-baca/diblokir di API & dashboard + banner | ✅ |
 | 3 | Daftar sendiri `gspos.id/register` (trial, rate limit, honeypot) + verifikasi email + masuk `app.` via tiket | ✅ |
 | S1 | Pengaturan → Profil outlet (dashboard) + `GET/PUT /v1/outlet` | ✅ |
-| S2 | Pengaturan → Karyawan + `/v1/users` (PIN aman, putus sesi, owner terakhir) | ✅ |
+| S2 | Pengaturan → Karyawan + `/v1/users` (PIN aman, putus sesi, owner terakhir, username kasir web) | ✅ |
+| S3 | Pengaturan → Metode pembayaran + `/v1/payment-methods` (tunai selalu aktif, urutan) | ✅ |
 | 4 | Panduan setup beranda `app.` (profil outlet → kategori → produk) + template menu Kafe/Warung. Langkah tablet/kasir menyusul di fase aplikasi kasir | Belum |
 | 5 | "Buat tenant dari lead" + link atur kata sandi + `gspos.id/lupa-sandi` | Belum |
 | 6 | Edisi `self_hosted`: `POS_EDITION`, `php artisan pos:install`, batas satu tenant | Belum |

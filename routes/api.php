@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\OptionGroupController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\OutletController;
+use App\Http\Controllers\Api\V1\PaymentMethodController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ShiftController;
@@ -110,6 +111,11 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('{user}', 'show')->name('show');
             Route::put('{user}', 'update')->name('update');
             Route::post('{user}/unlock-pin', 'unlockPin')->name('unlock-pin');
+        });
+
+        Route::controller(PaymentMethodController::class)->prefix('payment-methods')->name('payment-methods.')->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::put('{paymentMethod}', 'update')->name('update');
         });
     });
 });

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Filament\Admin\Resources\Tenants\Pages\ListTenants;
 use App\Filament\Dashboard\Resources\Categories\Pages\ManageCategories;
+use App\Filament\Dashboard\Resources\Employees\Pages\ManageEmployees;
 use App\Filament\Dashboard\Resources\OptionGroups\Pages\ListOptionGroups;
 use App\Filament\Dashboard\Resources\Orders\Pages\ListOrders;
+use App\Filament\Dashboard\Resources\PaymentMethods\Pages\ManagePaymentMethods;
 use App\Filament\Dashboard\Resources\Products\Pages\ListProducts;
 use App\Filament\Dashboard\Resources\Shifts\Pages\ListShifts;
 use Livewire\Attributes\Url;
@@ -27,6 +29,8 @@ it('filter tidak ditulis ke URL', function (string $page) {
     ListOrders::class,
     ListShifts::class,
     ListTenants::class,
+    ManageEmployees::class,
+    ManagePaymentMethods::class,
 ]);
 
 it('tab tidak ditulis ke URL', function (string $page) {

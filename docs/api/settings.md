@@ -12,6 +12,8 @@ Semua endpoint memakai **token user** + header `X-App-Version`. Base URL: [READM
 | POST | `/v1/users` | `user.manage` | `id` opsional | `SaveEmployee` |
 | PUT | `/v1/users/{id}` | `user.manage` | ya | `SaveEmployee`, `SetEmployeeActive` |
 | POST | `/v1/users/{id}/unlock-pin` | `user.manage` | ya | `UnlockEmployeePin` |
+| GET | `/v1/payment-methods` | `payment_method.manage` (role) | baca | — |
+| PUT | `/v1/payment-methods/{id}` | `payment_method.manage` | ya | `UpdatePaymentMethod` |
 
 Error umum: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `403 SUBSCRIPTION_EXPIRED` (PUT saat trial/langganan
 habis), `403 TENANT_SUSPENDED`, `422 VALIDATION_ERROR`, `426 APP_UPDATE_REQUIRED`.
@@ -87,3 +89,24 @@ Dashboard: **Pengaturan → Karyawan** (`app.gspos.id/settings/employees`), hany
 
 Test: `tests/Feature/Api/V1/Settings/EmployeeTest.php`, `tests/Feature/Filament/Dashboard/EmployeeResourceTest.php`,
 `tests/Unit/SecurePinTest.php`
+
+---
+
+## Metode pembayaran — `/v1/payment-methods`
+
+Lima metode bawaan per bisnis, satu per kategori (`cash`, `qris`, `transfer`, `debit`, `credit`), dibuat
+otomatis saat bisnis dibuat. **Tidak ada tambah/hapus.** `GET` mengembalikan semua (termasuk nonaktif)
+urut `sort_order`; aplikasi kasir memakai `/catalog` yang hanya berisi yang aktif.
+
+| Field (PUT) | Tipe | Aturan |
+|---|---|---|
+| `name` | string | maks. 50, mis. "QRIS BCA" |
+| `requires_reference` | bool | Kasir wajib mengisi kode approval/nomor transaksi |
+| `is_active` | bool | **Tunai tidak bisa dinonaktifkan** → `422 VALIDATION_ERROR` (`details.is_active`) — kembalian hanya untuk tunai |
+| `sort_order` | int | 0–255, urutan tombol bayar di kasir |
+
+Field yang tidak dikirim tetap. Metode nonaktif ditolak saat checkout ("Metode bayar tidak tersedia").
+
+Dashboard: **Pengaturan → Metode pembayaran** (`app.gspos.id/settings/payment-methods`), hanya owner.
+
+Test: `tests/Feature/Api/V1/Settings/PaymentMethodTest.php`, `tests/Feature/Filament/Dashboard/PaymentMethodResourceTest.php`
