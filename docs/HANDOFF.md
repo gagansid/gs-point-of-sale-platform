@@ -56,10 +56,10 @@ Catatan untuk Flutter: field baru `options[].is_available`; kategori aktif tanpa
 
 | Prioritas | Pekerjaan | Catatan |
 |---|---|---|
-| 1 | Import produk dari Excel | `maatwebsite/excel`, simpan lewat `SaveProduct` (perlu outlet untuk stok awal; kolom "dijual di outlet" opsional), cegah formula injection (`SafeCell`) |
-| 2 | Kasir web | Login: slug bisnis + username + kata sandi (SPEC Q35); cadangan bila tablet rusak; pakai outlet dari pilihan kasir |
-| 3 | Minggu 7 — panel admin | Versi aplikasi, pengumuman, backup, log viewer, queue, rate limit & audit keamanan |
-| 4 | Minggu 8 — deploy | cPanel, uji MySQL ulang (fitur 9–10 Okt & migrasi multi-outlet), uji dengan Flutter, pilot |
+| 1 | Kasir web | Login: slug bisnis + username + kata sandi (SPEC Q35); cadangan bila tablet rusak; pakai outlet dari pilihan kasir |
+| 2 | Minggu 7 — panel admin | Versi aplikasi, pengumuman, backup, log viewer, queue, rate limit & audit keamanan |
+| 3 | Minggu 8 — deploy | cPanel, uji MySQL ulang (fitur 9–10 Okt & migrasi multi-outlet), uji dengan Flutter, pilot |
+| Ditunda | Import produk dari Excel | Ditunda atas keputusan pemilik produk (2026-10-10); rencana: lewat `SaveProduct`, cegah formula injection (`SafeCell`) |
 | Ditunda | Menu Perangkat (S4) & aplikasi tablet | Fase tablet/aplikasi kasir |
 
 Utang teknis tersisa (lihat PROGRESS): T1 cache widget beranda, T2 gambar lama tidak terhapus,
