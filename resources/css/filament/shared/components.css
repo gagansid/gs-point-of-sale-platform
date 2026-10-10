@@ -1981,3 +1981,134 @@ select.fi-select-input {
         margin-inline-start: 30px;
     }
 }
+
+/* =====================================================================
+ * Beranda: checklist "Mulai berjualan" (SetupChecklistWidget)
+ * ===================================================================== */
+.gs-setup {
+    padding: 18px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-surface);
+    box-shadow: var(--shadow);
+}
+
+.gs-setup-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.gs-setup-title {
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.gs-setup-sub {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.gs-setup-progress {
+    height: 6px;
+    margin: 14px 0 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background-color: var(--bg-surface-secondary);
+    box-shadow: inset 0 0 0 1px var(--border-color-light);
+}
+
+.gs-setup-progress > span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background-color: var(--primary);
+    transition: width 300ms;
+}
+
+.gs-setup-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.gs-setup-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+.gs-setup-step.is-done {
+    background-color: var(--bg-surface-secondary);
+}
+
+.gs-setup-mark {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: var(--primary-lt);
+    color: var(--primary);
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.gs-setup-step.is-done .gs-setup-mark {
+    background-color: rgb(47 179 68 / 0.12);
+    color: #2fb344;
+}
+
+.gs-setup-mark .fi-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.gs-setup-text {
+    display: grid;
+    min-width: 0;
+    flex: 1;
+}
+
+.gs-setup-text strong {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.gs-setup-text span {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.gs-setup-step.is-done .gs-setup-text strong {
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.gs-setup-link {
+    flex: none;
+    padding: 4px 12px;
+    border-radius: var(--radius);
+    background-color: var(--primary);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.gs-setup-status {
+    flex: none;
+    color: #2fb344;
+    font-size: 12px;
+    font-weight: 600;
+}

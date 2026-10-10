@@ -74,7 +74,8 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | S1 | Pengaturan → Profil outlet (dashboard) + `GET/PUT /v1/outlet` | ✅ |
 | S2 | Pengaturan → Karyawan + `/v1/users` (PIN aman, putus sesi, owner terakhir, username kasir web) | ✅ |
 | S3 | Pengaturan → Metode pembayaran + `/v1/payment-methods` (tunai selalu aktif, urutan) | ✅ |
-| 4 | Panduan setup beranda `app.` (profil outlet → kategori → produk) + template menu Kafe/Warung. Langkah tablet/kasir menyusul di fase aplikasi kasir | Belum |
+| 4 | Panduan setup beranda `app.` (profil outlet → kategori → produk, + verifikasi email bila perlu) + template menu Kafe/Warung (`ApplyMenuTemplate`, hanya katalog kosong). Langkah tablet/kasir menyusul | ✅ |
+| S4 | Pengaturan → Perangkat (daftar tablet + cabut akses) — ditunda ke fase tablet | Ditunda |
 | 5 | "Buat tenant dari lead" + link atur kata sandi + `gspos.id/lupa-sandi` | Belum |
 | 6 | Edisi `self_hosted`: `POS_EDITION`, `php artisan pos:install`, batas satu tenant | Belum |
 
