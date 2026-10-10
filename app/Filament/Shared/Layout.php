@@ -12,9 +12,14 @@ use Filament\Facades\Filament;
 use Filament\Panel;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Enums\FiltersResetActionPosition;
+use Filament\Tables\Table;
+use Filament\Tables\View\TablesIconAlias;
+use Filament\Tables\View\TablesRenderHook;
 use Filament\View\PanelsIconAlias;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\HtmlString;
+use Livewire\Livewire;
 
 /**
  * Kerangka panel yang sama untuk /admin & /dashboard, meniru gs-task-tracker
@@ -39,6 +44,10 @@ final class Layout
                 ActionsIconAlias::DELETE_ACTION => Heroicon::OutlinedTrash,
                 ActionsIconAlias::ACTION_GROUP => Heroicon::OutlinedEllipsisVertical,
                 ActionsIconAlias::DELETE_ACTION_MODAL => Heroicon::OutlinedExclamationTriangle,
+                // Kolom yang bisa diurutkan selalu menampilkan ikon ↕; ↑/↓ saat aktif
+                TablesIconAlias::HEADER_CELL_SORT_BUTTON => Heroicon::ChevronUpDown,
+                TablesIconAlias::HEADER_CELL_SORT_ASC_BUTTON => Heroicon::ChevronUp,
+                TablesIconAlias::HEADER_CELL_SORT_DESC_BUTTON => Heroicon::ChevronDown,
             ])
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->globalSearchFieldKeyBindingSuffix()
@@ -47,6 +56,12 @@ final class Layout
             ])
             ->bootUsing(fn () => self::configureActions())
             // Footer hanya di layout panel; hook FOOTER juga dirender di halaman login (layout sederhana)
+            // Tab cepat di header card tabel untuk halaman daftar yang memakai HasCardTabs
+            ->renderHook(TablesRenderHook::HEADER_AFTER, function (): string {
+                $page = Livewire::current();
+
+                return $page !== null && method_exists($page, 'renderCardTabs') ? $page->renderCardTabs() : '';
+            })
             ->renderHook(PanelsRenderHook::FOOTER, fn (): string => Filament::auth()->check() ? view('filament.shared.footer')->render() : '');
     }
 
@@ -67,6 +82,24 @@ final class Layout
 
         DeleteBulkAction::configureUsing(fn (DeleteBulkAction $action): DeleteBulkAction => $action
             ->modalDescription(self::confirmText('Yakin ingin menghapus data yang dipilih?', 'Tindakan ini tidak bisa dibatalkan.')));
+
+        Table::configureUsing(fn (Table $table): Table => $table
+            // Pilihan baris per halaman seragam untuk semua tabel panel (table.md)
+            ->paginated([5, 10, 25, 50, 100])
+            ->defaultPaginationPageOption(10)
+            // Pilihan baris per halaman tidak kembali ke default setelah refresh
+            ->persistRecordsPerPageInSession()
+            // Pencarian & urutan tetap saat kembali ke halaman daftar (filter: persistFiltersInSession per tabel)
+            ->persistSearchInSession()
+            ->persistSortInSession()
+            // Tombol "Atur ulang" di samping "Terapkan filter"
+            ->filtersResetActionPosition(FiltersResetActionPosition::Footer)
+            ->filtersResetAction(fn (Action $action): Action => $action->label('Atur ulang')->color('gray'))
+            // Filament selalu menampilkan badge jumlah filter, termasuk "0": tandai agar disembunyikan CSS
+            ->filtersTriggerAction(fn (Action $action): Action => $action->extraAttributes(
+                fn (): array => $action->getTable()?->getActiveFiltersCount() === 0 ? ['class' => 'gs-filters-inactive'] : [],
+                merge: true,
+            )));
     }
 
     /**

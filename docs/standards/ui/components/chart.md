@@ -29,7 +29,7 @@ hanya jika > 1 seri).
 | Grid | Garis horizontal `--border-light`, tanpa garis vertikal |
 | Sumbu nominal | Singkatan Indonesia: `Rp1,2 jt`, `Rp850 rb` |
 | Tooltip | Nilai lengkap: `Rp1.250.500` |
-| Font | Inter 12px, `text-muted` |
+| Font | Plus Jakarta Sans 12px, `text-muted` |
 
 Status (success/warning/danger) **tidak** dipakai sebagai warna kategori agar tidak disalahartikan.
 

@@ -52,7 +52,7 @@ Implementasi bersama di `App\Filament\Shared\Layout`:
 | Properti | Nilai |
 |---|---|
 | Lebar | Konfirmasi `sm` (≈440px); form `md`/`lg` |
-| Posisi | Atas layar, jarak 48px (mobile 16px) |
+| Posisi | Atas layar, jarak `min(12vh, 96px)` dari atas (mobile 16px) — override grid `.fi-modal-window-ctn` |
 | Radius | 8px, border 1px `--border-color`, overlay `rgba(15,23,42,.45)` + blur 3px |
 | Padding body | 18px × 24px |
 | Tinggi maks | Layar − 96px; hanya body yang di-scroll, header & footer tetap |

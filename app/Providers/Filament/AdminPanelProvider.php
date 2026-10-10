@@ -48,7 +48,7 @@ final class AdminPanelProvider extends PanelProvider
             )
             ->multiFactorAuthenticationRequiredMiddlewareName(EnsureAdminTwoFactorWhenRequired::class)
             ->colors(Theme::colors())
-            ->font('Inter')
+            ->font('Plus Jakarta Sans')
             ->brandName('gs.POS Admin')
             ->brandLogo(fn () => view('filament.shared.brand-logo', ['tag' => 'Super Admin']))
             ->brandLogoHeight('2rem')

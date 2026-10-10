@@ -36,21 +36,27 @@
 | Boolean aktif | `IconColumn::boolean()` atau `ToggleColumn` | `ToggleColumn` hanya bila perubahan aman & langsung (availability) |
 | Tanggal | `TextColumn::dateTime('j M Y, H.i')` | `->sortable()`, zona outlet |
 | Relasi | `TextColumn('category.name')` | Eager load via `modifyQueryUsing` |
-| Gambar | `ImageColumn` | 24px, `->square()`, radius 4px (baris tetap 37px) |
+| Gambar | `ImageColumn` | 24px, `->square()`, radius 4px (baris tetap 37px); `->toggleable(isToggledHiddenByDefault: true)` bila banyak data tanpa gambar |
 | Aksi | Lihat [row-actions.md](row-actions.md) | Selalu kolom terakhir |
 
 ## Spesifikasi
 
 | Properti | Nilai |
 |---|---|
-| Header card | Min. 52px, padding 10×16px: judul 15px/600 · pencarian 240px · tombol ikon 32px · tombol tambah 32px |
-| Header kolom | Tinggi 40px, 13px/600 `--text`, tanpa uppercase, latar `surface`, garis bawah `--border-color` |
-| Sel | 13px/20px `--text`, padding 8×12px → baris 37px; badge 20px; ikon 16px; tombol aksi 26px |
+| Header card | Min. 52px, padding 10×16px: judul 15px/600 · pencarian 240px · tombol ikon 32px · tombol `+ Tambah` 32px. Badge jumlah filter di sudut tombol filter, disembunyikan saat 0 |
+| Header kolom | Tinggi 40px, 13px/700 `--text`, tanpa uppercase, latar `surface`, garis bawah `--border-color` |
+| Sel | 12.5px/20px `--text` (warna sama dengan header kolom), padding 8×12px → baris 37px; badge 20px; ikon status 16px; tombol aksi 26px, ikon aksi 14px |
 | Pemisah baris | 1px `--border-light` |
 | Hover baris | Latar `surface-secondary`; seluruh baris bisa diklik ke detail (`->recordUrl()`) |
 | Pencarian | Lebar 240px, tinggi 32px (penuh di mobile), placeholder spesifik |
 | Baris terpilih | Latar `--primary-lt` |
-| Pagination | `[10, 20, 50, 100]`, default 20 — sama dengan API. Kiri: `1–20 dari 135` + `20 / hal`; kanan: pager 28px `‹ 1 2 ›` selalu tampil (non-aktif bila 1 halaman). Data per halaman diambil dari server (Livewire `gotoPage`). Markup: `resources/views/vendor/filament/components/pagination/index.blade.php`, teks: `lang/vendor/filament/id/components/pagination.php` |
+| Urutkan | Semua kolom data `->sortable()`; ikon di kanan judul: `↕` (chevron-up-down, `--text-disabled`) saat belum aktif, `↑`/`↓` `--primary` saat aktif (alias ikon di `Layout`) |
+| Pilih baris | Checkbox di kiri muncul bila ada aksi massal (`->toolbarActions([BulkActionGroup])`). Aksi massal memanggil Action bisnis per rekaman, wajib konfirmasi, cek permission, `->deselectRecordsAfterCompletion()` |
+| Panel filter | **Lipat** di antara header card dan isi tabel: `->filtersLayout(FiltersLayout::AboveContentCollapsible)->filtersFormColumns(['default' => 1, 'sm' => 2, 'lg' => 4])`. Dibuka/ditutup dengan slide 250ms (`x-collapse`, override `resources/views/vendor/filament-tables/components/filters.blade.php`), latar `surface-secondary`, tanpa judul. Footer: `Atur ulang` (abu) + `Terapkan filter` (primary) — global di `Layout`. Tombol filter tetap di header (urutan: cari · filter · kolom · tambah) |
+| Tab cepat | Di **dalam header card** (baris kedua, garis bawah 2px primary, angka dalam pill; merah/kuning hanya bila > 0) — trait `HasCardTabs` + `resources/views/filament/shared/card-tabs.blade.php`, bukan pill di atas card. Tab aktif disimpan di session (tetap setelah refresh/pindah menu); halaman wajib mendeklarasikan ulang `public ?string $activeTab = null;` tanpa `#[Url]` |
+| Checkbox | Kolom pilih 16px dari tepi card, 4px ke kolom berikut (sejajar judul card) |
+| URL | Filter **tidak** ditulis ke URL: halaman List mendeklarasikan ulang `public ?array $tableFilters = null;` tanpa `#[Url]`; filter bertahan lewat `->persistFiltersInSession()`. Pencarian & urutan tetap di URL (`?search=`, `?sort=`) |
+| Pagination | `[5, 10, 25, 50, 100]`, default 10 — global lewat `Table::configureUsing()` di `App\Filament\Shared\Layout`, jangan set per tabel (API tetap `[10, 20, 50, 100]`). Kiri: `1–10 dari 135` + pilihan `10 ▾` 28px (diingat per tabel lewat `->persistRecordsPerPageInSession()`); kanan: pager 28px `‹ 1 2 ›` selalu tampil (non-aktif bila 1 halaman). Data per halaman diambil dari server (Livewire `gotoPage`). Markup: `resources/views/vendor/filament/components/pagination/index.blade.php`, teks: `lang/vendor/filament/id/components/pagination.php` |
 | Urutan default | Terbaru dulu (`->defaultSort('created_at', 'desc')`) kecuali master (`sort_order`/nama) |
 
 ## Perilaku & state
@@ -58,8 +64,8 @@
 | State | Perilaku |
 |---|---|
 | Memuat | Skeleton bawaan Filament |
-| Kosong | [Empty state](empty-state.md) dengan aksi Tambah |
-| Hasil filter kosong | "Tidak ada data yang cocok" + tombol "Reset filter" |
+| Kosong | [Empty state](empty-state.md) tanpa tombol (tombol `+` sudah ada di header card): "Belum ada {objek}" |
+| Hasil filter/pencarian kosong | "Tidak ada {objek} yang cocok" + "Ubah kata kunci atau atur ulang filter" (cek `$table->isFiltered()` / `getTableSearch()`) |
 | Filter aktif | Indikator jumlah filter pada tombol Filter; filter disimpan di session (`->persistFiltersInSession()`) |
 | Data ditandai | Stok ≤ 0: nilai stok `danger`; produk nonaktif: baris teks muted |
 
@@ -69,7 +75,7 @@
 |---|---|
 | Penjualan | Rentang tanggal (default hari ini), status, shift, metode bayar, kasir |
 | Shift | Rentang tanggal, kasir, status, "ada selisih" |
-| Produk | Kategori, aktif/nonaktif, lacak stok, stok ≤ 0 |
+| Produk | Tab: Semua · Favorit · Aktif · Habis · Stok menipis (badge jumlah) di header card. Filter: kategori (multi), grup opsi (multi), status aktif, ketersediaan, favorit, lacak stok, rentang harga, stok ≤ 0. Kolom bintang (klik = favorit), stok kuning ⚠ bila menipis. Urutan bawaan `sort_order` → nama (`->reorderable('sort_order')` = atur urutan kasir) |
 | Karyawan | Role, aktif/nonaktif |
 
 ## Aksesibilitas
@@ -99,8 +105,6 @@ public static function table(Table $table): Table
         ])
         ->actions([ViewAction::make()->iconButton()])
         ->defaultSort('created_at', 'desc')
-        ->paginated([10, 20, 50, 100])
-        ->defaultPaginationPageOption(20)
         ->persistFiltersInSession()
         ->emptyStateHeading('Belum ada transaksi')
         ->emptyStateDescription('Transaksi dari aplikasi kasir akan muncul di sini');

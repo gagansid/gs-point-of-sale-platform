@@ -52,8 +52,6 @@ final class OrdersTable
             ])
             ->recordUrl(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
             ->defaultSort('created_at', 'desc')
-            ->paginated([10, 20, 50, 100])
-            ->defaultPaginationPageOption(20)
             ->persistFiltersInSession()
             ->emptyStateIcon(Heroicon::OutlinedReceiptPercent)
             ->emptyStateHeading('Belum ada transaksi')

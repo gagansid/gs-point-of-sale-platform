@@ -90,7 +90,7 @@ Kedua panel memakai sidebar yang sama; `/admin` dibedakan oleh badge "Super Admi
 
 | Token | Nilai |
 |---|---|
-| Font UI | `Inter`, fallback `-apple-system, Segoe UI, Roboto, sans-serif` |
+| Font UI | `Plus Jakarta Sans` (panel `->font()`, Bunny Fonts), fallback `ui-sans-serif, system-ui, sans-serif` |
 | Font brand | `Nunito` (hanya wordmark logo) |
 | Font mono | `SF Mono, Monaco, Consolas, monospace` (nomor order, kode, SKU) |
 | Angka | `font-variant-numeric: tabular-nums` untuk semua nominal & kuantitas |
@@ -100,8 +100,8 @@ Kedua panel memakai sidebar yang sama; `/admin` dibedakan oleh badge "Super Admi
 | Page title | 18px / 600 | Judul halaman |
 | Section title | 16px / 600 | Judul kartu/section |
 | Body | 14px / 400 | Teks umum |
-| Sel tabel | 13px / 400, `--text`, line-height 20px | Isi tabel |
-| Header tabel | 13px / 600, `--text`, tanpa uppercase, latar `--bg-surface` | Judul kolom (gaya list view Odoo) |
+| Sel tabel | 12.5px / 400, `--text`, line-height 20px | Isi tabel |
+| Header tabel | 13px / 700, `--text`, tanpa uppercase, latar `--bg-surface` | Judul kolom (gaya list view Odoo) |
 | Control | 13px / 500 | Tombol, input, sel tabel |
 | Small | 12px / 500–600 | Badge, hint, label kolom |
 | Overline | 12px / 600, uppercase, `letter-spacing .04em`, `text-muted` | Judul grup form |
@@ -130,7 +130,7 @@ Skala 4px: `4 · 8 · 12 · 16 · 24 · 32 · 48 · 64`.
 | `--control-h-lg` | 40px (aksi utama halaman form) |
 | `--control-radius` | 8px |
 | `--control-font` | 13px |
-| Tombol ikon baris | 26 × 26px, ikon 16px |
+| Tombol ikon baris | 26 × 26px, ikon 14px (setara visual ikon status 16px) |
 | Ikon di dalam baris tabel | 16px (IconColumn, ikon teks); ikon badge 12px |
 
 ## 7. Radius & bayangan

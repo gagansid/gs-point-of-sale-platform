@@ -62,8 +62,6 @@ final class ShiftsTable
             ])
             ->recordUrl(fn (Shift $record): string => ShiftResource::getUrl('view', ['record' => $record]))
             ->defaultSort('opened_at', 'desc')
-            ->paginated([10, 20, 50, 100])
-            ->defaultPaginationPageOption(20)
             ->emptyStateIcon(Heroicon::OutlinedClock)
             ->emptyStateHeading('Belum ada shift')
             ->emptyStateDescription('Shift dibuka kasir dari aplikasi');

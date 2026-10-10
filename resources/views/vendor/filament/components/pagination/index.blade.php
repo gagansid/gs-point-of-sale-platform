@@ -69,7 +69,7 @@
                     <x-filament::input.select :wire:model.live="$currentPageOptionProperty">
                         @foreach ($pageOptions as $option)
                             <option value="{{ $option }}">
-                                {{ $option === 'all' ? __('filament::components/pagination.fields.records_per_page.options.all') : $option . ' / hal' }}
+                                {{ $option === 'all' ? __('filament::components/pagination.fields.records_per_page.options.all') : $option }}
                             </option>
                         @endforeach
                     </x-filament::input.select>

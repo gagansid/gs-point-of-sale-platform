@@ -60,7 +60,7 @@ ditampilkan lalu ditolak.
 
 | Jenis halaman | Isi | Aksi utama (kanan atas) |
 |---|---|---|
-| **Daftar** (List) | Card tabel; header card satu baris: `Daftar {objek}` · pencarian · filter · `+ Tambah {objek}` (trait `HasTableCardHeader`) | di header card, bukan kanan atas halaman |
+| **Daftar** (List) | Card tabel; header card satu baris: `Daftar {objek}` · pencarian · filter · `+ Tambah` (trait `HasTableCardHeader`) | di header card, bukan kanan atas halaman |
 | **Form** (Create/Edit) | Section bertumpuk; kolom kanan 360px untuk ringkasan (opsional) | `Simpan` di bawah form, kanan |
 | **Detail** (View) | Infolist dalam section + relasi (tabel item, pembayaran) | Aksi kontekstual (`Cetak ulang`, `Void`) |
 | **Laporan** | Filter rentang tanggal di atas → stat widget → chart → tabel | `Export Excel` |

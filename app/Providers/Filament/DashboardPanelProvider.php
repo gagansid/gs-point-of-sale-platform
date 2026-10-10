@@ -38,7 +38,7 @@ final class DashboardPanelProvider extends PanelProvider
             ->login()
             ->profile(isSimple: false)
             ->colors(Theme::colors())
-            ->font('Inter')
+            ->font('Plus Jakarta Sans')
             ->brandName('gs.POS')
             ->brandLogo(fn () => view('filament.shared.brand-logo'))
             ->brandLogoHeight('2rem')

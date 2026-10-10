@@ -19,7 +19,7 @@ return Layout::apply($panel)   // App\Filament\Shared\Layout: sidebar 252/64px, 
     ->id('dashboard')
     ->path('dashboard')
     ->colors(Theme::colors())   // App\Filament\Shared\Theme — satu palet untuk kedua panel
-    ->font('Inter')
+    ->font('Plus Jakarta Sans')
     ->brandName('gs.POS')
     ->brandLogo(fn () => view('filament.shared.brand-logo'))
     ->brandLogoHeight('2rem')

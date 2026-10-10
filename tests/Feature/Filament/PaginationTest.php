@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Filament\Dashboard\Resources\Products\Pages\ListProducts;
+use App\Filament\Shared\Layout;
 use App\Models\Product;
 use App\Models\User;
 use App\Support\TenantContext;
@@ -21,14 +22,48 @@ beforeEach(function () {
 });
 
 it('menampilkan ringkasan singkat dan memuat halaman berikutnya dari server', function () {
-    Product::factory()->count(25)->create();
+    Product::factory()->count(15)->create();
 
     Livewire::test(ListProducts::class)
-        ->assertSeeText('1–20 dari 25')
+        ->assertSeeText('1–10 dari 15')
         ->assertSeeHtml('aria-label="Ke halaman 2"')
         ->call('gotoPage', 2)
-        ->assertSeeText('21–25 dari 25')
-        ->assertCountTableRecords(25);
+        ->assertSeeText('11–15 dari 15')
+        ->assertCountTableRecords(15);
+});
+
+// Lewat HTTP agar konfigurasi tabel global (Layout::configureActions, dipasang saat panel boot) ikut berlaku
+it('memakai pilihan baris per halaman 5, 10, 25, 50, 100', function () {
+    Product::factory()->create();
+
+    $html = $this->get('/dashboard/products')->assertOk()->getContent();
+
+    foreach ([5, 10, 25, 50, 100] as $option) {
+        expect($html)->toContain('<option value="'.$option.'">');
+    }
+
+    expect($html)->not->toContain('<option value="20">');
+});
+
+it('menyembunyikan badge filter hanya saat tidak ada filter aktif', function () {
+    // Konfigurasi tabel global biasanya dipasang saat panel boot (tidak terjadi di test Livewire)
+    Layout::configureActions();
+
+    Livewire::test(ListProducts::class)
+        ->assertSeeHtml('gs-filters-inactive')
+        ->set('tableFilters.is_active.value', '1')
+        ->assertDontSeeHtml('gs-filters-inactive');
+});
+
+it('mengingat pilihan baris per halaman setelah halaman dimuat ulang', function () {
+    Layout::configureActions();
+    Product::factory()->count(7)->create();
+
+    Livewire::test(ListProducts::class)->set('tableRecordsPerPage', 5);
+
+    Livewire::test(ListProducts::class)
+        ->assertSet('tableRecordsPerPage', 5)
+        ->assertSeeText('1–5 dari 7');
 });
 
 it('tetap menampilkan pager walau hanya satu halaman', function () {
