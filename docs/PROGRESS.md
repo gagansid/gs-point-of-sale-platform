@@ -71,7 +71,7 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | 1 | Keputusan: ADR 0009, SPEC Q30–Q34, error code `SUBSCRIPTION_EXPIRED` & `EMAIL_NOT_VERIFIED` | ✅ |
 | 2 | Setelan admin (`trial_days`, `signup_enabled`); tingkat akses tenant penuh/hanya-baca/diblokir di API & dashboard + banner | ✅ |
 | 3 | Daftar sendiri `gspos.id/daftar` (trial, rate limit, honeypot) + verifikasi email + masuk `app.` via tiket | ✅ |
-| 4 | Panduan setup beranda `app.` + template menu Kafe/Warung | Belum |
+| 4 | Panduan setup beranda `app.` (profil outlet → kategori → produk) + template menu Kafe/Warung. Langkah tablet/kasir menyusul di fase aplikasi kasir | Belum |
 | 5 | "Buat tenant dari lead" + link atur kata sandi + `gspos.id/lupa-sandi` | Belum |
 | 6 | Edisi `self_hosted`: `POS_EDITION`, `php artisan pos:install`, batas satu tenant | Belum |
 
