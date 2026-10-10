@@ -96,6 +96,16 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | M5 | Stok & katalog per outlet: `ProductStock` + `Product::atOutlet()`, `AdjustStock`, potong stok checkout, `/catalog`, `PinUsers` | ✅ |
 | M6 | Laporan & daftar (penjualan, shift, beranda) mengikuti outlet topbar; API `GET /outlets`, laporan `?outlet_id=` | ✅ |
 
+### 1d. Menu per outlet (ADR 0011, SPEC Q42–Q45) — sebelum kasir web & deploy
+
+| Langkah | Isi | Status |
+|---|---|---|
+| P1 | Keputusan: ADR 0011 (opsi B, tanpa harga per outlet, metode bayar aktif/nonaktif), SPEC Q39 diganti, Q42–Q45 | ✅ |
+| P2 | Data: `outlet_product.is_listed`, `outlet_option`, `outlet_payment_method` (+ migrasi data lama: dijual/aktif di semua outlet) | ⏳ |
+| P3 | Action: `SaveProduct` (outlet dijual), opsi habis per outlet, `UpdatePaymentMethod` per outlet, `CreateOutlet` salin dari outlet lain | ⏳ |
+| P4 | Dashboard: form produk, grup opsi, metode bayar, outlet baru | ⏳ |
+| P5 | API: `/catalog` & checkout memfilter outlet device; dokumen API | ⏳ |
+
 ### 2. Minggu 7 — panel `/admin` & keamanan
 
 - Resource **Versi Aplikasi** (`app_versions`; cache otomatis terhapus via event model) dan

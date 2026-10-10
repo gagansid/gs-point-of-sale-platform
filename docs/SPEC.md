@@ -223,9 +223,10 @@ tabel master memakai soft delete.
 | Akses | `devices` | tenant_id, outlet_id, name, device_uid (unik per tenant), platform, app_version, last_seen_at, revoked_at |
 | Produk | `categories` | tenant_id, name, sort_order, is_active (Q27) |
 | Produk | `products` | tenant_id, category_id (nullable), name, sku, barcode, price, cost_price, track_stock, image_path, is_active, is_favorite (favorit outlet, Q25), sort_order (urutan tampil kasir) |
-| Produk | `outlet_product` | tenant_id, outlet_id, product_id (unik per outlet), stock_qty, min_stock (batas stok menipis, Q24), is_available (tanda habis, Q12) — stok & ketersediaan per outlet (Q40) |
+| Produk | `outlet_product` | tenant_id, outlet_id, product_id (unik per outlet), stock_qty, min_stock (batas stok menipis, Q24), is_available (tanda habis, Q12), is_listed (dijual di outlet, Q42) — stok & ketersediaan per outlet (Q40) |
 | Produk | `option_groups` | tenant_id, name (Ukuran, Gula, Topping), min_select, max_select, is_active (Q27) |
 | Produk | `options` | tenant_id (Q13), option_group_id, name, price_delta, sort_order |
+| Produk | `outlet_option` | tenant_id, outlet_id, option_id (unik per outlet), is_available — opsi habis per outlet (Q43) |
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
 | Transaksi | `shifts` | tenant_id, outlet_id, device_id, opened_by, closed_by, opening_cash, expected_cash, actual_cash, difference, status, close_note, open_device_key (unik: 1 shift terbuka per device), opened_at, closed_at |
 | Transaksi | `order_sequences` | outlet_id, date, last_number (penomoran order harian) |
@@ -233,6 +234,7 @@ tabel master memakai soft delete.
 | Transaksi | `order_items` | order_id, product_id, product_name, unit_price, options_total, qty, discount, line_total, notes |
 | Transaksi | `order_item_options` | order_item_id, option_id, option_name, price_delta |
 | Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |
+| Pembayaran | `outlet_payment_method` | tenant_id, outlet_id, payment_method_id (unik per outlet), is_active — metode bayar per outlet (Q44) |
 | Produk | `stock_movements` | tenant_id, outlet_id, product_id, user_id, type (adjustment/sale/void_return), qty_change, qty_after, reason, reference_id — riwayat stok (Q14) |
 | Pembayaran | `payments` | tenant_id, order_id, payment_method_id, user_id, category, amount (dipakai membayar), tendered (uang diterima), change, reference (approval code), status |
 | Sistem Laravel | `personal_access_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs` | Bawaan Laravel / Sanctum |
@@ -596,8 +598,12 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q36 | Multi-outlet | Dimajukan dari Fase 2: owner menambah outlet (Pengaturan → Outlet), batas `tenants.max_outlets` diatur admin (SaaS). Outlet dinonaktifkan, tidak dihapus. | Diterima | ADR 0010 |
 | Q37 | Penugasan outlet | `outlet_user` banyak-ke-banyak menggantikan `users.outlet_id`. Owner otomatis semua outlet; manager, supervisor, kasir boleh lebih dari satu. | Diterima | ADR 0010 |
 | Q38 | Akses per outlet | Order, shift, laporan, perangkat, stok hanya untuk outlet yang ditugaskan; outlet lain → `404 NOT_FOUND` (fail-closed). | Diterima | ADR 0010 |
-| Q39 | Katalog & harga | Katalog dan harga sama untuk semua outlet. Harga per outlet di luar cakupan. | Diterima | ADR 0010 |
+| Q39 | Katalog & harga | ~~Katalog dan harga sama untuk semua outlet.~~ Diganti Q42: katalog bersama, produk dipilih per outlet; harga tetap sama (harga per outlet di backlog). | Diganti | ADR 0010, ADR 0011 |
 | Q40 | Stok per outlet | `outlet_product`: `is_available`, `stock_qty`, `min_stock` per outlet; "lacak stok" tetap setting produk. Checkout memotong stok outlet device. | Diterima | ADR 0010 |
 | Q41 | Pemilih outlet dashboard | Topbar: "Semua outlet" atau satu outlet, disimpan di session; laporan/penjualan/shift mengikuti. | Diterima | ADR 0010 |
+| Q42 | Menu per outlet | `outlet_product.is_listed` (default true): produk dijual di outlet. Tidak dijual → tidak dikirim di `/catalog`, checkout `VALIDATION_ERROR` per item. Kategori tampil bila ada produk yang dijual di outlet. | Diterima | ADR 0011 |
+| Q43 | Opsi habis per outlet | `outlet_option.is_available` (tanpa baris = tersedia). Opsi habis dikirim dengan `is_available=false`; checkout `VALIDATION_ERROR` per item. | Diterima | ADR 0011 |
+| Q44 | Metode bayar per outlet | `outlet_payment_method.is_active`; metode dipakai bila aktif di bisnis dan di outlet device. Nama tetap satu per bisnis. Nonaktif → `VALIDATION_ERROR` per pembayaran. | Diterima | ADR 0011 |
+| Q45 | Outlet baru | Opsi salin menu & metode bayar dari outlet lain (default outlet pertama); tanpa salin = semua produk dijual, semua metode aktif. Migrasi: data lama dijual/aktif di semua outlet. | Diterima | ADR 0011 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |
