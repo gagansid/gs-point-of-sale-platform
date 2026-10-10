@@ -66,6 +66,13 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
    `HasIconBreadcrumbs` meng-escape label sendiri. Diuji di `tests/Feature/Filament/PanelLayoutTest.php`.
 10. Keluar panel lewat modal konfirmasi; aksinya sama dengan `LogoutController` Filament: logout guard,
     `session()->invalidate()`, `regenerateToken()`, lalu redirect ke halaman login internal.
+11. Login pelanggan di `gspos.id/login` (ADR 0008): user dicari lintas tenant + `Hash::check` dengan hash dummy
+    (waktu konstan), pesan umum "Email atau kata sandi salah", 5 percobaan/menit per email+IP. Sesi di `app.`
+    hanya lewat tiket sekali pakai (acak 64, disimpan sebagai hash, 60 detik, `Cache::pull`). Parameter
+    `next` hanya path relatif (`DashboardLoginTicket::safePath`: tolak URL absolut, `//`, `\`, karakter kontrol).
+    Diuji di `tests/Feature/Routing/CentralLoginTest.php`.
+12. Form publik (hubungi sales): honeypot `website` (bot mendapat respons sukses tanpa disimpan), throttle
+    `contact` 3/menit & 10/jam per IP, CSRF, batas panjang tiap field, IP disimpan sebagai HMAC (bukan mentah).
 
 ## 3. Header keamanan (sudah aktif)
 
@@ -86,13 +93,17 @@ CSP untuk panel Filament (butuh skrip Livewire/Alpine) disusun di langkah panel,
 ## 4. Hosting cPanel (sebelum rilis)
 
 - [ ] Domain di belakang **Cloudflare** (proxy oranye): WAF managed rules, Bot Fight Mode,
-      rate limiting rule untuk `/api/v1/auth/*`, SSL mode **Full (strict)**.
+      rate limiting rule untuk `api.gspos.id/v1/auth/*` dan `admin.gspos.id/login`, SSL mode **Full (strict)**.
 - [ ] Jika memakai Cloudflare, set trusted proxies agar IP asli terbaca (rate limit per IP akurat).
 - [ ] AutoSSL aktif; ModSecurity cPanel aktif.
 - [ ] Project di luar `public_html`; document root ke `public/` (SPEC Deploy).
 - [ ] `.env` production: `APP_DEBUG=false`, `APP_ENV=production`, `SESSION_SECURE_COOKIE=true`.
 - [ ] PHP `post_max_size` ≤ 8M, `expose_php=Off`, `display_errors=Off`.
 - [ ] Izin file: folder 755, file 644, `.env` 600.
+- [ ] Subdomain (ADR 0008): `SESSION_DOMAIN` **kosong** (cookie host-only — sesi `app.` tidak terbawa ke
+      `admin.`); jangan diisi `.gspos.id`. Opsional: batasi `admin.gspos.id` per IP kantor di Cloudflare/cPanel.
+- [ ] Route pengalih URL lama (`/dashboard/*`, `/admin/*`, `/api/v1/*` di domain utama) tanpa CSRF —
+      aman karena hanya mengembalikan redirect ke host tetap dari env (bukan dari input pengguna).
 - [ ] Backup harian terenkripsi & uji restore.
 
 ## 5. Anti-phishing (non-kode)
@@ -110,7 +121,7 @@ Phishing menyerang **manusia**, sehingga kontrolnya sebagian besar operasional:
 
 - [ ] `composer check` hijau (termasuk `composer audit`).
 - [ ] Semua endpoint punya test permission & isolasi tenant.
-- [ ] Scan otomatis: OWASP ZAP baseline terhadap staging (`/api/v1`, `/dashboard`, `/admin`).
+- [ ] Scan otomatis: OWASP ZAP baseline terhadap staging (`api.`, `app.`, `admin.` dan domain utama).
 - [ ] Uji manual: IDOR antar tenant, brute force PIN, manipulasi nominal checkout, replay request,
       upload file berbahaya, akses `/admin` dengan akun tenant.
 - [ ] Hasil scan & perbaikan dicatat di `docs/security/{YYYY-MM-DD}-pentest.md`.

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Dashboard\Pages\Auth\Login;
 use App\Filament\Shared\Layout;
 use App\Filament\Shared\Pages\Home;
 use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\SetDashboardTenant;
+use App\Support\Domains;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -33,9 +35,11 @@ final class DashboardPanelProvider extends PanelProvider
     {
         return Layout::apply($panel)
             ->id('dashboard')
-            ->path('dashboard')
+            ->domain(Domains::app())
+            ->path(Domains::appPath())
             ->authGuard('web')
-            ->login()
+            // Dengan subdomain: mengalihkan ke gspos.id/login (ADR 0008)
+            ->login(Login::class)
             ->profile(isSimple: false)
             ->colors(Theme::colors())
             ->font('Plus Jakarta Sans')

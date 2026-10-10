@@ -24,11 +24,11 @@ Error umum semua endpoint: `401 UNAUTHENTICATED`, `403 FORBIDDEN` (permission),
 
 ---
 
-## `GET /api/v1/catalog`
+## `GET /v1/catalog`
 
 Seluruh katalog untuk aplikasi kasir dalam satu respons.
 
-- Produk **nonaktif tidak dikirim**. Produk "habis" tetap dikirim dengan `is_available: false`
+- Produk **nonaktif tidak dikirim**, begitu juga kategori/grup opsi nonaktif dan produk di kategori nonaktif. Produk "habis" tetap dikirim dengan `is_available: false`
   (tampilkan abu-abu, tidak bisa dipilih).
 - `cost_price` hanya dikirim untuk user dengan `product.manage`.
 - `is_favorite: true` → tampilkan di tab **Favorit** layar kasir (ditandai owner/manager di dashboard).
@@ -66,7 +66,7 @@ Test: `tests/Feature/Api/V1/Product/CatalogTest.php`
 
 ---
 
-## `GET /api/v1/products`
+## `GET /v1/products`
 
 Query: `search` (nama/SKU/barcode; `%` dan `_` dicari apa adanya), `category_id`, `is_active`,
 `sort`, `page`, `per_page` (default 20, maks. 100). Respons daftar + `meta.pagination`.
@@ -76,13 +76,13 @@ Kolom yang diizinkan: `name`, `price`, `stock_qty`, `sort_order`, `created_at`, 
 nilai lain → `422 VALIDATION_ERROR`. Tanpa `sort`: `sort_order` lalu `name`. Seri dipecah dengan `id`
 agar urutan antar halaman stabil.
 
-## `GET /api/v1/products/barcode/{code}`
+## `GET /v1/products/barcode/{code}`
 
 Produk **aktif** dengan barcode tersebut. `code`: `[A-Za-z0-9-]`, maks. 50. Tidak ada → 404.
 
 ---
 
-## `POST /api/v1/products` · `PUT /api/v1/products/{id}`
+## `POST /v1/products` · `PUT /v1/products/{id}`
 
 | Field | Tipe | Wajib | Aturan |
 |---|---|---|---|
@@ -107,7 +107,7 @@ Test: `tests/Feature/Api/V1/Product/ProductTest.php`
 
 ---
 
-## `POST /api/v1/products/{id}/stock`
+## `POST /v1/products/{id}/stock`
 
 Penyesuaian stok manual; tercatat di riwayat `stock_movements`.
 
@@ -132,7 +132,7 @@ Penyesuaian stok manual; tercatat di riwayat `stock_movements`.
 - Stok boleh minus (SPEC). Baris produk dikunci saat menyesuaikan.
 - Produk tanpa `track_stock` → `422 VALIDATION_ERROR` ("Produk ini tidak melacak stok").
 
-## `PATCH /api/v1/products/{id}/availability`
+## `PATCH /v1/products/{id}/availability`
 
 Body `{ "is_available": false }`. Menandai menu habis/tersedia tanpa mengubah data lain.
 Owner, manager, supervisor.
@@ -143,8 +143,10 @@ Test keduanya: `tests/Feature/Api/V1/Product/StockAndAvailabilityTest.php`
 
 ## Kategori — `POST /categories`, `PUT/DELETE /categories/{id}`
 
-Body `{ "id"?: uuid, "name": string ≤ 100, "sort_order"?: int }`. Kategori baru tanpa
-`sort_order` diletakkan paling akhir. **Hapus kategori tidak menghapus produknya** — produk menjadi
+Body `{ "id"?: uuid, "name": string ≤ 100, "sort_order"?: int, "is_active"?: bool }`. Kategori baru tanpa
+`sort_order` diletakkan paling akhir. `is_active` default `true`; di PUT bila tidak dikirim tetap memakai
+nilai lama. **Kategori nonaktif tidak dikirim di katalog beserta produknya** dan produknya ditolak saat
+checkout (SPEC Q27). **Hapus kategori tidak menghapus produknya** — produk menjadi
 tanpa kategori.
 
 Test: `tests/Feature/Api/V1/Product/CategoryTest.php`
@@ -157,6 +159,7 @@ Test: `tests/Feature/Api/V1/Product/CategoryTest.php`
   "name": "Ukuran",
   "min_select": 1,
   "max_select": 1,
+  "is_active": true,
   "options": [
     { "id": "…opsi lama", "name": "Regular", "price_delta": 0 },
     { "name": "Large", "price_delta": 5000 }
@@ -167,6 +170,9 @@ Test: `tests/Feature/Api/V1/Product/CategoryTest.php`
 - `0 ≤ min_select ≤ max_select ≤ 20`, `max_select ≥ 1`, 1–50 opsi, nama opsi unik dalam grup.
 - PUT menyinkronkan opsi: ber-`id` diubah, tanpa `id` ditambah, yang tidak dikirim dihapus.
   `id` opsi milik grup lain diperlakukan sebagai opsi baru (tidak bisa diambil alih).
+- `is_active` default `true`; di PUT bila tidak dikirim tetap memakai nilai lama. Grup nonaktif tidak
+  dikirim di katalog dan dilepas dari `option_group_ids` produk; saat checkout tidak wajib dipilih dan
+  opsinya ditolak (SPEC Q27).
 - Hapus grup → dilepas dari semua produk.
 
 Test: `tests/Feature/Api/V1/Product/OptionGroupTest.php`

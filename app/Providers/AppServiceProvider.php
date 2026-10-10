@@ -136,6 +136,12 @@ class AppServiceProvider extends ServiceProvider
                 ->by($token instanceof PersonalAccessToken ? 'token:'.$token->getKey() : 'ip:'.$request->ip());
         });
 
+        // Form hubungi sales di halaman depan: 3/menit & 10/jam per IP (anti-spam)
+        RateLimiter::for('contact', fn (Request $request): array => [
+            Limit::perMinute(3)->by('contact-m:'.$request->ip()),
+            Limit::perHour(10)->by('contact-h:'.$request->ip()),
+        ]);
+
         // Login & PIN: 5/menit per IP + device (SPEC Keamanan). Batas kedua per IP saja
         // mencegah penyerang mengganti-ganti device_uid untuk brute force PIN.
         RateLimiter::for('auth', function (Request $request): array {

@@ -23,9 +23,14 @@ Indonesia tanpa mengubah kode.
 
 | Bagian | Route | Pengguna | Autentikasi |
 |---|---|---|---|
-| REST API v1 | `/api/v1/...` | Aplikasi `gs-point-of-sale-app` (kasir & owner) | Laravel Sanctum token per device |
-| Dashboard | `/dashboard` | Owner / manager tiap bisnis | Session (Filament) |
-| Maintenance | `/admin` | Super admin (pengelola sistem) | Session (Filament), tabel user terpisah |
+| Halaman depan | `gspos.id` | Calon pelanggan (penjualan + hubungi sales) | — |
+| REST API v1 | `api.gspos.id/v1/...` | Aplikasi `gs-point-of-sale-app` (kasir & owner) | Laravel Sanctum token per device |
+| Dashboard | `app.gspos.id` (mis. `/products`) | Owner / manager tiap bisnis | Session (Filament), cookie hanya untuk subdomain ini |
+| Maintenance | `admin.gspos.id` | Super admin (pengelola sistem) | Session (Filament), tabel user terpisah, cookie terpisah |
+
+Subdomain diatur lewat env `POS_APP_DOMAIN`, `POS_ADMIN_DOMAIN`, `POS_API_DOMAIN` (ADR 0008). Bila
+kosong, semua di satu domain: `/dashboard`, `/admin`, `/api/v1` (dipakai test). URL lama di domain utama
+dialihkan ke subdomain baru.
 
 ## Kebutuhan server
 
@@ -207,14 +212,15 @@ tabel master memakai soft delete.
 | Sistem | `admins` | name, email, password, last_login_at |
 | Sistem | `app_versions` | platform, min_version, latest_version, force_update |
 | Sistem | `announcements` | title, body, starts_at, ends_at (banner ke semua tenant) |
+| Sistem | `sales_leads` | name, business_name, phone, email, city, business_type, message, status (new/contacted/won/lost), notes, ip_hash — form "Hubungi sales" di gspos.id, data platform (tanpa tenant), dikelola di panel admin (Q29) |
 | Sistem | `system_settings` | key, value (JSON), updated_by — setelan global dari panel `/admin`, mis. wajib 2FA (ADR 0006) |
 | Akses | `tenants` | name, slug, business_type (cafe/retail/other), status (trial/active/suspended), subscription_ends_at |
 | Akses | `outlets` | tenant_id, code, name, address, tax_rate, service_charge_rate, tax_inclusive, rounding, receipt_header, receipt_footer, discount_limits (JSON), timezone (default `Asia/Jakarta`, ADR 0001) |
 | Akses | `users` | tenant_id, outlet_id, name, email (unik global, boleh kosong untuk kasir), password, pin (hash), pin_failed_attempts, pin_locked_until, role, is_active, last_login_at |
 | Akses | `devices` | tenant_id, outlet_id, name, device_uid (unik per tenant), platform, app_version, last_seen_at, revoked_at |
-| Produk | `categories` | tenant_id, name, sort_order |
+| Produk | `categories` | tenant_id, name, sort_order, is_active (Q27) |
 | Produk | `products` | tenant_id, category_id (nullable), name, sku, barcode, price, cost_price, track_stock, stock_qty, min_stock (batas stok menipis, Q24), image_path, is_active, is_available (tanda habis, Q12), is_favorite (favorit outlet, Q25), sort_order (urutan tampil kasir) |
-| Produk | `option_groups` | tenant_id, name (Ukuran, Gula, Topping), min_select, max_select |
+| Produk | `option_groups` | tenant_id, name (Ukuran, Gula, Topping), min_select, max_select, is_active (Q27) |
 | Produk | `options` | tenant_id (Q13), option_group_id, name, price_delta, sort_order |
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
 | Transaksi | `shifts` | tenant_id, outlet_id, device_id, opened_by, closed_by, opening_cash, expected_cash, actual_cash, difference, status, close_note, open_device_key (unik: 1 shift terbuka per device), opened_at, closed_at |
@@ -451,12 +457,14 @@ Memakai tabel `admins` dan guard sendiri. Tidak pernah bisa diakses akun tenant.
 
 ## Deploy ke cPanel
 
-Project di luar `public_html`; document root subdomain diarahkan ke folder `public`.
+Project di luar `public_html`. Domain utama dan **ketiga subdomain** (`app.`, `admin.`, `api.`)
+memakai document root yang sama: folder `public` (cPanel → Domains → Create/Manage → Document Root).
+SSL (AutoSSL/Let's Encrypt) diaktifkan untuk keempatnya.
 
 ```
 /home/{user}/
 ├── gs-point-of-sale-platform/      # Kode Laravel (hasil git clone)
-│   └── public/                     # ← Document root pos.domainanda.com
+│   └── public/                     # ← Document root gspos.id, app., admin., api.gspos.id
 └── public_html/                    # Website lain, tidak disentuh
 ```
 
@@ -467,7 +475,7 @@ Langkah rilis:
 3. `composer install --no-dev --optimize-autoloader`
 4. `php artisan migrate --force`
 5. `php artisan optimize` dan `php artisan filament:optimize`
-6. Cek `/api/v1/system/status` dan login dashboard.
+6. Cek `https://api.gspos.id/v1/system/status`, login `https://app.gspos.id`, dan `https://admin.gspos.id`.
 
 Cron (satu saja): `* * * * * cd /home/{user}/gs-point-of-sale-platform && php artisan schedule:run >> /dev/null 2>&1`
 (di beberapa hosting `php` diganti path lengkap, misal `/opt/cpanel/ea-php83/root/usr/bin/php`).
@@ -484,7 +492,12 @@ Cron (satu saja): `* * * * * cd /home/{user}/gs-point-of-sale-platform && php ar
 ```dotenv
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://pos.domainanda.com
+APP_URL=https://gspos.id
+POS_APP_DOMAIN=app.gspos.id     # ADR 0008
+POS_ADMIN_DOMAIN=admin.gspos.id
+POS_API_DOMAIN=api.gspos.id
+SESSION_DOMAIN=null         # cookie per subdomain: login app. tidak berlaku di admin.
+SESSION_SECURE_COOKIE=true
 APP_TIMEZONE=UTC            # zona tampilan diambil dari outlets.timezone (ADR 0001)
 DB_CONNECTION=mysql
 DB_DATABASE={user}_gspos
@@ -554,5 +567,8 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q22 | Approver void | Kolom `orders.void_approved_by` terpisah dari `approved_by` (approver diskon). | Diterima | Database |
 | Q24 | Stok menipis | Batas per produk `products.min_stock` (nullable). Menipis = `track_stock` dan 0 < stok ≤ `min_stock`; stok ≤ 0 = habis. API: `min_stock`, `is_low_stock`. Dashboard: tab "Stok menipis" + warna kuning. | Diterima | `docs/api/product.md` |
 | Q25 | Produk favorit | Tanda per produk untuk seluruh tenant (`products.is_favorite`), bukan per pengguna; aplikasi kasir menampilkan tab Favorit. Diubah dengan `product.manage`. | Diterima | `docs/api/product.md` |
+| Q27 | Status kategori & grup opsi | `categories.is_active`, `option_groups.is_active` (default aktif). Kategori nonaktif tidak dikirim di katalog **beserta produknya**, dan checkout menolak produk tersebut ("Produk tidak tersedia"). Grup opsi nonaktif tidak dikirim dan dilepas dari `option_group_ids` produk di katalog; saat checkout aturannya (min/maks) tidak berlaku dan opsinya ditolak. Diubah dengan `product.manage`. | Diterima | `docs/api/product.md` |
+| Q28 | URL & subdomain | `gspos.id` halaman depan, `app.gspos.id` panel pelanggan (tanpa `/dashboard`), `admin.gspos.id` panel super admin, `api.gspos.id/v1` API. Cookie session per subdomain. File publik `/storage` relatif ke host. | Diterima | ADR 0008 |
+| Q29 | Halaman depan & login | `gspos.id`: halaman penjualan + form hubungi sales (honeypot, 3/menit & 10/jam per IP, IP disimpan sebagai HMAC) → menu Admin "Calon pelanggan". Login owner/manager di `gspos.id/login` → `app.gspos.id` lewat tiket sekali pakai 60 detik; 5 percobaan/menit per email+IP, pesan umum, waktu konstan. | Diterima | ADR 0008 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |
