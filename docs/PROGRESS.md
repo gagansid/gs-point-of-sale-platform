@@ -103,7 +103,7 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | P1 | Keputusan: ADR 0011 (opsi B, tanpa harga per outlet, metode bayar aktif/nonaktif), SPEC Q39 diganti, Q42–Q45 | ✅ |
 | P2 | Data: `outlet_product.is_listed`, `outlet_option`, `outlet_payment_method` (tanpa baris = dijual/tersedia/aktif, data lama tidak disalin); `Product::listedAt()`, `OutletOption::unavailableIds()`, `PaymentMethod::activeAt()` | ✅ |
 | P3 | Action: `SetProductListing` (lewat `SaveProduct`, hanya outlet yang dipegang user), `SetOptionAvailability`, `SetPaymentMethodAtOutlet` (tunai selalu aktif), `CreateOutlet` `copyMenuFrom` (stok & opsi habis tidak disalin) | ✅ |
-| P4 | Dashboard: form produk, grup opsi, metode bayar, outlet baru | ⏳ |
+| P4 | Dashboard: form produk "Dijual di outlet" + badge/filter "Tidak dijual"; grup opsi aksi "Opsi habis" (outlet topbar, badge merah); metode bayar "Aktif di outlet" + kolom Outlet; tambah outlet "Salin menu & metode bayar dari" — dicek di browser | ✅ |
 | P5 | API: `/catalog` & checkout memfilter outlet device; dokumen API | ⏳ |
 
 ### 2. Minggu 7 — panel `/admin` & keamanan

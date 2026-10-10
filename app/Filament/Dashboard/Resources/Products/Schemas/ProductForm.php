@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Resources\Products\Schemas;
 
+use App\Actions\Product\SetProductListing;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Models\Category;
 use App\Models\OptionGroup;
 use App\Models\Outlet;
+use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -114,6 +117,18 @@ final class ProductForm
                                     ->maxSize(1024)
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']),
                             ]),
+                        Section::make('Dijual di outlet')
+                            ->description('Produk hanya tampil di aplikasi kasir outlet yang dicentang')
+                            // Hanya bila ada lebih dari satu outlet; tersembunyi = status dijual tidak diubah (ADR 0011)
+                            ->visible(fn (): bool => self::outletOptions() !== [] && Outlet::query()->active()->count() > 1)
+                            ->schema([
+                                CheckboxList::make('listed_outlet_ids')
+                                    ->hiddenLabel()
+                                    ->validationAttribute('outlet')
+                                    ->options(fn (): array => self::outletOptions())
+                                    ->default(fn (): array => array_keys(self::outletOptions()))
+                                    ->bulkToggleable(),
+                            ]),
                         Section::make('Status')
                             ->description('Atur tampil atau tidaknya di kasir')
                             ->schema([
@@ -136,6 +151,18 @@ final class ProductForm
             .'<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Zm10.5-11.25h.008v.008h-.008V9.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>'
             .'<span><span class="filepond--label-action">Pilih gambar</span> atau seret ke sini</span>'
             .'</span>';
+    }
+
+    /**
+     * Outlet aktif yang dipegang user login (manager hanya outletnya, owner semua).
+     *
+     * @return array<string, string>
+     */
+    private static function outletOptions(): array
+    {
+        $user = auth()->user();
+
+        return SetProductListing::manageableOutlets($user instanceof User ? $user : null)->pluck('name', 'id')->all();
     }
 
     /** SKU/barcode unik di antara produk tenant aktif yang belum dihapus. */

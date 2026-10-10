@@ -26,6 +26,7 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **DDoS volumetrik** | Cloudflare proxy + "Under Attack mode" | Hosting (§4) | ⏳ Sebelum rilis |
 | **Broken object level authorization (IDOR)** | Global scope tenant fail-closed + Policy; data tenant lain → 404; tenant_id tidak bisa disusupkan/diubah | `BelongsToTenant`, `SetTenantContext`, Policy | ✅ Langkah 3 (Policy per model menyusul) |
 | **Broken function level authorization** | Permission hanya dari role (`Gate::before`), wildcard dibatasi daftar permission, menu tersembunyi | `UserRole`, `AppServiceProvider`, Filament | ✅ Langkah 3 (menu: langkah 5) |
+| **Akses outlet lain lewat form menu (ADR 0011)** | "Dijual di outlet" hanya mengubah outlet aktif yang dipegang user; ID outlet di luar pilihan ditolak validasi form dan diabaikan Action (juga ID tenant lain); baris per outlet tenant-scoped | `SetProductListing`, `ProductForm`, `OutletMenu*Test` | ✅ Menu per outlet P3–P4 |
 | **Mass assignment** | `$fillable` eksplisit; `Model::shouldBeStrict()` di non-production | Model, `AppServiceProvider` | ✅ Langkah 2 |
 | **Manipulasi harga dari client** | Nominal selalu dihitung ulang `OrderCalculator`; harga & opsi dari DB; field nominal kiriman diabaikan (ada test) | `CheckoutOrder` | ✅ Minggu 4 |
 | **Replay / transaksi ganda** | ID client sebagai idempotency key + PK sebagai penjaga terakhir; nomor order & stok dengan row lock (diuji 30 checkout paralel di MySQL) | `CheckoutOrder`, `OrderNumberGenerator` | ✅ Minggu 4 |

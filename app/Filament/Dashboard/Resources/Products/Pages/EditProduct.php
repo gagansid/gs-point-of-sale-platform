@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\Products\Pages;
 
 use App\Actions\Product\Data\ProductData;
 use App\Actions\Product\SaveProduct;
+use App\Actions\Product\SetProductListing;
 use App\Filament\Dashboard\Resources\Products\Actions\ProductActions;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
@@ -35,6 +36,8 @@ final class EditProduct extends EditRecord
         if ($record instanceof Product) {
             $data['option_group_ids'] = $record->optionGroups()->pluck('option_groups.id')->all();
             $data['current_stock'] = $record->stock_qty;
+            $user = auth()->user();
+            $data['listed_outlet_ids'] = SetProductListing::listedOutletIds($record, $user instanceof User ? $user : null);
         }
 
         return $data;

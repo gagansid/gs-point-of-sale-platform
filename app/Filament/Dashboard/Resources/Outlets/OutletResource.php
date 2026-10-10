@@ -99,6 +99,15 @@ final class OutletResource extends Resource
             Select::make('timezone')->label('Zona waktu')->options(Timezones::OPTIONS)->required()->native(false)
                 ->default(config('pos.default_timezone'))
                 ->helperText('Dipakai untuk tanggal nomor order & laporan harian'),
+            // Hanya saat menambah outlet (ADR 0011 / Q45); stok & opsi habis tidak disalin
+            Select::make('copy_menu_from')->label('Salin menu & metode bayar dari')
+                ->options(fn (): array => Outlet::query()->orderBy('created_at')->pluck('name', 'id')->all())
+                ->default(fn (): ?string => Outlet::query()->orderBy('created_at')->value('id'))
+                ->placeholder('Tidak menyalin (semua produk dijual, semua metode aktif)')
+                ->helperText('Produk yang tidak dijual & metode bayar yang dimatikan di outlet itu ikut disalin')
+                ->native(false)
+                ->visibleOn('create')
+                ->columnSpanFull(),
         ]);
     }
 

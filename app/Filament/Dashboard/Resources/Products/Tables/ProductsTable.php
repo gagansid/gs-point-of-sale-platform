@@ -79,8 +79,17 @@ final class ProductsTable
                     ->label('Ketersediaan')
                     ->badge()
                     ->sortable()
-                    ->formatStateUsing(fn (bool $state): string => $state ? 'Tersedia' : 'Habis')
-                    ->color(fn (bool $state): string => $state ? 'success' : 'danger'),
+                    // Tidak dijual di outlet topbar (ADR 0011) didahulukan dari habis/tersedia
+                    ->formatStateUsing(fn (bool $state, Product $record): string => match (true) {
+                        ! $record->is_listed => 'Tidak dijual',
+                        $state => 'Tersedia',
+                        default => 'Habis',
+                    })
+                    ->color(fn (bool $state, Product $record): string => match (true) {
+                        ! $record->is_listed => 'gray',
+                        $state => 'success',
+                        default => 'danger',
+                    }),
                 IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable()->toggleable(),
             ])
             ->filters([
@@ -98,6 +107,13 @@ final class ProductsTable
                     ->queries(
                         true: fn (Builder $query) => $query->scopes(['availableAt' => [CurrentOutlet::getOrFail()->id, true]]),
                         false: fn (Builder $query) => $query->scopes(['availableAt' => [CurrentOutlet::getOrFail()->id, false]]),
+                        blank: fn (Builder $query) => $query,
+                    ),
+                TernaryFilter::make('is_listed')->label('Dijual di outlet ini')->trueLabel('Dijual')->falseLabel('Tidak dijual')
+                    ->queries(
+                        true: fn (Builder $query) => $query->scopes(['listedAt' => [CurrentOutlet::getOrFail()->id]]),
+                        false: fn (Builder $query) => $query->whereHas('stocks', fn (Builder $stock) => $stock
+                            ->where('outlet_id', CurrentOutlet::getOrFail()->id)->where('is_listed', false)),
                         blank: fn (Builder $query) => $query,
                     ),
                 TernaryFilter::make('is_favorite')->label('Favorit')->trueLabel('Favorit')->falseLabel('Bukan favorit'),

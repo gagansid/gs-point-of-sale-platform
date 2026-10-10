@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -36,5 +37,15 @@ final class Option extends Model
     public function group(): BelongsTo
     {
         return $this->belongsTo(OptionGroup::class, 'option_group_id');
+    }
+
+    /**
+     * Status habis per outlet (ADR 0011 / Q43); tanpa baris = tersedia.
+     *
+     * @return HasMany<OutletOption, $this>
+     */
+    public function outletStates(): HasMany
+    {
+        return $this->hasMany(OutletOption::class);
     }
 }

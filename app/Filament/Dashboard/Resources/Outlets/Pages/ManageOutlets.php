@@ -77,6 +77,7 @@ final class ManageOutlets extends ManageRecords
                             (string) $data['name'],
                             isset($data['address']) ? (string) $data['address'] : null,
                             (string) $data['timezone'],
+                            filled($data['copy_menu_from'] ?? null) ? Outlet::query()->findOrFail($data['copy_menu_from']) : null,
                         );
                     } catch (BusinessException $e) {
                         Notification::make()->danger()->title($e->getMessage())->send();
