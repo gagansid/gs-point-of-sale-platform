@@ -30,12 +30,18 @@
 
 ## Standar widget beranda `/dashboard`
 
+Angka mengikuti filter Beranda (periode + pembanding); deskripsi tren "Naik/Turun X% dari periode sebelumnya".
+
 | Urutan | Label | Nilai | Deskripsi |
 |---|---|---|---|
-| 1 | Omzet hari ini | Σ `grand_total` order selesai | Tren vs kemarin |
-| 2 | Transaksi | Jumlah order selesai | Tren vs kemarin |
-| 3 | Rata-rata transaksi | Omzet ÷ transaksi | — |
-| 4 | Stok habis | Jumlah produk `track_stock` dengan stok ≤ 0 | Link "Lihat produk" |
+| 1 | Omzet | Σ `grand_total` order selesai | Tren vs pembanding + sparkline (per jam / per hari) |
+| 2 | Transaksi | Jumlah order selesai | Tren, link ke Penjualan |
+| 3 | Rata-rata transaksi | Omzet ÷ transaksi | Tren |
+| 4 | Item terjual | Σ qty item | Tren |
+| 5 | Total diskon | Σ `discount_total` | Tren terbalik (naik = merah) |
+| 6 | Pajak & service | Σ pajak + service | Rincian keduanya |
+| 7 | Void | Jumlah order void | Nominal void, `warning` bila > 0 |
+| 8 | Stok habis | Produk `track_stock` dengan stok ≤ 0 di outlet | Link "Lihat daftar produk" |
 
 ## Spesifikasi
 

@@ -35,7 +35,7 @@ beforeEach(function () {
 });
 
 it('beranda menampilkan omzet hari ini', function () {
-    $this->get('/dashboard')->assertOk()->assertSee('Omzet hari ini')->assertSee('Rp28.000')->assertSee('Produk terlaris');
+    $this->get('/dashboard')->assertOk()->assertSee('Omzet')->assertSee('Rp28.000')->assertSee('Produk terlaris');
 });
 
 it('widget laporan disembunyikan untuk yang tanpa report.view', function () {

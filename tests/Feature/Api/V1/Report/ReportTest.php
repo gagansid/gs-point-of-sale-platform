@@ -94,3 +94,116 @@ it('isolasi: laporan tidak memuat transaksi tenant lain', function () {
 
     fetchReport($this, 'summary')->assertJsonPath('data.order_count', 2)->assertJsonPath('data.revenue', '83900.00');
 });
+
+// ---------- Beranda: /reports/dashboard, /reports/hourly, /reports/audit ----------
+
+it('dashboard: KPI dibanding periode sebelumnya, tren per jam untuk 1 hari', function () {
+    fetchReport($this, 'dashboard')
+        ->assertOk()
+        ->assertJsonPath('data.period.granularity', 'hour')
+        ->assertJsonPath('data.comparison', ['from' => '2026-10-07', 'to' => '2026-10-07'])
+        ->assertJsonPath('data.summary.revenue', '83900.00')
+        ->assertJsonPath('data.previous_summary.revenue', '28000.00')
+        // (83.900 − 28.000) ÷ 28.000 = 199,64%
+        ->assertJsonPath('data.changes.revenue', '199.6')
+        ->assertJsonPath('data.changes.order_count', '100.0')
+        ->assertJsonPath('data.trend.0', ['hour' => 0, 'revenue' => '28000.00', 'order_count' => 1])
+        ->assertJsonPath('data.trend.12', ['hour' => 12, 'revenue' => '55900.00', 'order_count' => 1])
+        ->assertJsonPath('data.previous_trend.23.revenue', '28000.00')
+        ->assertJsonPath('data.order_types.0', ['order_type' => 'takeaway', 'label' => 'Bawa pulang', 'order_count' => 2, 'revenue' => '83900.00'])
+        ->assertJsonPath('data.order_types.1.order_count', 0)
+        ->assertJsonPath('data.top_products.0.product_name', 'Croissant')
+        ->assertJsonPath('data.outlets.0.revenue', '83900.00');
+});
+
+it('dashboard: rentang beberapa hari = tren harian; compare none / tahun lalu', function () {
+    fetchReport($this, 'dashboard?from=2026-10-07&to=2026-10-08&compare=none')
+        ->assertJsonPath('data.period.granularity', 'day')
+        ->assertJsonPath('data.trend.*.revenue', ['28000.00', '83900.00'])
+        ->assertJsonPath('data.comparison', null)
+        ->assertJsonPath('data.previous_summary', null)
+        ->assertJsonPath('data.changes.revenue', null);
+
+    fetchReport($this, 'dashboard?compare=previous_year')
+        ->assertJsonPath('data.comparison', ['from' => '2025-10-08', 'to' => '2025-10-08'])
+        // Pembanding 0 → persen tidak terdefinisi
+        ->assertJsonPath('data.changes.revenue', null);
+});
+
+it('filter metode bayar, tipe order, dan kasir membatasi angka', function () {
+    $qris = $this->pos->methods['qris']->id;
+
+    fetchReport($this, "dashboard?payment_method_ids[]={$qris}")
+        ->assertJsonPath('data.summary.order_count', 1)
+        ->assertJsonPath('data.summary.revenue', '28000.00')
+        ->assertJsonPath('data.payment_methods.0.name', 'QRIS')
+        ->assertJsonCount(1, 'data.payment_methods');
+
+    fetchReport($this, 'summary?order_type=dine_in')->assertJsonPath('data.order_count', 0);
+    fetchReport($this, 'summary?user_ids[]='.$this->pos->cashier->id)->assertJsonPath('data.order_count', 2);
+    fetchReport($this, 'summary?user_ids[]='.uuid())->assertJsonPath('data.order_count', 0)->assertJsonPath('data.void_count', 0);
+});
+
+it('jam ramai per jam lokal outlet', function () {
+    fetchReport($this, 'hourly?from=2026-10-07&to=2026-10-08')
+        ->assertOk()
+        ->assertJsonCount(24, 'data.hours')
+        ->assertJsonPath('data.hours.0.order_count', 1)
+        ->assertJsonPath('data.hours.12.revenue', '55900.00')
+        ->assertJsonPath('data.hours.23.order_count', 1);
+});
+
+it('audit: void dengan pelaku & alasan', function () {
+    fetchReport($this, 'audit')
+        ->assertOk()
+        ->assertJsonPath('data.void_count', 1)
+        ->assertJsonPath('data.void_total', '28000.00')
+        ->assertJsonPath('data.voids.0.voided_by', 'Sari')
+        ->assertJsonPath('data.voids.0.reason', 'Salah')
+        ->assertJsonPath('data.discount_count', 0)
+        ->assertJsonPath('data.shift_issue_count', 0);
+});
+
+it('audit: shift ditutup dengan selisih kas tercatat', function () {
+    TenantContext::run($this->pos->tenantId, fn () => $this->pos->shift->forceFill([
+        'status' => 'closed', 'expected_cash' => '300000.00', 'actual_cash' => '290000.00',
+        'difference' => '-10000.00', 'closed_by' => $this->pos->cashier->id, 'closed_at' => '2026-10-08 09:00:00',
+    ])->save());
+
+    fetchReport($this, 'audit')
+        ->assertJsonPath('data.shift_issue_count', 1)
+        ->assertJsonPath('data.shift_difference_total', '-10000.00')
+        ->assertJsonPath('data.shifts.0.cashier', 'Budi')
+        ->assertJsonPath('data.shifts.0.difference', '-10000.00');
+});
+
+it('validasi filter dashboard', function (string $query) {
+    assertApiError(fetchReport($this, "dashboard?{$query}"), 'VALIDATION_ERROR', 422);
+})->with(['compare=kemarin', 'order_type=delivery', 'payment_method_ids[]=bukan-uuid', 'user_ids=abc']);
+
+it('dashboard, jam ramai & audit butuh report.view', function (string $path) {
+    assertApiError(fetchReport($this, $path, $this->pos->cashier), 'FORBIDDEN', 403);
+    assertApiError(fetchReport($this, $path, $this->pos->supervisor), 'FORBIDDEN', 403);
+})->with(['dashboard', 'hourly', 'audit']);
+
+it('isolasi: dashboard & audit tidak memuat data tenant lain; filter ID asing tidak bocor', function () {
+    $other = posSetup();
+    $foreign = sellAt($other, '2026-10-08 05:00:00', 'cash', 5);
+    TenantContext::run($other->tenantId, fn () => app(VoidOrder::class)->handle($other->supervisor, sellAt($other, '2026-10-08 06:00:00'), 'Asing', null));
+    TenantContext::forget();
+    Carbon::setTestNow('2026-10-08 10:00:00');
+
+    fetchReport($this, 'dashboard')
+        ->assertJsonPath('data.summary.revenue', '83900.00')
+        ->assertJsonCount(1, 'data.outlets');
+    fetchReport($this, 'audit')->assertJsonPath('data.void_count', 1)->assertJsonMissing(['reason' => 'Asing']);
+    fetchReport($this, 'dashboard?payment_method_ids[]='.$other->methods['cash']->id.'&user_ids[]='.$foreign->user_id)
+        ->assertJsonPath('data.summary.order_count', 0);
+});
+
+it('request ganda menghasilkan angka yang sama (hanya baca)', function () {
+    $first = fetchReport($this, 'dashboard')->json('data');
+    $second = fetchReport($this, 'dashboard')->json('data');
+
+    expect($second)->toBe($first)->and(Order::allTenants()->count())->toBe(4);
+});

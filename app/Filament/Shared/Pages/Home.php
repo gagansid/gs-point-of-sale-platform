@@ -8,7 +8,8 @@ use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use Filament\Pages\Dashboard;
 
 /**
- * Beranda kedua panel: Dashboard bawaan Filament + judul berikon (HasIconBreadcrumbs).
+ * Beranda panel /admin: Dashboard bawaan Filament + judul berikon (HasIconBreadcrumbs).
+ * Panel /dashboard memakai App\Filament\Dashboard\Pages\Home (ringkasan bisnis berfilter).
  */
 final class Home extends Dashboard
 {

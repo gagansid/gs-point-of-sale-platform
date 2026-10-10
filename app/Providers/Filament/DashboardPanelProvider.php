@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Filament\Dashboard\Pages\Auth\Login;
+use App\Filament\Dashboard\Pages\Home;
 use App\Filament\Shared\Layout;
-use App\Filament\Shared\Pages\Home;
 use App\Filament\Shared\Theme;
 use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Controllers\Web\ReceiptController;
@@ -70,7 +70,7 @@ final class DashboardPanelProvider extends PanelProvider
                 Home::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Dashboard/Widgets'), for: 'App\Filament\Dashboard\Widgets')
-            // Widget beranda ditemukan otomatis dari app/Filament/Dashboard/Widgets
+            // Urutan widget beranda diatur di Pages\Home::getWidgets()
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

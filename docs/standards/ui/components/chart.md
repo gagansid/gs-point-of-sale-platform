@@ -36,7 +36,7 @@ Status (success/warning/danger) **tidak** dipakai sebagai warna kategori agar ti
 ## Perilaku & state
 
 - Data dari `ReportService`, sama dengan endpoint `/reports/*`.
-- Periode default: 7 hari terakhir (beranda), mengikuti filter halaman (laporan).
+- Periode mengikuti filter halaman: Beranda (default hari ini, dengan seri pembanding abu-abu putus-putus) dan Laporan.
 - Kosong: teks "Belum ada data pada periode ini" di tengah area chart.
 - Animasi mati dengan `animation: { duration: 0 }` — **bukan** `animation: false` (membuat chart.js Filament gagal dirender).
 - Sumbu & tooltip berformat Rupiah lewat `getOptions(): RawJs` (lihat `RevenueChartWidget`).

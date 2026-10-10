@@ -5,14 +5,21 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Widgets\Concerns;
 
 use App\Models\User;
+use App\Services\Report\ReportFilters;
+use App\Services\Report\ReportPeriod;
 use App\Support\CurrentOutlet;
-use Carbon\CarbonImmutable;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Livewire\Attributes\On;
 
 /**
- * Bersama untuk widget beranda: hanya untuk yang punya report.view, rentang hari lokal outlet.
+ * Bersama untuk widget beranda: hanya untuk yang punya report.view, angka mengikuti filter
+ * halaman Beranda ($pageFilters, reaktif: widget dirender ulang setiap filter berubah).
+ * Tanpa filter (mis. test widget langsung) = hari ini, dibanding periode sebelumnya.
  */
 trait ReportWidget
 {
+    use InteractsWithPageFilters;
+
     public static function canView(): bool
     {
         $user = auth()->user();
@@ -20,16 +27,31 @@ trait ReportWidget
         return $user instanceof User && $user->can('report.view');
     }
 
-    /**
-     * Rentang N hari terakhir (termasuk hari ini) dalam UTC.
-     *
-     * @return array{0: CarbonImmutable, 1: CarbonImmutable}
-     */
-    protected function lastDays(int $days): array
+    /** Tombol "Muat ulang" di Beranda: hitung ulang tanpa mengubah filter. */
+    #[On('dashboard-refresh')]
+    public function refreshReport(): void
     {
-        $today = CurrentOutlet::today();
-        $from = CarbonImmutable::parse($today)->subDays($days - 1)->toDateString();
+        // Cukup memicu render ulang
+    }
 
-        return CurrentOutlet::utcRange($from, $today);
+    protected function period(): ReportPeriod
+    {
+        $filters = $this->pageFilters ?? [];
+        $today = CurrentOutlet::today();
+        $preset = (string) ($filters['preset'] ?? 'today');
+
+        return $preset === 'custom'
+            ? ReportPeriod::normalize($filters['from'] ?? null, $filters['to'] ?? null, $today)
+            : ReportPeriod::preset($preset, $today);
+    }
+
+    protected function comparisonPeriod(): ?ReportPeriod
+    {
+        return $this->period()->comparison((string) ($this->pageFilters['compare'] ?? 'previous_period'));
+    }
+
+    protected function reportFilters(): ReportFilters
+    {
+        return ReportFilters::fromArray($this->pageFilters ?? []);
     }
 }

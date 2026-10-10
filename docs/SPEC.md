@@ -379,6 +379,9 @@ Contoh `POST /checkout`:
 | GET | `/reports/summary?from=&to=` | O, M | Omzet, jumlah transaksi, rata-rata, diskon, pajak |
 | GET | `/reports/products?from=&to=` | O, M | Penjualan per produk |
 | GET | `/reports/payment-methods?from=&to=` | O, M | Penjualan per metode bayar |
+| GET | `/reports/dashboard?from=&to=&compare=` | O, M | Ringkasan beranda: KPI + periode pembanding (`previous_period` default, `previous_year`, `none`) + persen perubahan (null bila pembanding 0), tren per jam (1 hari) / per hari, jam ramai, metode bayar, top 10 produk, tipe order, perbandingan outlet (hanya semua outlet) |
+| GET | `/reports/hourly?from=&to=` | O, M | Omzet & transaksi per jam lokal outlet (0–23) |
+| GET | `/reports/audit?from=&to=` | O, M | Void (pelaku, approver, alasan), diskon dengan approval PIN, shift dengan selisih kas / ditutup paksa (20 terbaru + jumlah total) |
 | GET | `/outlets` | Semua | Outlet yang dipegang user (Q37) |
 | GET, PUT | `/outlet` | O | Pajak, service charge, pembulatan, header/footer struk (outlet perangkat) |
 | GET, POST, PUT | `/users`, `/users/{id}` | O | Kelola kasir & manager |
@@ -424,7 +427,7 @@ Panel Filament; owner hanya melihat data bisnisnya sendiri lewat `TenantContext`
 
 | Menu | Fungsi | Role |
 |---|---|---|
-| Beranda | Widget omzet hari ini, jumlah transaksi, produk terlaris, komposisi metode bayar, produk stok ≤ 0 | O, M |
+| Beranda | Ringkasan bisnis berfilter live (outlet = pemilih sidebar, periode preset/kustom, pembanding, tipe order, metode bayar, kasir): KPI + tren, grafik omzet vs pembanding, metode bayar, jam ramai, produk terlaris/kurang laku, tipe order, riwayat pendapatan harian, perbandingan outlet, panel audit (void, diskon ber-approval, selisih kas shift), stok ≤ 0, export Excel | O, M |
 | Penjualan | Daftar order dengan filter tanggal/status/shift, detail, cetak ulang struk, void | O, M |
 | Shift | Riwayat shift, selisih kas per kasir | O, M |
 | Produk | Kategori, produk, grup opsi, import produk dari Excel | O, M |

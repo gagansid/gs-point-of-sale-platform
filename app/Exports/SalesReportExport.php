@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Exports;
 
+use App\Services\Report\ReportFilters;
 use App\Services\Report\ReportService;
 use Carbon\CarbonImmutable;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 
 /**
  * Laporan penjualan Excel: sheet Ringkasan, Harian, Per Produk, Per Metode Bayar.
- * Angka dari ReportService (sama persis dengan dashboard & API).
+ * Angka dari ReportService (sama persis dengan dashboard & API); filter beranda ikut diterapkan.
  */
 final class SalesReportExport implements WithMultipleSheets
 {
@@ -21,12 +22,13 @@ final class SalesReportExport implements WithMultipleSheets
         private readonly string $timezone,
         private readonly CarbonImmutable $start,
         private readonly CarbonImmutable $end,
+        private readonly ?ReportFilters $filters = null,
     ) {}
 
     /** @return list<ReportSheet> */
     public function sheets(): array
     {
-        $summary = $this->reports->summary($this->start, $this->end);
+        $summary = $this->reports->summary($this->start, $this->end, $this->filters);
         $period = "{$this->from} s/d {$this->to} ({$this->timezone})";
 
         return [
@@ -45,15 +47,15 @@ final class SalesReportExport implements WithMultipleSheets
             ], moneyColumns: []),
             new ReportSheet('Harian', ['Tanggal', 'Transaksi', 'Omzet'], array_map(
                 fn (array $d): array => [$d['date'], $d['order_count'], SafeCell::money($d['revenue'])],
-                $this->reports->daily($this->start, $this->end, $this->timezone),
+                $this->reports->daily($this->start, $this->end, $this->timezone, $this->filters),
             ), moneyColumns: ['C']),
             new ReportSheet('Per Produk', ['Produk', 'Qty', 'Omzet'], array_map(
                 fn (array $p): array => [SafeCell::text($p['product_name']), $p['qty'], SafeCell::money($p['revenue'])],
-                $this->reports->products($this->start, $this->end),
+                $this->reports->products($this->start, $this->end, null, $this->filters),
             ), moneyColumns: ['C']),
             new ReportSheet('Per Metode Bayar', ['Metode', 'Transaksi', 'Nominal'], array_map(
                 fn (array $m): array => [SafeCell::text($m['name']), $m['count'], SafeCell::money($m['amount'])],
-                $this->reports->paymentMethods($this->start, $this->end),
+                $this->reports->paymentMethods($this->start, $this->end, $this->filters),
             ), moneyColumns: ['C']),
         ];
     }

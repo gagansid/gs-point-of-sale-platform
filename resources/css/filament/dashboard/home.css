@@ -1,0 +1,229 @@
+/*
+ * Beranda /dashboard (Pages\Home): tabel ringkas, bar kontribusi, kartu audit, empty state.
+ * Memakai token tokens.css agar mengikuti light/dark mode panel.
+ */
+
+.pos-dash-table-wrap {
+    overflow-x: auto;
+    margin-inline: -0.25rem;
+}
+
+.pos-dash-table-wrap--scroll {
+    max-height: 26rem;
+    overflow-y: auto;
+}
+
+.pos-dash-table {
+    width: 100%;
+    font-size: 0.875rem;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.pos-dash-table th,
+.pos-dash-table td {
+    padding: 0.55rem 0.5rem;
+    white-space: nowrap;
+}
+
+.pos-dash-table thead th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color-light);
+    background: var(--bg-surface);
+}
+
+.pos-dash-table thead th.text-right {
+    text-align: right;
+}
+
+.pos-dash-table tbody td {
+    border-bottom: 1px solid var(--border-color-light);
+    color: var(--text-secondary);
+}
+
+.pos-dash-table tbody tr:hover td {
+    background: var(--bg-surface-secondary);
+}
+
+.pos-dash-table tfoot th {
+    font-weight: 700;
+    color: var(--text);
+    text-align: left;
+    background: var(--bg-surface-secondary);
+    border-top: 2px solid var(--border-color);
+}
+
+.pos-dash-table tfoot th.text-right {
+    text-align: right;
+}
+
+.pos-dash-table--sticky thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.pos-dash-table--sticky tfoot th {
+    position: sticky;
+    bottom: 0;
+}
+
+.pos-dash-table__row--muted td {
+    color: var(--text-disabled);
+}
+
+.pos-dash-table__share {
+    width: 9rem;
+    text-align: right;
+}
+
+td.pos-dash-table__share {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+td.pos-dash-table__share .pos-dash-bar {
+    flex: 1;
+    max-width: 5rem;
+}
+
+td.pos-dash-table__share span.tabular-nums {
+    min-width: 3rem;
+    text-align: right;
+}
+
+.pos-dash-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    cursor: pointer;
+}
+
+.pos-dash-sort:hover,
+.pos-dash-sort--active {
+    color: var(--text);
+}
+
+/* Bar kontribusi (angka % selalu tampil di sebelahnya, warna bukan satu-satunya info) */
+.pos-dash-bar {
+    position: relative;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: var(--bg-surface-secondary);
+    overflow: hidden;
+}
+
+.pos-dash-bar--lg {
+    height: 0.65rem;
+}
+
+.pos-dash-bar__fill {
+    position: absolute;
+    inset-block: 0;
+    left: 0;
+    border-radius: inherit;
+    background: var(--primary);
+}
+
+.pos-dash-bar__fill--alt {
+    background: #066fd1;
+}
+
+.pos-dash-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 2rem 1rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.pos-dash-empty__icon {
+    width: 2rem;
+    height: 2rem;
+    color: var(--text-disabled);
+}
+
+/* Kartu audit */
+.pos-dash-audit {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.875rem;
+    border: 1px solid var(--border-color-light);
+    border-radius: var(--radius);
+    background: var(--bg-surface);
+    min-width: 0;
+}
+
+.pos-dash-audit__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.pos-dash-audit__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.pos-dash-audit__item {
+    display: block;
+    padding: 0.5rem 0.5rem;
+    margin-inline: -0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    transition: background-color 0.15s;
+}
+
+.pos-dash-audit__item + .pos-dash-audit__item {
+    border-top: 1px dashed var(--border-color-light);
+}
+
+.pos-dash-audit__item:hover {
+    background: var(--bg-surface-secondary);
+}
+
+.pos-dash-audit__meta {
+    margin-top: 0.15rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pos-dash-audit__ok {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 1rem 0;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.pos-dash-audit__ok svg {
+    color: rgb(var(--success-500, 47 179 68));
+}
+
+/* Widget tersembunyi (perbandingan outlet saat satu outlet) tidak menyisakan ruang */
+.fi-wi-widget:empty {
+    display: none;
+}

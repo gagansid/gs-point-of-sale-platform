@@ -97,6 +97,9 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('summary', 'summary')->name('summary');
             Route::get('products', 'products')->name('products');
             Route::get('payment-methods', 'paymentMethods')->name('payment-methods');
+            Route::get('dashboard', 'dashboard')->name('dashboard');
+            Route::get('hourly', 'hourly')->name('hourly');
+            Route::get('audit', 'audit')->name('audit');
         });
 
         // ---------- Setelan ----------

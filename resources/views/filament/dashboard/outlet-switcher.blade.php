@@ -5,7 +5,7 @@
     $label = $selected?->name ?? 'Semua outlet';
 @endphp
 
-<div class="pos-outlet-switcher">
+<div class="pos-outlet-switcher" x-data="{ label: @js($label) }" x-on:pos-outlet-changed.window="label = $event.detail.label">
     <x-filament::dropdown placement="bottom-start" teleport width="xs">
         <x-slot name="trigger">
             <button type="button" class="pos-outlet-switcher__trigger" aria-label="Pilih outlet" title="{{ $label }}">
@@ -14,7 +14,8 @@
                 </span>
                 <span class="pos-outlet-switcher__text">
                     <span class="pos-outlet-switcher__caption">Outlet</span>
-                    <span class="pos-outlet-switcher__label">{{ $label }}</span>
+                    {{-- Diperbarui tanpa reload saat outlet diganti dari filter Beranda --}}
+                    <span class="pos-outlet-switcher__label" x-text="label">{{ $label }}</span>
                 </span>
                 <x-filament::icon icon="heroicon-o-chevron-up-down" class="pos-outlet-switcher__chevron" />
             </button>

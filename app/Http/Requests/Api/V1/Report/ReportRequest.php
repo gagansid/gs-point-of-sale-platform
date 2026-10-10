@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Report;
 
+use App\Enums\OrderType;
 use App\Models\User;
+use App\Services\Report\ReportFilters;
+use App\Services\Report\ReportPeriod;
 use App\Support\CurrentOutlet;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -16,6 +20,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * outlet_id opsional (ADR 0010): satu outlet yang dipegang user, atau "all" untuk semua outlet
  * yang dipegang. Tanpa outlet_id: outlet perangkat (bila login di perangkat), selain itu semua.
  * Outlet di luar penugasan → 404.
+ *
+ * Filter opsional (semua endpoint laporan): order_type, payment_method_ids[], user_ids[].
+ * compare (khusus /reports/dashboard): previous_period (default) | previous_year | none.
  */
 final class ReportRequest extends FormRequest
 {
@@ -33,6 +40,12 @@ final class ReportRequest extends FormRequest
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
             'outlet_id' => ['nullable', 'string', 'regex:/^(all|[0-9a-fA-F-]{36})$/'],
+            'compare' => ['nullable', Rule::in(array_keys(ReportPeriod::COMPARES))],
+            'order_type' => ['nullable', Rule::enum(OrderType::class)],
+            'payment_method_ids' => ['nullable', 'array', 'max:50'],
+            'payment_method_ids.*' => ['uuid'],
+            'user_ids' => ['nullable', 'array', 'max:100'],
+            'user_ids.*' => ['uuid'],
         ];
     }
 
@@ -85,6 +98,22 @@ final class ReportRequest extends FormRequest
     public function utcRange(): array
     {
         return CurrentOutlet::utcRange($this->from(), $this->to());
+    }
+
+    public function filters(): ReportFilters
+    {
+        return ReportFilters::fromArray($this->only(['order_type', 'payment_method_ids', 'user_ids']));
+    }
+
+    public function reportPeriod(): ReportPeriod
+    {
+        return new ReportPeriod($this->from(), $this->to());
+    }
+
+    /** Periode pembanding (default periode sebelumnya); null bila compare=none. */
+    public function comparison(): ?ReportPeriod
+    {
+        return $this->reportPeriod()->comparison($this->filled('compare') ? $this->string('compare')->toString() : 'previous_period');
     }
 
     /** @return array{from: string, to: string, timezone: string, outlet_id: string|null} */
