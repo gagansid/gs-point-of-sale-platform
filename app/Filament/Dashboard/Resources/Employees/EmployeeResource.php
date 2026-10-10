@@ -144,26 +144,29 @@ final class EmployeeResource extends Resource
     {
         $table = $table
             ->columns([
-                TextColumn::make('name')->label('Nama')->weight('medium')
-                    ->description(fn (User $record): ?string => $record->email ?? ($record->username !== null ? '@'.$record->username : null))
-                    ->searchable(['name', 'email', 'username'])->sortable(),
+                TextColumn::make('name')->label('Nama')->weight('medium')->searchable()->sortable(),
+                // Email + status verifikasi (SPEC Q46): ikon hijau = terverifikasi, kuning = menunggu verifikasi
+                TextColumn::make('email')->label('Email')->placeholder('Belum diisi')->searchable()->sortable()
+                    ->icon(fn (User $record): ?Heroicon => match (true) {
+                        $record->email === null => null,
+                        $record->hasVerifiedEmail() => Heroicon::OutlinedCheckBadge,
+                        default => Heroicon::OutlinedClock,
+                    })
+                    ->iconPosition('after')
+                    ->iconColor(fn (User $record): string => $record->hasVerifiedEmail() ? 'success' : 'warning')
+                    ->tooltip(fn (User $record): ?string => match (true) {
+                        $record->email === null => null,
+                        $record->hasVerifiedEmail() => 'Terverifikasi',
+                        default => 'Belum verifikasi',
+                    }),
+                // Login kasir web (SPEC Q35); owner/manager login dengan email
+                TextColumn::make('username')->label('Username')->placeholder('—')->searchable()->sortable()
+                    ->formatStateUsing(fn (string $state): string => '@'.$state)
+                    ->toggleable(),
                 TextColumn::make('role')->label('Role')->badge()->sortable(),
                 TextColumn::make('outlets.name')->label('Outlet')->badge()->color('gray')
                     ->placeholder('Semua outlet')
                     ->visible(fn (): bool => Outlet::query()->count() > 1),
-                // Verifikasi email karyawan (SPEC Q46)
-                TextColumn::make('email_status')->label('Email')->badge()
-                    ->state(fn (User $record): string => match (true) {
-                        $record->email === null => 'Belum diisi',
-                        $record->hasVerifiedEmail() => 'Terverifikasi',
-                        default => 'Belum verifikasi',
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'Terverifikasi' => 'success',
-                        'Belum verifikasi' => 'warning',
-                        default => 'gray',
-                    })
-                    ->tooltip(fn (User $record): ?string => $record->email),
                 TextColumn::make('pin_status')->label('PIN')->badge()
                     ->state(fn (User $record): string => match (true) {
                         $record->isPinLocked() => 'Terkunci',
