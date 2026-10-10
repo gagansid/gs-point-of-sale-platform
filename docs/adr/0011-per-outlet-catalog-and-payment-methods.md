@@ -38,8 +38,10 @@ Kami memilih **B, tanpa harga per outlet**.
 ## Konsekuensi
 
 - Positif: cabang bisa punya menu & alat bayar sendiri tanpa data dobel; laporan produk tetap gabungan.
-- Negatif / risiko: setiap query katalog & checkout harus memfilter outlet (fail-closed: tanpa baris
-  `outlet_product` = tidak dijual); dua tabel pivot baru yang wajib tenant-scoped.
+- Negatif / risiko: setiap query katalog & checkout harus memfilter outlet; dua tabel pivot baru yang
+  wajib tenant-scoped. Tanpa baris = dijual / tersedia / aktif, sama seperti `outlet_product` yang dibuat
+  saat dibutuhkan (ADR 0010) — migrasi tidak menyalin data, dan isolasi tenant tetap dijaga
+  `BelongsToTenant`.
 - Yang diubah: migrasi, `GetCatalog`, `ResolveOrderLines`, `AllocatePayments`, `SaveProduct`,
   `CreateOutlet`, `CreateDefaultPaymentMethods`, `UpdatePaymentMethod`, form produk/metode bayar/outlet
   di dashboard, dokumen API katalog & checkout.

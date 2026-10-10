@@ -10,13 +10,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Stok, stok minimum, dan ketersediaan satu produk di satu outlet (tabel outlet_product, ADR 0010).
+ * Stok, stok minimum, ketersediaan, dan status dijual satu produk di satu outlet (tabel outlet_product, ADR 0010/0011).
  * stock_qty hanya berubah lewat AdjustStock / order (StockMovement).
  *
  * @property string $id
  * @property string $tenant_id
  * @property string $outlet_id
  * @property string $product_id
+ * @property bool $is_listed dijual di outlet ini (ADR 0011 / Q42)
  * @property bool $is_available
  * @property int $stock_qty
  * @property int|null $min_stock
@@ -27,13 +28,13 @@ final class ProductStock extends Model
 
     protected $table = 'outlet_product';
 
-    protected $fillable = ['outlet_id', 'product_id', 'is_available', 'min_stock'];
+    protected $fillable = ['outlet_id', 'product_id', 'is_listed', 'is_available', 'min_stock'];
 
-    protected $attributes = ['is_available' => true, 'stock_qty' => 0];
+    protected $attributes = ['is_listed' => true, 'is_available' => true, 'stock_qty' => 0];
 
     protected function casts(): array
     {
-        return ['is_available' => 'boolean', 'stock_qty' => 'integer', 'min_stock' => 'integer'];
+        return ['is_listed' => 'boolean', 'is_available' => 'boolean', 'stock_qty' => 'integer', 'min_stock' => 'integer'];
     }
 
     /**

@@ -101,7 +101,7 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | Langkah | Isi | Status |
 |---|---|---|
 | P1 | Keputusan: ADR 0011 (opsi B, tanpa harga per outlet, metode bayar aktif/nonaktif), SPEC Q39 diganti, Q42–Q45 | ✅ |
-| P2 | Data: `outlet_product.is_listed`, `outlet_option`, `outlet_payment_method` (+ migrasi data lama: dijual/aktif di semua outlet) | ⏳ |
+| P2 | Data: `outlet_product.is_listed`, `outlet_option`, `outlet_payment_method` (tanpa baris = dijual/tersedia/aktif, data lama tidak disalin); `Product::listedAt()`, `OutletOption::unavailableIds()`, `PaymentMethod::activeAt()` | ✅ |
 | P3 | Action: `SaveProduct` (outlet dijual), opsi habis per outlet, `UpdatePaymentMethod` per outlet, `CreateOutlet` salin dari outlet lain | ⏳ |
 | P4 | Dashboard: form produk, grup opsi, metode bayar, outlet baru | ⏳ |
 | P5 | API: `/catalog` & checkout memfilter outlet device; dokumen API | ⏳ |

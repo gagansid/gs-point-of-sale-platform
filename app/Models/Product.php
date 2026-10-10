@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Storage;
  * @property string|null $image_path
  * @property bool $is_active
  * @property bool $is_available dari outlet_product (atOutlet)
+ * @property bool $is_listed dijual di outlet, dari outlet_product (atOutlet, ADR 0011)
  * @property bool $is_favorite
  * @property int|null $min_stock dari outlet_product (atOutlet)
  * @property int $sort_order
@@ -63,6 +64,7 @@ final class Product extends Model
             'stock_qty' => 'integer',
             'is_active' => 'boolean',
             'is_available' => 'boolean',
+            'is_listed' => 'boolean',
             'is_favorite' => 'boolean',
             'min_stock' => 'integer',
             'sort_order' => 'integer',
@@ -70,7 +72,7 @@ final class Product extends Model
     }
 
     /**
-     * Menambahkan stock_qty, min_stock, dan is_available milik satu outlet sebagai atribut produk.
+     * Menambahkan stock_qty, min_stock, is_available, dan is_listed milik satu outlet sebagai atribut produk.
      * Subquery (bukan join) agar kolom products tidak ambigu saat sort/filter.
      *
      * @param  Builder<self>  $query
@@ -83,14 +85,15 @@ final class Product extends Model
 
         $row = 'from outlet_product op where op.product_id = products.id and op.outlet_id = ? limit 1';
 
-        // Baris stok belum ada (produk/outlet baru) = stok 0, tersedia
+        // Baris stok belum ada (produk/outlet baru) = stok 0, tersedia, dijual
         $query->selectRaw("coalesce((select op.stock_qty {$row}), 0) as stock_qty", [$outletId])
             ->selectRaw("(select op.min_stock {$row}) as min_stock", [$outletId])
-            ->selectRaw("coalesce((select op.is_available {$row}), 1) as is_available", [$outletId]);
+            ->selectRaw("coalesce((select op.is_available {$row}), 1) as is_available", [$outletId])
+            ->selectRaw("coalesce((select op.is_listed {$row}), 1) as is_listed", [$outletId]);
     }
 
     /**
-     * Mengisi stock_qty, min_stock, dan is_available dari outlet tertentu ke instance ini
+     * Mengisi stock_qty, min_stock, is_available, dan is_listed dari outlet tertentu ke instance ini
      * (setelah route model binding / refresh, yang tidak melewati scope atOutlet).
      */
     public function loadOutletState(string $outletId): static
@@ -101,6 +104,7 @@ final class Product extends Model
             'stock_qty' => $stock->stock_qty ?? 0,
             'min_stock' => $stock?->min_stock,
             'is_available' => $stock->is_available ?? true,
+            'is_listed' => $stock->is_listed ?? true,
         ]), sync: true);
 
         return $this;
@@ -165,6 +169,16 @@ final class Product extends Model
         $available
             ? $query->whereDoesntHave('stocks', fn (Builder $stock) => $stock->where('outlet_id', $outletId)->where('is_available', false))
             : $query->whereHas('stocks', fn (Builder $stock) => $stock->where('outlet_id', $outletId)->where('is_available', false));
+    }
+
+    /**
+     * Dijual di satu outlet (ADR 0011 / Q42); tanpa baris outlet_product = dijual.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeListedAt(Builder $query, string $outletId): void
+    {
+        $query->whereDoesntHave('stocks', fn (Builder $stock) => $stock->where('outlet_id', $outletId)->where('is_listed', false));
     }
 
     public function imageUrl(): ?string

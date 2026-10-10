@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -45,5 +46,22 @@ final class PaymentMethod extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /**
+     * Aktif di bisnis dan tidak dinonaktifkan di outlet (ADR 0011 / Q44); tanpa baris outlet = aktif.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeActiveAt(Builder $query, string $outletId): void
+    {
+        $query->active()->whereDoesntHave('outletSettings', fn (Builder $setting) => $setting
+            ->where('outlet_id', $outletId)->where('is_active', false));
+    }
+
+    /** @return HasMany<OutletPaymentMethod, $this> */
+    public function outletSettings(): HasMany
+    {
+        return $this->hasMany(OutletPaymentMethod::class);
     }
 }
