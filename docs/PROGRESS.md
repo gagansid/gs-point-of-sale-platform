@@ -1,8 +1,8 @@
 # Progres Pengerjaan
 
-> Terakhir diperbarui: 2026-10-08 · Branch: `feature/pos` (ADR 0003) · Commit terakhir: `3face3f`
-> Status kualitas: `composer check` hijau — **417 test**, lulus di SQLite & MySQL, Larastan level 6 bersih,
-> tanpa CVE dependency.
+> Terakhir diperbarui: 2026-10-10 · Branch: `feature/pos` (ADR 0003) · Commit terakhir: `3937a7b`
+> Status kualitas: **632 test** lulus (SQLite), Pint & Larastan level 6 bersih. Uji MySQL untuk fitur
+> 9–10 Okt belum dijalankan ulang.
 
 Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#cara-melanjutkan) dan
 [Berikutnya](#berikutnya) sebelum mulai. Urutan rencana mengikuti `docs/SPEC.md` → *Urutan pengerjaan*.
@@ -20,11 +20,16 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | Minggu 4 | Shift, `OrderCalculator`, `/checkout`, nomor order, potong stok | ✅ | `039384c`, `5b3e8cd` |
 | Minggu 5 | Open bill, tambah pembayaran, riwayat, detail, struk, void | ✅ | `bc73939` |
 | Minggu 6 | Laporan API + beranda (widget) + menu Penjualan, Shift, Laporan + export Excel | ✅ | `51e7146`, `3face3f` |
-| **Setelan** | API & menu: outlet, karyawan, perangkat, metode bayar, import produk | ⏳ **berikutnya** | — |
+| UI dashboard | Gaya tabel/form seragam (tab di card, filter lipat, URL bersih), Plus Jakarta Sans, form field & upload gambar | ✅ | `af4ce6c` … `1668b35` |
+| Katalog+ | Favorit, stok minimum & menipis, atur urutan kasir, status kategori/grup opsi, sortir API | ✅ | `42f1fad`, `f15f427` |
+| Domain | Subdomain `app.`/`admin.`/`api.` + halaman depan & login `gspos.id` (ADR 0008), URL berbahasa Inggris | ✅ | `5d3dcf3`, `83aec78`, `c13c37c` |
+| Onboarding | Daftar mandiri + trial, hanya-baca, verifikasi email, checklist + template menu, lead → tenant, lupa kata sandi, edisi jual putus (ADR 0009 langkah 1–6) | ✅ | `abec733` … `3937a7b` |
+| **Setelan** | Profil outlet ✅, Karyawan ✅ (PIN + username/kata sandi kasir web), Metode bayar ✅; Perangkat ditunda ke fase tablet; import produk | 🟡 | `1a1b9d9`, `fa95b7e`, `cd2ac45`, `22f2ed2` |
+| **Berikutnya** | Keputusan multi-outlet (lihat bawah), import produk Excel, kasir web | ⏳ | — |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ⏳ | — |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
-Endpoint selesai: **35** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q23, ADR 0001–0007.
+Endpoint selesai: **44** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q35, ADR 0001–0009.
 
 ---
 
