@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\DashboardLoginController;
 use App\Http\Controllers\Web\EmailVerificationController;
+use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\SignupController;
 use App\Http\Controllers\Web\SiteController;
 use App\Support\Domains;
@@ -22,6 +23,12 @@ Route::domain(Domains::main())->group(function (): void {
     Route::post('contact-sales', [SiteController::class, 'contact'])
         ->middleware('throttle:contact')
         ->name('contact');
+
+    // Lupa kata sandi & undangan owner (SPEC Q34)
+    Route::get('forgot-password', [PasswordResetController::class, 'create'])->name('password.request');
+    Route::post('forgot-password', [PasswordResetController::class, 'store'])->middleware('throttle:5,1')->name('password.email');
+    Route::get('reset-password/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('reset-password', [PasswordResetController::class, 'update'])->middleware('throttle:5,1')->name('password.update');
 
     // Daftar mandiri + verifikasi email (ADR 0009)
     Route::get('register', [SignupController::class, 'create'])->name('signup');

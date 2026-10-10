@@ -6,6 +6,10 @@
             <h1>Masuk ke akun Anda</h1>
             <p class="site-auth-sub">Dashboard owner & manager</p>
 
+            @if (session('status'))
+                <div class="site-alert site-alert-success" role="status">{{ session('status') }}</div>
+            @endif
+
             @if ($expired)
                 <div class="site-alert site-alert-warning" role="alert">Sesi login kedaluwarsa. Silakan masuk lagi.</div>
             @endif
@@ -29,9 +33,12 @@
                     @error('password') <p class="site-error">{{ $message }}</p> @enderror
                 </div>
 
-                <label class="site-check">
-                    <input type="checkbox" name="remember" value="1" @checked(old('remember'))> Ingat saya
-                </label>
+                <div class="site-login-row">
+                    <label class="site-check">
+                        <input type="checkbox" name="remember" value="1" @checked(old('remember'))> Ingat saya
+                    </label>
+                    <a href="{{ route('password.request') }}" class="site-link-small">Lupa kata sandi?</a>
+                </div>
 
                 <button type="submit" class="site-btn site-btn-primary site-btn-lg site-btn-block">Masuk</button>
             </form>

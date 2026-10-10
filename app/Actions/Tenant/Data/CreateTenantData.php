@@ -24,7 +24,8 @@ final readonly class CreateTenantData
         public string $outletTimezone,
         public string $ownerName,
         public string $ownerEmail,
-        public string $ownerPassword,
+        // null = kirim undangan "atur kata sandi" ke email owner (SPEC Q34, disarankan)
+        public ?string $ownerPassword,
         // Dibuat tim (admin) = terpercaya; daftar mandiri = harus verifikasi email dulu (ADR 0009)
         public bool $ownerEmailVerified = true,
     ) {}
@@ -49,7 +50,7 @@ final readonly class CreateTenantData
             outletTimezone: (string) $data['outlet_timezone'],
             ownerName: (string) $data['owner_name'],
             ownerEmail: (string) $data['owner_email'],
-            ownerPassword: (string) $data['owner_password'],
+            ownerPassword: filled($data['owner_password'] ?? null) ? (string) $data['owner_password'] : null,
         );
     }
 }

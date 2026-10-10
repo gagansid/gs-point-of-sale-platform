@@ -110,6 +110,14 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+
+        // Undangan owner dari tim/sales: link "atur kata sandi" 3 hari (SPEC Q34)
+        'invitations' => [
+            'provider' => 'users',
+            'table' => 'user_invitation_tokens',
+            'expire' => 60 * 24 * 3,
+            'throttle' => 60,
+        ],
     ],
 
     /*

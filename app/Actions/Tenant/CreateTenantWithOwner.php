@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Tenant;
 
+use App\Actions\Auth\SendOwnerInvitation;
 use App\Actions\Payment\CreateDefaultPaymentMethods;
 use App\Actions\Tenant\Data\CreateTenantData;
 use App\Enums\UserRole;
@@ -52,11 +53,13 @@ final class CreateTenantWithOwner
                     'outlet_id' => null,
                     'name' => $data->ownerName,
                     'email' => Str::lower($data->ownerEmail),
-                    'password' => $data->ownerPassword,
+                    // Tanpa kata sandi: acak & tidak diketahui siapa pun sampai owner mengaturnya lewat undangan
+                    'password' => $data->ownerPassword ?? Str::password(48),
                     'role' => UserRole::Owner,
                     'is_active' => true,
                 ]);
-                $owner->forceFill(['email_verified_at' => $data->ownerEmailVerified ? now() : null])->save();
+                // Diundang: email terverifikasi saat owner membuka link undangan
+                $owner->forceFill(['email_verified_at' => $data->ownerEmailVerified && $data->ownerPassword !== null ? now() : null])->save();
 
                 $this->createPaymentMethods->handle();
             });
@@ -65,6 +68,12 @@ final class CreateTenantWithOwner
         });
 
         Log::info('Tenant dibuat', ['tenant_id' => $tenant->id, 'admin_id' => $by?->id]);
+
+        if ($data->ownerPassword === null) {
+            $owner = User::allTenants()->where('tenant_id', $tenant->id)->where('role', UserRole::Owner)->firstOrFail();
+            // Gagal kirim email tidak membatalkan tenant: owner bisa memakai "Lupa kata sandi"
+            rescue(fn () => app(SendOwnerInvitation::class)->handle($owner, $tenant->name));
+        }
 
         return $tenant;
     }

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Models\Concerns\BelongsToTenant;
+use App\Notifications\ResetUserPassword;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
@@ -86,6 +87,12 @@ class User extends Authenticatable implements FilamentUser
         $role = $this->getAttribute('role');
 
         return $role instanceof UserRole && $role->allows($permission);
+    }
+
+    /** Link lupa kata sandi berbahasa Indonesia (bawaan Laravel: bahasa Inggris). */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new ResetUserPassword($token));
     }
 
     public function hasVerifiedEmail(): bool

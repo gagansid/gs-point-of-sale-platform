@@ -124,8 +124,8 @@ final class TenantForm
                             ->label('Kata sandi awal')
                             ->password()
                             ->revealable()
-                            ->required()
-                            ->rule(Password::defaults()),
+                            ->rule(Password::defaults())
+                            ->helperText('Disarankan dikosongkan: owner menerima email "Atur kata sandi" (berlaku 3 hari) — kata sandi tidak dikirim sebagai teks'),
                     ]),
             ]);
     }

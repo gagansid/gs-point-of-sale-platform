@@ -76,6 +76,11 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
     Owner baru **belum terverifikasi**: checkout & pembayaran ditolak `EMAIL_NOT_VERIFIED`. Link verifikasi =
     `URL::temporarySignedRoute` 3 hari + `sha1(email)` (link lama mati bila email diganti), throttle 6/menit;
     kirim ulang hanya dari panel (login) 3 per 10 menit.
+14. Kata sandi (SPEC Q34): lupa kata sandi `gspos.id/forgot-password` (respons sama untuk email terdaftar/tidak,
+    5/menit, broker throttle 60 detik, link 60 menit, hanya user aktif). Undangan owner dari admin/lead = token
+    di **tabel terpisah** `user_invitation_tokens` (3 hari) agar link reset tidak ikut berlaku 3 hari. Reset
+    berhasil → email terverifikasi, `remember_token` diganti, semua token Sanctum dihapus. Kata sandi owner
+    tidak pernah dikirim sebagai teks.
 12. Form publik (hubungi sales): honeypot `website` (bot mendapat respons sukses tanpa disimpan), throttle
     `contact` 3/menit & 10/jam per IP, CSRF, batas panjang tiap field, IP disimpan sebagai HMAC (bukan mentah).
 

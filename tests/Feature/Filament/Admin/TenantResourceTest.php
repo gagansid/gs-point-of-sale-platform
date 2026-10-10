@@ -12,9 +12,11 @@ use App\Models\Admin;
 use App\Models\Outlet;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Notifications\InviteOwner;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -133,4 +135,19 @@ it('tab tenant: aktif, suspended, dan segera berakhir', function () {
         ->set('activeTab', 'expiring')
         ->assertCanSeeTableRecords([$expiring])
         ->assertCanNotSeeTableRecords([$active, $suspended]);
+});
+
+it('tambah tenant tanpa kata sandi: owner menerima undangan atur kata sandi (Q34)', function () {
+    Notification::fake();
+
+    Livewire::test(CreateTenant::class)
+        ->fillForm(validTenantForm(['owner_password' => null]))
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $owner = User::allTenants()->where('email', 'rina@kopipagi.test')->sole();
+
+    expect($owner->hasVerifiedEmail())->toBeFalse()
+        ->and(Hash::check('rahasia123', (string) $owner->password))->toBeFalse();
+    Notification::assertSentTo($owner, InviteOwner::class);
 });
