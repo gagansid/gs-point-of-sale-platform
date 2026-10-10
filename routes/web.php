@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Web\DashboardLoginController;
+use App\Http\Controllers\Web\EmailVerificationController;
+use App\Http\Controllers\Web\SignupController;
 use App\Http\Controllers\Web\SiteController;
 use App\Support\Domains;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -20,6 +22,13 @@ Route::domain(Domains::main())->group(function (): void {
     Route::post('hubungi-sales', [SiteController::class, 'contact'])
         ->middleware('throttle:contact')
         ->name('contact');
+
+    // Daftar mandiri + verifikasi email (ADR 0009)
+    Route::get('daftar', [SignupController::class, 'create'])->name('signup');
+    Route::post('daftar', [SignupController::class, 'store'])->middleware('throttle:signup')->name('signup.store');
+    Route::get('verifikasi-email/{user}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
 
     if (! Domains::enabled()) {
         return;

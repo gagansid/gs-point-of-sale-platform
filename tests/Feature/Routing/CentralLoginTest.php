@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Auth\DashboardLoginTicket;
 use App\Enums\TenantStatus;
 use App\Models\User;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 
 /*
@@ -132,4 +133,19 @@ it('form login wajib CSRF di aplikasi nyata (route berada di grup web)', functio
     $route = app('router')->getRoutes()->getByName('login.store');
 
     expect($route?->gatherMiddleware())->toContain('web');
+});
+
+it('daftar di gspos.id langsung masuk ke app. lewat tiket', function () {
+    Notification::fake();
+    RateLimiter::clear('signup-h:127.0.0.1');
+
+    $location = (string) $this->post('http://gspos.localhost/daftar', [
+        'business_name' => 'Warung Bu Sri', 'business_type' => 'retail', 'name' => 'Sri',
+        'email' => 'sri@warung.test', 'password' => 'rahasia123', 'password_confirmation' => 'rahasia123',
+    ])->assertStatus(303)->headers->get('Location');
+
+    expect(parse_url($location, PHP_URL_HOST))->toBe('app.gspos.localhost');
+
+    $this->get($location)->assertRedirect();
+    expect(auth('web')->user()?->email)->toBe('sri@warung.test');
 });

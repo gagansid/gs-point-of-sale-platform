@@ -47,7 +47,7 @@ final class CreateTenantWithOwner
                     'discount_limits' => config('pos.outlet_defaults.discount_limits'),
                 ]);
 
-                User::query()->create([
+                $owner = new User([
                     // Owner berlaku untuk seluruh outlet tenant
                     'outlet_id' => null,
                     'name' => $data->ownerName,
@@ -56,6 +56,7 @@ final class CreateTenantWithOwner
                     'role' => UserRole::Owner,
                     'is_active' => true,
                 ]);
+                $owner->forceFill(['email_verified_at' => $data->ownerEmailVerified ? now() : null])->save();
 
                 $this->createPaymentMethods->handle();
             });

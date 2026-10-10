@@ -25,7 +25,11 @@
 
             <div class="site-header-actions">
                 <a href="{{ $loginUrl }}" class="site-btn site-btn-ghost">Masuk</a>
-                <a href="#kontak" class="site-btn site-btn-primary">Hubungi sales</a>
+                @if ($signupEnabled)
+                    <a href="{{ route('signup') }}" class="site-btn site-btn-primary">Coba gratis</a>
+                @else
+                    <a href="#kontak" class="site-btn site-btn-primary">Hubungi sales</a>
+                @endif
             </div>
         </div>
     </header>
@@ -42,10 +46,17 @@
                         stok, dan shift tercatat otomatis — Anda cukup fokus melayani pelanggan.
                     </p>
                     <div class="site-hero-actions">
-                        <a href="#kontak" class="site-btn site-btn-primary site-btn-lg">
-                            Jadwalkan demo <x-site.icon name="arrow" class="size-4" />
-                        </a>
-                        <a href="{{ $loginUrl }}" class="site-btn site-btn-outline site-btn-lg">Sudah punya akun? Masuk</a>
+                        @if ($signupEnabled)
+                            <a href="{{ route('signup') }}" class="site-btn site-btn-primary site-btn-lg">
+                                Coba gratis {{ $trialDays }} hari <x-site.icon name="arrow" class="size-4" />
+                            </a>
+                            <a href="#kontak" class="site-btn site-btn-outline site-btn-lg">Jadwalkan demo</a>
+                        @else
+                            <a href="#kontak" class="site-btn site-btn-primary site-btn-lg">
+                                Jadwalkan demo <x-site.icon name="arrow" class="size-4" />
+                            </a>
+                            <a href="{{ $loginUrl }}" class="site-btn site-btn-outline site-btn-lg">Sudah punya akun? Masuk</a>
+                        @endif
                     </div>
                     <ul class="site-hero-points">
                         <li><x-site.icon name="check" class="size-4" /> Hak akses sesuai peran</li>
@@ -118,7 +129,7 @@
                 </div>
 
                 <ol class="site-steps">
-                    <li><b>Hubungi tim sales</b><span>Ceritakan bisnis Anda. Kami jadwalkan demo singkat.</span></li>
+                    <li><b>{{ $signupEnabled ? 'Daftar atau hubungi sales' : 'Hubungi tim sales' }}</b><span>{{ $signupEnabled ? 'Coba gratis '.$trialDays.' hari, atau minta demo singkat bersama tim kami.' : 'Ceritakan bisnis Anda. Kami jadwalkan demo singkat.' }}</span></li>
                     <li><b>Setup bersama</b><span>Menu, harga, opsi, dan akun karyawan kami bantu siapkan.</span></li>
                     <li><b>Mulai berjualan</b><span>Kasir memakai aplikasi di tablet, owner memantau dari dashboard.</span></li>
                 </ol>

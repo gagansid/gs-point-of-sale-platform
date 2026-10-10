@@ -25,6 +25,8 @@ final readonly class CreateTenantData
         public string $ownerName,
         public string $ownerEmail,
         public string $ownerPassword,
+        // Dibuat tim (admin) = terpercaya; daftar mandiri = harus verifikasi email dulu (ADR 0009)
+        public bool $ownerEmailVerified = true,
     ) {}
 
     /**

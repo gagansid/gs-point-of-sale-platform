@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\BusinessType;
 use App\Enums\TenantAccess;
 use App\Enums\TenantStatus;
+use App\Enums\UserRole;
 use App\Models\Scopes\TenantScope;
 use Carbon\CarbonImmutable;
 use Database\Factories\TenantFactory;
@@ -75,6 +76,24 @@ final class Tenant extends Model
     public function isReadOnly(): bool
     {
         return $this->access() === TenantAccess::ReadOnly;
+    }
+
+    /**
+     * Owner hasil daftar mandiri belum memverifikasi email (ADR 0009, SPEC Q31): checkout & pembayaran
+     * ditolak. Benar bila ada owner aktif belum terverifikasi dan belum ada satu pun yang terverifikasi.
+     */
+    public function needsOwnerEmailVerification(): bool
+    {
+        $owners = User::allTenants()
+            ->where('tenant_id', $this->id)
+            ->where('role', UserRole::Owner)
+            ->where('is_active', true)
+            ->whereNotNull('email')
+            ->selectRaw('COUNT(email_verified_at) AS verified, COUNT(*) AS total')
+            ->toBase()
+            ->first();
+
+        return (int) ($owners->total ?? 0) > 0 && (int) ($owners->verified ?? 0) === 0;
     }
 
     /** Sisa hari trial yang masih berjalan (dibulatkan ke atas), null bila bukan trial berjalan. */

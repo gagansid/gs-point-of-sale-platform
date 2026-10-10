@@ -34,6 +34,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property int $pin_failed_attempts
  * @property CarbonImmutable|null $pin_locked_until
  * @property UserRole $role
+ * @property CarbonImmutable|null $email_verified_at
  * @property bool $is_active
  * @property CarbonImmutable|null $last_login_at
  */
@@ -69,6 +70,7 @@ class User extends Authenticatable implements FilamentUser
             'pin_failed_attempts' => 'integer',
             'pin_locked_until' => 'immutable_datetime',
             'last_login_at' => 'immutable_datetime',
+            'email_verified_at' => 'immutable_datetime',
         ];
     }
 
@@ -82,6 +84,11 @@ class User extends Authenticatable implements FilamentUser
         $role = $this->getAttribute('role');
 
         return $role instanceof UserRole && $role->allows($permission);
+    }
+
+    public function hasVerifiedEmail(): bool
+    {
+        return $this->email_verified_at !== null;
     }
 
     public function canAccessPanel(Panel $panel): bool

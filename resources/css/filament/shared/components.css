@@ -1957,6 +1957,16 @@ select.fi-select-input {
     color: #b97500;
 }
 
+.gs-banner form {
+    flex: none;
+    margin-inline-start: auto;
+}
+
+.gs-banner button.gs-banner-action {
+    border: 0;
+    cursor: pointer;
+}
+
 .gs-banner-warning .gs-banner-action {
     background-color: #f59f00;
     color: #ffffff;

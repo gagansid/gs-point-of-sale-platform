@@ -12,6 +12,23 @@
     $daysLeft = $tenant?->trialDaysLeft();
 @endphp
 
+@if ($tenant !== null && ! $tenant->isReadOnly() && $tenant->needsOwnerEmailVerification())
+    @php($me = filament()->auth()->user())
+    <div class="gs-banner gs-banner-warning" role="alert">
+        <x-filament::icon icon="heroicon-o-envelope" class="gs-banner-icon" />
+        <div>
+            <strong>Verifikasi email owner untuk mulai bertransaksi.</strong>
+            Kami sudah mengirim link ke {{ $me?->hasVerifiedEmail() === false ? $me->email : 'email owner' }}. Menu & produk tetap bisa disiapkan sekarang.
+        </div>
+        @if ($me instanceof \App\Models\User && ! $me->hasVerifiedEmail())
+            <form method="POST" action="{{ route('filament.dashboard.verification.send') }}">
+                @csrf
+                <button type="submit" class="gs-banner-action">Kirim ulang link</button>
+            </form>
+        @endif
+    </div>
+@endif
+
 @if ($tenant?->isReadOnly())
     <div class="gs-banner gs-banner-warning" role="alert">
         <x-filament::icon icon="heroicon-o-lock-closed" class="gs-banner-icon" />

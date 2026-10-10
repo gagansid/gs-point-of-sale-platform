@@ -10,6 +10,7 @@ use App\Enums\BusinessType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\ContactSalesRequest;
 use App\Support\Domains;
+use App\Support\SystemSettings;
 use Filament\Facades\Filament;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -24,6 +25,8 @@ final class SiteController extends Controller
         return view('site.home', [
             'loginUrl' => Domains::enabled() ? route('login') : Filament::getPanel('dashboard')->getLoginUrl(),
             'businessTypes' => BusinessType::cases(),
+            'signupEnabled' => app(SystemSettings::class)->signupEnabled(),
+            'trialDays' => app(SystemSettings::class)->trialDays(),
         ]);
     }
 

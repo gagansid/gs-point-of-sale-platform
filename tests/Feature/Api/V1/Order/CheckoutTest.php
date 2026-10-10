@@ -332,3 +332,14 @@ it('regresi: opsi yang sama di dua item berbeda tidak dianggap ganda', function 
 
     checkout($this, $body)->assertCreated()->assertJsonCount(3, 'data.items');
 });
+
+describe('verifikasi email owner (ADR 0009, Q31)', function () {
+    it('checkout & tambah pembayaran ditolak sampai email owner diverifikasi', function () {
+        $owner = User::factory()->owner()->unverified()->create(['tenant_id' => $this->pos->tenantId]);
+
+        assertApiError(checkout($this, cart($this->pos)), 'EMAIL_NOT_VERIFIED', 403);
+
+        $owner->forceFill(['email_verified_at' => now()])->save();
+        checkout($this, cart($this->pos))->assertCreated();
+    });
+});

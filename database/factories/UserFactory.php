@@ -31,6 +31,7 @@ final class UserFactory extends Factory
             'outlet_id' => null,
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
             // Hash disimpan sekali agar test tidak lambat
             'password' => self::$password ??= Hash::make('password'),
             'pin' => self::$pin ??= Hash::make('123456'),
@@ -43,6 +44,12 @@ final class UserFactory extends Factory
     public function role(UserRole $role): self
     {
         return $this->state(['role' => $role]);
+    }
+
+    /** Owner hasil daftar mandiri yang belum klik link verifikasi (ADR 0009). */
+    public function unverified(): self
+    {
+        return $this->state(['email_verified_at' => null]);
     }
 
     public function owner(): self

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Tenant\EnsureOwnerEmailVerified;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
 use App\Exceptions\BusinessException;
@@ -40,6 +41,8 @@ final class AddPayment
         if ($existingOnOrder === count($ids)) {
             return ['order' => CheckoutOrder::load($order->refresh()), 'replayed' => true];
         }
+
+        app(EnsureOwnerEmailVerified::class)->handle($actor->tenant);
 
         PaymentIds::ensureUnused($payments);
 

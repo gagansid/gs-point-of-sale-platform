@@ -8,6 +8,7 @@ use App\Filament\Dashboard\Pages\Auth\Login;
 use App\Filament\Shared\Layout;
 use App\Filament\Shared\Pages\Home;
 use App\Filament\Shared\Theme;
+use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Middleware\Filament\SetDashboardTenant;
 use App\Models\User;
 use App\Support\Domains;
@@ -26,6 +27,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /**
@@ -80,6 +82,12 @@ final class DashboardPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            // Kirim ulang link verifikasi email owner (ADR 0009); route di dalam panel = wajib login
+            ->authenticatedRoutes(function (): void {
+                Route::post('verifikasi-email/kirim-ulang', [EmailVerificationController::class, 'resend'])
+                    ->middleware('throttle:3,10')
+                    ->name('verification.send');
+            })
             // Banner trial / hanya-baca di atas setiap halaman (ADR 0009)
             ->renderHook(PanelsRenderHook::CONTENT_START, function (): string {
                 $user = Filament::auth()->user();

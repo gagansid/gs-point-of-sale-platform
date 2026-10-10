@@ -822,3 +822,34 @@
         padding: 20px;
     }
 }
+
+/* Daftar mandiri & verifikasi email (ADR 0009) */
+.site-auth-card-wide {
+    max-width: 520px;
+}
+
+.site-form-note-left {
+    margin-top: -8px;
+    text-align: start;
+}
+
+.site-auth-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    margin: 20px auto 0;
+    border-radius: 50%;
+    background: rgb(47 179 68 / 0.12);
+    color: #2fb344;
+}
+
+.site-auth-check .site-icon {
+    width: 26px;
+    height: 26px;
+}
+
+.site-auth-card .site-auth-check + h1 {
+    margin-top: 14px;
+}

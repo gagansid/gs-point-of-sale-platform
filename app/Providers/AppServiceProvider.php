@@ -142,6 +142,12 @@ class AppServiceProvider extends ServiceProvider
                 ->by($token instanceof PersonalAccessToken ? 'token:'.$token->getKey() : 'ip:'.$request->ip());
         });
 
+        // Daftar mandiri: 5/jam & 20/hari per IP (anti pembuatan akun massal)
+        RateLimiter::for('signup', fn (Request $request): array => [
+            Limit::perHour(5)->by('signup-h:'.$request->ip()),
+            Limit::perDay(20)->by('signup-d:'.$request->ip()),
+        ]);
+
         // Form hubungi sales di halaman depan: 3/menit & 10/jam per IP (anti-spam)
         RateLimiter::for('contact', fn (Request $request): array => [
             Limit::perMinute(3)->by('contact-m:'.$request->ip()),

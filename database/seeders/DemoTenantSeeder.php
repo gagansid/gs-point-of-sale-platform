@@ -73,12 +73,17 @@ final class DemoTenantSeeder extends Seeder
             ];
 
             foreach ($users as $user) {
-                User::query()->firstOrCreate(['name' => $user['name']], [
+                $model = User::query()->firstOrCreate(['name' => $user['name']], [
                     'password' => $user['email'] !== null ? 'password' : null,
                     'pin' => $user['pin'] ?? null,
                     'is_active' => true,
                     ...$user,
                 ]);
+
+                // Akun demo dianggap sudah verifikasi email (ADR 0009)
+                if ($user['email'] !== null && ! $model->hasVerifiedEmail()) {
+                    $model->forceFill(['email_verified_at' => now()])->save();
+                }
             }
 
             Device::query()->firstOrCreate(['device_uid' => 'demo-device-01'], [

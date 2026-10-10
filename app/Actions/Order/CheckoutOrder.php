@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Order;
 
 use App\Actions\Order\Data\CheckoutData;
+use App\Actions\Tenant\EnsureOwnerEmailVerified;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
 use App\Exceptions\BusinessException;
@@ -47,6 +48,9 @@ final class CheckoutOrder
         if (($existing = Idempotency::existing(Order::class, $data->id)) !== null) {
             return ['order' => self::load($existing), 'replayed' => true];
         }
+
+        // Setelah cek idempotensi: kiriman ulang order lama tetap mendapat data lama
+        app(EnsureOwnerEmailVerified::class)->handle($actor->tenant);
 
         PaymentIds::ensureUnused($data->payments);
 
