@@ -5,10 +5,12 @@ declare(strict_types=1);
 use App\Filament\Dashboard\Resources\Categories\Pages\ManageCategories;
 use App\Filament\Dashboard\Resources\OptionGroups\Pages\CreateOptionGroup;
 use App\Filament\Dashboard\Resources\OptionGroups\Pages\EditOptionGroup;
+use App\Filament\Dashboard\Resources\OptionGroups\Pages\ListOptionGroups;
 use App\Models\Category;
 use App\Models\Option;
 use App\Models\OptionGroup;
 use App\Models\Product;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Support\TenantContext;
 use Filament\Actions\Testing\TestAction;
@@ -80,4 +82,39 @@ it('mengubah grup opsi: opsi lama dipertahankan dengan id yang sama', function (
 
     expect(Option::query()->find($large->id)?->price_delta)->toBe('6000.00')
         ->and(Option::query()->count())->toBe(2);
+});
+
+it('hapus massal kategori & grup opsi hanya menyentuh data tenant sendiri', function () {
+    $mine = Category::factory()->count(2)->create();
+    $foreignCategory = TenantContext::run(Tenant::factory()->create()->id, fn () => Category::factory()->create());
+
+    Livewire::test(ManageCategories::class)
+        ->selectTableRecords([...$mine->pluck('id')->all(), $foreignCategory->id])
+        ->callAction(TestAction::make('bulkDelete')->table()->bulk());
+
+    expect(Category::query()->count())->toBe(0)
+        ->and(Category::allTenants()->whereKey($foreignCategory->id)->exists())->toBeTrue();
+
+    $group = OptionGroup::factory()->create();
+
+    Livewire::test(ListOptionGroups::class)
+        ->selectTableRecords([$group])
+        ->callAction(TestAction::make('bulkDelete')->table()->bulk());
+
+    expect(OptionGroup::query()->count())->toBe(0);
+});
+
+it('filter grup opsi: wajib/opsional dan dipakai/belum', function () {
+    $required = OptionGroup::factory()->create(['min_select' => 1, 'max_select' => 1]);
+    $optional = OptionGroup::factory()->create(['min_select' => 0, 'max_select' => 3]);
+    Product::factory()->create()->optionGroups()->attach($required->id, ['sort_order' => 0]);
+
+    Livewire::test(ListOptionGroups::class)
+        ->filterTable('required', true)
+        ->assertCanSeeTableRecords([$required])
+        ->assertCanNotSeeTableRecords([$optional])
+        ->resetTableFilters()
+        ->filterTable('used', false)
+        ->assertCanSeeTableRecords([$optional])
+        ->assertCanNotSeeTableRecords([$required]);
 });

@@ -120,3 +120,17 @@ it('menampilkan statistik pemakaian tenant', function () {
         ->assertOk()
         ->assertSee('owner@stat.test');
 });
+
+it('tab tenant: aktif, suspended, dan segera berakhir', function () {
+    $active = Tenant::factory()->create(['status' => TenantStatus::Active, 'subscription_ends_at' => now()->addMonths(3)]);
+    $suspended = Tenant::factory()->create(['status' => TenantStatus::Suspended]);
+    $expiring = Tenant::factory()->create(['status' => TenantStatus::Active, 'subscription_ends_at' => now()->addDays(3)]);
+
+    Livewire::test(ListTenants::class)
+        ->set('activeTab', 'suspended')
+        ->assertCanSeeTableRecords([$suspended])
+        ->assertCanNotSeeTableRecords([$active, $expiring])
+        ->set('activeTab', 'expiring')
+        ->assertCanSeeTableRecords([$expiring])
+        ->assertCanNotSeeTableRecords([$active, $suspended]);
+});

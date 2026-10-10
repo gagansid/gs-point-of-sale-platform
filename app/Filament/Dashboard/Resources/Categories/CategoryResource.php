@@ -7,9 +7,14 @@ namespace App\Filament\Dashboard\Resources\Categories;
 use App\Actions\Product\DeleteCategory;
 use App\Actions\Product\SaveCategory;
 use App\Filament\Dashboard\Resources\Categories\Pages\ManageCategories;
+use App\Filament\Shared\Actions\BulkDeleteAction;
 use App\Filament\Shared\Layout;
+use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Category;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
@@ -18,6 +23,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 use UnitEnum;
 
@@ -54,13 +60,16 @@ final class CategoryResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        $table = $table
             ->modifyQueryUsing(fn ($query) => $query->withCount('products'))
             ->reorderable('sort_order')
-            ->defaultSort('sort_order')
+            ->reorderRecordsTriggerAction(fn (Action $action, bool $isReordering): Action => $action
+                ->tooltip($isReordering ? 'Selesai mengatur urutan' : 'Atur urutan tampil di kasir'))
+            // Urutan bawaan = urutan tampil di kasir; Filament menambahkan id sebagai pemecah seri
+            ->defaultSort(fn (Builder $query): Builder => $query->orderBy('sort_order')->orderBy('name'))
             ->columns([
-                TextColumn::make('name')->label('Nama kategori')->weight('medium')->searchable(),
-                TextColumn::make('products_count')->label('Jumlah produk')->numeric(locale: 'id')->alignEnd(),
+                TextColumn::make('name')->label('Nama kategori')->weight('medium')->searchable()->sortable(),
+                TextColumn::make('products_count')->label('Jumlah produk')->numeric(locale: 'id')->alignEnd()->sortable(),
             ])
             ->recordActions([
                 EditAction::make()
@@ -68,24 +77,33 @@ final class CategoryResource extends Resource
                     ->tooltip('Ubah')
                     ->using(fn (Category $record, array $data): Category => app(SaveCategory::class)
                         ->handle($record, (string) $data['name'])['category']),
-                DeleteAction::make()
-                    ->iconButton()
-                    ->tooltip('Hapus')
-                    ->modalHeading('Hapus kategori')
-                    ->modalDescription(fn (Category $record): HtmlString => Layout::confirmText(
-                        'Yakin ingin menghapus <strong>'.e($record->name).'</strong>?',
-                        'Produk di kategori ini tidak ikut terhapus; menjadi tanpa kategori.',
-                    ))
-                    ->using(function (Category $record): bool {
-                        app(DeleteCategory::class)->handle($record);
+                ActionGroup::make([
+                    DeleteAction::make()
+                        ->modalHeading('Hapus kategori')
+                        ->modalDescription(fn (Category $record): HtmlString => Layout::confirmText(
+                            'Yakin ingin menghapus <strong>'.e($record->name).'</strong>?',
+                            'Produk di kategori ini tidak ikut terhapus; menjadi tanpa kategori.',
+                        ))
+                        ->using(function (Category $record): bool {
+                            app(DeleteCategory::class)->handle($record);
 
-                        return true;
-                    }),
+                            return true;
+                        }),
+                ])->tooltip('Aksi lain'),
             ])
-            ->paginated(false)
-            ->emptyStateIcon(Heroicon::OutlinedTag)
-            ->emptyStateHeading('Belum ada kategori')
-            ->emptyStateDescription('Kelompokkan produk agar kasir mudah mencarinya');
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    BulkDeleteAction::make(
+                        Category::class,
+                        fn (Category $category) => app(DeleteCategory::class)->handle($category),
+                        'kategori',
+                        'Produk di kategori ini tidak ikut terhapus; menjadi tanpa kategori.',
+                        'product.manage',
+                    ),
+                ])->label('Aksi massal'),
+            ]);
+
+        return TableEmptyState::apply($table, Heroicon::OutlinedTag, 'kategori', 'Kelompokkan produk agar kasir mudah mencarinya');
     }
 
     public static function getPages(): array

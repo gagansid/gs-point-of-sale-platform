@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Resources\Tenants\Tables;
 
 use App\Enums\BusinessType;
-use App\Enums\TenantStatus;
 use App\Filament\Admin\Resources\Tenants\Actions\TenantStatusActions;
+use App\Filament\Admin\Resources\Tenants\TenantResource;
+use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Tenant;
 use Filament\Actions\ActionGroup;
-use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
@@ -25,7 +25,7 @@ final class TenantsTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        $table = $table
             ->modifyQueryUsing(fn (Builder $query) => $query->withCount('users'))
             ->columns([
                 TextColumn::make('name')
@@ -38,6 +38,7 @@ final class TenantsTable
                     ->label('Jenis')
                     ->badge()
                     ->color('gray')
+                    ->sortable()
                     ->toggleable(),
                 TextColumn::make('status')
                     ->label('Status')
@@ -67,24 +68,19 @@ final class TenantsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('status')->label('Status')->options(TenantStatus::class),
                 SelectFilter::make('business_type')->label('Jenis usaha')->options(BusinessType::class),
             ])
             ->recordActions([
-                ViewAction::make()->iconButton()->tooltip('Lihat'),
                 EditAction::make()->iconButton()->tooltip('Ubah'),
                 ActionGroup::make([
+                    ViewAction::make()->label('Lihat detail'),
                     TenantStatusActions::suspend(),
                     TenantStatusActions::activate(),
                 ])->tooltip('Aksi lain'),
             ])
-            ->defaultSort('created_at', 'desc')
-            ->persistFiltersInSession()
-            ->emptyStateIcon(Heroicon::OutlinedBuildingOffice2)
-            ->emptyStateHeading('Belum ada tenant')
-            ->emptyStateDescription('Tambahkan bisnis pelanggan pertama beserta owner-nya')
-            ->emptyStateActions([
-                CreateAction::make()->label('Tambah tenant')->icon(Heroicon::OutlinedPlus),
-            ]);
+            ->recordUrl(fn (Tenant $record): string => TenantResource::getUrl('view', ['record' => $record]))
+            ->defaultSort('created_at', 'desc');
+
+        return TableEmptyState::apply($table, Heroicon::OutlinedBuildingOffice2, 'tenant', 'Tambahkan bisnis pelanggan pertama beserta owner-nya');
     }
 }

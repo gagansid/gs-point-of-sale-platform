@@ -20,10 +20,17 @@ final class ListOptionGroups extends ListRecords
     protected static string $resource = OptionGroupResource::class;
 
     /**
+     * Tanpa #[Url(as: 'filters')]: filter disimpan di session (persistFiltersInSession).
+     *
+     * @var array<string, mixed>|null
+     */
+    public ?array $tableFilters = null;
+
+    /**
      * @return array<Action>
      */
     protected function getTableCardActions(): array
     {
-        return [CreateAction::make()->label('Tambah grup opsi')->icon(Heroicon::OutlinedPlus)];
+        return [CreateAction::make()->label('Tambah')->icon(Heroicon::OutlinedPlus)];
     }
 }

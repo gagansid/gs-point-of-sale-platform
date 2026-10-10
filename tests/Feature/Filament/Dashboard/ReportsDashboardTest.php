@@ -59,6 +59,20 @@ it('daftar penjualan hari ini hanya tenant sendiri, detail bisa dibuka', functio
     $this->get("/dashboard/orders/{$this->order->id}")->assertOk()->assertSee($this->order->order_number)->assertSee('Croissant');
 });
 
+it('tab penjualan & shift memfilter berdasarkan status', function () {
+    Livewire::test(ListOrders::class)
+        ->set('activeTab', 'completed')
+        ->assertCanSeeTableRecords([$this->order])
+        ->set('activeTab', 'voided')
+        ->assertCanNotSeeTableRecords([$this->order]);
+
+    Livewire::test(ListShifts::class)
+        ->set('activeTab', 'open')
+        ->assertCanSeeTableRecords([$this->pos->shift])
+        ->set('activeTab', 'closed')
+        ->assertCanNotSeeTableRecords([$this->pos->shift]);
+});
+
 it('void dari dashboard mengembalikan stok', function () {
     Livewire::test(ViewOrder::class, ['record' => $this->order->getRouteKey()])
         ->callAction('void', ['reason' => 'Komplain pelanggan'])

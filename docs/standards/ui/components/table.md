@@ -69,6 +69,30 @@
 | Filter aktif | Indikator jumlah filter pada tombol Filter; filter disimpan di session (`->persistFiltersInSession()`) |
 | Data ditandai | Stok ≤ 0: nilai stok `danger`; produk nonaktif: baris teks muted |
 
+## Konvensi semua halaman daftar
+
+Semua tabel memakai pola yang sama dengan Produk (dijaga `tests/Feature/Filament/TableConventionsTest.php`):
+
+| Aspek | Aturan |
+|---|---|
+| Global (`Layout::configureActions`) | Panel filter lipat 4 kolom, filter/pencarian/urutan/baris per halaman di session, `[5,10,25,50,100]`, ikon urut, reset filter di footer |
+| Halaman | Deklarasikan ulang `public ?array $tableFilters = null;` (dan `public ?string $activeTab = null;` bila ada tab) tanpa `#[Url]` |
+| Tombol tambah | `CreateAction::make()->label('Tambah')->icon(Heroicon::OutlinedPlus)` di `getTableCardActions()`; judul modal tetap spesifik ("Tambah kategori") |
+| Aksi baris | Satu ikon utama (Ubah untuk master data, Lihat untuk transaksi) + `⋯` berisi sisanya (Hapus, Tutup paksa, Void, Suspend) |
+| Kolom | Semua kolom data `->sortable()`; maks. 7 terlihat — sisanya `->toggleable(isToggledHiddenByDefault: true)` |
+| Empty state | `TableEmptyState::apply($table, $icon, 'objek', 'deskripsi')` — tanpa tombol, pesan beda saat dipersempit |
+| Hapus massal | `BulkDeleteAction::make(Model::class, fn ($r) => app(DeleteX::class)->handle($r), 'objek', 'catatan', 'permission')` — hanya master data. **Tidak** untuk transaksi/audit (penjualan, shift, tenant) |
+| Tab cepat | `HasCardTabs` + `getTabs()`; status yang punya tab tidak diulang sebagai filter. Angka di tab hanya bila tidak dibatasi filter tanggal (Penjualan & Shift tanpa angka) |
+
+| Halaman | Tab | Filter | Massal |
+|---|---|---|---|
+| Produk | Semua · Favorit · Aktif · Habis · Stok menipis | lihat di bawah | Tandai habis/tersedia, Hapus |
+| Kategori | — (atur urutan kasir) | — | Hapus |
+| Grup opsi | — | Aturan (wajib/opsional), Pemakaian | Hapus |
+| Penjualan | Semua · Selesai · Open bill · Void | Tanggal, tipe, kasir | — |
+| Shift | Semua · Buka · Ditutup · Ada selisih | Tanggal dibuka | — |
+| Tenant (`/admin`) | Semua · Aktif · Trial · Suspended · Segera berakhir | Jenis usaha | — |
+
 ## Filter standar per halaman
 
 | Halaman | Filter |

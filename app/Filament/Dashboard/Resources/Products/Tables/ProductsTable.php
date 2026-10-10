@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Resources\Products\Tables;
 
+use App\Actions\Product\DeleteProduct;
 use App\Filament\Dashboard\Resources\Products\Actions\ProductActions;
+use App\Filament\Shared\Actions\BulkDeleteAction;
 use App\Filament\Shared\Columns\MoneyColumn;
+use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Category;
 use App\Models\Product;
 use Filament\Actions\Action;
@@ -17,7 +20,6 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
@@ -33,7 +35,7 @@ final class ProductsTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        $table = $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with('category'))
             ->columns([
                 // Bintang favorit: klik untuk menandai/melepas (tampil di tab "Favorit" aplikasi kasir)
@@ -99,8 +101,6 @@ final class ProductsTable
                     ->label('Stok habis (≤ 0)')
                     ->query(fn (Builder $query) => $query->where('track_stock', true)->where('stock_qty', '<=', 0)),
             ])
-            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
-            ->filtersFormColumns(['default' => 1, 'sm' => 2, 'lg' => 4])
             ->recordActions([
                 EditAction::make()->iconButton()->tooltip('Ubah'),
                 ActionGroup::make([
@@ -114,21 +114,22 @@ final class ProductsTable
                 BulkActionGroup::make([
                     ProductActions::bulkSetAvailability(false),
                     ProductActions::bulkSetAvailability(true),
-                    ProductActions::bulkDelete(),
+                    BulkDeleteAction::make(
+                        Product::class,
+                        fn (Product $product) => app(DeleteProduct::class)->handle($product),
+                        'produk',
+                        'Produk hilang dari aplikasi kasir. Riwayat transaksi tetap utuh.',
+                        'product.manage',
+                    ),
                 ])->label('Aksi massal'),
             ])
             // Urutan bawaan = urutan tampil di kasir; Filament menambahkan id sebagai pemecah seri
             ->defaultSort(fn (Builder $query): Builder => $query->orderBy('sort_order')->orderBy('name'))
             ->reorderable('sort_order')
             ->reorderRecordsTriggerAction(fn (Action $action, bool $isReordering): Action => $action
-                ->tooltip($isReordering ? 'Selesai mengatur urutan' : 'Atur urutan tampil di kasir'))
-            ->persistFiltersInSession()
-            ->emptyStateIcon(Heroicon::OutlinedCube)
-            // Tombol tambah sudah ada di header card; empty state hanya menjelaskan keadaan
-            ->emptyStateHeading(fn (Table $table): string => self::isNarrowed($table) ? 'Tidak ada produk yang cocok' : 'Belum ada produk')
-            ->emptyStateDescription(fn (Table $table): string => self::isNarrowed($table)
-                ? 'Ubah kata kunci atau atur ulang filter'
-                : 'Tambahkan produk pertama lewat tombol + di kanan atas');
+                ->tooltip($isReordering ? 'Selesai mengatur urutan' : 'Atur urutan tampil di kasir'));
+
+        return TableEmptyState::apply($table, Heroicon::OutlinedCube, 'produk', 'Tambahkan produk pertama lewat tombol + Tambah');
     }
 
     /**
@@ -159,11 +160,5 @@ final class ProductsTable
 
                 return $indicators;
             });
-    }
-
-    /** Daftar sedang dipersempit pencarian/filter (bukan tenant tanpa produk). */
-    private static function isNarrowed(Table $table): bool
-    {
-        return $table->isFiltered() || $table->getLivewire()->hasTableSearch();
     }
 }

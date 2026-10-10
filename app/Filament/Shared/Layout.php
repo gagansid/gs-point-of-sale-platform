@@ -12,6 +12,7 @@ use Filament\Facades\Filament;
 use Filament\Panel;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Enums\FiltersResetActionPosition;
 use Filament\Tables\Table;
 use Filament\Tables\View\TablesIconAlias;
@@ -92,6 +93,10 @@ final class Layout
             // Pencarian & urutan tetap saat kembali ke halaman daftar (filter: persistFiltersInSession per tabel)
             ->persistSearchInSession()
             ->persistSortInSession()
+            // Panel filter lipat di bawah header card (slide 250ms), 4 kolom di desktop
+            ->filtersLayout(FiltersLayout::AboveContentCollapsible)
+            ->filtersFormColumns(['default' => 1, 'sm' => 2, 'lg' => 4])
+            ->persistFiltersInSession()
             // Tombol "Atur ulang" di samping "Terapkan filter"
             ->filtersResetActionPosition(FiltersResetActionPosition::Footer)
             ->filtersResetAction(fn (Action $action): Action => $action->label('Atur ulang')->color('gray'))

@@ -10,6 +10,7 @@ use App\Filament\Dashboard\Resources\Orders\Actions\VoidOrderAction;
 use App\Filament\Dashboard\Resources\Orders\OrderResource;
 use App\Filament\Shared\Columns\MoneyColumn;
 use App\Filament\Shared\Filters\DateRangeFilter;
+use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Order;
 use App\Models\User;
 use Filament\Actions\ActionGroup;
@@ -27,21 +28,20 @@ final class OrdersTable
 {
     public static function configure(Table $table): Table
     {
-        return $table
+        $table = $table
             ->modifyQueryUsing(fn (Builder $query) => $query->with('user'))
             ->columns([
-                TextColumn::make('order_number')->label('Nomor order')->fontFamily('mono')->searchable()->copyable(),
+                TextColumn::make('order_number')->label('Nomor order')->fontFamily('mono')->searchable()->sortable()->copyable(),
                 TextColumn::make('created_at')->label('Waktu')->dateTime('j M Y, H.i')->sortable(),
-                TextColumn::make('user.name')->label('Kasir')->toggleable(),
-                TextColumn::make('order_type')->label('Tipe')->badge()->color('gray')->toggleable(),
-                TextColumn::make('table_label')->label('Meja')->placeholder('—')->searchable()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('status')->label('Status')->badge(),
+                TextColumn::make('user.name')->label('Kasir')->sortable()->toggleable(),
+                TextColumn::make('order_type')->label('Tipe')->badge()->color('gray')->sortable()->toggleable(),
+                TextColumn::make('table_label')->label('Meja')->placeholder('—')->searchable()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('status')->label('Status')->badge()->sortable(),
                 MoneyColumn::make('grand_total')->label('Total')->sortable()
                     ->color(fn (Order $record): ?string => $record->status === OrderStatus::Voided ? 'gray' : null),
             ])
             ->filters([
                 DateRangeFilter::make('created_at'),
-                SelectFilter::make('status')->label('Status')->options(OrderStatus::class),
                 SelectFilter::make('order_type')->label('Tipe')->options(OrderType::class),
                 SelectFilter::make('user_id')->label('Kasir')
                     ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all()),
@@ -51,10 +51,8 @@ final class OrdersTable
                 ActionGroup::make([VoidOrderAction::make()])->tooltip('Aksi lain'),
             ])
             ->recordUrl(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
-            ->defaultSort('created_at', 'desc')
-            ->persistFiltersInSession()
-            ->emptyStateIcon(Heroicon::OutlinedReceiptPercent)
-            ->emptyStateHeading('Belum ada transaksi')
-            ->emptyStateDescription('Transaksi dari aplikasi kasir akan muncul di sini');
+            ->defaultSort('created_at', 'desc');
+
+        return TableEmptyState::apply($table, Heroicon::OutlinedReceiptPercent, 'transaksi', 'Transaksi dari aplikasi kasir akan muncul di sini');
     }
 }

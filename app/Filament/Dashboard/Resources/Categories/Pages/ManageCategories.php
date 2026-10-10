@@ -22,13 +22,21 @@ final class ManageCategories extends ManageRecords
     protected static string $resource = CategoryResource::class;
 
     /**
+     * Tanpa #[Url(as: 'filters')]: filter disimpan di session (persistFiltersInSession).
+     *
+     * @var array<string, mixed>|null
+     */
+    public ?array $tableFilters = null;
+
+    /**
      * @return array<Action>
      */
     protected function getTableCardActions(): array
     {
         return [
             CreateAction::make()
-                ->label('Tambah kategori')
+                ->label('Tambah')
+                ->modalHeading('Tambah kategori')
                 ->icon(Heroicon::OutlinedPlus)
                 ->createAnother(false)
                 ->using(fn (array $data): Category => app(SaveCategory::class)->handle(null, (string) $data['name'])['category']),
