@@ -31,7 +31,7 @@ final class ShiftsTable
             ->modifyQueryUsing(fn (Builder $query) => $query->with(['openedBy', 'device']))
             ->columns([
                 TextColumn::make('opened_at')->label('Dibuka')->dateTime('j M Y, H.i')->sortable(),
-                // Tampil saat "Semua outlet" dipilih di topbar dan bisnis punya lebih dari satu outlet (ADR 0010)
+                // Tampil saat "Semua outlet" dipilih di pemilih outlet sidebar dan bisnis punya lebih dari satu outlet (ADR 0010)
                 TextColumn::make('outlet.name')->label('Outlet')->badge()->color('gray')->toggleable()
                     ->visible(fn (): bool => CurrentOutlet::selectedId() === null && Outlet::query()->count() > 1),
                 TextColumn::make('openedBy.name')->label('Kasir')->searchable()->sortable(),

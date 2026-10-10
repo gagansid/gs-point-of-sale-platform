@@ -12,7 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Pemilih outlet di topbar dashboard (ADR 0010, Q41). "all" = semua outlet yang dipegang user.
+ * Pemilih outlet di sidebar dashboard (ADR 0010, Q41). "all" = semua outlet yang dipegang user.
  * Outlet di luar penugasan user → 404 (CurrentOutlet::choose).
  */
 final class SwitchOutletController extends Controller

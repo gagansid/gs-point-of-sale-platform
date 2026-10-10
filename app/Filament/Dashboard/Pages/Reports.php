@@ -28,7 +28,7 @@ use UnitEnum;
  */
 final class Reports extends Page
 {
-    /** Outlet laporan mengikuti pemilih di topbar (ADR 0010). */
+    /** Outlet laporan mengikuti pemilih outlet di sidebar (ADR 0010). */
     public function getSubheading(): ?string
     {
         if (Outlet::query()->count() <= 1) {

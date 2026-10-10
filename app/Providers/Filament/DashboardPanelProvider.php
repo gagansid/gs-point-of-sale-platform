@@ -89,13 +89,14 @@ final class DashboardPanelProvider extends PanelProvider
                 Route::post('email/verification-notification', [EmailVerificationController::class, 'resend'])
                     ->middleware('throttle:3,10')
                     ->name('verification.send');
-                // Pemilih outlet topbar (ADR 0010)
+                // Pemilih outlet sidebar (ADR 0010)
                 Route::post('switch-outlet/{outlet}', SwitchOutletController::class)
                     ->where('outlet', 'all|[0-9a-fA-F-]{36}')
                     ->name('switch-outlet');
             })
-            // Pemilih outlet di topbar: hanya bila user memegang lebih dari satu outlet aktif (ADR 0010)
-            ->renderHook(PanelsRenderHook::TOPBAR_START, function (): string {
+            // Pemilih outlet di atas menu sidebar (seperti workspace): hanya bila user memegang lebih dari
+            // satu outlet aktif (ADR 0010). Topbar tetap bersih: hamburger + pencarian di kiri.
+            ->renderHook(PanelsRenderHook::SIDEBAR_NAV_START, function (): string {
                 $user = Filament::auth()->user();
 
                 if (! $user instanceof User) {

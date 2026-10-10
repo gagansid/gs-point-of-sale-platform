@@ -41,7 +41,7 @@ final class OptionGroupsTable
             ])->withCount('products'))
             ->columns([
                 TextColumn::make('name')->label('Nama grup')->weight('medium')->searchable()->sortable(),
-                // Merah = habis di outlet topbar (ADR 0011 / Q43)
+                // Merah = habis di outlet aktif (pemilih sidebar) (ADR 0011 / Q43)
                 TextColumn::make('options.name')->label('Opsi')->badge()->limitList(4)
                     ->color(fn (string $state, OptionGroup $record): string => $record->options->firstWhere('name', $state)
                         ?->outletStates->contains('is_available', false) ? 'danger' : 'gray')
@@ -121,7 +121,7 @@ final class OptionGroupsTable
     }
 
     /**
-     * Opsi habis di outlet topbar (ADR 0011 / Q43), mis. topping habis hari ini. Permission sama dengan
+     * Opsi habis di outlet aktif (pemilih sidebar) (ADR 0011 / Q43), mis. topping habis hari ini. Permission sama dengan
      * tanda habis produk; outlet lain tidak terpengaruh.
      */
     private static function soldOutOptions(): Action

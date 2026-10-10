@@ -21,7 +21,7 @@ use UnitEnum;
 
 /**
  * Menu Katalog → Produk. Simpan lewat Action SaveProduct; stok lewat aksi Sesuaikan stok.
- * Katalog & harga per bisnis; stok dan ketersediaan milik outlet aktif di topbar (ADR 0010).
+ * Katalog & harga per bisnis; stok dan ketersediaan milik outlet aktif di pemilih outlet sidebar (ADR 0010).
  */
 final class ProductResource extends Resource
 {

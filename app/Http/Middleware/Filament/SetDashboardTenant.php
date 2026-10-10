@@ -48,7 +48,7 @@ final class SetDashboardTenant
 
         // Trial/langganan habis: panel hanya-baca (ADR 0009); simpan/hapus data ditolak di BelongsToTenant
         TenantContext::set($user->tenant_id, readOnly: $user->tenant->isReadOnly());
-        // Outlet pilihan topbar (null = semua outlet yang dipegang user), ADR 0010
+        // Outlet pilihan sidebar (null = semua outlet yang dipegang user), ADR 0010
         CurrentOutlet::set($user, CurrentOutlet::sessionChoice());
         // Semua tanggal di panel tampil dalam zona outlet (ADR 0001)
         FilamentTimezone::set(CurrentOutlet::timezone());

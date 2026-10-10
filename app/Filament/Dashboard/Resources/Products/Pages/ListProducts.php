@@ -63,7 +63,7 @@ final class ListProducts extends ListRecords
         ];
     }
 
-    /** Stok & ketersediaan mengikuti outlet aktif di topbar (ADR 0010). */
+    /** Stok & ketersediaan mengikuti outlet aktif di pemilih outlet sidebar (ADR 0010). */
     private static function outletId(): string
     {
         return CurrentOutlet::getOrFail()->id;

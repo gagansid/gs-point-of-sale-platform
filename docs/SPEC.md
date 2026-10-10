@@ -600,7 +600,7 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q38 | Akses per outlet | Order, shift, laporan, perangkat, stok hanya untuk outlet yang ditugaskan; outlet lain → `404 NOT_FOUND` (fail-closed). | Diterima | ADR 0010 |
 | Q39 | Katalog & harga | ~~Katalog dan harga sama untuk semua outlet.~~ Diganti Q42: katalog bersama, produk dipilih per outlet; harga tetap sama (harga per outlet di backlog). | Diganti | ADR 0010, ADR 0011 |
 | Q40 | Stok per outlet | `outlet_product`: `is_available`, `stock_qty`, `min_stock` per outlet; "lacak stok" tetap setting produk. Checkout memotong stok outlet device. | Diterima | ADR 0010 |
-| Q41 | Pemilih outlet dashboard | Topbar: "Semua outlet" atau satu outlet, disimpan di session; laporan/penjualan/shift mengikuti. | Diterima | ADR 0010 |
+| Q41 | Pemilih outlet dashboard | Di atas menu sidebar, di bawah logo (seperti workspace; mode ciut = ikon saja): "Semua outlet" atau satu outlet, disimpan di session; laporan/penjualan/shift mengikuti. Awalnya di topbar, dipindah agar topbar bersih. | Diterima | ADR 0010 |
 | Q42 | Menu per outlet | `outlet_product.is_listed` (default true): produk dijual di outlet. Tidak dijual → tidak dikirim di `/catalog`, checkout `VALIDATION_ERROR` per item. Kategori tampil bila ada produk yang dijual di outlet. | Diterima | ADR 0011 |
 | Q43 | Opsi habis per outlet | `outlet_option.is_available` (tanpa baris = tersedia). Opsi habis dikirim dengan `is_available=false`; checkout `VALIDATION_ERROR` per item. | Diterima | ADR 0011 |
 | Q44 | Metode bayar per outlet | `outlet_payment_method.is_active`; metode dipakai bila aktif di bisnis dan di outlet device. Nama tetap satu per bisnis. Nonaktif → `VALIDATION_ERROR` per pembayaran. | Diterima | ADR 0011 |

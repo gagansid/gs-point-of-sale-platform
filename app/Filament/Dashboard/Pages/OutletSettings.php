@@ -35,7 +35,7 @@ use UnitEnum;
 /**
  * Pengaturan → Outlet → Profil outlet (SPEC: Pengaturan Outlet, permission outlet.settings).
  * Melihat cukup role berizin (tetap bisa saat hanya-baca); menyimpan butuh can() (ADR 0009).
- * Outlet dari ?outlet= (daftar Outlet) atau outlet aktif di topbar; hanya outlet yang boleh
+ * Outlet dari ?outlet= (daftar Outlet) atau outlet aktif di pemilih outlet sidebar; hanya outlet yang boleh
  * diakses user (lainnya 404, ADR 0010).
  */
 final class OutletSettings extends Page
@@ -179,7 +179,7 @@ final class OutletSettings extends Page
         return 'Profil outlet · '.$this->outlet()->name;
     }
 
-    /** Outlet yang diubah: dari URL (dicek aksesnya) atau outlet aktif topbar. */
+    /** Outlet yang diubah: dari URL (dicek aksesnya) atau outlet aktif (pemilih sidebar). */
     private function outlet(): Outlet
     {
         $user = auth()->user();

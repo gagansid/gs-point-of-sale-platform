@@ -50,7 +50,7 @@ final class OrderResource extends Resource
     }
 
     /**
-     * Outlet pilihan topbar ("Semua outlet" = semua outlet yang dipegang user), ADR 0010.
+     * Outlet pilihan sidebar ("Semua outlet" = semua outlet yang dipegang user), ADR 0010.
      *
      * @return Builder<Order>
      */

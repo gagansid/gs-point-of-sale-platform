@@ -79,7 +79,7 @@ final class ProductsTable
                     ->label('Ketersediaan')
                     ->badge()
                     ->sortable()
-                    // Tidak dijual di outlet topbar (ADR 0011) didahulukan dari habis/tersedia
+                    // Tidak dijual di outlet aktif (pemilih sidebar) (ADR 0011) didahulukan dari habis/tersedia
                     ->formatStateUsing(fn (bool $state, Product $record): string => match (true) {
                         ! $record->is_listed => 'Tidak dijual',
                         $state => 'Tersedia',

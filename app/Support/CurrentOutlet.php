@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  * Outlet aktif untuk request saat ini (ADR 0010). Scoped singleton: direset setiap request & job.
  *
  * - API: outlet device tempat token dipakai (middleware SetOutletContext).
- * - Dashboard: pilihan di topbar ("Semua outlet" = null), disimpan di session (SetDashboardTenant).
+ * - Dashboard: pilihan di pemilih outlet sidebar ("Semua outlet" = null), disimpan di session (SetDashboardTenant).
  *
  * Data per outlet (order, shift, laporan) difilter ke ids(): outlet terpilih, atau semua outlet
  * yang boleh diakses user. Fail-closed: user tanpa outlet tidak melihat data apa pun.
@@ -70,7 +70,7 @@ final class CurrentOutlet
         return is_string($id) ? $id : null;
     }
 
-    /** Menyimpan pilihan topbar dashboard. Outlet di luar akses user ditolak (404). */
+    /** Menyimpan pilihan pemilih outlet sidebar dashboard. Outlet di luar akses user ditolak (404). */
     public static function choose(User $user, ?string $outletId): void
     {
         if ($outletId !== null && ! $user->canAccessOutlet($outletId)) {

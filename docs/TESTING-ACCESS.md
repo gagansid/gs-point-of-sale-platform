@@ -28,7 +28,7 @@ Tanpa subdomain (domain `POS_*` kosong): `/dashboard`, `/admin`, `/api/v1`.
 | Laporan | `/reports` |
 | Pengaturan → Outlet · Profil outlet | `/settings/outlets` · `/settings/outlet?outlet={id}` |
 | Karyawan · Metode pembayaran | `/settings/employees` · `/settings/payment-methods` |
-| Pilih outlet (topbar) | `POST /switch-outlet/{id|all}` |
+| Pilih outlet (sidebar, di bawah logo) | `POST /switch-outlet/{id|all}` |
 
 ## Akun demo (bisnis "Kopi Senja (Demo)", outlet `DEMO01`)
 
@@ -55,7 +55,7 @@ Sumber resmi: tabel permission di `docs/SPEC.md` dan `App\Enums\UserRole::permis
 
 ## Skenario uji yang disarankan
 
-- Owner: tambah outlet ke-2 → pindah outlet di topbar → cek stok produk, laporan, penjualan berubah.
+- Owner: tambah outlet ke-2 → pindah outlet di pemilih outlet sidebar → cek stok produk, laporan, penjualan berubah.
 - Owner: tugaskan Budi ke outlet ke-2 di Karyawan → Budi tidak muncul di layar PIN perangkat `DEMO01`.
 - Admin: ubah "Maksimal outlet aktif" bisnis → tambah outlet melebihi batas ditolak.
 - Bisnis hanya-baca: set "Langganan berakhir" ke kemarin di admin → dashboard tampil banner, simpan ditolak.
@@ -64,10 +64,10 @@ Sumber resmi: tabel permission di `docs/SPEC.md` dan `App\Enums\UserRole::permis
 
 Butuh minimal 2 outlet aktif (demo: Kopi Senja Kemang & Kopi Senja Cilandak).
 
-- Owner: Produk → Ubah → hapus centang satu outlet di "Dijual di outlet" → pilih outlet itu di topbar →
+- Owner: Produk → Ubah → hapus centang satu outlet di "Dijual di outlet" → pilih outlet itu di pemilih outlet sidebar →
   daftar produk menampilkan badge "Tidak dijual"; filter "Dijual di outlet ini" berfungsi.
 - Manager (satu outlet): form produk hanya menampilkan outletnya; outlet lain tidak berubah saat disimpan.
-- Grup opsi → menu baris "Opsi habis" → centang Large → badge Large merah (hanya di outlet topbar).
+- Grup opsi → menu baris "Opsi habis" → centang Large → badge Large merah (hanya di outlet yang dipilih).
 - Metode pembayaran → Ubah QRIS → hapus centang satu outlet → kolom Outlet "1 dari 2 outlet" (tooltip
   menyebut outletnya). Tunai tidak punya pilihan outlet.
 - Outlet → Tambah → "Salin menu & metode bayar dari" outlet tadi → produk yang tidak dijual & QRIS nonaktif

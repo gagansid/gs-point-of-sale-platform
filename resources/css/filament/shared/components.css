@@ -2113,38 +2113,98 @@ select.fi-select-input {
     font-weight: 600;
 }
 
-/* ---------- Pemilih outlet topbar (ADR 0010) ---------- */
+/* ---------- Pemilih outlet di atas menu sidebar (ADR 0010) ---------- */
+.pos-outlet-switcher {
+    padding: 4px 12px 10px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--sidebar-border);
+}
+
+.pos-outlet-switcher .fi-dropdown,
+.pos-outlet-switcher .fi-dropdown-trigger {
+    display: block;
+    width: 100%;
+}
+
 .pos-outlet-switcher__trigger {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    height: var(--control-h);
-    max-width: 240px;
-    padding: 0 10px;
-    border: 1px solid var(--field-border);
-    border-radius: var(--control-radius);
-    background: var(--bg-surface);
-    color: var(--text);
-    font-size: 13px;
-    font-weight: 500;
+    gap: 10px;
+    width: 100%;
+    padding: 7px 8px;
+    border: 1px solid var(--sidebar-border);
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.05);
+    color: var(--sidebar-text-hover);
+    text-align: start;
     cursor: pointer;
-    transition: border-color .15s ease;
+    transition: background-color .15s ease, border-color .15s ease;
 }
 
 .pos-outlet-switcher__trigger:hover {
-    border-color: var(--field-border-hover);
+    background: var(--sidebar-hover);
+    border-color: rgb(255 255 255 / 0.16);
+}
+
+.pos-outlet-switcher__badge {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background: var(--sidebar-active-bg);
+}
+
+.pos-outlet-switcher__badge svg {
+    width: 17px;
+    height: 17px;
+}
+
+.pos-outlet-switcher__text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+    line-height: 1.25;
+}
+
+.pos-outlet-switcher__caption {
+    color: var(--sidebar-group-label);
+    font-size: 11px;
+    font-weight: 500;
 }
 
 .pos-outlet-switcher__label {
     overflow: hidden;
+    font-size: 13px;
+    font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.pos-outlet-switcher__icon,
 .pos-outlet-switcher__chevron {
     width: 16px;
     height: 16px;
     flex-shrink: 0;
-    color: var(--text-muted);
+    color: var(--sidebar-text);
+}
+
+/* Sidebar ciut (rail 64px): hanya ikon outlet di tengah */
+@media (min-width: 64rem) {
+    .fi-sidebar:not(.fi-sidebar-open) .pos-outlet-switcher {
+        padding: 4px 8px 8px;
+    }
+
+    .fi-sidebar:not(.fi-sidebar-open) .pos-outlet-switcher__trigger {
+        justify-content: center;
+        padding: 4px;
+        border-color: transparent;
+        background: transparent;
+    }
+
+    .fi-sidebar:not(.fi-sidebar-open) .pos-outlet-switcher__text,
+    .fi-sidebar:not(.fi-sidebar-open) .pos-outlet-switcher__chevron {
+        display: none;
+    }
 }

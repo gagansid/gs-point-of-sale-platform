@@ -17,6 +17,9 @@
 ```
 
 Meniru gs-task-tracker: sidebar setinggi layar di kiri, topbar dimulai di kanan sidebar.
+Topbar hanya berisi ☰, pencarian global (kiri), dan menu akun (kanan). **Pemilih outlet** `/dashboard`
+(SPEC Q41) ada di atas menu sidebar, di bawah logo — hanya bila user memegang lebih dari satu outlet aktif;
+sidebar ciut = ikon outlet saja (`PanelsRenderHook::SIDEBAR_NAV_START`, view `filament/dashboard/outlet-switcher`).
 Kerangka diterapkan lewat `App\Filament\Shared\Layout::apply()` di kedua panel. Grup menu
 tidak bisa diciutkan (`NavigationGroup::make(...)->collapsible(false)`).
 
