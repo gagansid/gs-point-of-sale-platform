@@ -32,7 +32,10 @@
         <env name="POS_ADMIN_DOMAIN" value="" force="true"/>
         <env name="POS_API_DOMAIN" value="" force="true"/>
         <env name="APP_URL" value="http://localhost" force="true"/>
-        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <!-- Maintenance mode per proses (cache array): driver file memakai storage/framework/down bersama,
+             sehingga test paralel lain ikut mendapat 503 (GSPOS-BUG-003) -->
+        <env name="APP_MAINTENANCE_DRIVER" value="cache"/>
+        <env name="APP_MAINTENANCE_STORE" value="array"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
