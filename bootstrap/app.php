@@ -37,6 +37,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prepend(AssignRequestId::class);
         $middleware->append(SecurityHeaders::class);
 
+        // Hanya host aplikasi sendiri: cegah host header poisoning pada link email (GSPOS-SEC-016)
+        $middleware->trustHosts(at: fn (): array => Domains::trustedHostPatterns(), subdomains: false);
+
         // ForceJsonResponse harus sebelum auth agar request tanpa token mendapat 401 JSON
         $middleware->api(prepend: [ForceJsonResponse::class]);
 

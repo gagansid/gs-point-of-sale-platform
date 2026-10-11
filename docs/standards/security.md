@@ -35,6 +35,7 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **Replay / transaksi ganda** | ID client sebagai idempotency key + PK sebagai penjaga terakhir; nomor order & stok dengan row lock (diuji 30 checkout paralel di MySQL) | `CheckoutOrder`, `OrderNumberGenerator` | ✅ Minggu 4 |
 | **Kebocoran informasi** | Error 500 tanpa detail (juga saat `APP_DEBUG=true`), tanpa `X-Powered-By`, 405 dijawab 404 | `ApiExceptionRenderer` | ✅ Langkah 2 |
 | **Pencurian token / sesi** | Token per device dengan masa berlaku, bisa dicabut (token kasir terikat device); token user & device tidak bisa saling dipakai; cookie `HttpOnly`, `Secure`, `SameSite`, session terenkripsi | Sanctum, `EnsureUserToken`, `EnsureDeviceToken` | ✅ Auth API |
+| **Host header poisoning (link reset/verifikasi ke domain penyerang)** | `TrustHosts` hanya host APP_URL + `POS_*_DOMAIN` (aktif di luar `local`); host lain → 400. Deploy: pastikan `APP_URL`/domain sesuai host publik (alias `www.` perlu redirect di server atau ditambahkan) | `bootstrap/app.php`, `Domains::trustedHostPatterns`, `GspoSec016TrustedHostsTest` | ✅ GSPOS-SEC-016 |
 | **CSRF** | API memakai Bearer token (tanpa cookie); panel Filament memakai CSRF bawaan Laravel | Bawaan | ✅ |
 | **CORS disalahgunakan** | Tidak ada origin yang diizinkan secara default | `config/cors.php` | ✅ Langkah 2 |
 | **Log injection** | `X-Request-Id` dari client hanya diterima jika `[A-Za-z0-9-_]{8,64}` | `AssignRequestId` | ✅ Langkah 2 |

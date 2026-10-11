@@ -65,6 +65,26 @@ final class Domains
     }
 
     /**
+     * Pola host yang dipercaya (TrustHosts): host APP_URL + domain bagian aplikasi. Host lain ditolak
+     * sehingga link reset kata sandi / verifikasi email tidak bisa diarahkan ke domain penyerang lewat
+     * header Host (GSPOS-SEC-016). TrustHosts tidak aktif di APP_ENV=local dan saat test.
+     *
+     * @return list<string>
+     */
+    public static function trustedHostPatterns(): array
+    {
+        $hosts = array_filter([
+            parse_url((string) config('app.url'), PHP_URL_HOST),
+            self::main(),
+            self::app(),
+            self::admin(),
+            self::api(),
+        ], fn (mixed $host): bool => is_string($host) && $host !== '');
+
+        return array_values(array_map(fn (string $host): string => '^'.preg_quote($host, '/').'$', array_unique($hosts)));
+    }
+
+    /**
      * URL absolut ke subdomain lain dengan skema & port request saat ini (port lokal :8000 ikut).
      */
     public static function url(string $domain, string $path = '', ?string $query = null): string
