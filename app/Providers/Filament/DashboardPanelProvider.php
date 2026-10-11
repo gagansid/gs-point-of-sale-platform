@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Dashboard\Pages\Auth\EditProfile;
 use App\Filament\Dashboard\Pages\Auth\Login;
 use App\Filament\Dashboard\Pages\Home;
 use App\Filament\Shared\Layout;
@@ -48,7 +49,7 @@ final class DashboardPanelProvider extends PanelProvider
             ->authGuard('web')
             // Dengan subdomain: mengalihkan ke gspos.id/login (ADR 0008)
             ->login(Login::class)
-            ->profile(isSimple: false)
+            ->profile(EditProfile::class, isSimple: false)
             ->colors(Theme::colors())
             ->font('Plus Jakarta Sans')
             ->brandName('gs.POS')
