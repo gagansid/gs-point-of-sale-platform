@@ -2,6 +2,7 @@
 
 > Hanya untuk development lokal. Data dari `php artisan db:seed` (`DemoTenantSeeder`, ditolak di
 > production). **Jangan** jalankan `migrate:fresh` / `db:wipe`: database lokal ikut terhapus.
+> Halaman program member & self-order QR meja (beserta login): [`PAGES-MEMBER-SELF-ORDER.md`](PAGES-MEMBER-SELF-ORDER.md).
 
 ## URL (mode subdomain, `.env` lokal)
 
