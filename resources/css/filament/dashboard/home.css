@@ -430,3 +430,9 @@ td.pos-dash-table__share span.tabular-nums {
 .pos-report-page .pos-report-tabs {
     padding: 0.25rem;
 }
+
+/* Tab tersegmentasi (bar jenis laporan, toggle Terlaris/Kurang laku) setinggi tombol & field: 32px */
+.pos-report-page .fi-tabs-item {
+    height: var(--control-h);
+    padding-block: 0;
+}

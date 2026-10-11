@@ -230,7 +230,7 @@ trait InteractsWithReportFilters
             ->label('Filter lanjutan')
             ->icon(Heroicon::OutlinedFunnel)
             ->color('gray')
-            ->size('sm')
+            // Ukuran standar (32px) sama dengan field & tombol Simpan/Batal
             ->badge(fn (): ?int => $this->activeAdvancedFilterCount() ?: null)
             ->slideOver()
             ->modalWidth('md')
