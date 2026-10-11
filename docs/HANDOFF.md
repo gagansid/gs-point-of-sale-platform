@@ -1,8 +1,9 @@
 # Catatan Lanjut Pengerjaan
 
 > Diperbarui: 2026-10-11 · Branch: `feature/pos`
-> Status: **Beranda berfilter + modul Laporan lengkap (SPEC Q49–Q52, ADR 0012) + perapian UI selesai & di-push** (`8c0fedc`).
-> Kualitas: 872 test lulus (SQLite; test laporan juga MySQL `gspos_test`), Pint & Larastan level 6 bersih.
+> Status: **Kasir web + panel admin + R5–R9 + import produk selesai** (`000d2f0`). Deploy ditunda atas keputusan pemilik.
+> Kualitas: 1087 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih.
+> Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
 ---
@@ -82,6 +83,27 @@ input group tanpa garis pemisah; tanpa `style=""`/hex di Blade (pakai kelas + to
 
 ---
 
+### Sesi 2026-10-11 sore (SPEC Q55–Q59)
+| Commit | Isi |
+|---|---|
+| `b1df171` | Menu **Kasir** di sidebar dashboard → `/cashier/confirm` (tab baru), masuk ulang dengan kata sandi atau PIN (Q55). PIN hanya di jalur ini; tanpa link lupa kata sandi/PIN |
+| `dfdb65c` | Halaman masuk kasir bermerek (`x-cashier.auth`: latar navy, panel fitur, versi di bawah kartu), tab cara masuk di form (tanpa `?mode=`), pilih outlet > 3 = dropdown dengan pencarian, Keluar → kembali ke dashboard |
+| `9a9487a` | Pesan kasir web jadi **toast kanan atas** (`PointOfSale::toast()` → event `cashier-toast`); hapus/lanjutkan transaksi tertahan ada pesannya; perbaikan total lama tertinggal setelah Tahan |
+| `6a58a6d` | Item sama (produk + opsi) tanpa catatan & diskon item digabung ke satu baris |
+| `e05a85c`, `3c18e86` | Semua halaman masuk (kasir, admin, Filament simple page, `gspos.id/login`) memakai field & tombol 40px; halaman lain tetap 32px |
+| `8995ca5` | PIN sendiri di **Profil** (wajib kata sandi saat ini, reset kunci PIN, cabut token) |
+| `0b9e64a` | **R6** target omzet harian/bulanan per outlet (Profil outlet & `PUT /v1/outlet`) + widget Beranda (Q56) |
+| `27040e1` | **R5** ringkasan harian email `pos:daily-summary` (tiap jam, sekali per hari setelah 07.00 waktu outlet; toggle di Profil, bawaan owner) (Q57) |
+| `9fedd51` | **R7** Riwayat perubahan (`spatie/laravel-activitylog`, `ActivityLog` per tenant, izin `audit.view`), tautan dari panel Audit; disimpan 365 hari (Q58) |
+| `489e114` | **Import produk** dari Excel/CSV dengan template, validasi semua baris dulu, upsert per SKU (Q59) |
+| `000d2f0` | **R9** uji E2E Dusk (kasir web, menu Kasir, dashboard) dengan `database/dusk.sqlite` terpisah |
+
+Aturan untuk tim Flutter (repo `gs-point-of-sale-app`, tidak ada di mesin ini):
+- **F1** — samakan gabung item keranjang: produk & pilihan opsi sama, tanpa catatan & tanpa diskon item → qty
+  ditambah ke baris yang ada; beda opsi/catatan/diskon → baris baru (SPEC Q54).
+- **F2** — `GET/PUT /v1/outlet` kini memuat `daily_sales_target` & `monthly_sales_target` (nullable, Q56); opsional
+  ditampilkan di setelan outlet aplikasi.
+
 ## 2. Belum dikerjakan
 
 | Prioritas | Pekerjaan | Catatan |
@@ -90,7 +112,8 @@ input group tanpa garis pemisah; tanpa `style=""`/hex di Blade (pakai kelas + to
 | ✅ | Kasir web (SPEC Q54, W1–W6) | Selesai 2026-10-11: akses per karyawan, login `/cashier`, shift X/Z, layar transaksi, open bill, approval PIN, void, menu Perangkat. Sisa: uji di browser tablet sungguhan & printer thermal; cetak tanpa dialog di luar cakupan |
 | ✅ | Minggu 7 — panel admin | Selesai 2026-10-11 (lihat PROGRESS); sisa OWASP ZAP & uji manual di staging |
 | 3 | Minggu 8 — deploy | cPanel, uji MySQL ulang (fitur 9–10 Okt & migrasi multi-outlet), uji dengan Flutter, pilot |
-| Ditunda | Import produk dari Excel | Ditunda atas keputusan pemilik produk (2026-10-10); rencana: lewat `SaveProduct`, cegah formula injection (`SafeCell`) |
+| ✅ | Import produk dari Excel | Selesai 2026-10-11 (`489e114`, Q59) |
+| 2 | Integrasi Flutter | L1 + F1–F2 (repo aplikasi) |
 | Ditunda | Aplikasi tablet | Fase tablet/aplikasi kasir (menu Perangkat sudah ada, Q54) |
 
 ### Perlu diubah / dilanjutkan (modul Laporan & UI)
@@ -111,11 +134,11 @@ input group tanpa garis pemisah; tanpa `style=""`/hex di Blade (pakai kelas + to
 | R2 | Cache agregat laporan (driver `database`, 60 detik, kunci tenant + filter; periode yang sudah lewat lebih lama) — sekaligus menutup T1 | Beranda/Laporan lebih ringan di shared hosting; `daily`/`hourly`/`heatmap` kini mengelompokkan di PHP — ✅ Selesai: `CachedReportService` (60 detik, periode lewat 10×, "Muat ulang" = flush per tenant) |
 | R3 | Throttle aksi & endpoint export (mis. 10/menit per user) | Export sinkron cukup berat; cegah penyalahgunaan (DoS ringan) — ✅ Selesai (`bd473df`): `ExportThrottle`, `pos.rate_limits.export` |
 | R4 | Wajib email terverifikasi untuk login dashboard supervisor | Supervisor kini bisa login web (Q50); verifikasi (Q46) belum memblokir akses — ✅ Selesai (`ae629f7`) |
-| R5 | Ringkasan harian otomatis (email/WhatsApp) lewat cron cPanel `schedule:run` | Owner tahu omzet & anomali (void, selisih kas) tanpa membuka dashboard |
-| R6 | Target omzet harian/bulanan per outlet + progres di Beranda | Manager punya patokan, bukan hanya pembanding periode lalu |
-| R7 | Audit log (`spatie/laravel-activitylog`, Fase 2) terhubung ke panel Audit | Jejak perubahan harga, diskon, void lebih lengkap |
+| R5 | Ringkasan harian otomatis (email/WhatsApp) lewat cron cPanel `schedule:run` | Owner tahu omzet & anomali (void, selisih kas) tanpa membuka dashboard — ✅ Email selesai (`27040e1`, Q57); WhatsApp belum |
+| R6 | Target omzet harian/bulanan per outlet + progres di Beranda | Manager punya patokan, bukan hanya pembanding periode lalu — ✅ Selesai (`0b9e64a`, Q56) |
+| R7 | Audit log (`spatie/laravel-activitylog`, Fase 2) terhubung ke panel Audit | Jejak perubahan harga, diskon, void lebih lengkap — ✅ Selesai (`9fedd51`, Q58); void & diskon tetap di panel Audit |
 | R8 | Simpan preset filter per user ("Laporan mingguan outlet A") | Mempercepat rekap rutin — ✅ Selesai: grup aksi Preset di Laporan (tabel `report_presets`, maks. 10 per user) |
-| R9 | Tabel data pendamping grafik (aksesibilitas `chart.md`) & uji E2E browser untuk alur laporan | Mutu & aksesibilitas — ✅ Tabel pendamping grafik (tren & jam ramai; kategori & metode bayar sudah ada). Uji E2E browser: menunggu keputusan alat (Pest browser butuh PHP 8.3; Dusk butuh ChromeDriver) |
+| R9 | Tabel data pendamping grafik (aksesibilitas `chart.md`) & uji E2E browser untuk alur laporan | Mutu & aksesibilitas — ✅ Tabel pendamping grafik (tren & jam ramai; kategori & metode bayar sudah ada). Uji E2E browser ✅ Dusk (`000d2f0`, `docs/standards/testing.md` §8) |
 
 Utang teknis tersisa (lihat PROGRESS): T1 cache widget beranda, T2 gambar lama tidak terhapus,
 T3 cetak struk dari web, T4 Node lokal, T5 rencana PHP 8.3 + Laravel 13, T6 `POS_ADMIN_2FA_REQUIRED=true` di production.

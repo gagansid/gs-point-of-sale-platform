@@ -1,8 +1,8 @@
 # Progres Pengerjaan
 
-> Terakhir diperbarui: 2026-10-10 · Branch: `feature/pos` (ADR 0003) · Commit terakhir: `3937a7b`
-> Status kualitas: **656 test** lulus (SQLite), Pint & Larastan level 6 bersih. Uji MySQL untuk fitur
-> 9–10 Okt belum dijalankan ulang.
+> Terakhir diperbarui: 2026-10-11 · Branch: `feature/pos` (ADR 0003) · Commit terakhir: `000d2f0`
+> Status kualitas: **1087 test** lulus (SQLite) + 3 uji E2E Dusk, Pint & Larastan level 6 bersih. Uji MySQL
+> untuk fitur 9–11 Okt belum dijalankan ulang. Ringkasan sesi terbaru: `docs/HANDOFF.md`.
 
 Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#cara-melanjutkan) dan
 [Berikutnya](#berikutnya) sebelum mulai. Urutan rencana mengikuti `docs/SPEC.md` → *Urutan pengerjaan*.
@@ -24,17 +24,18 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | Katalog+ | Favorit, stok minimum & menipis, atur urutan kasir, status kategori/grup opsi, sortir API | ✅ | `42f1fad`, `f15f427` |
 | Domain | Subdomain `app.`/`admin.`/`api.` + halaman depan & login `gspos.id` (ADR 0008), URL berbahasa Inggris | ✅ | `5d3dcf3`, `83aec78`, `c13c37c` |
 | Onboarding | Daftar mandiri + trial, hanya-baca, verifikasi email, checklist + template menu, lead → tenant, lupa kata sandi, edisi jual putus (ADR 0009 langkah 1–6) | ✅ | `abec733` … `3937a7b` |
-| **Setelan** | Profil outlet ✅, Karyawan ✅ (PIN + username/kata sandi kasir web), Metode bayar ✅; Perangkat ditunda ke fase tablet; import produk | 🟡 | `1a1b9d9`, `fa95b7e`, `cd2ac45`, `22f2ed2` |
+| **Setelan** | Profil outlet ✅ (+ target omzet), Karyawan ✅ (PIN + username/kata sandi kasir web), Metode bayar ✅, Perangkat ✅, Riwayat perubahan ✅, import produk ✅ | ✅ | `1a1b9d9` … `489e114` |
 | Multi-outlet | Outlet per bisnis (tambah/nonaktifkan, batas paket), penugasan karyawan, stok & ketersediaan per outlet, pemilih outlet topbar, filter laporan, `/outlets` (ADR 0010 M1–M6) | ✅ | — |
 | Beranda | Ringkasan bisnis berfilter live (KPI + tren + audit), URL ringkas, ikon kalender, KPI responsif | ✅ | `5cb6b1c`, `0d12fe4` |
 | **Modul laporan** | 12 tab laporan + filter (granularitas, kategori, produk, shift), akses supervisor 31 hari & kasir rekap shift (Q49–Q52), 9 endpoint API baru, export Excel & PDF (ADR 0012) | ✅ | `d7a1ad5` … `bf20537` |
 | UI rapi | Toolbar filter ringkas + panel filter lanjutan, KPI rapat, checklist di atas, kontrol 32px & input group tanpa pemisah di semua form, jarak 16px | ✅ | `42a40c9` … `8c0fedc` |
-| **Tindak lanjut laporan** | L1–L7 & rekomendasi R1–R9 (lihat `docs/HANDOFF.md`) | ⏳ | — |
-| **Berikutnya** | Import produk Excel & kasir web | ⏳ | — |
+| Tindak lanjut laporan | L3, L5–L7, R1–R9 selesai; sisa L1 (Flutter), L2 & L4 (hosting) | 🟡 | `ae629f7` … `000d2f0` |
+| Kasir web | Q54–Q55: login, shift, transaksi, open bill, tahan, PIN approval, void, menu Kasir di dashboard, toast | ✅ | `a178508` … `6a58a6d` |
+| Import produk | Excel/CSV + template, validasi per baris, upsert SKU (Q59) | ✅ | `489e114` |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ✅ 2026-10-11 (sisa: OWASP ZAP & uji manual di staging) | `38a67cd`..`fe6d252` |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
-Endpoint selesai: **45** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q52, ADR 0001–0012.
+Endpoint selesai: **58** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q59, ADR 0001–0012.
 
 ---
 
@@ -145,7 +146,7 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 git checkout feature/pos
 composer install            # juga mem-publish aset Filament
 npm install && npm run build
-php artisan migrate:fresh --seed   # data demo: tenant, katalog, transaksi 7 hari
+php artisan migrate --seed         # data demo: tenant, katalog, transaksi 7 hari (JANGAN migrate:fresh: menghapus data lokal)
 php artisan serve
 composer check              # wajib hijau sebelum commit
 ```
