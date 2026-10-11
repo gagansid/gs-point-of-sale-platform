@@ -150,3 +150,16 @@ it('daftar di gspos.id langsung masuk ke app. lewat tiket', function () {
     $this->get($location)->assertRedirect();
     expect(auth('web')->user()?->email)->toBe('sri@warung.test');
 });
+
+it('tiket ditolak bila akun dinonaktifkan atau tenant ditangguhkan sebelum ditukar (GSPOS-SEC-007)', function (string $case) {
+    $ticket = loginForTicket($this, ['email' => 'owner@kopi.test', 'password' => 'rahasia-123']);
+
+    match ($case) {
+        'akun nonaktif' => $this->owner->update(['is_active' => false]),
+        'tenant ditangguhkan' => $this->owner->tenant->update(['status' => TenantStatus::Suspended]),
+    };
+
+    $this->get('http://app.gspos.localhost/auth/ticket?ticket='.$ticket)
+        ->assertRedirect('http://gspos.localhost/login?expired=1');
+    $this->assertGuest('web');
+})->with(['akun nonaktif', 'tenant ditangguhkan']);

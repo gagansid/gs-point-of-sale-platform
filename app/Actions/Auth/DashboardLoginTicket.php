@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Auth;
 
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -50,9 +51,13 @@ final class DashboardLoginTicket
         }
 
         // Lintas tenant: tenant baru diketahui dari user; id berasal dari tiket di server, bukan input
-        $user = User::allTenants()->find($payload['user_id']);
+        $user = User::allTenants()->with('tenant')->find($payload['user_id']);
 
-        if (! $user instanceof User) {
+        // Status dicek ulang saat tiket ditukar: akun dinonaktifkan / tenant ditangguhkan di antara
+        // terbit dan tukar tiket tidak boleh tetap login (GSPOS-SEC-007)
+        if (! $user instanceof User
+            || ! $user->canAccessPanel(Filament::getPanel('dashboard'))
+            || $user->tenant?->isActive() !== true) {
             return null;
         }
 
