@@ -14,6 +14,7 @@ use App\Models\StockMovement;
 use App\Models\User;
 use App\Support\Idempotency;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Membuat (product = null) atau mengubah produk beserta urutan grup opsinya.
@@ -33,6 +34,8 @@ final class SaveProduct
         if ($product === null && ($existing = Idempotency::existing(Product::class, $data->id)) !== null) {
             return ['product' => $existing->loadOutletState($outlet->id), 'replayed' => true];
         }
+
+        $oldImage = $product?->image_path;
 
         $product = DB::transaction(function () use ($product, $data, $outlet, $by): Product {
             $isNew = $product === null;
@@ -87,7 +90,25 @@ final class SaveProduct
             return $product;
         });
 
+        // Gambar diganti/dihapus: file lama dibuang setelah data tersimpan (T2)
+        if ($data->imagePathProvided && $oldImage !== null && $oldImage !== $product->image_path) {
+            self::deleteImage($product, $oldImage);
+        }
+
         return ['product' => $product->refresh()->loadOutletState($outlet->id), 'replayed' => false];
+    }
+
+    /**
+     * Hapus file gambar lama di disk public. Hanya di folder produk tenant ini dan bila tidak dipakai
+     * produk lain (mis. hasil salin), agar tidak pernah menghapus file sembarang path.
+     */
+    private static function deleteImage(Product $product, string $path): void
+    {
+        $inTenantFolder = str_starts_with($path, 'products/'.$product->tenant_id.'/') && ! str_contains($path, '..');
+
+        if ($inTenantFolder && Product::withTrashed()->where('image_path', $path)->doesntExist()) {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     /**
