@@ -2736,3 +2736,12 @@ select.fi-select-input {
 .fi-ta-text-summary-label {
     font-weight: 600;
 }
+
+/*
+ * Halaman masuk (login, reset kata sandi, verifikasi — layout "simple"): field & tombol 40px dan font 14px
+ * agar tidak terlihat gepeng. Halaman lain tetap 32px (--control-h di tokens.css).
+ */
+.fi-simple-layout {
+    --control-h: 40px;
+    --control-font: 14px;
+}

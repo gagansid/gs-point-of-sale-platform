@@ -37,5 +37,5 @@
         <button type="submit" class="cashier-auth-btn">Masuk kasir</button>
     </form>
 
-    <p class="cashier-auth-foot">PIN atau kata sandi terkunci? Hubungi owner.</p>
+    <p class="cashier-auth-foot">PIN atau kata sandi terkunci? Hubungi atasan.</p>
 </x-cashier.auth>

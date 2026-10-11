@@ -1895,10 +1895,10 @@
 
 /*
  * Kasir web: halaman masuk (login, masuk ulang, pilih outlet). Latar navy brand + pola titik,
- * kartu ringkas; field & tombol 32px seperti dashboard (--control-h).
+ * kartu ringkas; field & tombol 40px seperti login admin/dashboard (layout simple Filament).
  */
 .cashier-auth {
-    --control-h: 32px;
+    --control-h: 40px;
     position: relative;
     display: flex;
     flex-direction: column;

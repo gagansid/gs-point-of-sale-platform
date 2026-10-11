@@ -121,7 +121,7 @@ it('user tanpa PIN: tab PIN disembunyikan dan login PIN ditolak', function () {
     $this->actingAs($this->owner, 'web');
 
     $this->get(route('cashier.confirm'))->assertOk()
-        ->assertSee('PIN atau kata sandi terkunci? Hubungi owner.')
+        ->assertSee('PIN atau kata sandi terkunci? Hubungi atasan.')
         ->assertDontSee('inputmode="numeric"', false);
 
     confirmCashier($this, ['method' => 'pin', 'pin' => '123456'])->assertSessionHasErrors('pin');
