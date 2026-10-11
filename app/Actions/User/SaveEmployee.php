@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\User;
 
+use App\Actions\Auth\VerifyPin;
 use App\Actions\User\Data\EmployeeData;
 use App\Enums\ErrorCode;
 use App\Enums\UserRole;
@@ -82,6 +83,11 @@ final class SaveEmployee
             }
 
             $user->save();
+
+            // PIN baru: penghitung & kunci per perangkat ikut direset
+            if ($data->pin !== null) {
+                VerifyPin::resetFor($user);
+            }
 
             if ($outletIds !== null) {
                 $user->outlets()->sync($outletIds);

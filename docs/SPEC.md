@@ -414,7 +414,7 @@ berdasarkan `error.code`, bukan teks `message`. Detail & contoh:
 | 422 | `VALIDATION_ERROR` | Input tidak valid (detail per field di `error.details`) |
 | 422 | `PAYMENT_EXCEEDS_BALANCE` | Non-tunai melebihi sisa tagihan |
 | 422 | `DISCOUNT_OVER_LIMIT` | Diskon melebihi batas role tanpa approval |
-| 423 | `PIN_LOCKED` | PIN dikunci 15 menit setelah 5 kali salah (`error.details.retry_after` detik) |
+| 423 | `PIN_LOCKED` | PIN dikunci 15 menit: 5 kali salah dari satu sumber (login / approval, per perangkat) atau 15 kali salah dari semua perangkat (`error.details.retry_after` detik) |
 | 426 | `APP_UPDATE_REQUIRED` | Versi app di bawah `min_version` |
 | 429 | `TOO_MANY_REQUESTS` | Rate limit terlampaui |
 | 500 | `SERVER_ERROR` | Error tak terduga (detail hanya di log) |
@@ -459,7 +459,7 @@ Memakai tabel `admins` dan guard sendiri. Tidak pernah bisa diakses akun tenant.
 | Area | Aturan |
 |---|---|
 | Isolasi tenant | Global scope `BelongsToTenant` + Policy per model; test wajib memastikan tenant A tidak bisa membaca data tenant B |
-| Password & PIN | Di-hash (bcrypt/argon2); PIN dikunci 15 menit setelah 5 kali salah |
+| Password & PIN | Di-hash (bcrypt/argon2); PIN dikunci 15 menit setelah 5 kali salah per sumber (login atau approval, per perangkat), dikunci di semua perangkat setelah 15 kali salah dalam 15 menit; satu perangkat maksimal 20 PIN salah per 15 menit (`TOO_MANY_REQUESTS`). Owner bisa membuka kunci (GSPOS-SEC-002) |
 | Token | Sanctum per device dengan masa berlaku; owner bisa mencabut device |
 | Rate limit | Login & PIN: 5 kali/menit per IP + device; API umum: 120 request/menit per token |
 | Nominal transaksi | Selalu dihitung ulang di server |

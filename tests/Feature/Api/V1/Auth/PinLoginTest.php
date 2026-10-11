@@ -61,10 +61,13 @@ it('PIN salah → 401 INVALID_PIN dan percobaan dihitung', function () {
 });
 
 it('5 kali salah → PIN dikunci 15 menit (423 PIN_LOCKED), lalu bisa login lagi', function () {
-    foreach (range(1, 4) as $_) {
+    foreach (range(1, 4) as $i) {
+        // IP berbeda tiap percobaan agar throttle:auth tidak ikut campur; yang diuji di sini penguncian PIN
+        // (cache tidak di-flush: penghitung PIN juga tersimpan di cache)
+        $this->withServerVariables(['REMOTE_ADDR' => "10.0.0.{$i}"]);
         pinLogin($this, $this->cashier->id, '000000')->assertStatus(401);
-        $this->app['cache']->store()->flush(); // kosongkan rate limiter, yang diuji di sini penguncian PIN
     }
+    $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.9']);
 
     $locked = pinLogin($this, $this->cashier->id, '000000');
     assertApiError($locked, 'PIN_LOCKED', 423);

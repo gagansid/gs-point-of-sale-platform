@@ -34,7 +34,7 @@ final class LoginWithPin
             throw BusinessException::of(ErrorCode::InvalidPin);
         }
 
-        $this->verifyPin->handle($user, $pin);
+        $this->verifyPin->handle($user, $pin, 'login:'.$device->id, $device->id);
 
         $expiresAt = now()->addMinutes((int) config('pos.tokens.cashier_ttl'));
         $token = $this->issueToken->handle($user, 'pin:'.$device->device_uid, $expiresAt, $device);

@@ -40,7 +40,10 @@ return [
     // Penguncian PIN: dikunci setelah N kali salah selama M menit
     'pin' => [
         'length' => 6,
+        // Per (user, sumber: login/approval per perangkat), per user (semua perangkat), per perangkat (semua user)
         'max_attempts' => 5,
+        'max_attempts_total' => 15,
+        'max_attempts_per_device' => 20,
         'lockout_minutes' => 15,
     ],
 

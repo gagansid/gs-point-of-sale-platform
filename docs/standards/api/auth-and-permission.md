@@ -78,7 +78,10 @@ lanjut, approved_by = approver_user_id
 ## 5. PIN & password
 
 - Hash dengan `Hash::make()` (bcrypt/argon2). PIN tidak pernah dikembalikan di respons atau log.
-- PIN: 6 digit. Terkunci 15 menit setelah 5 kali salah → `423 PIN_LOCKED` (berlaku juga untuk PIN approver).
+- PIN: 6 digit. Terkunci 15 menit setelah 5 kali salah → `423 PIN_LOCKED`. Penghitung per sumber: login PIN
+  dan PIN approver dihitung terpisah, per perangkat. 15 kali salah dari semua perangkat dalam 15 menit →
+  dikunci di semua perangkat; satu perangkat maksimal 20 PIN salah per 15 menit → `429 TOO_MANY_REQUESTS`
+  (`VerifyPin`, GSPOS-SEC-002).
 - Password minimal 8 karakter.
 
 ## 6. Panel web

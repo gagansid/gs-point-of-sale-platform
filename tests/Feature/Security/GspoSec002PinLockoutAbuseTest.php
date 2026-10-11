@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Actions\User\UnlockEmployeePin;
 use App\Models\Device;
+use App\Models\User;
 use App\Support\TenantContext;
 use Illuminate\Testing\TestResponse;
 
@@ -54,4 +56,47 @@ it('5 PIN approver salah lewat void tidak mengunci login PIN supervisor', functi
     }
 
     sec002PinLogin($this, $this->pos->device, $this->pos->supervisor->id, '123456', '10.0.0.11')->assertOk();
+});
+
+it('kunci per perangkat: PIN benar di perangkat penyerang tetap ditolak 423 selama terkunci', function () {
+    foreach (range(1, 5) as $i) {
+        sec002PinLogin($this, $this->attackerDevice, $this->pos->cashier->id, '000000', "10.1.0.{$i}");
+    }
+
+    assertApiError(sec002PinLogin($this, $this->attackerDevice, $this->pos->cashier->id, '123456', '10.1.0.9'), 'PIN_LOCKED', 423);
+});
+
+it('15 PIN salah dari banyak perangkat → dikunci di semua perangkat (brute force terdistribusi)', function () {
+    $devices = TenantContext::run($this->pos->tenantId, fn () => Device::factory()->forOutlet($this->pos->outlet)->count(3)->create());
+
+    foreach ($devices as $d => $device) {
+        foreach (range(1, 5) as $i) {
+            sec002PinLogin($this, $device, $this->pos->cashier->id, '000000', "10.2.{$d}.{$i}");
+        }
+    }
+
+    expect($this->pos->cashier->refresh()->isPinLocked())->toBeTrue();
+    assertApiError(sec002PinLogin($this, $this->pos->device, $this->pos->cashier->id, '123456', '10.2.9.9'), 'PIN_LOCKED', 423);
+});
+
+it('satu perangkat menebak PIN banyak karyawan → 429 setelah 20 salah', function () {
+    $staff = TenantContext::run($this->pos->tenantId, fn () => User::factory()->cashier()->forOutlet($this->pos->outlet)->count(5)->create());
+
+    foreach ($staff as $u => $user) {
+        foreach (range(1, 4) as $i) {
+            sec002PinLogin($this, $this->attackerDevice, $user->id, '000000', "10.3.{$u}.{$i}");
+        }
+    }
+
+    assertApiError(sec002PinLogin($this, $this->attackerDevice, $this->pos->cashier->id, '000000', '10.3.9.9'), 'TOO_MANY_REQUESTS', 429);
+});
+
+it('unlock owner membuka kunci per perangkat juga', function () {
+    foreach (range(1, 5) as $i) {
+        sec002PinLogin($this, $this->attackerDevice, $this->pos->cashier->id, '000000', "10.4.0.{$i}");
+    }
+
+    TenantContext::run($this->pos->tenantId, fn () => app(UnlockEmployeePin::class)->handle($this->pos->cashier));
+
+    sec002PinLogin($this, $this->attackerDevice, $this->pos->cashier->id, '123456', '10.4.0.9')->assertOk();
 });

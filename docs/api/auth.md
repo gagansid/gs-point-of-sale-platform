@@ -236,8 +236,8 @@ Sama dengan `POST /auth/login`; token berlaku maks. 16 jam dan terikat ke device
 | 403 | `DEVICE_NOT_REGISTERED` | Memakai token user / device dicabut |
 | 403 | `TENANT_SUSPENDED` | Tenant ditangguhkan |
 | 422 | `VALIDATION_ERROR` | `pin` bukan 6 digit, `user_id` bukan UUID |
-| 423 | `PIN_LOCKED` | 5 kali salah → dikunci 15 menit; `error.details.retry_after` (detik) |
-| 429 | `TOO_MANY_REQUESTS` | Rate limit |
+| 423 | `PIN_LOCKED` | 5 kali salah di perangkat ini (atau 15 kali dari semua perangkat) → dikunci 15 menit; `error.details.retry_after` (detik) |
+| 429 | `TOO_MANY_REQUESTS` | Rate limit, atau perangkat ini sudah 20 kali salah PIN dalam 15 menit (semua karyawan) |
 
 ### Catatan
 

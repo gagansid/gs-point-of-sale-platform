@@ -7,6 +7,7 @@ namespace App\Actions\Auth;
 use App\Actions\Auth\Data\ApprovalData;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
+use App\Models\PersonalAccessToken;
 use App\Models\User;
 
 /**
@@ -46,7 +47,10 @@ final class VerifyApproval
             throw BusinessException::of(ErrorCode::InvalidPin);
         }
 
-        $this->verifyPin->handle($approver, $approval->pin);
+        // Penghitung terpisah dari login PIN, per perangkat pelaku (GSPOS-SEC-002)
+        $token = $actor->currentAccessToken();
+        $deviceId = $token instanceof PersonalAccessToken ? $token->device_id : null;
+        $this->verifyPin->handle($approver, $approval->pin, 'approval:'.($deviceId ?? 'none'), $deviceId);
 
         if (! $approver->can($permission)) {
             throw BusinessException::of(ErrorCode::Forbidden, 'Approver tidak memiliki wewenang untuk aksi ini');

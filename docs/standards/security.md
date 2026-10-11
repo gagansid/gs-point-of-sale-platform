@@ -21,7 +21,7 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **SQL injection** | Hanya Eloquent/Query Builder dengan binding; raw SQL wajib `?` binding | `coding.md` §7, test `SecurityTest` | ✅ Langkah 2 |
 | **XSS** | Blade `{{ }}` auto-escape; API hanya JSON + CSP `default-src 'none'`; `nosniff` | `SecurityHeaders` | ✅ Langkah 2 |
 | **Clickjacking / phishing pembungkus** | `X-Frame-Options: DENY`, CSP `frame-ancestors 'none'` | `SecurityHeaders` | ✅ Langkah 2 |
-| **Brute force login & PIN** | Rate limit `auth` 5/menit per IP+device, 20/menit per IP; kunci PIN 15 menit setelah 5 salah | `AppServiceProvider`, Action auth | ✅ Auth API (PIN terkunci dengan row lock, `PIN_LOCKED`) |
+| **Brute force login & PIN** | Rate limit `auth` 5/menit per IP+device, 20/menit per IP; kunci PIN 15 menit setelah 5 salah per sumber (login/approval per perangkat), global setelah 15 salah, 20 salah per perangkat → 429 | `AppServiceProvider`, `VerifyPin` | ✅ Auth API (`PIN_LOCKED`; penghitung per sumber agar perangkat dicuri tidak bisa mengunci karyawan lain — GSPOS-SEC-002) |
 | **Flood / DoS aplikasi** | Rate limit `api` 120/menit per token; batas body 8 MB; pagination maks. 100 | `AppServiceProvider`, `.htaccess`, `config/pos.php` | ✅ Langkah 2 |
 | **DDoS volumetrik** | Cloudflare proxy + "Under Attack mode" | Hosting (§4) | ⏳ Sebelum rilis |
 | **Broken object level authorization (IDOR)** | Global scope tenant fail-closed + Policy; data tenant lain → 404; tenant_id tidak bisa disusupkan/diubah | `BelongsToTenant`, `SetTenantContext`, Policy | ✅ Langkah 3 (Policy per model menyusul) |
@@ -42,7 +42,7 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 | **Password lemah / bocor** | Min. 8, huruf + angka, cek HIBP di production; hash bcrypt | `Password::defaults()` | ✅ Langkah 2 |
 | **Akun admin diambil alih (phishing)** | Guard & tabel terpisah, tanpa akun default, kata sandi admin min. 12 + huruf besar/kecil + simbol, 2FA (wajib secara default, on/off dengan konfirmasi kata sandi), rate limit login | `pos:create-admin`, Filament, ADR 0006 | ✅ Langkah 5 |
 | **Karyawan nonaktif masih punya akses** | Provider auth hanya menerima user aktif; sesi lama ikut terputus | `TenantUserProvider` | ✅ Langkah 4 |
-| **Enumerasi akun / karyawan** | Pesan & waktu respons sama untuk email tak terdaftar vs kata sandi salah; PIN salah vs user lain tenant | `LoginWithPassword`, `LoginWithPin` | ✅ Auth API |
+| **Enumerasi akun / karyawan** | Pesan & waktu respons sama untuk email tak terdaftar vs kata sandi salah (hash dummy di cache, `DummyPasswordHash` — GSPOS-SEC-010); PIN salah vs user lain tenant | `LoginWithPassword`, `DashboardLoginController`, `LoginWithPin` | ✅ Auth API |
 | **Aplikasi usang / dimodifikasi** | `X-App-Version` wajib semver & ≥ `min_version` (426) | `CheckAppVersion` | ✅ Auth API |
 | **Dokumentasi API bocor** | `/docs/api` hanya local & staging | Gate `viewApiDocs` | ✅ Auth API |
 | **Formula injection di Excel** | Teks pengguna yang diawali `= + - @` diberi awalan `'`; nominal ditulis sebagai angka | `App\Exports\SafeCell` | ✅ Minggu 6 |
