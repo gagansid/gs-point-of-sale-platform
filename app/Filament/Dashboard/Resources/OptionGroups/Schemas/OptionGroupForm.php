@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\OptionGroups\Schemas;
 
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Filament\Shared\Schemas\AuditInfo;
+use App\Support\Money;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
@@ -80,7 +81,7 @@ final class OptionGroupForm
                             ->schema([
                                 Hidden::make('id'),
                                 TextInput::make('name')->hiddenLabel()->placeholder('Large')->required()->maxLength(100)->distinct(),
-                                MoneyInput::make('price_delta')->hiddenLabel()->default(0),
+                                MoneyInput::make('price_delta')->hiddenLabel()->default(0)->rule('max:'.Money::MAX_PRICE),
                             ])
                             ->minItems(1)
                             ->maxItems(50)

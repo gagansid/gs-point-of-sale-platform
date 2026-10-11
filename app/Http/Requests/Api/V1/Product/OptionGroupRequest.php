@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Product;
 
+use App\Support\Money;
 use Illuminate\Foundation\Http\FormRequest;
 
 final class OptionGroupRequest extends FormRequest
@@ -25,7 +26,7 @@ final class OptionGroupRequest extends FormRequest
             'options' => ['required', 'array', 'min:1', 'max:50'],
             'options.*.id' => ['nullable', 'uuid'],
             'options.*.name' => ['required', 'string', 'max:100', 'distinct'],
-            'options.*.price_delta' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
+            'options.*.price_delta' => ['nullable', 'decimal:0,2', 'min:0', 'max:'.Money::MAX_PRICE],
         ];
     }
 

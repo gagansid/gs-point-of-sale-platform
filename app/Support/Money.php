@@ -14,6 +14,15 @@ final class Money
 {
     private const SCALE = 2;
 
+    /** Nominal terbesar yang muat di kolom DECIMAL(15,2). */
+    public const MAX = '9999999999999.99';
+
+    /**
+     * Batas harga produk & tambahan harga opsi (GSPOS-BUG-002). Total order tetap dicek terhadap MAX di
+     * PriceOrder, karena qty × (harga + opsi) × jumlah item masih bisa melewati kapasitas kolom.
+     */
+    public const MAX_PRICE = '999999999.99';
+
     /** Menormalkan input (int/string desimal) menjadi "62000.00". */
     public static function of(int|string $value): string
     {

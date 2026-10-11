@@ -9,6 +9,7 @@ use App\Actions\Auth\VerifyApproval;
 use App\Actions\Order\Data\ResolvedLine;
 use App\Enums\DiscountType;
 use App\Enums\ErrorCode;
+use App\Exceptions\BusinessException;
 use App\Models\Outlet;
 use App\Models\User;
 use App\Services\Order\CalculationResult;
@@ -43,6 +44,8 @@ final class PriceOrder
             $outlet->rounding,
         );
 
+        self::ensureFitsStorage($totals);
+
         return ['totals' => $totals, 'approved_by' => $this->checkDiscountLimit($actor, $outlet, $totals, $approval)];
     }
 
@@ -62,7 +65,7 @@ final class PriceOrder
         /** @var array<string, int|float|string> $limits */
         $limits = $outlet->discount_limits ?? config('pos.outlet_defaults.discount_limits');
         $percent = $totals->discountPercent();
-        $limitOf = fn (User $user): string => (string) ($limits[$user->role->value] ?? 0);
+        $limitOf = fn (User $user): string => self::percent($limits[$user->role->value] ?? 0);
         $authorized = fn (User $user): bool => $user->can('order.discount_over_limit')
             || ($user->can('order.discount') && bccomp($percent, $limitOf($user), 2) <= 0);
 
@@ -79,5 +82,37 @@ final class PriceOrder
             ['limit_percent' => $limitOf($actor), 'discount_percent' => $percent],
             $authorized,
         );
+    }
+
+    /**
+     * Total yang melewati DECIMAL(15,2) ditolak 422 — tanpa ini MySQL strict melempar 500 dan
+     * MariaDB non-strict memotong nilainya diam-diam (GSPOS-BUG-002).
+     *
+     * @throws BusinessException
+     */
+    private static function ensureFitsStorage(CalculationResult $totals): void
+    {
+        $amounts = [
+            $totals->grossTotal, $totals->subtotal, $totals->serviceTotal, $totals->taxTotal, $totals->grandTotal,
+            ...array_column($totals->lines, 'gross'), ...array_column($totals->lines, 'line_total'),
+        ];
+
+        foreach ($amounts as $amount) {
+            if (Money::compare($amount, Money::MAX) > 0) {
+                throw BusinessException::of(ErrorCode::ValidationError, 'Total transaksi melebihi batas', [
+                    'items' => ['Total transaksi maksimal '.Money::format(Money::MAX)],
+                ]);
+            }
+        }
+    }
+
+    /** Persen batas diskon sebagai string desimal aman untuk bcmath ("10", "12.5"); nilai rusak = 0. */
+    private static function percent(mixed $value): string
+    {
+        if (! is_numeric($value)) {
+            return '0';
+        }
+
+        return rtrim(rtrim(sprintf('%.2F', max(0, min(100, (float) $value))), '0'), '.');
     }
 }

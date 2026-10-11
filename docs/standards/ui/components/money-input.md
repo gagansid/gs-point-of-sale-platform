@@ -34,7 +34,7 @@ Prefix `Rp` abu, angka rata kanan, pemisah ribuan titik saat mengetik.
 | Angka | `tabular-nums` |
 | Desimal | Tidak ditampilkan bila `,00`; maks. 2 digit |
 | Nilai dikirim ke server | String desimal (`"62000.00"`) |
-| Batas | `minValue(0)`, maks. `9999999999999.99` (DECIMAL 15,2) |
+| Batas | `minValue(0)`, maks. `9999999999999.99` (DECIMAL 15,2); harga produk & opsi maks. `Money::MAX_PRICE` (`999999999.99`) |
 
 ## Perilaku & state
 

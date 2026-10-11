@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests\Api\V1\Product;
 
 use App\Models\Product;
+use App\Support\Money;
 use App\Support\TenantContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -30,8 +31,8 @@ final class ProductRequest extends FormRequest
             'name' => ['required', 'string', 'max:150'],
             'sku' => ['nullable', 'string', 'max:50', self::tenantUnique('sku', $ignoreId)],
             'barcode' => ['nullable', 'string', 'max:50', 'regex:/^[A-Za-z0-9-]+$/', self::tenantUnique('barcode', $ignoreId)],
-            'price' => ['required', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
-            'cost_price' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
+            'price' => ['required', 'decimal:0,2', 'min:0', 'max:'.Money::MAX_PRICE],
+            'cost_price' => ['nullable', 'decimal:0,2', 'min:0', 'max:'.Money::MAX_PRICE],
             'track_stock' => ['sometimes', 'boolean'],
             // Stok awal hanya saat membuat; perubahan berikutnya lewat POST /products/{id}/stock
             'stock_qty' => [$ignoreId === null ? 'sometimes' : 'prohibited', 'integer', 'min:-1000000', 'max:1000000'],

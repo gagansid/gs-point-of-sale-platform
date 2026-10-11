@@ -36,8 +36,9 @@ final class OutletSettingsRequest extends FormRequest
             'receipt_footer' => ['nullable', 'string', 'max:500'],
             'receipt_show_rounding' => ['boolean'],
             'discount_limits' => ['array:cashier,supervisor'],
-            'discount_limits.cashier' => ['required_with:discount_limits', 'numeric', 'min:0', 'max:100'],
-            'discount_limits.supervisor' => ['required_with:discount_limits', 'numeric', 'min:0', 'max:100'],
+            // decimal (bukan numeric): "1e-7" lolos numeric lalu merusak bccomp di PriceOrder (GSPOS-BUG-002)
+            'discount_limits.cashier' => ['required_with:discount_limits', 'decimal:0,2', 'min:0', 'max:100'],
+            'discount_limits.supervisor' => ['required_with:discount_limits', 'decimal:0,2', 'min:0', 'max:100'],
         ];
     }
 

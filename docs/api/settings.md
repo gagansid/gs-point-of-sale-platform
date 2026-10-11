@@ -55,7 +55,7 @@ pertama yang dipegang user. Outlet lain diubah dari dashboard (Pengaturan → Ou
 | `rounding` | int | `0` (tanpa), `100`, `500`, `1000` — pembulatan grand total ke Rp terdekat |
 | `receipt_header`, `receipt_footer` | string\|null | maks. 500 |
 | `receipt_show_rounding` | boolean | Tampilkan baris pembulatan di struk (SPEC Q48). Bawaan `false`: pembulatan sudah termasuk di total |
-| `discount_limits` | object | `{ "cashier": 10, "supervisor": 25 }` persen 0–100, keduanya wajib bila dikirim (Q18) |
+| `discount_limits` | object | `{ "cashier": 10, "supervisor": 25 }` persen 0–100 (maks. 2 desimal, tanpa notasi ilmiah), keduanya wajib bila dikirim (Q18) |
 | `code` | — | **Tidak bisa diubah** (awalan nomor order); diabaikan bila dikirim |
 
 PUT: field yang tidak dikirim tetap memakai nilai lama. Order lama tidak berubah — setiap order

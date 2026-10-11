@@ -13,6 +13,7 @@ use App\Models\OptionGroup;
 use App\Models\Outlet;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Money;
 use App\Support\TenantContext;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -48,7 +49,7 @@ final class ProductForm
                                     ->options(fn (): array => Category::query()->orderBy('sort_order')->pluck('name', 'id')->all())
                                     ->searchable()
                                     ->placeholder('Tanpa kategori'),
-                                MoneyInput::make('price')->label('Harga jual')->required(),
+                                MoneyInput::make('price')->label('Harga jual')->required()->rule('max:'.Money::MAX_PRICE),
                                 TextInput::make('sku')->label('SKU')->maxLength(50)
                                     ->placeholder('KOP-001')
                                     ->helperText('Kode internal untuk stok & laporan. Opsional')
@@ -58,7 +59,7 @@ final class ProductForm
                                     ->helperText('Angka di bawah garis barcode kemasan, untuk dipindai kasir. Kosongkan untuk menu racikan')
                                     ->regex('/^[A-Za-z0-9-]+$/')
                                     ->unique('products', 'barcode', ignoreRecord: true, modifyRuleUsing: fn (Unique $rule) => self::tenantUnique($rule)),
-                                MoneyInput::make('cost_price')->label('Harga modal')
+                                MoneyInput::make('cost_price')->label('Harga modal')->rule('max:'.Money::MAX_PRICE)
                                     ->helperText('Tidak ditampilkan ke kasir'),
                             ]),
 

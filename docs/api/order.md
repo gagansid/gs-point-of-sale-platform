@@ -57,6 +57,7 @@ yang dikirim aplikasi diabaikan.
    pajak (exclusive/inclusive) → pembulatan ke kelipatan Rp `outlet.rounding` (half-up).
 2. **Item:** produk harus aktif & tersedia; opsi harus milik grup opsi produk; jumlah pilihan per grup
    sesuai `min_select`–`max_select`. Pelanggaran → `422` per field (`items.N.product_id`, `items.N.option_ids`).
+   Total/baris di atas `9999999999999.99` (kapasitas DECIMAL 15,2) → `422` "Total transaksi melebihi batas" (`items`).
 3. **Pembayaran:** non-tunai dialokasikan dulu dan tidak boleh melebihi sisa (`PAYMENT_EXCEEDS_BALANCE`,
    `error.details.remaining`); tunai menutup sisa, kelebihannya `change`. Total kurang → `422`
    (`error.details.remaining`).

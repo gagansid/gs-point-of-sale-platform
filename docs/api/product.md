@@ -104,8 +104,8 @@ Produk **aktif** dengan barcode tersebut. `code`: `[A-Za-z0-9-]`, maks. 50. Tida
 | `name` | string | Ya | maks. 150 |
 | `sku` | string | Tidak | maks. 50, unik per tenant |
 | `barcode` | string | Tidak | `[A-Za-z0-9-]`, maks. 50, unik per tenant |
-| `price` | uang | Ya | ≥ 0, maks. 2 desimal (`22000` atau `"22000.00"`) |
-| `cost_price` | uang | Tidak | ≥ 0 |
+| `price` | uang | Ya | ≥ 0, maks. 2 desimal (`22000` atau `"22000.00"`), maks. `999999999.99` |
+| `cost_price` | uang | Tidak | ≥ 0, maks. `999999999.99` |
 | `track_stock` | bool | Tidak | default `false` |
 | `stock_qty` | int | Tidak | **Hanya POST** = stok awal; di PUT → 422 |
 | `min_stock` | int\|null | Tidak | 0–1.000.000; batas peringatan "stok menipis"; `null` = tanpa peringatan |
@@ -181,6 +181,7 @@ Test: `tests/Feature/Api/V1/Product/CategoryTest.php`
 ```
 
 - `0 ≤ min_select ≤ max_select ≤ 20`, `max_select ≥ 1`, 1–50 opsi, nama opsi unik dalam grup.
+- `price_delta` ≥ 0, maks. `999999999.99`.
 - PUT menyinkronkan opsi: ber-`id` diubah, tanpa `id` ditambah, yang tidak dikirim dihapus.
   `id` opsi milik grup lain diperlakukan sebagai opsi baru (tidak bisa diambil alih).
 - `is_active` default `true`; di PUT bila tidak dikirim tetap memakai nilai lama. Grup nonaktif tidak
