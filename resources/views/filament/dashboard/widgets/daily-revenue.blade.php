@@ -6,13 +6,13 @@
 <x-filament-widgets::widget>
     <x-filament::section
         heading="Riwayat pendapatan"
-        :description="'Rincian per hari · rata-rata transaksi ' . $money($history['total']['average'])"
+        :description="'Rata-rata ' . $money($history['total']['average']) . ' per transaksi'"
         icon="heroicon-o-table-cells"
     >
         @if ($history['total']['order_count'] === 0 && $history['total']['void_count'] === 0)
             <div class="pos-dash-empty">
                 <x-filament::icon icon="heroicon-o-banknotes" class="pos-dash-empty__icon" />
-                <p>Belum ada transaksi pada periode ini</p>
+                <p>Belum ada transaksi</p>
             </div>
         @else
             <div class="pos-dash-table-wrap pos-dash-table-wrap--scroll">

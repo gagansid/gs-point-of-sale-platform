@@ -3,11 +3,11 @@
 @php($empty = collect($types)->sum('order_count') === 0)
 
 <x-filament-widgets::widget>
-    <x-filament::section heading="Tipe order" description="Porsi omzet makan di tempat vs bawa pulang" icon="heroicon-o-shopping-bag" class="h-full">
+    <x-filament::section heading="Tipe order" description="Porsi omzet" icon="heroicon-o-shopping-bag" class="h-full">
         @if ($empty)
             <div class="pos-dash-empty">
                 <x-filament::icon icon="heroicon-o-shopping-bag" class="pos-dash-empty__icon" />
-                <p>Belum ada transaksi pada periode ini</p>
+                <p>Belum ada transaksi</p>
             </div>
         @else
             <div class="space-y-5">

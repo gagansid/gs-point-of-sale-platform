@@ -38,13 +38,13 @@ final class PaymentMethodsChartWidget extends ChartWidget
         $slices = $this->slices();
 
         if ($slices === []) {
-            return 'Belum ada pembayaran pada periode ini';
+            return 'Belum ada pembayaran';
         }
 
         $total = Money::add('0', ...array_column($slices, 'amount'));
         $top = $slices[0];
 
-        return $top['name'].' terbanyak: '.Money::format($top['amount']).' ('.Money::round(bcdiv(bcmul($top['amount'], '100', 4), $total, 4), 0).'%)';
+        return 'Terbanyak: '.$top['name'].' '.Money::round(bcdiv(bcmul($top['amount'], '100', 4), $total, 4), 0).'%';
     }
 
     protected function getType(): string

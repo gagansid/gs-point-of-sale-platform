@@ -45,8 +45,8 @@ final class RevenueChartWidget extends ChartWidget
         $total = Money::add('0', ...array_column($current, 'revenue'));
 
         return Money::compare($total, '0') === 0
-            ? 'Belum ada transaksi pada periode ini'
-            : 'Total '.Money::format($total).' · '.$this->period()->label();
+            ? 'Belum ada transaksi'
+            : 'Total '.Money::format($total);
     }
 
     protected function getType(): string

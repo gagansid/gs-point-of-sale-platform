@@ -4,7 +4,7 @@
         @php($outlets = $this->getOutlets())
         @php($money = fn (string $v): string => \App\Support\Money::format($v))
 
-        <x-filament::section heading="Perbandingan outlet" description="Kontribusi tiap outlet pada periode ini" icon="heroicon-o-building-storefront">
+        <x-filament::section heading="Perbandingan outlet" description="Kontribusi per outlet" icon="heroicon-o-building-storefront">
             <div class="pos-dash-table-wrap">
                 <table class="pos-dash-table">
                     <thead>
@@ -31,7 +31,7 @@
                                     @else
                                         @php($up = (float) $row['change'] >= 0)
                                         <span class="{{ $up ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400' }}">
-                                            {{ $up ? '▲ Naik' : '▼ Turun' }} {{ str_replace('.', ',', ltrim($row['change'], '-')) }}%
+                                            <span class="sr-only">{{ $up ? 'Naik' : 'Turun' }}</span><span aria-hidden="true">{{ $up ? '▲' : '▼' }}</span> {{ str_replace('.', ',', ltrim($row['change'], '-')) }}%
                                         </span>
                                     @endif
                                 </td>

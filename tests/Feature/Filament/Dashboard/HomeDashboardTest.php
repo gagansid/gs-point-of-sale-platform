@@ -68,7 +68,7 @@ it('beranda tampil dengan filter dan semua widget ringkasan', function () {
         ->assertOk()
         ->assertSee('Bandingkan dengan')
         ->assertSee('Rp56.000')            // omzet hari ini
-        ->assertSee('Naik 100,0% dari periode sebelumnya')
+        ->assertSee('Naik 100,0%')
         ->assertSee('Komposisi metode bayar')
         ->assertSee('Jam ramai')
         ->assertSee('Riwayat pendapatan')
@@ -91,10 +91,44 @@ it('ubah tanggal manual = preset kustom; tanggal masa depan & rentang > 366 hari
         ->set('filters.from', '2026-10-07')
         ->assertSet('filters.preset', 'custom');
 
-    Livewire::withQueryParams(['filters' => ['preset' => 'custom', 'from' => '2024-01-01', 'to' => '2027-01-01']])
+    Livewire::withQueryParams(['period' => 'custom', 'from' => '2024-01-01', 'to' => '2027-01-01'])
         ->test(Home::class)
         ->assertSet('filters.to', dateIs('2026-10-08'))
         ->assertSet('filters.from', dateIs('2025-10-08'));
+});
+
+it('URL ringkas: hanya parameter yang bukan default, tanpa filters[...]', function () {
+    Livewire::test(Home::class)
+        ->assertSet('urlPeriod', 'today')
+        ->assertSet('urlFrom', '')
+        ->set('filters.preset', 'last_30_days')
+        ->assertSet('urlPeriod', 'last_30_days')
+        // Preset dihitung ulang dari hari ini: tanggal tidak perlu masuk URL
+        ->assertSet('urlFrom', '')
+        ->set('filters.from', '2026-10-01 00:00:00')
+        ->assertSet('urlPeriod', 'custom')
+        ->assertSet('urlFrom', '2026-10-01')
+        ->assertSet('urlTo', '2026-10-08')
+        ->set('filters.compare', 'previous_year')
+        ->assertSet('urlCompare', 'previous_year')
+        ->set('filters.order_type', 'dine_in')
+        ->assertSet('urlType', 'dine_in');
+
+    expect((new ReflectionProperty(Home::class, 'filters'))->getAttributes())->toBe([]);
+});
+
+it('link dari URL ringkas mengisi filter (menang atas session)', function () {
+    session()->put((new Home)->getFiltersSessionKey(), ['preset' => 'yesterday']);
+
+    Livewire::withQueryParams(['period' => 'last_7_days', 'compare' => 'none', 'type' => 'dine_in'])
+        ->test(Home::class)
+        ->assertSet('filters.preset', 'last_7_days')
+        ->assertSet('filters.from', dateIs('2026-10-02'))
+        ->assertSet('filters.compare', 'none')
+        ->assertSet('filters.order_type', 'dine_in');
+
+    // Tanpa parameter: filter terakhir dari session (sudah diperbarui oleh link di atas)
+    Livewire::test(Home::class)->assertSet('filters.preset', 'last_7_days');
 });
 
 it('widget mengikuti filter halaman (pageFilters)', function () {
@@ -108,8 +142,8 @@ it('widget mengikuti filter halaman (pageFilters)', function () {
 
     Livewire::test(RevenueChartWidget::class, ['pageFilters' => $range])->assertSee('Tren omzet harian');
     Livewire::test(RevenueChartWidget::class, ['pageFilters' => $today])->assertSee('Tren omzet per jam');
-    Livewire::test(PeakHoursChartWidget::class, ['pageFilters' => $today])->assertSee('Tersibuk pukul 09.00');
-    Livewire::test(PaymentMethodsChartWidget::class, ['pageFilters' => $today])->assertSee('terbanyak');
+    Livewire::test(PeakHoursChartWidget::class, ['pageFilters' => $today])->assertSee('Tersibuk 09.00');
+    Livewire::test(PaymentMethodsChartWidget::class, ['pageFilters' => $today])->assertSee('Terbanyak');
     Livewire::test(OrderTypesWidget::class, ['pageFilters' => $today])->assertSee('Makan di tempat')->assertSee('50%');
     Livewire::test(AuditWidget::class, ['pageFilters' => $today])->assertSee('Pelanggan batal')->assertSee('Sari');
 });

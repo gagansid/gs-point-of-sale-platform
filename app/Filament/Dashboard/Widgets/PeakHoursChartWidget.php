@@ -38,10 +38,10 @@ final class PeakHoursChartWidget extends ChartWidget
         $peak = collect($hours)->sortByDesc('order_count')->first();
 
         if ($peak === null || $peak['order_count'] === 0) {
-            return 'Belum ada transaksi pada periode ini';
+            return 'Belum ada transaksi';
         }
 
-        return sprintf('Tersibuk pukul %02d.00–%02d.00 (%s transaksi)', $peak['hour'], ($peak['hour'] + 1) % 24, number_format($peak['order_count'], 0, ',', '.'));
+        return sprintf('Tersibuk %02d.00–%02d.00 · %s transaksi', $peak['hour'], ($peak['hour'] + 1) % 24, number_format($peak['order_count'], 0, ',', '.'));
     }
 
     protected function getType(): string

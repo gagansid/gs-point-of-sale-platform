@@ -4,7 +4,7 @@
 <x-filament-widgets::widget>
     <x-filament::section
         :heading="$mode === 'slow' ? 'Produk paling tidak laku' : 'Produk terlaris'"
-        :description="$mode === 'slow' ? 'Pertimbangkan promo atau hapus dari menu' : 'Top 10 berdasarkan omzet'"
+        :description="$mode === 'slow' ? 'Kandidat promo' : 'Top 10 omzet'"
         :icon="$mode === 'slow' ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-trophy'"
     >
         <x-slot name="afterHeader">
@@ -17,7 +17,7 @@
         @if ($products === [])
             <div class="pos-dash-empty">
                 <x-filament::icon icon="heroicon-o-cube" class="pos-dash-empty__icon" />
-                <p>Belum ada data pada periode ini</p>
+                <p>Belum ada data</p>
             </div>
         @else
             <div class="pos-dash-table-wrap">

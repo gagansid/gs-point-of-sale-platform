@@ -3,6 +3,25 @@
  * Memakai token tokens.css agar mengikuti light/dark mode panel.
  */
 
+/* KPI: nominal mengecil mengikuti lebar kartu (bukan layar) agar tidak meluber */
+.fi-wi-stats-overview-stat {
+    container-type: inline-size;
+}
+
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value {
+    font-size: clamp(1.125rem, 10.5cqi, 1.875rem);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .pos-dash-table-wrap {
     overflow-x: auto;
     margin-inline: -0.25rem;

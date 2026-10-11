@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Pages;
 
 use App\Enums\OrderType;
 use App\Exports\SalesReportExport;
+use App\Filament\Dashboard\Pages\Concerns\SyncsReportFiltersToUrl;
 use App\Filament\Dashboard\Widgets\AuditWidget;
 use App\Filament\Dashboard\Widgets\DailyRevenueWidget;
 use App\Filament\Dashboard\Widgets\OrderTypesWidget;
@@ -43,8 +44,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  *
  * Filter (outlet, periode, pembanding, tipe order, metode bayar, kasir) bersifat live: setiap
  * perubahan langsung menghitung ulang semua widget lewat $pageFilters (tanpa polling — shared
- * hosting). Filter tersimpan di query string & session. Outlet memakai pilihan sidebar yang sama
- * (CurrentOutlet, ADR 0010), jadi menu lain ikut berpindah outlet.
+ * hosting). Filter tersimpan di session; URL hanya berisi parameter ringkas yang bukan default
+ * (SyncsReportFiltersToUrl). Outlet memakai pilihan sidebar yang sama (CurrentOutlet, ADR 0010),
+ * jadi menu lain ikut berpindah outlet.
  */
 final class Home extends Dashboard
 {
@@ -52,6 +54,15 @@ final class Home extends Dashboard
         mountHasFilters as private mountFiltersFromSession;
     }
     use HasIconBreadcrumbs;
+    use SyncsReportFiltersToUrl;
+
+    /**
+     * Dideklarasi ulang TANPA #[Url] (bawaan HasFilters): state lengkap hanya di session,
+     * URL memakai parameter ringkas dari SyncsReportFiltersToUrl.
+     *
+     * @var array<string, mixed>|null
+     */
+    public ?array $filters = null;
 
     // Nama route tetap filament.dashboard.pages.dashboard seperti Dashboard bawaan
     protected static ?string $slug = 'dashboard';
@@ -66,9 +77,11 @@ final class Home extends Dashboard
     {
         $this->mountFiltersFromSession();
 
-        $this->filters = $this->normalizedFilters($this->filters ?? []);
+        $input = $this->filters ?? [];
+        $this->filters = $this->normalizedFilters($this->hasReportQuery() ? $this->filtersWithUrl($input) : $input);
         $this->getFiltersForm()->fill($this->filters);
         session()->put($this->getFiltersSessionKey(), $this->filters);
+        $this->syncUrlFromFilters($this->filters);
 
         $this->touchRefreshedAt();
     }
@@ -78,6 +91,7 @@ final class Home extends Dashboard
         $this->touchRefreshedAt();
 
         session()->put($this->getFiltersSessionKey(), $this->filters);
+        $this->syncUrlFromFilters($this->filters ?? []);
     }
 
     /** @return array<class-string> */
@@ -164,22 +178,8 @@ final class Home extends Dashboard
                             $set('from', $period->from);
                             $set('to', $period->to);
                         }),
-                    DatePicker::make('from')
-                        ->label('Dari tanggal')
-                        ->native(false)
-                        ->displayFormat('j M Y')
-                        ->closeOnDateSelection()
-                        ->maxDate(fn (): string => CurrentOutlet::today())
-                        ->suffixIcon(Heroicon::OutlinedCalendarDays)
-                        ->afterStateUpdated(fn (Set $set) => $set('preset', 'custom')),
-                    DatePicker::make('to')
-                        ->label('Sampai tanggal')
-                        ->native(false)
-                        ->displayFormat('j M Y')
-                        ->closeOnDateSelection()
-                        ->maxDate(fn (): string => CurrentOutlet::today())
-                        ->suffixIcon(Heroicon::OutlinedCalendarDays)
-                        ->afterStateUpdated(fn (Set $set) => $set('preset', 'custom')),
+                    self::datePicker('from', 'Dari tanggal'),
+                    self::datePicker('to', 'Sampai tanggal'),
                     Select::make('compare')
                         ->label('Bandingkan dengan')
                         ->options(ReportPeriod::COMPARES)
@@ -201,6 +201,30 @@ final class Home extends Dashboard
                         ->placeholder('Semua kasir'),
                 ]),
         ]);
+    }
+
+    /**
+     * DatePicker periode: ikon kalender di kanan bisa diklik untuk membuka popup kalender
+     * (hanya JS di browser, tanpa request ke server). Mengubah tanggal = preset kustom.
+     */
+    private static function datePicker(string $name, string $label): DatePicker
+    {
+        return DatePicker::make($name)
+            ->label($label)
+            ->native(false)
+            ->displayFormat('j M Y')
+            ->closeOnDateSelection()
+            ->maxDate(fn (): string => CurrentOutlet::today())
+            ->suffixAction(
+                Action::make("open_{$name}_calendar")
+                    ->label('Buka kalender')
+                    ->icon(Heroicon::OutlinedCalendarDays)
+                    ->color('gray')
+                    ->alpineClickHandler(<<<'JS'
+                        $el.closest('.fi-input-wrp').querySelector('input[x-ref=button]')?.click()
+                    JS),
+            )
+            ->afterStateUpdated(fn (Set $set) => $set('preset', 'custom'));
     }
 
     protected function getHeaderActions(): array

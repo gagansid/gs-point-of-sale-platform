@@ -7,7 +7,7 @@
 <x-filament-widgets::widget>
     <x-filament::section
         heading="Audit & kontrol"
-        :description="$issues > 0 ? $issues . ' temuan perlu ditinjau pada periode ini' : 'Tidak ada temuan pada periode ini'"
+        :description="$issues > 0 ? $issues . ' temuan perlu ditinjau' : 'Tidak ada temuan'"
         icon="heroicon-o-shield-check"
         :icon-color="$issues > 0 ? 'warning' : 'success'"
     >
