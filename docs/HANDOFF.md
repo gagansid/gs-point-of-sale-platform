@@ -88,7 +88,7 @@ input group tanpa garis pemisah; tanpa `style=""`/hex di Blade (pakai kelas + to
 |---|---|---|
 | 0 | Tindak lanjut modul Laporan | Lihat tabel "Perlu diubah / dilanjutkan" di bawah |
 | ✅ | Kasir web (SPEC Q54, W1–W6) | Selesai 2026-10-11: akses per karyawan, login `/cashier`, shift X/Z, layar transaksi, open bill, approval PIN, void, menu Perangkat. Sisa: uji di browser tablet sungguhan & printer thermal; cetak tanpa dialog di luar cakupan |
-| 2 | Minggu 7 — panel admin | Versi aplikasi, pengumuman, backup, log viewer, queue, rate limit & audit keamanan |
+| ✅ | Minggu 7 — panel admin | Selesai 2026-10-11 (lihat PROGRESS); sisa OWASP ZAP & uji manual di staging |
 | 3 | Minggu 8 — deploy | cPanel, uji MySQL ulang (fitur 9–10 Okt & migrasi multi-outlet), uji dengan Flutter, pilot |
 | Ditunda | Import produk dari Excel | Ditunda atas keputusan pemilik produk (2026-10-10); rencana: lewat `SaveProduct`, cegah formula injection (`SafeCell`) |
 | Ditunda | Aplikasi tablet | Fase tablet/aplikasi kasir (menu Perangkat sudah ada, Q54) |

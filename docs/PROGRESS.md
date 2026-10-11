@@ -31,7 +31,7 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | UI rapi | Toolbar filter ringkas + panel filter lanjutan, KPI rapat, checklist di atas, kontrol 32px & input group tanpa pemisah di semua form, jarak 16px | ✅ | `42a40c9` … `8c0fedc` |
 | **Tindak lanjut laporan** | L1–L7 & rekomendasi R1–R9 (lihat `docs/HANDOFF.md`) | ⏳ | — |
 | **Berikutnya** | Import produk Excel & kasir web | ⏳ | — |
-| Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ⏳ | — |
+| Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ✅ 2026-10-11 (sisa: OWASP ZAP & uji manual di staging) | `38a67cd`..`fe6d252` |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
 Endpoint selesai: **45** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q52, ADR 0001–0012.
@@ -110,18 +110,12 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 | P4 | Dashboard: form produk "Dijual di outlet" + badge/filter "Tidak dijual"; grup opsi aksi "Opsi habis" (outlet topbar, badge merah); metode bayar "Aktif di outlet" + kolom Outlet; tambah outlet "Salin menu & metode bayar dari" — dicek di browser | ✅ |
 | P5 | API: `/catalog` (produk dijual, kategori berisi, `options[].is_available`, metode aktif di outlet), checkout & tambah bayar menolak produk tidak dijual / opsi habis / metode nonaktif di outlet (`VALIDATION_ERROR` per field); dokumen API | ✅ |
 
-### 2. Minggu 7 — panel `/admin` & keamanan
+### 2. Minggu 7 — panel `/admin` & keamanan ✅ (2026-10-11)
 
-- Resource **Versi Aplikasi** (`app_versions`; cache otomatis terhapus via event model) dan
-  **Pengumuman** (tampilkan sebagai banner di `/dashboard` lewat render hook, lihat
-  `docs/standards/ui/components/notification.md`).
-- Halaman **Backup** (`spatie/laravel-backup`, belum terpasang), **Log Viewer**
-  (`opcodesio/log-viewer`, belum terpasang), **Queue** (job gagal + retry), **Maintenance Mode**.
-- Resource **Admin** (kelola super admin; tetap tanpa akun default).
-- Jadwal di `routes/console.php`: `queue:work --stop-when-empty`, `backup:run`, `backup:clean`,
-  `sanctum:prune-expired` (SPEC → Deploy).
-- Pasang `sentry/sentry-laravel` (SPEC MVP).
-- Jalankan checklist `docs/standards/security.md` §6 (OWASP ZAP baseline ke staging).
+- Selesai: Versi aplikasi, Pengumuman (banner dashboard + kasir web + `system/status`), Admin, Queue, Maintenance,
+  Log, Backup (`spatie/laravel-backup`, disk privat `backups`), Sentry (tanpa PII), jadwal `routes/console.php`,
+  audit keamanan kode baru (temuan diperbaiki di `fe6d252`, aturan di `docs/standards/security.md` §2 no. 15–16).
+- Sisa (butuh staging): OWASP ZAP baseline & uji manual `security.md` §6 → `docs/security/{tanggal}-pentest.md`.
 
 ### 3. Minggu 8 — deploy
 
