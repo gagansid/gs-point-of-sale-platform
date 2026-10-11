@@ -20,6 +20,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
+use Sentry\Laravel\Integration;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -67,6 +68,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions): void {
         // Error bisnis adalah alur normal, bukan bug: jangan memenuhi log/Sentry
         $exceptions->dontReport(BusinessException::class);
+
+        // Sentry (SPEC MVP): aktif hanya bila SENTRY_LARAVEL_DSN diisi; tanpa data pribadi (PII)
+        Integration::handles($exceptions);
 
         // Nilai rahasia tidak boleh ikut tersimpan di session saat validasi gagal
         $exceptions->dontFlash([
