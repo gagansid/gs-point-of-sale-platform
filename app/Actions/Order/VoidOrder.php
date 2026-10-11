@@ -9,6 +9,7 @@ use App\Actions\Auth\VerifyApproval;
 use App\Actions\Member\ReverseOrderBenefits;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentCategory;
 use App\Enums\PaymentStatus;
 use App\Enums\StockMovementType;
 use App\Exceptions\BusinessException;
@@ -70,6 +71,8 @@ final class VoidOrder
                 app(ReverseOrderBenefits::class)->handle($locked);
             }
 
+            // Dana online tidak dikembalikan otomatis: tandai perlu refund manual (ADR 0014, Q73)
+            $paidOnline = $locked->payments()->where('category', PaymentCategory::Online)->where('status', PaymentStatus::Paid)->exists();
             $locked->payments()->update(['status' => PaymentStatus::Voided]);
             $locked->forceFill([
                 'status' => OrderStatus::Voided,
@@ -77,6 +80,7 @@ final class VoidOrder
                 'voided_by' => $actor->id,
                 'void_approved_by' => $approverId,
                 'voided_at' => now(),
+                'refund_required' => $paidOnline,
             ])->save();
 
             return ['order' => $locked, 'replayed' => false];

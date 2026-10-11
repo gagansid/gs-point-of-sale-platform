@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Catalog;
 
+use App\Enums\PaymentCategory;
 use App\Models\Category;
 use App\Models\OptionGroup;
 use App\Models\Outlet;
@@ -56,7 +57,8 @@ final class GetCatalog
                 ->orderBy('sort_order')->orderBy('name')->get(),
             'products' => $products,
             'option_groups' => $optionGroups,
-            'payment_methods' => PaymentMethod::query()->activeAt($outlet->id)->orderBy('sort_order')->get(),
+            // Online (Midtrans) dibayar pelanggan dari HP, bukan dipilih kasir (ADR 0014)
+            'payment_methods' => PaymentMethod::query()->activeAt($outlet->id)->where('category', '!=', PaymentCategory::Online)->orderBy('sort_order')->get(),
         ];
     }
 }

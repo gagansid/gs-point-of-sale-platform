@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\DashboardLoginController;
 use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Controllers\Web\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Web\Member\PortalController as MemberPortalController;
+use App\Http\Controllers\Web\MidtransWebhookController;
 use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\SelfOrder\TableController as SelfOrderTableController;
 use App\Http\Controllers\Web\SignupController;
@@ -96,6 +97,13 @@ if (Domains::enabled()) {
         ->middleware('throttle:auth')
         ->name('dashboard.login.ticket');
 }
+
+// Notifikasi pembayaran Midtrans per bisnis (ADR 0014, Q72): tanpa CSRF, keaslian dari tanda tangan & cek ulang API
+Route::post('webhooks/midtrans/{tenant}', MidtransWebhookController::class)
+    ->whereUuid('tenant')
+    ->withoutMiddleware(ValidateCsrfToken::class)
+    ->middleware('throttle:120,1')
+    ->name('webhooks.midtrans');
 
 /*
  * Pesan dari meja (ADR 0014, Q69–Q70): gspos.id/order/t/{token} (tanpa subdomain: /order/t/{token}). Publik; meja &

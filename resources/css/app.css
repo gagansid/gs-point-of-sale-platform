@@ -3169,6 +3169,16 @@
     min-height: 44px;
 }
 
+.self-order-pay {
+    display: grid;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.self-order-pay .site-btn {
+    min-height: 44px;
+}
+
 /* Voucher pribadi di halaman member (M7) */
 .member-voucher {
     border: 2px dashed rgb(45 66 130 / 0.3);

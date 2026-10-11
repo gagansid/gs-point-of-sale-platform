@@ -7,6 +7,7 @@ namespace App\Livewire\SelfOrder;
 use App\Actions\Catalog\GetCatalog;
 use App\Actions\Member\Data\BenefitSelection;
 use App\Actions\Order\QuoteOrder;
+use App\Actions\Payment\StartOnlinePayment;
 use App\Actions\SelfOrder\SubmitSelfOrder;
 use App\Enums\OrderStatus;
 use App\Enums\SelfOrderStatus;
@@ -14,6 +15,8 @@ use App\Exceptions\BusinessException;
 use App\Models\Category;
 use App\Models\Member;
 use App\Models\OptionGroup;
+use App\Models\Order;
+use App\Models\PaymentGatewaySetting;
 use App\Models\Product;
 use App\Models\SelfOrder;
 use App\Services\Order\CalculationResult;
@@ -36,6 +39,7 @@ use Livewire\Component;
  * @property-read array{categories: Collection<int, Category>, products: Collection<int, Product>, option_groups: Collection<int, OptionGroup>} $catalog
  * @property-read array{totals: CalculationResult|null, error: string|null} $quote
  * @property-read Collection<int, SelfOrder> $myOrders
+ * @property-read bool $onlineReady
  */
 final class OrderPage extends Component
 {
@@ -281,6 +285,34 @@ final class OrderPage extends Component
         $this->view = 'status';
     }
 
+    /** Bayar online (Midtrans Snap) pesanan yang sudah diterima; hanya pesanan milik sesi ini. */
+    public function payOnline(string $selfOrderId): void
+    {
+        $selfOrder = $this->myOrders->firstWhere('id', $selfOrderId);
+        $order = $selfOrder?->order_id !== null ? Order::query()->find($selfOrder->order_id) : null;
+
+        if ($order === null) {
+            return;
+        }
+
+        try {
+            $transaction = app(StartOnlinePayment::class)->handle($order, $selfOrder->customer_name,
+                route('self-order.table', ['token' => $this->context->table->qr_token]));
+        } catch (BusinessException $e) {
+            $this->error = $e->getMessage();
+
+            return;
+        }
+
+        $this->redirect((string) $transaction->redirect_url);
+    }
+
+    #[Computed]
+    public function onlineReady(): bool
+    {
+        return PaymentGatewaySetting::current()->isReady();
+    }
+
     public function render(): View
     {
         return view('livewire.self-order.order-page', [
@@ -302,7 +334,7 @@ final class OrderPage extends Component
             $selfOrder->status === SelfOrderStatus::Pending => ['label' => 'Menunggu kasir', 'tone' => 'warning', 'note' => 'Kasir akan memeriksa pesananmu sebentar lagi.'],
             $selfOrder->status === SelfOrderStatus::Rejected => ['label' => 'Ditolak', 'tone' => 'danger', 'note' => (string) $selfOrder->reject_reason],
             $selfOrder->status === SelfOrderStatus::Expired => ['label' => 'Kedaluwarsa', 'tone' => 'muted', 'note' => 'Pesanan terlalu lama menunggu. Silakan pesan lagi atau ke kasir.'],
-            $order?->status === OrderStatus::AwaitingPayment => ['label' => 'Silakan bayar', 'tone' => 'info', 'note' => 'Pesanan diterima. Bayar di kasir dengan menyebut nomor '.$order->order_number.'.'],
+            $order?->status === OrderStatus::AwaitingPayment => ['label' => 'Silakan bayar', 'tone' => 'info', 'note' => 'Pesanan diterima dengan nomor '.$order->order_number.'.'],
             $order?->status === OrderStatus::Completed => ['label' => 'Lunas', 'tone' => 'success', 'note' => 'Terima kasih! Pesananmu sedang disiapkan.'],
             $order?->status === OrderStatus::Expired => ['label' => 'Kedaluwarsa', 'tone' => 'muted', 'note' => 'Pesanan tidak dibayar dalam batas waktu.'],
             $order?->status === OrderStatus::Voided => ['label' => 'Dibatalkan', 'tone' => 'danger', 'note' => 'Pesanan dibatalkan kasir.'],

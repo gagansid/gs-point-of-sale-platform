@@ -41,6 +41,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property OrderChannel $channel pos / self_order (ADR 0014)
  * @property string|null $dining_table_id meja self-order
  * @property CarbonImmutable|null $accepted_at self-order diterima kasir
+ * @property bool $refund_required dibayar online lalu di-void: refund manual (Q73)
  * @property OrderStatus $status
  * @property string|null $notes
  * @property DiscountType|null $discount_type
@@ -90,6 +91,7 @@ final class Order extends Model
             'status' => OrderStatus::class,
             'channel' => OrderChannel::class,
             'accepted_at' => 'immutable_datetime',
+            'refund_required' => 'boolean',
             'discount_type' => DiscountType::class,
             'discount_value' => 'decimal:2',
             'order_discount' => 'decimal:2',

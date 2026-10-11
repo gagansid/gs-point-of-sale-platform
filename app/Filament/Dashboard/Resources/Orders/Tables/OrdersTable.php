@@ -43,7 +43,9 @@ final class OrdersTable
                 TextColumn::make('order_type')->label('Tipe')->badge()->color('gray')->sortable()->toggleable(),
                 TextColumn::make('table_label')->label('Meja')->placeholder('—')->searchable()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('member_name')->label('Member')->placeholder('—')->searchable()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('status')->label('Status')->badge()->sortable(),
+                TextColumn::make('status')->label('Status')->badge()->sortable()
+                    // Dibayar online lalu di-void: owner mengembalikan dana manual lewat Midtrans (ADR 0014)
+                    ->description(fn (Order $record): ?string => $record->refund_required ? 'Perlu refund manual' : null),
                 MoneyColumn::make('grand_total')->label('Total')->sortable()
                     ->color(fn (Order $record): ?string => $record->status === OrderStatus::Voided ? 'gray' : null),
                 // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom

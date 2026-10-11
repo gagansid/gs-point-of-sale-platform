@@ -133,6 +133,16 @@
                     @if ($status['note'] !== '')
                         <p>{{ $status['note'] }}</p>
                     @endif
+                    @if ($selfOrder->order?->status === \App\Enums\OrderStatus::AwaitingPayment)
+                        <div class="self-order-pay">
+                            @if ($this->onlineReady)
+                                <button type="button" class="site-btn site-btn-primary" wire:click="payOnline('{{ $selfOrder->id }}')" wire:loading.attr="disabled">Bayar online (QRIS / e-wallet)</button>
+                            @endif
+                            @if ($context->setting->allow_pay_at_cashier || ! $this->onlineReady)
+                                <p class="member-muted">{{ $this->onlineReady ? 'Atau bayar' : 'Bayar' }} di kasir dengan menyebut nomor pesanan.</p>
+                            @endif
+                        </div>
+                    @endif
                 </article>
             @empty
                 <section class="member-card"><p class="member-muted">Belum ada pesanan dari HP ini.</p></section>

@@ -15,6 +15,8 @@ enum PaymentCategory: string implements HasLabel
     case Credit = 'credit';
     // Kategori sistem (tidak dibuat untuk setiap bisnis): poin member (ADR 0013)
     case Points = 'points';
+    // Kategori sistem: pembayaran online lewat Midtrans owner (ADR 0014); hanya dicatat dari webhook terverifikasi
+    case Online = 'online';
 
     public function getLabel(): string
     {
@@ -25,6 +27,7 @@ enum PaymentCategory: string implements HasLabel
             self::Debit => 'Debit',
             self::Credit => 'Kredit',
             self::Points => 'Poin',
+            self::Online => 'Online',
         };
     }
 
@@ -41,7 +44,7 @@ enum PaymentCategory: string implements HasLabel
     /** Dibuat & diatur oleh fitur (mis. program member), bukan metode bayar biasa. */
     public function isSystem(): bool
     {
-        return $this === self::Points;
+        return $this === self::Points || $this === self::Online;
     }
 
     /** Debit & kredit wajib approval code EDC (SPEC Pembayaran). */

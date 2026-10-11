@@ -38,6 +38,9 @@ final class AllocatePayments
 
             if ($method === null) {
                 $errors["payments.{$index}.payment_method_id"] = ['Metode bayar tidak tersedia'];
+            } elseif ($method->category === PaymentCategory::Online) {
+                // Online hanya dari webhook Midtrans terverifikasi (ADR 0014), tidak bisa dicatat kasir
+                $errors["payments.{$index}.payment_method_id"] = ['Pembayaran online hanya lewat HP pelanggan'];
             } elseif ($method->requires_reference && $payment['reference'] === null) {
                 $errors["payments.{$index}.reference"] = ["Kode approval {$method->name} wajib diisi"];
             }

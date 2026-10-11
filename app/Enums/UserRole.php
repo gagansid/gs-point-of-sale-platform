@@ -58,6 +58,7 @@ enum UserRole: string implements HasColor, HasLabel
         // Self-order QR meja (ADR 0014)
         'table.manage',
         'self_order.handle',
+        'payment_gateway.manage',
     ];
 
     /**
