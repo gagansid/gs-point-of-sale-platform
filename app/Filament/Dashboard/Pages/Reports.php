@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Pages;
 
+use App\Actions\Report\ManageReportPresets;
 use App\Enums\ReportTab;
 use App\Exceptions\ReportTooLargeException;
 use App\Filament\Dashboard\Pages\Concerns\InteractsWithReportFilters;
@@ -29,8 +30,10 @@ use App\Filament\Dashboard\Widgets\Reports\ShiftsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\SlowProductsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\StockTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\VoidsTableWidget;
+use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Outlet;
+use App\Models\ReportPreset;
 use App\Models\Shift;
 use App\Models\User;
 use App\Services\Report\ReportExporter;
@@ -39,6 +42,8 @@ use App\Support\ExportThrottle;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Pages\Page;
@@ -49,6 +54,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Arr;
 use Livewire\Attributes\Url;
 use Symfony\Component\HttpFoundation\Response;
 use UnitEnum;
@@ -218,6 +224,7 @@ final class Reports extends Page
         return [
             $this->refreshReportAction(),
             $this->resetReportFiltersAction(),
+            $this->presetActions(),
             ActionGroup::make([
                 $this->makeExportAction('excel_tab', 'Excel — tab ini', 'excel', lengkap: false),
                 $this->makeExportAction('excel_full', 'Excel — lengkap', 'excel', lengkap: true),
@@ -230,6 +237,63 @@ final class Reports extends Page
                 ->button()
                 ->visible(fn (): bool => self::user()?->can('report.export') ?? false),
         ];
+    }
+
+    /**
+     * Preset filter per user (R8): simpan kombinasi periode/filter/tab, pakai lagi dengan sekali klik.
+     */
+    private function presetActions(): ActionGroup
+    {
+        $presets = fn (): array => ReportPreset::query()->where('user_id', self::user()?->id)->orderBy('name')->pluck('name', 'id')->all();
+        $select = fn (): Select => Select::make('preset_id')->label('Preset')->options($presets)->required()->native(false);
+
+        return ActionGroup::make([
+            Action::make('applyPreset')->label('Pakai preset')->icon(Heroicon::OutlinedPlay)
+                ->visible(fn (): bool => $presets() !== [])
+                ->modalWidth('md')->modalSubmitActionLabel('Pakai')
+                ->schema([$select()])
+                ->action(function (array $data): void {
+                    $user = self::user() ?? abort(403);
+                    $saved = app(ManageReportPresets::class)->filtersOf($user, (string) $data['preset_id']);
+
+                    if ($saved === null) {
+                        Notification::make()->danger()->title('Preset tidak ditemukan')->send();
+
+                        return;
+                    }
+
+                    // Tab hanya dipakai bila boleh dilihat user saat ini
+                    $tab = ReportTab::tryFrom((string) ($saved['tab'] ?? ''));
+                    if ($tab !== null && in_array($tab, ReportTab::visibleTabs($user), true)) {
+                        $this->tab = $tab->value;
+                    }
+
+                    $this->fillReportFilters($this->normalizedReportFilters(Arr::except($saved, ['tab']), keepDates: true));
+                    $this->reportFiltersUpdated();
+                }),
+            Action::make('savePreset')->label('Simpan filter ini')->icon(Heroicon::OutlinedBookmark)
+                ->modalWidth('md')->modalSubmitActionLabel('Simpan')
+                ->modalDescription('Periode, pembanding, filter lanjutan, dan tab disimpan. Outlet tetap mengikuti pemilih outlet.')
+                ->schema([
+                    TextInput::make('name')->label('Nama preset')->required()->maxLength(60)->placeholder('mis. Rekap mingguan'),
+                ])
+                ->action(fn (array $data, Action $action) => RunBusinessAction::run(function () use ($data): void {
+                    app(ManageReportPresets::class)->save(self::user() ?? abort(403), (string) $data['name'], [...($this->filters ?? []), 'tab' => $this->activeTab()->value]);
+                    Notification::make()->success()->title('Preset disimpan')->send();
+                }, $action)),
+            Action::make('deletePreset')->label('Hapus preset')->icon(Heroicon::OutlinedTrash)->color('danger')
+                ->visible(fn (): bool => $presets() !== [])
+                ->modalWidth('md')->modalSubmitActionLabel('Hapus')
+                ->schema([$select()])
+                ->action(function (array $data): void {
+                    app(ManageReportPresets::class)->delete(self::user() ?? abort(403), (string) $data['preset_id']);
+                    Notification::make()->success()->title('Preset dihapus')->send();
+                }),
+        ])
+            ->label('Preset')
+            ->icon(Heroicon::OutlinedBookmark)
+            ->color('gray')
+            ->button();
     }
 
     /**

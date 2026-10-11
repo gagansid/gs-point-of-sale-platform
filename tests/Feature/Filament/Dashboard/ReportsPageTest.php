@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Actions\Order\CheckoutOrder;
 use App\Actions\Order\Data\CheckoutData;
+use App\Actions\Report\ManageReportPresets;
 use App\Enums\ReportTab;
+use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Pages\Reports;
 use App\Filament\Dashboard\Widgets\Reports\CategoriesTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\EmployeesTableWidget;
@@ -15,6 +17,7 @@ use App\Filament\Dashboard\Widgets\Reports\ShiftsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\StockTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\VoidsTableWidget;
 use App\Models\Order;
+use App\Models\ReportPreset;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
@@ -159,4 +162,55 @@ it('link dengan sebagian parameter: sisanya dari bawaan halaman (bulan ini)', fu
         ->test(Reports::class)
         ->assertSet('filters.preset', 'this_month')
         ->assertSet('filters.order_type', 'dine_in');
+});
+
+describe('preset filter (R8)', function () {
+    it('simpan filter + tab, lalu pakai lagi dari kondisi lain', function () {
+        $page = Livewire::test(Reports::class)
+            ->set('filters.preset', 'last_7_days')->set('filters.compare', 'previous_year')->set('tab', 'products')
+            ->callAction('savePreset', ['name' => 'Rekap mingguan'])
+            ->assertNotified('Preset disimpan');
+
+        $preset = ReportPreset::query()->sole();
+        expect($preset->user_id)->toBe($this->owner->id)
+            ->and($preset->filters['preset'])->toBe('last_7_days')
+            ->and($preset->filters['tab'])->toBe('products')
+            ->and($preset->filters)->not->toHaveKey('outlet');
+
+        $page->set('filters.preset', 'today')->set('filters.compare', 'none')->set('tab', 'summary')
+            ->callAction('applyPreset', ['preset_id' => $preset->id])
+            ->assertSet('filters.preset', 'last_7_days')
+            ->assertSet('filters.compare', 'previous_year')
+            ->assertSet('tab', 'products');
+    });
+
+    it('nama sama menimpa; maks. 10 preset; preset user lain tidak bisa dipakai/dihapus', function () {
+        $presets = app(ManageReportPresets::class);
+        $presets->save($this->owner, 'A', ['preset' => 'today']);
+        $presets->save($this->owner, 'A', ['preset' => 'this_month']);
+        expect(ReportPreset::query()->count())->toBe(1);
+
+        foreach (range(2, 10) as $i) {
+            $presets->save($this->owner, "P{$i}", []);
+        }
+        expect(fn () => $presets->save($this->owner, 'P11', []))->toThrow(BusinessException::class);
+
+        $other = User::factory()->manager()->create(['tenant_id' => $this->pos->tenantId]);
+        $mine = ReportPreset::query()->where('name', 'A')->sole();
+        expect($presets->filtersOf($other, $mine->id))->toBeNull();
+        $presets->delete($other, $mine->id);
+        expect($mine->fresh())->not->toBeNull();
+    });
+
+    it('supervisor: preset di luar 31 hari dinormalkan, tab tak boleh diabaikan', function () {
+        $presets = app(ManageReportPresets::class);
+        $sari = $this->pos->supervisor;
+        $preset = $presets->save($sari, 'Lama', ['preset' => 'custom', 'from' => '2026-08-01', 'to' => '2026-08-31', 'tab' => 'stock']);
+        $this->actingAs($sari);
+
+        $page = Livewire::test(Reports::class)->callAction('applyPreset', ['preset_id' => $preset->id]);
+
+        expect($page->get('filters.from'))->toBeGreaterThanOrEqual('2026-09-09')
+            ->and($page->get('tab'))->not->toBe('stock');
+    });
 });
