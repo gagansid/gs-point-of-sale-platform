@@ -107,7 +107,7 @@ input group tanpa garis pemisah; tanpa `style=""`/hex di Blade (pakai kelas + to
 ### Rekomendasi tambahan
 | # | Rekomendasi | Manfaat |
 |---|---|---|
-| R1 | Snapshot `cost_price` ke `order_items` saat checkout → laporan HPP & margin kotor per produk/kategori | Finance: laba kotor akurat walau harga modal berubah (`products.cost_price` sudah ada) — ✅ Snapshot selesai (`2a6a926`, Q53: `order_items.unit_cost`); laporan HPP & margin belum |
+| R1 | Snapshot `cost_price` ke `order_items` saat checkout → laporan HPP & margin kotor per produk/kategori | Finance: laba kotor akurat walau harga modal berubah (`products.cost_price` sudah ada) — ✅ Snapshot selesai (`2a6a926`, Q53: `order_items.unit_cost`); laporan Laba kotor ✅ (tab + API `/reports/profit`) |
 | R2 | Cache agregat laporan (driver `database`, 60 detik, kunci tenant + filter; periode yang sudah lewat lebih lama) — sekaligus menutup T1 | Beranda/Laporan lebih ringan di shared hosting; `daily`/`hourly`/`heatmap` kini mengelompokkan di PHP |
 | R3 | Throttle aksi & endpoint export (mis. 10/menit per user) | Export sinkron cukup berat; cegah penyalahgunaan (DoS ringan) — ✅ Selesai (`bd473df`): `ExportThrottle`, `pos.rate_limits.export` |
 | R4 | Wajib email terverifikasi untuk login dashboard supervisor | Supervisor kini bisa login web (Q50); verifikasi (Q46) belum memblokir akses — ✅ Selesai (`ae629f7`) |

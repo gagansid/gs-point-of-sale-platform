@@ -102,6 +102,7 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('audit', 'audit')->name('audit');
             Route::get('trend', 'trend')->name('trend');
             Route::get('categories', 'categories')->name('categories');
+            Route::get('profit', 'profit')->name('profit');
             Route::get('options', 'options')->name('options');
             Route::get('employees', 'employees')->name('employees');
             Route::get('shifts', 'shifts')->name('shifts');

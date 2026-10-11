@@ -20,6 +20,8 @@ use App\Filament\Dashboard\Widgets\Reports\HeatmapWidget;
 use App\Filament\Dashboard\Widgets\Reports\OptionsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\PaymentMethodsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ProductsTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\ProfitStatsWidget;
+use App\Filament\Dashboard\Widgets\Reports\ProfitTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ReportStatsWidget;
 use App\Filament\Dashboard\Widgets\Reports\ReportTrendChartWidget;
 use App\Filament\Dashboard\Widgets\Reports\ShiftDifferencesTableWidget;
@@ -198,6 +200,7 @@ final class Reports extends Page
             ReportTab::Summary => [ReportStatsWidget::class, ReportTrendChartWidget::class, FinancialBreakdownWidget::class],
             ReportTab::Products => [ProductsTableWidget::class, SlowProductsTableWidget::class],
             ReportTab::Categories => [CategoriesChartWidget::class, CategoriesTableWidget::class],
+            ReportTab::Profit => [ProfitStatsWidget::class, ProfitTableWidget::class],
             ReportTab::Options => [OptionsTableWidget::class],
             ReportTab::PaymentMethods => [PaymentMethodsChartWidget::class, PaymentMethodsTableWidget::class],
             ReportTab::Employees => [EmployeesTableWidget::class],

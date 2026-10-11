@@ -44,6 +44,7 @@ final class ReportRequest extends FormRequest
         'shifts' => ReportTab::Shifts,
         'audit' => ReportTab::Discounts,
         'categories' => ReportTab::Categories,
+        'profit' => ReportTab::Profit,
         'options' => ReportTab::Options,
         'hourly' => ReportTab::Time,
         'heatmap' => ReportTab::Time,

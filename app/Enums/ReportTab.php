@@ -17,6 +17,7 @@ enum ReportTab: string
     case Summary = 'summary';
     case Products = 'products';
     case Categories = 'categories';
+    case Profit = 'profit';
     case Options = 'options';
     case PaymentMethods = 'payment_methods';
     case Employees = 'employees';
@@ -33,6 +34,7 @@ enum ReportTab: string
             self::Summary => 'Ringkasan',
             self::Products => 'Produk',
             self::Categories => 'Kategori',
+            self::Profit => 'Laba kotor',
             self::Options => 'Opsi',
             self::PaymentMethods => 'Metode bayar',
             self::Employees => 'Karyawan',
@@ -51,6 +53,7 @@ enum ReportTab: string
             self::Summary => 'heroicon-o-chart-bar',
             self::Products => 'heroicon-o-cube',
             self::Categories => 'heroicon-o-tag',
+            self::Profit => 'heroicon-o-scale',
             self::Options => 'heroicon-o-adjustments-horizontal',
             self::PaymentMethods => 'heroicon-o-credit-card',
             self::Employees => 'heroicon-o-users',

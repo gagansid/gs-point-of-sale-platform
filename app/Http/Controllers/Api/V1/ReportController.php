@@ -186,6 +186,19 @@ final class ReportController extends Controller
     }
 
     /**
+     * Laba kotor per produk.
+     *
+     * Dari snapshot harga modal saat transaksi (Q53). net_sales = setelah diskon order, tanpa pajak & service.
+     * Produk tanpa harga modal: gross_profit & margin null, dilaporkan di uncosted_qty. Hanya report.view.
+     */
+    public function profit(ReportRequest $request, ReportService $reports): JsonResponse
+    {
+        [$start, $end] = $request->utcRange();
+
+        return ApiResponse::success(['period' => $request->period(), ...$reports->profit($start, $end, $request->filters())]);
+    }
+
+    /**
      * Opsi & add-on terlaris.
      *
      * qty = dipilih × qty item; revenue = tambahan omzet dari opsi.

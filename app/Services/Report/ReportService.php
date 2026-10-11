@@ -478,6 +478,85 @@ final class ReportService
     }
 
     /**
+     * Laba kotor per produk (R1, Q53) dari snapshot harga modal `order_items.unit_cost`.
+     *
+     * Penjualan bersih per item = line_total × (grand_total − pajak − service − pembulatan) / subtotal order:
+     * diskon order dialokasikan proporsional dan pajak (termasuk harga-termasuk-pajak) dikeluarkan, sehingga
+     * total = net_sales di summary(). HPP = qty × unit_cost; item tanpa harga modal tidak dihitung dalam
+     * laba/margin (dilaporkan terpisah) agar margin tidak terlihat 100%. Harga opsi belum punya modal.
+     *
+     * @return array{
+     *     products: list<array{product_id: string, product_name: string, category_name: string, qty: int, net_sales: string, cogs: string, gross_profit: string|null, margin: string|null, uncosted_qty: int}>,
+     *     totals: array{net_sales: string, costed_sales: string, cogs: string, gross_profit: string, margin: string|null, uncosted_qty: int, uncosted_sales: string}
+     * }
+     */
+    public function profit(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        $net = '(order_items.line_total * (orders.grand_total - orders.tax_total - orders.service_total - orders.rounding) / NULLIF(orders.subtotal, 0))';
+
+        $rows = $this->items($start, $end, $filters)
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->select(
+                'order_items.product_id',
+                DB::raw('MAX(order_items.product_name) as product_name'),
+                DB::raw('MAX(order_items.category_name) as category_name'),
+                DB::raw('SUM(order_items.qty) as qty'),
+                DB::raw("ROUND(COALESCE(SUM({$net}), 0), 2) as net_sales"),
+                DB::raw('ROUND(COALESCE(SUM(CASE WHEN order_items.unit_cost IS NULL THEN 0 ELSE order_items.qty * order_items.unit_cost END), 0), 2) as cogs'),
+                DB::raw("ROUND(COALESCE(SUM(CASE WHEN order_items.unit_cost IS NULL THEN {$net} ELSE 0 END), 0), 2) as uncosted_sales"),
+                DB::raw('SUM(CASE WHEN order_items.unit_cost IS NULL THEN order_items.qty ELSE 0 END) as uncosted_qty'),
+            )
+            ->groupBy('order_items.product_id')
+            ->get();
+
+        $products = $rows->map(function (object $row): array {
+            $netSales = Money::fromDb($row->net_sales);
+            $costedSales = Money::sub($netSales, Money::fromDb($row->uncosted_sales));
+            $cogs = Money::fromDb($row->cogs);
+            $costed = (int) $row->qty > (int) $row->uncosted_qty;
+            $profit = $costed ? Money::sub($costedSales, $cogs) : null;
+
+            return [
+                'product_id' => (string) $row->product_id,
+                'product_name' => (string) $row->product_name,
+                'category_name' => (string) $row->category_name,
+                'qty' => (int) $row->qty,
+                'net_sales' => $netSales,
+                'cogs' => $cogs,
+                'gross_profit' => $profit,
+                'margin' => $profit !== null ? self::marginPercent($profit, $costedSales) : null,
+                'uncosted_qty' => (int) $row->uncosted_qty,
+                '_uncosted_sales' => Money::fromDb($row->uncosted_sales),
+            ];
+        })->sortByDesc(fn (array $r): float => (float) ($r['gross_profit'] ?? '-1e15'))->values();
+
+        $netSales = Money::add('0', ...$products->pluck('net_sales')->all());
+        $uncostedSales = Money::add('0', ...$products->pluck('_uncosted_sales')->all());
+        $costedSales = Money::sub($netSales, $uncostedSales);
+        $cogs = Money::add('0', ...$products->pluck('cogs')->all());
+        $profit = Money::sub($costedSales, $cogs);
+
+        return [
+            'products' => $products->map(fn (array $r): array => collect($r)->except('_uncosted_sales')->all())->all(),
+            'totals' => [
+                'net_sales' => $netSales,
+                'costed_sales' => $costedSales,
+                'cogs' => $cogs,
+                'gross_profit' => $profit,
+                'margin' => Money::isPositive($costedSales) ? self::marginPercent($profit, $costedSales) : null,
+                'uncosted_qty' => (int) $products->sum('uncosted_qty'),
+                'uncosted_sales' => $uncostedSales,
+            ],
+        ];
+    }
+
+    /** Persen 1 desimal ("42.5"); null bila penjualan 0. */
+    private static function marginPercent(string $profit, string $sales): ?string
+    {
+        return Money::isPositive($sales) ? Money::round(bcdiv(bcmul($profit, '100', 6), $sales, 6), 1) : null;
+    }
+
+    /**
      * Opsi / add-on terlaris: dipilih berapa kali (× qty item) dan tambahan omzet (price_delta × qty).
      *
      * @return list<array{option_id: string, option_name: string, qty: int, revenue: string}>

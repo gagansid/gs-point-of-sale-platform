@@ -102,6 +102,14 @@ final class ReportSectionBuilder
                     array_map(fn (array $r): array => [$r['category_name'], $r['product_count'], $r['qty'], $r['revenue'], self::share($r['revenue'], $total)], $rows),
                     [3], ['Total', null, array_sum(array_column($rows, 'qty')), $total, '100.0'])];
             })(),
+            ReportTab::Profit => (function () use ($start, $end, $filters): array {
+                $profit = $this->reports->profit($start, $end, $filters);
+                $t = $profit['totals'];
+
+                return [$this->section('Laba kotor per produk', ['Produk', 'Kategori', 'Qty', 'Penjualan bersih', 'HPP', 'Laba kotor', 'Margin (%)', 'Item tanpa harga modal'],
+                    array_map(fn (array $r): array => [$r['product_name'], $r['category_name'], $r['qty'], $r['net_sales'], $r['cogs'], $r['gross_profit'], $r['margin'], $r['uncosted_qty']], $profit['products']),
+                    [3, 4, 5], ['Total', null, array_sum(array_column($profit['products'], 'qty')), $t['net_sales'], $t['cogs'], $t['gross_profit'], $t['margin'], $t['uncosted_qty']])];
+            })(),
             ReportTab::Options => (function () use ($start, $end, $filters): array {
                 $rows = $this->reports->options($start, $end, $filters);
 
