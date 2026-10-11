@@ -9,6 +9,7 @@ use App\Filament\Dashboard\Resources\Shifts\Pages\ViewShift;
 use App\Filament\Dashboard\Resources\Shifts\Schemas\ShiftInfolist;
 use App\Filament\Dashboard\Resources\Shifts\Tables\ShiftsTable;
 use App\Models\Shift;
+use App\Models\User;
 use App\Support\CurrentOutlet;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -39,6 +40,14 @@ final class ShiftResource extends Resource
     protected static ?string $modelLabel = 'shift';
 
     protected static ?string $pluralModelLabel = 'shift';
+
+    /** Menu khusus akses panel penuh (owner/manager); supervisor di panel hanya Laporan (Q50). */
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && $user->role->hasFullDashboard() && parent::canViewAny();
+    }
 
     public static function canCreate(): bool
     {

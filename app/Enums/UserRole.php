@@ -128,13 +128,23 @@ enum UserRole: string implements HasColor, HasLabel
         };
     }
 
-    /** Role yang boleh membuka panel /dashboard (SPEC: semua menu dashboard untuk O, M). */
+    /**
+     * Boleh membuka panel /dashboard: pemegang report.view (owner, manager — semua menu sesuai permission)
+     * atau report.view_shift (supervisor — hanya menu Laporan, Q50). Kasir tidak (rekap shift lewat API).
+     */
     public function canAccessDashboard(): bool
     {
-        return match ($this) {
-            self::Owner, self::Manager => true,
-            self::Supervisor, self::Cashier => false,
-        };
+        return $this->allows('report.view') || $this->allows('report.view_shift');
+    }
+
+    /**
+     * Akses panel penuh (menu transaksi, katalog, beranda): hanya pemegang report.view. Supervisor di panel
+     * hanya Laporan (Q50); menu Penjualan/Shift disembunyikan walau ia punya order.view_all/shift.view_all
+     * (permission itu untuk aplikasi kasir).
+     */
+    public function hasFullDashboard(): bool
+    {
+        return $this->allows('report.view');
     }
 
     /**

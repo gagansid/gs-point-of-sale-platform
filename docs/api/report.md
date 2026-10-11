@@ -1,14 +1,43 @@
 # API — Laporan
 
-Token user dengan permission `report.view` (owner, manager). Semua angka berasal dari
-`App\Services\Report\ReportService` — sama persis dengan beranda dashboard, halaman Laporan,
-dan file Excel.
+Token user. Semua angka berasal dari `App\Services\Report\ReportService` — sama persis dengan
+beranda dashboard, halaman Laporan, dan file Excel/PDF.
 
-| Method | Endpoint | Isi |
+## Akses (SPEC Q49)
+
+| Permission | Role | Endpoint |
 |---|---|---|
-| GET | `/reports/summary?from=&to=&outlet_id=` | Ringkasan + seri harian |
-| GET | `/reports/products?from=&to=&outlet_id=` | Per produk, urut omzet terbesar |
-| GET | `/reports/payment-methods?from=&to=&outlet_id=` | Per metode bayar |
+| `report.view` | owner, manager | Semua, periode maks. 366 hari per query |
+| `report.view_shift` | + supervisor | `summary`, `trend`, `products`, `payment-methods`, `employees`, `shifts`, `audit` — `from` maks. **31 hari ke belakang** dari hari ini (lebih lama → `422`) |
+| `report.view_own` | + kasir | `shifts/{id}` untuk shift sendiri (X/Z-report) |
+
+| Method | Endpoint | Izin | Isi |
+|---|---|---|---|
+| GET | `/reports/summary` | view / view_shift | Ringkasan + seri harian (`subtotal_total`, `net_sales` = omzet − pajak − service − pembulatan) |
+| GET | `/reports/trend?granularity=` | view / view_shift | Tren per `hour` (1 hari) / `day` / `week` (Senin) / `month` + `previous_trend` |
+| GET | `/reports/products` | view / view_shift | Per produk, urut omzet terbesar |
+| GET | `/reports/payment-methods` | view / view_shift | Per metode bayar |
+| GET | `/reports/employees` | view / view_shift | Per kasir: transaksi, omzet, rata-rata, diskon, void |
+| GET | `/reports/shifts` | view / view_shift | Shift yang dibuka pada rentang: kas awal, tunai, kas seharusnya vs aktual, selisih |
+| GET | `/reports/shifts/{id}` | view / view_shift (≤ 31 hari) / view_own (shift sendiri) | Rekap satu shift: `type` `x_report` (berjalan) / `z_report` (ditutup), penjualan, kas, metode bayar, produk |
+| GET | `/reports/audit` | view / view_shift | Void, diskon dengan approval PIN, shift selisih kas (20 terbaru + jumlah) |
+| GET | `/reports/categories` | view | Per kategori dari snapshot `order_items.category_name` (Q51) |
+| GET | `/reports/options` | view | Opsi/add-on: `qty` (dipilih × qty item), `revenue` (tambahan omzet) |
+| GET | `/reports/hourly` | view | Per jam lokal (0–23) |
+| GET | `/reports/heatmap` | view | `heatmap[hari ISO 1–7][jam 0–23]` = jumlah transaksi |
+| GET | `/reports/stock` | view | Per produk: terjual, kembali dari void, penyesuaian, stok kini, `is_low` |
+| GET | `/reports/dashboard` | view | Ringkasan beranda (KPI + pembanding + tren + metode bayar + produk + tipe order + outlet) |
+
+## Parameter (semua endpoint kecuali `shifts/{id}`)
+
+| Parameter | Nilai |
+|---|---|
+| `from`, `to` | `YYYY-MM-DD` tanggal lokal outlet, inklusif |
+| `outlet_id` | UUID outlet yang dipegang / `all` |
+| `compare` | `previous_period` (bawaan) / `previous_year` / `none` — supervisor: pembanding di luar 31 hari = `null` |
+| `granularity` | `hour` / `day` / `week` / `month`; tidak cocok dengan rentang → bawaan (≤ 1 hari jam, ≤ 62 hari hari, ≤ 180 hari minggu, sisanya bulan) |
+| `order_type` | `takeaway` / `dine_in` |
+| `payment_method_ids[]`, `user_ids[]`, `category_ids[]`, `product_ids[]`, `shift_ids[]` | UUID; ID tenant/outlet lain = hasil kosong (fail-closed) |
 
 ## Aturan
 
@@ -59,11 +88,12 @@ dan file Excel.
 
 | HTTP | `error.code` | Kapan |
 |---|---|---|
-| 403 | `FORBIDDEN` | Tanpa `report.view` (supervisor, kasir) |
-| 404 | `NOT_FOUND` | `outlet_id` bukan outlet yang dipegang user |
-| 422 | `VALIDATION_ERROR` | Format tanggal salah, `to` < `from`, rentang > 366 hari |
+| 403 | `FORBIDDEN` | Tanpa izin endpoint (lihat tabel akses); shift orang lain untuk kasir |
+| 404 | `NOT_FOUND` | `outlet_id` / shift di luar outlet yang dipegang user |
+| 422 | `VALIDATION_ERROR` | Format tanggal/UUID salah, `to` < `from`, rentang > 366 hari, supervisor `from` > 31 hari ke belakang, `granularity` tidak dikenal |
 
-Test: `tests/Feature/Api/V1/Report/ReportTest.php` (termasuk batas hari 23.30 / 00.30 WIB dan isolasi tenant).
+Test: `tests/Feature/Api/V1/Report/ReportTest.php`, `ReportModuleApiTest.php`, `tests/Feature/Report/ReportServiceTest.php`
+(batas hari 23.30 / 00.30 WIB, minggu Senin, bulan, kabisat, isolasi tenant, batas supervisor, rekap shift kasir).
 
 ## Export Excel (dashboard)
 

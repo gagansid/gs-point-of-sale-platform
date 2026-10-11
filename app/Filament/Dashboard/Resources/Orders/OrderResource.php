@@ -9,6 +9,7 @@ use App\Filament\Dashboard\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Dashboard\Resources\Orders\Schemas\OrderInfolist;
 use App\Filament\Dashboard\Resources\Orders\Tables\OrdersTable;
 use App\Models\Order;
+use App\Models\User;
 use App\Support\CurrentOutlet;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -38,6 +39,14 @@ final class OrderResource extends Resource
     protected static ?string $pluralModelLabel = 'penjualan';
 
     protected static ?string $recordTitleAttribute = 'order_number';
+
+    /** Menu khusus akses panel penuh (owner/manager); supervisor di panel hanya Laporan (Q50). */
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && $user->role->hasFullDashboard() && parent::canViewAny();
+    }
 
     public static function canCreate(): bool
     {

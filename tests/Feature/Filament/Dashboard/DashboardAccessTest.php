@@ -15,9 +15,22 @@ it('owner & manager bisa membuka dashboard', function (string $role) {
     $this->actingAs($user)->get('/dashboard/products')->assertOk();
 })->with(['owner', 'manager']);
 
-it('supervisor & kasir tidak bisa membuka dashboard', function (string $role) {
-    $this->actingAs(User::factory()->{$role}()->create())->get('/dashboard')->assertForbidden();
-})->with(['supervisor', 'cashier']);
+it('kasir tidak bisa membuka dashboard', function () {
+    $this->actingAs(User::factory()->cashier()->create())->get('/dashboard')->assertForbidden();
+});
+
+it('supervisor hanya Laporan: beranda dialihkan, menu lain tertutup (Q50)', function () {
+    $supervisor = User::factory()->supervisor()->create();
+
+    $this->actingAs($supervisor)->get('/dashboard')->assertRedirect('/dashboard/reports');
+    $this->actingAs($supervisor)->get('/dashboard/reports')->assertOk()->assertSee('Laporan')
+        // Menu lain tidak ada di sidebar
+        ->assertDontSee('/dashboard/orders"', false)->assertDontSee('/dashboard/shifts"', false)->assertDontSee('/dashboard/products"', false);
+
+    foreach (['/dashboard/orders', '/dashboard/shifts', '/dashboard/products', '/dashboard/employees'] as $url) {
+        expect($this->actingAs($supervisor)->get($url)->status())->toBeIn([403, 404], $url);
+    }
+});
 
 it('tamu diarahkan ke login dashboard', function () {
     $this->get('/dashboard')->assertRedirect('/dashboard/login');

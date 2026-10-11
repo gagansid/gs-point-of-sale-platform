@@ -82,9 +82,10 @@ it('validasi rentang', function (string $query) {
     assertApiError(fetchReport($this, "summary?{$query}"), 'VALIDATION_ERROR', 422);
 })->with(['from=08-10-2026', 'from=2026-10-08&to=2026-10-01', 'from=2025-01-01&to=2026-10-08']);
 
-it('supervisor & kasir tidak punya report.view', function (string $role) {
-    assertApiError(fetchReport($this, 'summary', $this->pos->{$role}), 'FORBIDDEN', 403);
-})->with(['supervisor', 'cashier']);
+it('kasir tidak punya akses laporan; supervisor boleh ringkasan (report.view_shift)', function () {
+    assertApiError(fetchReport($this, 'summary', $this->pos->cashier), 'FORBIDDEN', 403);
+    fetchReport($this, 'summary', $this->pos->supervisor)->assertOk()->assertJsonPath('data.order_count', 2);
+});
 
 it('isolasi: laporan tidak memuat transaksi tenant lain', function () {
     $other = posSetup();
@@ -181,10 +182,12 @@ it('validasi filter dashboard', function (string $query) {
     assertApiError(fetchReport($this, "dashboard?{$query}"), 'VALIDATION_ERROR', 422);
 })->with(['compare=kemarin', 'order_type=delivery', 'payment_method_ids[]=bukan-uuid', 'user_ids=abc']);
 
-it('dashboard, jam ramai & audit butuh report.view', function (string $path) {
+it('dashboard & jam ramai butuh report.view; audit juga untuk supervisor (tab Diskon & void)', function (string $path, bool $supervisor) {
     assertApiError(fetchReport($this, $path, $this->pos->cashier), 'FORBIDDEN', 403);
-    assertApiError(fetchReport($this, $path, $this->pos->supervisor), 'FORBIDDEN', 403);
-})->with(['dashboard', 'hourly', 'audit']);
+    $supervisor
+        ? fetchReport($this, $path, $this->pos->supervisor)->assertOk()
+        : assertApiError(fetchReport($this, $path, $this->pos->supervisor), 'FORBIDDEN', 403);
+})->with([['dashboard', false], ['hourly', false], ['audit', true]]);
 
 it('isolasi: dashboard & audit tidak memuat data tenant lain; filter ID asing tidak bocor', function () {
     $other = posSetup();

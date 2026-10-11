@@ -100,6 +100,14 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('dashboard', 'dashboard')->name('dashboard');
             Route::get('hourly', 'hourly')->name('hourly');
             Route::get('audit', 'audit')->name('audit');
+            Route::get('trend', 'trend')->name('trend');
+            Route::get('categories', 'categories')->name('categories');
+            Route::get('options', 'options')->name('options');
+            Route::get('employees', 'employees')->name('employees');
+            Route::get('shifts', 'shifts')->name('shifts');
+            Route::get('shifts/{shift}', 'shiftRecap')->whereUuid('shift')->name('shifts.show');
+            Route::get('heatmap', 'heatmap')->name('heatmap');
+            Route::get('stock', 'stock')->name('stock');
         });
 
         // ---------- Setelan ----------

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Requests\Api\V1\Report;
 
 use App\Enums\OrderType;
+use App\Enums\ReportTab;
 use App\Models\User;
+use App\Services\Report\ReportContext;
 use App\Services\Report\ReportFilters;
 use App\Services\Report\ReportPeriod;
 use App\Support\CurrentOutlet;
@@ -21,16 +23,45 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * yang dipegang. Tanpa outlet_id: outlet perangkat (bila login di perangkat), selain itu semua.
  * Outlet di luar penugasan → 404.
  *
- * Filter opsional (semua endpoint laporan): order_type, payment_method_ids[], user_ids[].
- * compare (khusus /reports/dashboard): previous_period (default) | previous_year | none.
+ * Filter opsional (semua endpoint laporan): order_type, payment_method_ids[], user_ids[],
+ * category_ids[], product_ids[], shift_ids[]. compare: previous_period (default) | previous_year | none.
+ * granularity (tren): hour | day | week | month, bila cocok dengan rentang (selain itu bawaan).
+ *
+ * Izin per endpoint (Q49): tab operasional (ringkasan, produk, metode bayar, karyawan, shift, audit)
+ * juga untuk report.view_shift — maks. 31 hari ke belakang, di luar itu 422 VALIDATION_ERROR.
  */
 final class ReportRequest extends FormRequest
 {
     public const MAX_DAYS = 366;
 
+    /** Nama route → jenis laporan untuk izin; tidak terdaftar = hanya report.view. */
+    private const ROUTE_TABS = [
+        'summary' => ReportTab::Summary,
+        'trend' => ReportTab::Summary,
+        'products' => ReportTab::Products,
+        'payment-methods' => ReportTab::PaymentMethods,
+        'employees' => ReportTab::Employees,
+        'shifts' => ReportTab::Shifts,
+        'audit' => ReportTab::Discounts,
+        'categories' => ReportTab::Categories,
+        'options' => ReportTab::Options,
+        'hourly' => ReportTab::Time,
+        'heatmap' => ReportTab::Time,
+        'stock' => ReportTab::Stock,
+    ];
+
     public function authorize(): bool
     {
-        return $this->user()?->can('report.view') ?? false;
+        $user = $this->user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $tab = self::ROUTE_TABS[(string) str($this->route()?->getName() ?? '')->afterLast('reports.')] ?? null;
+        $permissions = $tab?->permissions() ?? ['report.view'];
+
+        return collect($permissions)->contains(fn (string $permission): bool => $user->can($permission));
     }
 
     /** @return array<string, mixed> */
@@ -46,6 +77,13 @@ final class ReportRequest extends FormRequest
             'payment_method_ids.*' => ['uuid'],
             'user_ids' => ['nullable', 'array', 'max:100'],
             'user_ids.*' => ['uuid'],
+            'category_ids' => ['nullable', 'array', 'max:50'],
+            'category_ids.*' => ['uuid'],
+            'product_ids' => ['nullable', 'array', 'max:100'],
+            'product_ids.*' => ['uuid'],
+            'shift_ids' => ['nullable', 'array', 'max:50'],
+            'shift_ids.*' => ['uuid'],
+            'granularity' => ['nullable', Rule::in(array_keys(ReportPeriod::GRANULARITIES))],
         ];
     }
 
@@ -60,6 +98,13 @@ final class ReportRequest extends FormRequest
             $days = CarbonImmutable::parse($this->from())->diffInDays(CarbonImmutable::parse($this->to())) + 1;
             if ($days > self::MAX_DAYS) {
                 $validator->errors()->add('to', 'Rentang laporan maksimal '.self::MAX_DAYS.' hari');
+            }
+
+            // Supervisor (report.view_shift tanpa report.view): maks. 31 hari ke belakang (Q49)
+            $user = $this->user();
+            $min = ReportContext::minDateFor($user instanceof User ? $user : null);
+            if ($min !== null && $this->from() < $min) {
+                $validator->errors()->add('from', 'Laporan hanya bisa dilihat maksimal '.ReportPeriod::SUPERVISOR_LOOKBACK_DAYS.' hari ke belakang');
             }
         }];
     }
@@ -102,7 +147,7 @@ final class ReportRequest extends FormRequest
 
     public function filters(): ReportFilters
     {
-        return ReportFilters::fromArray($this->only(['order_type', 'payment_method_ids', 'user_ids']));
+        return ReportFilters::fromArray($this->only(['order_type', 'payment_method_ids', 'user_ids', 'category_ids', 'product_ids', 'shift_ids']));
     }
 
     public function reportPeriod(): ReportPeriod
@@ -110,10 +155,19 @@ final class ReportRequest extends FormRequest
         return new ReportPeriod($this->from(), $this->to());
     }
 
-    /** Periode pembanding (default periode sebelumnya); null bila compare=none. */
+    /** Periode pembanding (default periode sebelumnya); null bila compare=none atau di luar batas supervisor. */
     public function comparison(): ?ReportPeriod
     {
-        return $this->reportPeriod()->comparison($this->filled('compare') ? $this->string('compare')->toString() : 'previous_period');
+        $comparison = $this->reportPeriod()->comparison($this->filled('compare') ? $this->string('compare')->toString() : 'previous_period');
+        $user = $this->user();
+        $min = ReportContext::minDateFor($user instanceof User ? $user : null);
+
+        return $comparison !== null && $min !== null && $comparison->from < $min ? null : $comparison;
+    }
+
+    public function granularity(): string
+    {
+        return $this->reportPeriod()->granularity($this->filled('granularity') ? $this->string('granularity')->toString() : null);
     }
 
     /** @return array{from: string, to: string, timezone: string, outlet_id: string|null} */
