@@ -127,7 +127,9 @@ final class ReportExporter
         $dompdf = $pdf->getDomPDF();
         $dompdf->render();
         $canvas = $dompdf->getCanvas();
-        $font = $dompdf->getFontMetrics()->getFont('DejaVu Sans');
+        // Font merek (terdaftar lewat @font-face saat render), DejaVu Sans bila TTF tidak ada
+        $metrics = $dompdf->getFontMetrics();
+        $font = $metrics->getFont('Plus Jakarta Sans') ?? $metrics->getFont('DejaVu Sans');
         $canvas->page_text($canvas->get_width() - 90, $canvas->get_height() - 27, 'Hal. {PAGE_NUM} / {PAGE_COUNT}', $font, 7, [0.494, 0.533, 0.588]);
 
         return (string) $dompdf->output();
