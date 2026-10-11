@@ -33,6 +33,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $birth_month
  * @property string|null $notes
  * @property int $points_balance
+ * @property string|null $tier_id tier saat ini (M5); null = di bawah tier terendah
+ * @property string $spend_12m total belanja 12 bulan bergulir (cache, dihitung TierEvaluator)
  * @property int $pin_failed_attempts
  * @property CarbonImmutable|null $pin_locked_until
  * @property string $total_spent
@@ -92,6 +94,12 @@ final class Member extends Model implements AuthenticatableContract
     public function joinedOutlet(): BelongsTo
     {
         return $this->belongsTo(Outlet::class, 'joined_outlet_id');
+    }
+
+    /** @return BelongsTo<MemberTier, $this> */
+    public function tier(): BelongsTo
+    {
+        return $this->belongsTo(MemberTier::class, 'tier_id');
     }
 
     /** @return HasMany<Order, $this> */

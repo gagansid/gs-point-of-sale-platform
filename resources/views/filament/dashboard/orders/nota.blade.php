@@ -27,7 +27,7 @@
         <div><dt>Kasir</dt><dd>{{ $order->user?->name ?? '—' }}</dd></div>
         <div><dt>Tipe</dt><dd>{{ $order->order_type->getLabel() }}{{ filled($order->table_label) ? ' · '.$order->table_label : '' }}</dd></div>
         @if (filled($order->member_name))
-            <div><dt>Member</dt><dd>{{ $order->member_name }}</dd></div>
+            <div><dt>Member</dt><dd>{{ $order->member_name }}{{ filled($order->member_tier) ? ' · '.$order->member_tier : '' }}</dd></div>
         @endif
         <div><dt>Pembayaran</dt><dd>{{ $methods !== '' ? $methods : 'Belum dibayar' }}</dd></div>
         @if (filled($order->notes))

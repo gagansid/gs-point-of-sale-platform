@@ -42,6 +42,7 @@ final class ReceiptResource extends JsonResource
             'order_type_label' => $this->order_type->getLabel(),
             'table_label' => $this->table_label,
             'member_name' => $this->member_name,
+            'member_tier' => $this->member_tier,
             // Poin di struk (ADR 0013): didapat dari order ini & saldo saat struk dibuat
             'member_points' => $this->member_id !== null ? ['earned' => $this->points_earned, 'balance' => $this->member?->points_balance] : null,
             'status' => $this->status->value,

@@ -30,6 +30,13 @@ final class MemberResource extends JsonResource
             'phone_masked' => Phone::masked($this->phone),
             'is_active' => $this->is_active,
             'points_balance' => $this->points_balance,
+            // Tier saat ini (M5); null = di bawah tier terendah / belum ada tier
+            'tier' => $this->tier !== null ? [
+                'id' => $this->tier->id,
+                'name' => $this->tier->name,
+                'point_multiplier' => $this->tier->point_multiplier,
+                'discount_percent' => $this->tier->discount_percent,
+            ] : null,
             'visit_count' => $this->visit_count,
             'last_visit_at' => $this->last_visit_at?->toIso8601ZuluString(),
             'joined_at' => $this->created_at?->toIso8601ZuluString(),

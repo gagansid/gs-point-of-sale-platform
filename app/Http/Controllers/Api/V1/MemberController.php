@@ -45,7 +45,7 @@ final class MemberController extends Controller
         }
         RateLimiter::hit($key, 60);
 
-        $members = Member::query()->whereNull('anonymized_at')
+        $members = Member::query()->with('tier')->whereNull('anonymized_at')
             ->search($request->string('search')->toString())
             ->orderByDesc('last_visit_at')->orderBy('name')
             ->limit(20)->get();

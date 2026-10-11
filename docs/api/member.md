@@ -2,7 +2,7 @@
 
 Standar: [`docs/standards/api/`](../standards/api/README.md). Skema lengkap: OpenAPI `/docs/api`.
 Semua endpoint memakai **token user** + header `X-App-Version`. Base URL: [README](README.md).
-Keputusan: [ADR 0013](../adr/0013-member-loyalty-program.md), SPEC Q60–Q61 (tahap M1).
+Keputusan: [ADR 0013](../adr/0013-member-loyalty-program.md), SPEC Q60–Q67 (tahap M1–M7).
 
 | Method | Endpoint | Permission | Idempotent | Action |
 |---|---|---|---|---|
@@ -35,7 +35,7 @@ pribadi lengkap (`phone`, `email`, `birth_day`, `birth_month`, `notes`) hanya un
   "data": [
     {
       "id": "…", "code": "RKX7P2", "name": "Rina Kusuma", "phone_masked": "•••• 7890", "is_active": true,
-      "points_balance": 0, "visit_count": 0, "last_visit_at": null, "joined_at": "2026-10-11T10:00:00Z"
+      "points_balance": 0, "tier": null, "visit_count": 0, "last_visit_at": null, "joined_at": "2026-10-11T10:00:00Z"
     }
   ],
   "meta": { "request_id": "…" }
@@ -117,4 +117,15 @@ sandi (sesi lain keluar), hapus akun (dianonimkan).
 6 digit terakhir sebagai `member_code` saat membayar dengan poin. Lupa kata sandi: owner/manager membuat kata sandi
 sementara di dashboard (Member → Kata sandi sementara); member wajib menggantinya saat masuk.
 
-Tier, stempel, dan voucher menyusul (ADR 0013, M5–M7).
+## Tier (M5, SPEC Q64)
+
+- Owner mengatur tier di **Pengaturan → Program member** (nama, minimal belanja 12 bulan, pengali poin, diskon
+  tambahan). Member masuk tier tertinggi yang batasnya terpenuhi; di bawah tier terendah = tanpa tier.
+- Belanja 12 bulan = total `grand_total` order selesai (void tidak dihitung) 12 bulan terakhir; dievaluasi saat order
+  selesai/void dan setiap hari (tier bisa turun).
+- Pengali poin: `floor(floor(dasar / earn_amount) × earn_points × pengali)`, memakai tier **sebelum** order ini.
+- Diskon tier **ditambahkan** ke diskon member dasar (`member_discount`, maks. 100%), tidak dihitung ke batas diskon kasir.
+- Member (`GET /members`, `/members/{id}`): `tier: { id, name, point_multiplier, discount_percent }` atau `null`.
+- Order: `member: { id, name, tier }` (snapshot nama tier yang diskonnya dipakai); struk: `member_tier`.
+
+Stempel dan voucher menyusul (ADR 0013, M6–M7).

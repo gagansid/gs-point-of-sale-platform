@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $table_label
  * @property string|null $member_id member terpasang (ADR 0013)
  * @property string|null $member_name snapshot nama member saat transaksi
+ * @property string|null $member_tier snapshot nama tier yang diskonnya dipakai (M5)
  * @property OrderStatus $status
  * @property string|null $notes
  * @property DiscountType|null $discount_type

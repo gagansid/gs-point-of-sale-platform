@@ -56,12 +56,12 @@ final class SaveOpenBill
         // Member yang berlaku untuk harga: baru (dikirim) atau yang sudah terpasang di open bill
         $pricingMember = $data->memberProvided ? $member : ($existing?->member_id !== null ? Member::query()->find($existing->member_id) : null);
         $lines = $this->resolveLines->handle($data->items, $outlet);
-        $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval,
-            app(ResolveMemberPricing::class)->handle($pricingMember, $outlet));
+        $pricing = app(ResolveMemberPricing::class)->handle($pricingMember, $outlet);
+        $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval, $pricing);
         $totals = $priced['totals'];
 
         try {
-            $result = DB::transaction(function () use ($actor, $device, $shift, $outlet, $orderId, $data, $lines, $priced, $totals, $member): array {
+            $result = DB::transaction(function () use ($actor, $device, $shift, $outlet, $orderId, $data, $lines, $priced, $totals, $member, $pricing): array {
                 $order = Order::query()->lockForUpdate()->find($orderId);
                 self::ensureOpen($order);
                 $created = $order === null;
@@ -99,6 +99,8 @@ final class SaveOpenBill
                 if ($data->memberProvided) {
                     $order->forceFill(['member_id' => $member?->id, 'member_name' => $member?->name]);
                 }
+                // Snapshot tier yang diskonnya dipakai di harga ini (M5)
+                $order->forceFill(['member_tier' => $order->member_id !== null ? $pricing->tierName : null]);
 
                 $this->writer->applyTotals($order, $totals, $outlet);
                 $order->save();

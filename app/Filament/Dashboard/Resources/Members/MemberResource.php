@@ -21,6 +21,7 @@ use App\Models\Member;
 use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
 use App\Models\User;
+use App\Support\Money;
 use App\Support\Phone;
 use BackedEnum;
 use Closure;
@@ -117,13 +118,15 @@ final class MemberResource extends Resource
             ->defaultSort('created_at', 'desc')
             // Nomor HP berspasi ("0812 3456 7890") dicari utuh, bukan per kata
             ->splitSearchTerms(false)
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('joinedOutlet:id,name'))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['joinedOutlet:id,name', 'tier:id,name']))
             ->columns([
                 TextColumn::make('name')->label('Nama')->weight('medium')->sortable()
                     ->description(fn (Member $record): string => $record->code)
                     ->searchable(query: fn (Builder $query, string $search): Builder => Member::applySearch($query, $search)),
                 TextColumn::make('phone')->label('Nomor HP')->formatStateUsing(fn (?string $state): string => Phone::display($state))
                     ->placeholder('—'),
+                TextColumn::make('tier.name')->label('Tier')->badge()->color('primary')->placeholder('—')
+                    ->tooltip(fn (Member $record): string => 'Belanja 12 bulan '.Money::format(Money::fromDb($record->spend_12m))),
                 TextColumn::make('points_balance')->label('Poin')->numeric()->sortable()->alignEnd()
                     ->color(fn (int $state): ?string => $state < 0 ? 'danger' : null),
                 TextColumn::make('visit_count')->label('Kunjungan')->numeric()->sortable()->alignEnd(),

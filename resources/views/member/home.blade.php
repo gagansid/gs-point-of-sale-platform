@@ -2,7 +2,7 @@
 <x-member.layout title="Beranda" active="home">
     <section class="member-card member-hello">
         <p class="member-muted">Halo,</p>
-        <h1 class="member-title">{{ $member->name }}</h1>
+        <h1 class="member-title">{{ $member->name }}@if ($tier) <span class="member-tier">{{ $tier->name }}</span>@endif</h1>
         <div class="member-balance">
             <div>
                 <span class="member-balance-value">{{ $fmt($member->points_balance) }}</span>
@@ -14,6 +14,17 @@
             <p class="member-muted">{{ $fmt($expiring->remaining) }} poin berlaku s/d {{ $expiring->expires_at?->locale('id')->translatedFormat('j F Y') }}</p>
         @endif
     </section>
+
+    @if ($nextTier)
+        {{-- Progres tier (M5): belanja 12 bulan terakhir terhadap batas tier berikutnya --}}
+        @php($spend = \App\Support\Money::fromDb($member->spend_12m))
+        @php($percent = \App\Support\Money::isPositive($nextTier->min_spend_12m) ? min(100, (int) floor((float) bcdiv(bcmul($spend, '100', 2), $nextTier->min_spend_12m, 2))) : 100)
+        <section class="member-card">
+            <h2 class="member-subtitle">Menuju {{ $nextTier->name }}</h2>
+            <progress class="member-progress" max="100" value="{{ $percent }}" aria-label="Progres ke tier {{ $nextTier->name }}">{{ $percent }}%</progress>
+            <p class="member-muted">Belanja {{ \App\Support\Money::format(\App\Support\Money::sub($nextTier->min_spend_12m, $spend)) }} lagi dalam 12 bulan untuk naik ke {{ $nextTier->name }}.</p>
+        </section>
+    @endif
 
     <section class="member-card member-qr" data-code-url="{{ route('member.code', ['business' => $business->slug]) }}">
         <h2>Tunjukkan ke kasir</h2>

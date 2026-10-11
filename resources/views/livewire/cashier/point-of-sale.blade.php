@@ -103,6 +103,9 @@
                 @if ($memberId)
                     <div class="pos-member-chip">
                         <span class="pos-member-chip-name"><span aria-hidden="true">★</span> {{ $memberName }}
+                            @if ($this->memberTier)
+                                <span class="pos-member-chip-tier">{{ $this->memberTier }}</span>
+                            @endif
                             @if ($this->memberPoints !== null)
                                 <span class="pos-member-chip-points">{{ number_format($this->memberPoints, 0, ',', '.') }} poin</span>
                             @endif
@@ -202,7 +205,7 @@
                     <dt>Diskon</dt><dd>−{{ $money($totals->manualDiscount) }}</dd>
                 @endif
                 @if (\App\Support\Money::isPositive($totals->memberDiscount))
-                    <dt>Diskon member</dt><dd>−{{ $money($totals->memberDiscount) }}</dd>
+                    <dt>Diskon member{{ $this->memberTier ? ' · '.$this->memberTier : '' }}</dt><dd>−{{ $money($totals->memberDiscount) }}</dd>
                 @endif
                 @if (\App\Support\Money::isPositive($totals->serviceTotal))
                     <dt>Service</dt><dd>{{ $money($totals->serviceTotal) }}</dd>

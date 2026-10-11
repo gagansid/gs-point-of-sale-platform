@@ -160,7 +160,7 @@ Order di luar visibilitas → `403` di detail/struk; order tenant lain → `404`
 ## `GET /v1/orders/{id}/receipt`
 
 Data struk siap cetak: `outlet` (nama, alamat, header, footer), `order_number`, `order_type_label`,
-`table_label`, `member_name` (atau `null`), `cashier_name`, `created_at` (UTC) + `created_at_local` (`08/10/2026 12.00`, zona outlet),
+`table_label`, `member_name` & `member_tier` (atau `null`), `cashier_name`, `created_at` (UTC) + `created_at_local` (`08/10/2026 12.00`, zona outlet),
 `lines` (nama, opsi, qty, harga, diskon, total, catatan), `totals` (dengan **tarif pajak/service saat
 transaksi**), `payments`, `is_void`, `void_reason`.
 

@@ -604,6 +604,13 @@ final class PointOfSale extends Component
         return $this->memberId !== null ? Member::query()->whereKey($this->memberId)->value('points_balance') : null;
     }
 
+    /** Nama tier member terpasang (M5); null = tanpa tier. */
+    #[Computed]
+    public function memberTier(): ?string
+    {
+        return $this->memberId !== null ? Member::query()->with('tier:id,name')->find($this->memberId)?->tier?->name : null;
+    }
+
     public function updatedMemberSearch(): void
     {
         $this->memberResults = [];

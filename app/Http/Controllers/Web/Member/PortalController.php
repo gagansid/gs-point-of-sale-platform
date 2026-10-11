@@ -13,9 +13,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Member;
 use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
+use App\Models\MemberTier;
 use App\Models\Order;
 use App\Services\Member\MemberProof;
 use App\Support\MemberPortal;
+use App\Support\Money;
 use App\Support\QrSvg;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -34,9 +36,15 @@ final class PortalController extends Controller
     {
         $member = self::member();
 
+        $tiers = MemberTier::ordered();
+        $tier = $tiers->firstWhere('id', $member->tier_id);
+
         return view('member.home', [
             'member' => $member,
             'settings' => MemberSetting::current(),
+            // Tier & progres ke tier berikutnya (M5)
+            'tier' => $tier,
+            'nextTier' => MemberTier::nextAfter($tier, Money::fromDb($member->spend_12m), $tiers),
             'proof' => self::proof($member),
             'expiring' => MemberPointEntry::query()->where('member_id', $member->id)->where('remaining', '>', 0)
                 ->whereNotNull('expires_at')->orderBy('expires_at')->first(),

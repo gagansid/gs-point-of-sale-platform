@@ -19,7 +19,10 @@ final readonly class MemberPricing
         public string $voucherValue = '0.00',
         // Maks. potongan voucher persen; null = tanpa batas
         public ?string $voucherMax = null,
+        // Diskon member dasar + diskon tier (M5), maks. 100
         public string $memberPercent = '0.00',
+        // Snapshot nama tier untuk order (orders.member_tier); tidak dipakai OrderCalculator
+        public ?string $tierName = null,
     ) {}
 
     public static function none(): self

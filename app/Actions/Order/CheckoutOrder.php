@@ -64,8 +64,8 @@ final class CheckoutOrder
 
         $member = app(ResolveOrderMember::class)->handle($data->memberId);
         $lines = $this->resolveLines->handle($data->items, $outlet);
-        $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval,
-            app(ResolveMemberPricing::class)->handle($member, $outlet));
+        $pricing = app(ResolveMemberPricing::class)->handle($member, $outlet);
+        $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval, $pricing);
         $totals = $priced['totals'];
         $payments = $this->allocatePayments->handle($data->payments, $totals->grandTotal, $outlet->id);
         // Bayar dengan poin: bukti pemilik diverifikasi di luar transaksi (percobaan PIN salah tetap tercatat)
@@ -81,7 +81,7 @@ final class CheckoutOrder
         }
 
         try {
-            $order = DB::transaction(function () use ($actor, $device, $shift, $outlet, $data, $lines, $priced, $totals, $payments, $member): Order {
+            $order = DB::transaction(function () use ($actor, $device, $shift, $outlet, $data, $lines, $priced, $totals, $payments, $member, $pricing): Order {
                 $order = new Order([
                     'outlet_id' => $outlet->id,
                     'shift_id' => $shift->id,
@@ -101,6 +101,7 @@ final class CheckoutOrder
                     // Snapshot nama member (tetap terbaca walau member dianonimkan, ADR 0013)
                     'member_id' => $member?->id,
                     'member_name' => $member?->name,
+                    'member_tier' => $pricing->tierName,
                 ]);
                 $this->writer->applyTotals($order, $totals, $outlet);
                 $order->save();

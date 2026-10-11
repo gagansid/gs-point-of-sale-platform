@@ -9,15 +9,19 @@ use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
 use App\Models\Order;
 use App\Services\Member\PointLedger;
+use App\Services\Member\TierEvaluator;
 use App\Support\Money;
 
 /**
  * Void order selesai (ADR 0013): poin yang didapat ditarik (saldo boleh minus bila sudah terpakai) dan
- * statistik kunjungan/belanja dikembalikan. Dipanggil VoidOrder di dalam transaksi; idempotent per order.
+ * statistik kunjungan/belanja & tier dikembalikan. Dipanggil VoidOrder di dalam transaksi; idempotent per order.
  */
 final class ReverseOrderBenefits
 {
-    public function __construct(private readonly PointLedger $ledger) {}
+    public function __construct(
+        private readonly PointLedger $ledger,
+        private readonly TierEvaluator $tiers,
+    ) {}
 
     public function handle(Order $order): void
     {
@@ -29,8 +33,9 @@ final class ReverseOrderBenefits
         $member->forceFill([
             'visit_count' => max(0, $member->visit_count - 1),
             'total_spent' => Money::max(Money::sub($member->total_spent, $order->grand_total), '0.00'),
-            'spend_12m' => Money::max(Money::sub((string) $member->getAttribute('spend_12m'), $order->grand_total), '0.00'),
         ])->save();
+        // Status void ditulis setelah ini: order dikecualikan dari belanja 12 bulan (tier bisa turun, M5)
+        $this->tiers->refresh($member, excludeOrderId: $order->id);
 
         $earned = MemberPointEntry::query()->where('order_id', $order->id)->where('type', PointEntryType::Earn)->first();
         $reversed = MemberPointEntry::query()->where('order_id', $order->id)->where('type', PointEntryType::VoidReversal)->where('points', '<', 0)->exists();

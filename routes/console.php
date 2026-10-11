@@ -26,6 +26,9 @@ Schedule::command('pos:daily-summary')->hourlyAt(5)->withoutOverlapping(30);
 // Poin member kedaluwarsa (ADR 0013): dini hari WIB
 Schedule::command('pos:expire-member-points')->dailyAt('01:30')->timezone('Asia/Jakarta')->withoutOverlapping(30);
 
+// Tier member (ADR 0013, Q64): belanja lewat 12 bulan keluar dari hitungan, tier bisa turun
+Schedule::command('pos:evaluate-member-tiers')->dailyAt('01:45')->timezone('Asia/Jakarta')->withoutOverlapping(30);
+
 // Audit log (Q58): hapus catatan lebih dari 365 hari (config activitylog.delete_records_older_than_days)
 Schedule::command('activitylog:clean --force')->dailyAt('03:30')->timezone('Asia/Jakarta');
 
