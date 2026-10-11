@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Widgets;
 
 use App\Filament\Dashboard\Resources\Orders\OrderResource;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
+use App\Filament\Dashboard\Widgets\Concerns\DescribesTrend;
 use App\Filament\Dashboard\Widgets\Concerns\ReportWidget;
 use App\Models\Product;
 use App\Services\Report\ReportService;
@@ -21,6 +22,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
  */
 final class SalesStatsWidget extends StatsOverviewWidget
 {
+    use DescribesTrend;
     use ReportWidget;
 
     // Dirender langsung: widget lazy = 1 request HTTP per widget (berat di shared hosting)
@@ -94,36 +96,5 @@ final class SalesStatsWidget extends StatsOverviewWidget
                 ->color($outOfStock > 0 ? 'danger' : 'success')
                 ->url($outOfStock > 0 ? ProductResource::getUrl('index') : null),
         ];
-    }
-
-    /**
-     * Deskripsi tren singkat ("Naik 12,5%" / "Turun 3%"); arah tetap dalam teks (aksesibilitas),
-     * pembanding lengkap di tooltip & subjudul halaman.
-     */
-    private function trend(Stat $stat, string $now, ?string $before, ?string $versus, bool $higherIsBetter = true): Stat
-    {
-        if ($before === null || $versus === null) {
-            return $stat->color('gray');
-        }
-
-        $change = ReportService::change($now, $before);
-
-        if ($change === null) {
-            // Pembanding 0: persen tak terdefinisi
-            $text = Money::compare($now, '0') === 0 ? 'Tetap' : 'Tanpa pembanding';
-
-            return $stat->description($text)->color('gray')->extraAttributes(['title' => "{$text} ({$versus})"]);
-        }
-
-        $up = Money::compare($change, '0') >= 0;
-        $flat = Money::compare($change, '0') === 0;
-        $good = $up === $higherIsBetter;
-        $text = $flat ? 'Tetap' : ($up ? 'Naik ' : 'Turun ').str_replace('.', ',', ltrim($change, '-')).'%';
-
-        return $stat
-            ->description($text)
-            ->descriptionIcon($flat ? null : ($up ? Heroicon::OutlinedArrowTrendingUp : Heroicon::OutlinedArrowTrendingDown))
-            ->color($flat ? 'gray' : ($good ? 'success' : 'danger'))
-            ->extraAttributes(['title' => "{$text} dari {$versus}"]);
     }
 }

@@ -97,6 +97,7 @@ it('halaman laporan & export Excel', function () {
 
     Livewire::test(Reports::class)
         ->assertSee('Rp28.000')
+        ->set('tab', 'products')
         ->assertSee('Croissant')
         ->callAction('export');
 
@@ -104,9 +105,11 @@ it('halaman laporan & export Excel', function () {
         fn (SalesReportExport $export): bool => count($export->sheets()) === 4);
 });
 
-it('export & halaman laporan tertutup untuk supervisor', function () {
+it('laporan supervisor terbatas tab operasional (Q49/Q50); kasir tertutup', function () {
     $this->actingAs($this->pos->supervisor);
+    expect(Reports::canAccess())->toBeTrue();
 
+    $this->actingAs($this->pos->cashier);
     expect(Reports::canAccess())->toBeFalse();
 });
 

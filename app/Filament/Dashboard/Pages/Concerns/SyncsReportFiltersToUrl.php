@@ -14,6 +14,7 @@ use Livewire\Attributes\Url;
  *   /dashboard                                   → hari ini (atau filter terakhir dari session)
  *   /dashboard?period=last_30_days
  *   /dashboard?period=custom&from=2026-10-01&to=2026-10-10&compare=previous_year&type=dine_in
+ *   /dashboard/reports?tab=products&period=this_year&group=month
  *
  * State lengkap tetap di $filters (session); outlet mengikuti pemilih sidebar, metode bayar &
  * kasir hanya di session agar URL tidak berisi deretan UUID.
@@ -35,10 +36,14 @@ trait SyncsReportFiltersToUrl
     #[Url(as: 'type', except: '')]
     public string $urlType = '';
 
+    /** Granularitas tren (halaman Laporan); kosong = otomatis sesuai rentang */
+    #[Url(as: 'group', except: '')]
+    public string $urlGroup = '';
+
     /** Ada parameter laporan di URL (link dibagikan/bookmark) → URL menang atas session. */
     protected function hasReportQuery(): bool
     {
-        return array_intersect(['period', 'from', 'to', 'compare', 'type'], array_keys(request()->query())) !== [];
+        return array_intersect(['period', 'from', 'to', 'compare', 'type', 'group'], array_keys(request()->query())) !== [];
     }
 
     /**
@@ -56,6 +61,7 @@ trait SyncsReportFiltersToUrl
             'to' => $this->urlTo !== '' ? $this->urlTo : null,
             'compare' => $this->urlCompare,
             'order_type' => $this->urlType !== '' ? $this->urlType : null,
+            'granularity' => $this->urlGroup !== '' ? $this->urlGroup : ($filters['granularity'] ?? null),
         ];
     }
 
@@ -72,5 +78,7 @@ trait SyncsReportFiltersToUrl
         $this->urlTo = $preset === 'custom' ? $date($filters['to'] ?? null) : '';
         $this->urlCompare = is_string($filters['compare'] ?? null) && isset(ReportPeriod::COMPARES[$filters['compare']]) ? $filters['compare'] : 'previous_period';
         $this->urlType = is_string($type) && OrderType::tryFrom($type) !== null ? $type : '';
+        $group = $filters['granularity'] ?? null;
+        $this->urlGroup = is_string($group) && isset(ReportPeriod::GRANULARITIES[$group]) && $group !== ($filters['granularity_default'] ?? null) ? $group : '';
     }
 }

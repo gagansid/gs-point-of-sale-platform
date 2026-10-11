@@ -30,6 +30,16 @@ final class PaymentMethodsChartWidget extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
+    /**
+     * Juga dipakai tab operasional Laporan › Metode bayar (Q49).
+     *
+     * @return list<string>
+     */
+    protected static function reportPermissions(): array
+    {
+        return ['report.view', 'report.view_shift'];
+    }
+
     /** @var list<array{name: string, amount: string, count: int}>|null Dihitung sekali per request */
     private ?array $slices = null;
 

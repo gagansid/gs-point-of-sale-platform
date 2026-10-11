@@ -39,9 +39,7 @@
                                     {{ $row['void_count'] > 0 ? $row['void_count'] . ' (' . $money($row['void_total']) . ')' : '–' }}
                                 </td>
                                 <td class="pos-dash-table__share">
-                                    <div class="pos-dash-bar" role="img" aria-label="{{ str_replace('.', ',', $row['share']) }}% dari total">
-                                        <span class="pos-dash-bar__fill" style="width: {{ min((float) $row['share'], 100) }}%"></span>
-                                    </div>
+                                    <progress class="pos-dash-bar" max="100" value="{{ min((float) $row['share'], 100) }}" aria-label="{{ str_replace('.', ',', $row['share']) }}% dari total"></progress>
                                     <span class="tabular-nums">{{ str_replace('.', ',', $row['share']) }}%</span>
                                 </td>
                             </tr>

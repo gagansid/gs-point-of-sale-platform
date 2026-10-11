@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Pages;
 
-use App\Enums\OrderType;
 use App\Exports\SalesReportExport;
-use App\Filament\Dashboard\Pages\Concerns\SyncsReportFiltersToUrl;
+use App\Filament\Dashboard\Pages\Concerns\InteractsWithReportFilters;
 use App\Filament\Dashboard\Widgets\AuditWidget;
 use App\Filament\Dashboard\Widgets\DailyRevenueWidget;
 use App\Filament\Dashboard\Widgets\OrderTypesWidget;
@@ -19,21 +18,15 @@ use App\Filament\Dashboard\Widgets\SetupChecklistWidget;
 use App\Filament\Dashboard\Widgets\TopProductsWidget;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Outlet;
-use App\Models\PaymentMethod;
 use App\Models\User;
-use App\Services\Report\ReportFilters;
-use App\Services\Report\ReportPeriod;
 use App\Services\Report\ReportService;
 use App\Support\CurrentOutlet;
 use Filament\Actions\Action;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Maatwebsite\Excel\Facades\Excel;
@@ -54,7 +47,7 @@ final class Home extends Dashboard
         mountHasFilters as private mountFiltersFromSession;
     }
     use HasIconBreadcrumbs;
-    use SyncsReportFiltersToUrl;
+    use InteractsWithReportFilters;
 
     /**
      * Dideklarasi ulang TANPA #[Url] (bawaan HasFilters): state lengkap hanya di session,
@@ -69,29 +62,29 @@ final class Home extends Dashboard
 
     protected static ?string $title = 'Beranda';
 
-    /** Jam hitung terakhir (zona outlet), tampil di subjudul. */
-    public string $refreshedAt = '';
+    /** Beranda = ringkasan bisnis (report.view); supervisor diarahkan ke Laporan (Q50). */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return self::canViewReports();
+    }
+
+    public function mount(): void
+    {
+        if (! self::canViewReports() && Reports::canAccess()) {
+            $this->redirect(Reports::getUrl());
+        }
+    }
 
     /** Filter session/URL → nilai aman: preset relatif hari ini, outlet mengikuti sidebar. */
     public function mountHasFilters(): void
     {
         $this->mountFiltersFromSession();
-
-        $input = $this->filters ?? [];
-        $this->filters = $this->normalizedFilters($this->hasReportQuery() ? $this->filtersWithUrl($input) : $input);
-        $this->getFiltersForm()->fill($this->filters);
-        session()->put($this->getFiltersSessionKey(), $this->filters);
-        $this->syncUrlFromFilters($this->filters);
-
-        $this->touchRefreshedAt();
+        $this->mountReportFilters();
     }
 
     public function updatedFilters(): void
     {
-        $this->touchRefreshedAt();
-
-        session()->put($this->getFiltersSessionKey(), $this->filters);
-        $this->syncUrlFromFilters($this->filters ?? []);
+        $this->reportFiltersUpdated();
     }
 
     /** @return array<class-string> */
@@ -130,205 +123,49 @@ final class Home extends Dashboard
 
     public function getSubheading(): ?string
     {
-        if (! self::canViewReports()) {
-            return null;
-        }
-
-        $period = $this->period();
-        $parts = [$period->label()];
-
-        if (($comparison = $period->comparison((string) ($this->filters['compare'] ?? 'none'))) !== null) {
-            $parts[] = 'dibanding '.$comparison->label();
-        }
-
-        if ($this->refreshedAt !== '') {
-            $parts[] = 'diperbarui '.$this->refreshedAt;
-        }
-
-        return implode(' · ', $parts);
+        return self::canViewReports() ? $this->reportSubheading() : null;
     }
 
     public function filtersForm(Schema $schema): Schema
     {
-        $outlets = $this->outletOptions();
-
         return $schema->components([
             Section::make()
                 ->columnSpanFull()
                 ->visible(self::canViewReports())
                 ->columns(['default' => 1, 'sm' => 2, 'xl' => 4])
                 ->schema([
-                    Select::make('outlet')
-                        ->label('Outlet')
-                        ->options(['all' => 'Semua outlet', ...$outlets])
-                        ->selectablePlaceholder(false)
-                        ->prefixIcon(Heroicon::OutlinedBuildingStorefront)
-                        ->visible(count($outlets) > 1)
-                        ->afterStateUpdated(fn (?string $state) => $this->switchOutlet($state)),
-                    Select::make('preset')
-                        ->label('Periode')
-                        ->options(ReportPeriod::PRESETS)
-                        ->selectablePlaceholder(false)
-                        ->afterStateUpdated(function (?string $state, Set $set): void {
-                            if ($state === null || $state === 'custom') {
-                                return;
-                            }
-
-                            $period = ReportPeriod::preset($state, CurrentOutlet::today());
-                            $set('from', $period->from);
-                            $set('to', $period->to);
-                        }),
-                    self::datePicker('from', 'Dari tanggal'),
-                    self::datePicker('to', 'Sampai tanggal'),
-                    Select::make('compare')
-                        ->label('Bandingkan dengan')
-                        ->options(ReportPeriod::COMPARES)
-                        ->selectablePlaceholder(false),
-                    Select::make('order_type')
-                        ->label('Tipe order')
-                        ->options(OrderType::class)
-                        ->placeholder('Semua tipe'),
-                    Select::make('payment_method_ids')
-                        ->label('Metode bayar')
-                        ->multiple()
-                        ->options(fn (): array => PaymentMethod::query()->orderBy('name')->pluck('name', 'id')->all())
-                        ->placeholder('Semua metode'),
-                    Select::make('user_ids')
-                        ->label('Kasir')
-                        ->multiple()
-                        ->searchable()
-                        ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
-                        ->placeholder('Semua kasir'),
+                    $this->outletField(),
+                    $this->presetField(),
+                    $this->dateField('from', 'Dari tanggal'),
+                    $this->dateField('to', 'Sampai tanggal'),
+                    $this->compareField(),
+                    $this->orderTypeField(),
+                    $this->paymentMethodField(),
+                    $this->cashierField(),
                 ]),
         ]);
-    }
-
-    /**
-     * DatePicker periode: ikon kalender di kanan bisa diklik untuk membuka popup kalender
-     * (hanya JS di browser, tanpa request ke server). Mengubah tanggal = preset kustom.
-     */
-    private static function datePicker(string $name, string $label): DatePicker
-    {
-        return DatePicker::make($name)
-            ->label($label)
-            ->native(false)
-            ->displayFormat('j M Y')
-            ->closeOnDateSelection()
-            ->maxDate(fn (): string => CurrentOutlet::today())
-            ->suffixAction(
-                Action::make("open_{$name}_calendar")
-                    ->label('Buka kalender')
-                    ->icon(Heroicon::OutlinedCalendarDays)
-                    ->color('gray')
-                    ->alpineClickHandler(<<<'JS'
-                        $el.closest('.fi-input-wrp').querySelector('input[x-ref=button]')?.click()
-                    JS),
-            )
-            ->afterStateUpdated(fn (Set $set) => $set('preset', 'custom'));
     }
 
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('refresh')
-                ->label('Muat ulang')
-                ->icon(Heroicon::OutlinedArrowPath)
-                ->color('gray')
-                ->visible(self::canViewReports())
-                ->action(function (): void {
-                    $this->touchRefreshedAt();
-                    $this->dispatch('dashboard-refresh');
-                }),
-            Action::make('resetFilters')
-                ->label('Reset filter')
-                ->icon(Heroicon::OutlinedXMark)
-                ->color('gray')
-                ->visible(self::canViewReports())
-                ->action(function (): void {
-                    $this->filters = $this->normalizedFilters([]);
-                    $this->getFiltersForm()->fill($this->filters);
-                    $this->updatedFilters();
-                }),
+            $this->refreshReportAction()->visible(self::canViewReports()),
+            $this->resetReportFiltersAction()->visible(self::canViewReports()),
             Action::make('export')
                 ->label('Export Excel')
                 ->icon(Heroicon::OutlinedArrowDownTray)
-                ->visible(fn (): bool => self::user()?->can('report.export') ?? false)
+                ->visible(fn (): bool => self::canViewReports() && (self::user()?->can('report.export') ?? false))
                 ->action(function (): BinaryFileResponse {
-                    $period = $this->period();
-                    [$start, $end] = $period->utcRange();
+                    $context = $this->reportContext();
+                    [$start, $end] = $context->range();
+                    $period = $context->period;
 
                     return Excel::download(
-                        new SalesReportExport(app(ReportService::class), $period->from, $period->to, CurrentOutlet::timezone(), $start, $end,
-                            ReportFilters::fromArray($this->filters ?? [])),
+                        new SalesReportExport(app(ReportService::class), $period->from, $period->to, CurrentOutlet::timezone(), $start, $end, $context->filters),
                         "laporan-penjualan-{$period->from}-{$period->to}.xlsx",
                     );
                 }),
         ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $input
-     * @return array<string, mixed>
-     */
-    private function normalizedFilters(array $input): array
-    {
-        $today = CurrentOutlet::today();
-        $preset = is_string($input['preset'] ?? null) && isset(ReportPeriod::PRESETS[$input['preset']]) ? $input['preset'] : 'today';
-        $period = $preset === 'custom'
-            ? ReportPeriod::normalize($input['from'] ?? null, $input['to'] ?? null, $today)
-            : ReportPeriod::preset($preset, $today);
-        $compare = is_string($input['compare'] ?? null) && isset(ReportPeriod::COMPARES[$input['compare']]) ? $input['compare'] : 'previous_period';
-        $extra = ReportFilters::fromArray($input);
-
-        return [
-            // Sumber kebenaran outlet = pemilih sidebar (session), bukan filter tersimpan
-            'outlet' => CurrentOutlet::selectedId() ?? 'all',
-            'preset' => $preset,
-            'from' => $period->from,
-            'to' => $period->to,
-            'compare' => $compare,
-            'order_type' => $extra->orderType?->value,
-            'payment_method_ids' => $extra->paymentMethodIds,
-            'user_ids' => $extra->userIds,
-        ];
-    }
-
-    private function period(): ReportPeriod
-    {
-        $filters = $this->filters ?? [];
-        $today = CurrentOutlet::today();
-
-        return ($filters['preset'] ?? 'today') === 'custom'
-            ? ReportPeriod::normalize($filters['from'] ?? null, $filters['to'] ?? null, $today)
-            : ReportPeriod::preset((string) ($filters['preset'] ?? 'today'), $today);
-    }
-
-    /** Ganti outlet = ganti pilihan sidebar (outlet di luar akses user → 404 di CurrentOutlet::choose). */
-    private function switchOutlet(?string $outletId): void
-    {
-        $user = self::user();
-
-        if ($user === null) {
-            return;
-        }
-
-        CurrentOutlet::choose($user, $outletId === null || $outletId === 'all' ? null : $outletId);
-
-        // Label pemilih outlet di sidebar ikut berubah tanpa reload
-        $this->dispatch('pos-outlet-changed', label: CurrentOutlet::selectedId() !== null ? CurrentOutlet::getOrFail()->name : 'Semua outlet');
-    }
-
-    /** @return array<string, string> */
-    private function outletOptions(): array
-    {
-        $user = self::user();
-
-        return $user !== null ? $user->accessibleOutlets()->pluck('name', 'id')->all() : [];
-    }
-
-    private function touchRefreshedAt(): void
-    {
-        $this->refreshedAt = now(CurrentOutlet::timezone())->format('H.i');
     }
 
     private static function canViewReports(): bool
