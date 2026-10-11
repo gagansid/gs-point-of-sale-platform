@@ -17,3 +17,5 @@ template: `docs/templates/adr.md`.
 | [0010](0010-multi-outlet.md) | Multi-outlet: penugasan banyak-ke-banyak, katalog bersama, stok per outlet | Diterima |
 | [0011](0011-per-outlet-catalog-and-payment-methods.md) | Menu & metode bayar per outlet: katalog bersama, dipilih per outlet, harga sama | Diterima |
 | [0012](0012-pdf-export-dompdf.md) | Export laporan PDF dengan dompdf (PHP murni, tanpa Chrome/biner) | Diterima |
+| [0013](0013-member-loyalty-program.md) | Program member milik bisnis: poin sebagai metode bayar, tier, stempel, voucher, halaman member HP + kata sandi | Diterima |
+| [0014](0014-table-qr-self-order-and-midtrans.md) | Self-order QR meja: terima kasir dulu, bayar dulu, Midtrans per owner | Diterima |
