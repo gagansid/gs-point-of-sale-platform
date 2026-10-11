@@ -1,8 +1,8 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-10 · Branch: `feature/pos`
-> Status: **multi-outlet (ADR 0010) dan menu per outlet (ADR 0011) selesai & di-commit.**
-> Kualitas: 691 test lulus (SQLite & MySQL `gspos_test`), Pint & Larastan level 6 bersih.
+> Diperbarui: 2026-10-11 · Branch: `feature/pos`
+> Status: **Beranda berfilter + modul Laporan lengkap (SPEC Q49–Q52, ADR 0012) selesai & di-commit.**
+> Kualitas: 870 test lulus (SQLite; test laporan juga MySQL `gspos_test`), Pint & Larastan level 6 bersih.
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
 ---
@@ -49,6 +49,18 @@ Keputusan penting:
 | P5 API | `/catalog` per outlet perangkat (+ `options[].is_available`, kategori kosong tidak dikirim); checkout/tambah bayar menolak dengan `VALIDATION_ERROR` per field |
 
 Catatan untuk Flutter: field baru `options[].is_available`; kategori aktif tanpa produk di outlet tidak lagi dikirim.
+
+### Beranda & modul Laporan (SPEC Q49–Q52, ADR 0012) — selesai, di-commit
+| Bagian | Isi |
+|---|---|
+| Fondasi | `ReportPeriod` (preset minggu/tahun, granularitas jam/hari/minggu/bulan, batas 31 hari), `ReportFilters` (+ kategori, produk, shift), `ReportContext` (satu paket parameter + batas supervisor), snapshot `order_items.category_name` |
+| Dashboard | Beranda & Laporan berbagi `InteractsWithReportFilters` (URL ringkas `?period=&from=&to=&compare=&type=&group=`, `?tab=`); Laporan 12 tab (`ReportTab`), widget per tab, tabel dari data teragregasi |
+| Akses | Supervisor masuk panel **hanya Laporan** (tab operasional, maks. 31 hari dipotong di server); Penjualan/Shift/cetak ulang struk butuh `UserRole::hasFullDashboard()`; kasir: rekap shift sendiri via API |
+| API | `trend`, `categories`, `options`, `employees`, `shifts`, `shifts/{id}` (+ `/pdf`), `heatmap`, `stock` — izin per endpoint dari `ReportTab` (`docs/api/report.md`) |
+| Export | Grup Export: Excel/PDF tab ini atau lengkap, sinkron, batas 50.000/5.000 baris → "Persempit rentang tanggal"; dompdf tanpa PHP/remote/JS |
+
+Catatan: PDF memakai DejaVu Sans sampai file `resources/fonts/PlusJakartaSans-Regular.ttf` & `-Bold.ttf` ditambahkan
+(template otomatis memakainya). HPP/margin produk belum ada karena data modal belum dicatat.
 
 ---
 

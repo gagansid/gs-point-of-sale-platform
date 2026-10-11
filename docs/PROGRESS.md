@@ -26,11 +26,13 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | Onboarding | Daftar mandiri + trial, hanya-baca, verifikasi email, checklist + template menu, lead → tenant, lupa kata sandi, edisi jual putus (ADR 0009 langkah 1–6) | ✅ | `abec733` … `3937a7b` |
 | **Setelan** | Profil outlet ✅, Karyawan ✅ (PIN + username/kata sandi kasir web), Metode bayar ✅; Perangkat ditunda ke fase tablet; import produk | 🟡 | `1a1b9d9`, `fa95b7e`, `cd2ac45`, `22f2ed2` |
 | Multi-outlet | Outlet per bisnis (tambah/nonaktifkan, batas paket), penugasan karyawan, stok & ketersediaan per outlet, pemilih outlet topbar, filter laporan, `/outlets` (ADR 0010 M1–M6) | ✅ | — |
+| Beranda | Ringkasan bisnis berfilter live (KPI + tren + audit), URL ringkas, ikon kalender, KPI responsif | ✅ | `5cb6b1c`, `0d12fe4` |
+| **Modul laporan** | 12 tab laporan + filter (granularitas, kategori, produk, shift), akses supervisor 31 hari & kasir rekap shift (Q49–Q52), 9 endpoint API baru, export Excel & PDF (ADR 0012) | ✅ | `d7a1ad5` … `bf20537` |
 | **Berikutnya** | Import produk Excel & kasir web | ⏳ | — |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ⏳ | — |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
-Endpoint selesai: **45** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q41, ADR 0001–0010.
+Endpoint selesai: **45** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q52, ADR 0001–0012.
 
 ---
 

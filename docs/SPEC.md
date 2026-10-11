@@ -430,7 +430,7 @@ berdasarkan `error.code`, bukan teks `message`. Detail & contoh:
 ## Panel dashboard owner (`/dashboard`)
 
 Panel Filament; owner hanya melihat data bisnisnya sendiri lewat `TenantContext` + `TenantScope`
-(bukan fitur tenancy Filament — ADR 0007). Akses: owner & manager aktif.
+(bukan fitur tenancy Filament — ADR 0007). Akses: owner & manager aktif; supervisor hanya menu Laporan (Q50).
 
 | Menu | Fungsi | Role |
 |---|---|---|
@@ -439,7 +439,7 @@ Panel Filament; owner hanya melihat data bisnisnya sendiri lewat `TenantContext`
 | Shift | Riwayat shift, selisih kas per kasir | O, M |
 | Produk | Kategori, produk, grup opsi, import produk dari Excel | O, M |
 | Stok | Penyesuaian stok dan daftar stok menipis | O, M |
-| Laporan | Ringkasan, per produk, per metode bayar, export Excel | O, M |
+| Laporan | 12 tab (Ringkasan, Produk, Kategori, Opsi, Metode bayar, Karyawan, Shift, Waktu, Tipe order, Outlet, Diskon & void, Stok), filter live, export Excel & PDF (Q49–Q52) | O, M; S: tab operasional ≤ 31 hari (Q50) |
 | Karyawan | Tambah kasir/manager, atur PIN, nonaktifkan | O |
 | Perangkat | Daftar device, cabut akses device hilang | O |
 | Metode Pembayaran | Aktif/nonaktifkan metode, wajib approval code atau tidak | O |
