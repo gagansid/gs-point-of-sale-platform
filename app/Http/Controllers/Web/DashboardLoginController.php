@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\DashboardLoginRequest;
 use App\Models\User;
 use App\Support\Domains;
+use App\Support\DummyPasswordHash;
 use Filament\Facades\Filament;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -46,12 +47,15 @@ final class DashboardLoginController extends Controller
             ]);
         }
 
+        // Diambil di kedua jalur (user ada / tidak) agar biaya pengambilan hash dummy ikut sama
+        $dummyHash = DummyPasswordHash::get();
+
         // Lintas tenant (email unik global): tenant baru diketahui setelah user ditemukan. Tidak membuat
         // sesi login di domain utama — hanya memverifikasi kata sandi.
         $user = User::allTenants()->with('tenant')->where('email', $email)->first();
 
         // Hash tetap dicek walau user tidak ada agar waktu respons sama (anti enumerasi akun)
-        $passwordValid = Hash::check($request->string('password')->toString(), $user->password ?? self::dummyHash());
+        $passwordValid = Hash::check($request->string('password')->toString(), $user->password ?? $dummyHash);
 
         if ($user === null || ! $passwordValid) {
             RateLimiter::hit($throttleKey, 60);
@@ -90,13 +94,6 @@ final class DashboardLoginController extends Controller
         return redirect()
             ->to($result['next'] ?? Filament::getPanel('dashboard')->getUrl())
             ->header('Cache-Control', 'no-store');
-    }
-
-    private static function dummyHash(): string
-    {
-        static $hash = null;
-
-        return $hash ??= Hash::make('dummy-password-untuk-waktu-konstan');
     }
 
     /**

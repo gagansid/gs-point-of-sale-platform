@@ -9,6 +9,7 @@ use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Device;
 use App\Models\User;
+use App\Support\DummyPasswordHash;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -23,11 +24,14 @@ final class LoginWithPassword
      */
     public function handle(string $email, string $password, string $deviceUid): AuthResult
     {
+        // Diambil di kedua jalur (user ada / tidak) agar biaya pengambilan hash dummy ikut sama
+        $dummyHash = DummyPasswordHash::get();
+
         // Lintas tenant: tenant baru diketahui setelah user ditemukan
         $user = User::allTenants()->with('tenant')->where('email', mb_strtolower($email))->first();
 
         // Hash tetap dicek walau user tidak ada agar waktu respons sama (anti enumerasi akun)
-        $passwordValid = Hash::check($password, $user->password ?? $this->dummyHash());
+        $passwordValid = Hash::check($password, $user->password ?? $dummyHash);
 
         if ($user === null || ! $passwordValid || ! $user->is_active) {
             throw BusinessException::of(ErrorCode::Unauthenticated, 'Email atau kata sandi salah');
@@ -51,12 +55,5 @@ final class LoginWithPassword
         $token = $this->issueToken->handle($user, 'app:'.$deviceUid, $expiresAt, $device);
 
         return new AuthResult($user, $token);
-    }
-
-    private function dummyHash(): string
-    {
-        static $hash = null;
-
-        return $hash ??= Hash::make('dummy-password-untuk-waktu-konstan');
     }
 }
