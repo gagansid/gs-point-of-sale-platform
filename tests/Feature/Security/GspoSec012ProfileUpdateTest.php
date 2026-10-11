@@ -86,3 +86,47 @@ it('ganti email tanpa kata sandi saat ini ditolak', function () {
 
     expect($this->owner->refresh()->email)->toBe('owner@kopi.test');
 });
+
+it('atur PIN sendiri: wajib kata sandi saat ini, kunci PIN direset, token dicabut', function () {
+    userToken($this->owner);
+    $this->owner->forceFill(['pin' => null, 'pin_failed_attempts' => 3])->save();
+
+    Livewire::test(EditProfile::class)
+        ->assertSee('Belum diatur')
+        ->fillForm(['pin' => '481920'])
+        ->call('save')
+        ->assertHasFormErrors(['currentPassword' => 'required']);
+
+    Livewire::test(EditProfile::class)
+        ->fillForm(['pin' => '481920', 'currentPassword' => 'rahasia-lama-123'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $owner = $this->owner->refresh();
+    expect(Hash::check('481920', (string) $owner->pin))->toBeTrue()
+        ->and($owner->pin_failed_attempts)->toBe(0)
+        ->and($owner->tokens()->count())->toBe(0);
+});
+
+it('PIN lemah atau bukan 6 digit ditolak', function (string $pin) {
+    $before = $this->owner->pin;
+
+    Livewire::test(EditProfile::class)
+        ->fillForm(['pin' => $pin, 'currentPassword' => 'rahasia-lama-123'])
+        ->call('save')
+        ->assertHasFormErrors(['pin']);
+
+    expect($this->owner->refresh()->pin)->toBe($before);
+})->with(['berurutan' => '123456', 'sama semua' => '111111', 'pendek' => '1234', 'huruf' => 'abcdef']);
+
+it('PIN kosong tidak mengubah PIN lama', function () {
+    $this->owner->forceFill(['pin' => '481920'])->save();
+
+    Livewire::test(EditProfile::class)
+        ->assertSee('Kosongkan bila tidak diganti')
+        ->fillForm(['name' => 'Nama Baru'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect(Hash::check('481920', (string) $this->owner->refresh()->pin))->toBeTrue();
+});

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\User;
 
+use App\Actions\Auth\VerifyPin;
 use App\Models\User;
 use App\Notifications\VerifyOwnerEmail;
 use Illuminate\Support\Facades\DB;
@@ -17,15 +18,17 @@ use SensitiveParameter;
  *   verifikasi dikirim ke alamat baru setelah tersimpan (SPEC Q46, GSPOS-SEC-012).
  * - Kata sandi diganti → semua token API (aplikasi Flutter) dicabut. Sesi web lain diputus oleh
  *   AuthenticateSession; sesi saat ini diperbarui Filament (GSPOS-SEC-013).
+ * - PIN diganti → penghitung & kunci PIN direset dan token API dicabut (sama dengan SaveEmployee).
  */
 final class UpdateOwnProfile
 {
     /**
      * @param  string|null  $password  kata sandi baru (boleh sudah di-hash oleh form; cast "hashed" tidak meng-hash ulang)
+     * @param  string|null  $pin  PIN baru 6 digit (sudah divalidasi SecurePin); null = tidak diganti
      */
-    public function handle(User $user, string $name, string $email, #[SensitiveParameter] ?string $password = null): User
+    public function handle(User $user, string $name, string $email, #[SensitiveParameter] ?string $password = null, #[SensitiveParameter] ?string $pin = null): User
     {
-        $user = DB::transaction(function () use ($user, $name, $email, $password): User {
+        $user = DB::transaction(function () use ($user, $name, $email, $password, $pin): User {
             $user->fill(['name' => $name, 'email' => Str::lower(trim($email))]);
 
             if ($user->isDirty('email')) {
@@ -36,9 +39,17 @@ final class UpdateOwnProfile
                 $user->password = $password;
             }
 
+            if ($pin !== null) {
+                $user->pin = $pin;
+            }
+
             $user->save();
 
-            if ($password !== null) {
+            if ($pin !== null) {
+                VerifyPin::resetFor($user);
+            }
+
+            if ($password !== null || $pin !== null) {
                 $user->tokens()->delete();
             }
 

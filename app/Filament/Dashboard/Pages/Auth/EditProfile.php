@@ -6,16 +6,57 @@ namespace App\Filament\Dashboard\Pages\Auth;
 
 use App\Actions\User\UpdateOwnProfile;
 use App\Models\User;
+use App\Rules\SecurePin;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 use SensitiveParameter;
 
 /**
  * Profil owner/manager. Penyimpanan lewat Action (bukan $record->update bawaan Filament) agar
  * aturan email terverifikasi & pencabutan token berlaku (GSPOS-SEC-012, GSPOS-SEC-013).
+ * PIN sendiri (approval & masuk kasir web, Q55) juga diatur di sini; mengganti PIN wajib kata sandi saat ini.
  */
 class EditProfile extends BaseEditProfile
 {
+    public function form(Schema $schema): Schema
+    {
+        return $schema->components([
+            $this->getNameFormComponent(),
+            $this->getEmailFormComponent(),
+            $this->getPasswordFormComponent(),
+            $this->getPasswordConfirmationFormComponent(),
+            $this->getPinFormComponent(),
+            $this->getCurrentPasswordFormComponent(),
+        ]);
+    }
+
+    protected function getPinFormComponent(): Component
+    {
+        return TextInput::make('pin')->label('PIN')
+            ->password()->revealable()
+            ->rule(new SecurePin)->length(6)
+            ->extraInputAttributes(['inputmode' => 'numeric', 'autocomplete' => 'off'])
+            ->dehydrated(fn (#[SensitiveParameter] ?string $state): bool => filled($state))
+            ->live(debounce: 500)
+            ->helperText(fn (): string => $this->getUser()->getAttributeValue('pin') !== null
+                ? 'Kosongkan bila tidak diganti. 6 digit, bukan angka sama/berurutan'
+                : 'Belum diatur. Untuk approval void/diskon & masuk kasir web. 6 digit, bukan angka sama/berurutan');
+    }
+
+    protected function getCurrentPasswordFormComponent(): Component
+    {
+        /** @var TextInput $component */
+        $component = parent::getCurrentPasswordFormComponent();
+
+        // Ganti PIN juga butuh kata sandi saat ini
+        return $component->visible(fn (Get $get): bool => filled($get('password')) || filled($get('pin'))
+            || ($get('email') !== $this->getUser()->getAttributeValue('email')));
+    }
+
     /**
      * @param  array<string, mixed>  $data
      */
@@ -27,6 +68,7 @@ class EditProfile extends BaseEditProfile
             (string) $data['name'],
             (string) $data['email'],
             isset($data['password']) ? (string) $data['password'] : null,
+            isset($data['pin']) ? (string) $data['pin'] : null,
         );
     }
 }
