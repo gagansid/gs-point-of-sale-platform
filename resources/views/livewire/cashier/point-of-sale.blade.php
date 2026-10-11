@@ -42,6 +42,9 @@
                             <span class="pos-tile-flag">Habis</span>
                         @elseif ($product->track_stock)
                             <span @class(['pos-tile-stock', 'is-low' => $product->isLowStock()])>Stok {{ $product->stock_qty }}</span>
+                        @else
+                            {{-- Tempat baris info tetap dipesan agar semua tile sama tinggi --}}
+                            <span class="pos-tile-meta" aria-hidden="true"></span>
                         @endif
                     </button>
                     @if ($canToggle)
@@ -60,6 +63,19 @@
     {{-- Keranjang --}}
     <aside class="pos-cart" aria-label="Keranjang">
         <div class="pos-cart-head">
+            @if ($held = $this->heldCarts())
+                <div class="pos-held" aria-label="Transaksi ditahan">
+                    @foreach ($held as $h)
+                        <span class="pos-held-chip" wire:key="h-{{ $h['id'] }}">
+                            <button type="button" class="site-link-button" wire:click="resume('{{ $h['id'] }}')" title="Lanjutkan {{ $h['label'] }}">
+                                ⏸ {{ $h['label'] }} <small>{{ $h['items'] }} item{{ $h['total'] ? ' · '.$money($h['total']) : '' }}</small>
+                            </button>
+                            <button type="button" class="site-link-button" wire:click="discardHeld('{{ $h['id'] }}')"
+                                wire:confirm="Buang transaksi {{ $h['label'] }}?" aria-label="Buang {{ $h['label'] }}">✕</button>
+                        </span>
+                    @endforeach
+                </div>
+            @endif
             <div class="pos-bill-bar">
                 @if ($billId)
                     <span class="pos-bill-tag">Open bill {{ $tableLabel ?: '' }}</span>
@@ -115,6 +131,9 @@
                     @endif
                 </div>
                 <input type="text" wire:model.blur="notes" maxlength="255" placeholder="Catatan order" aria-label="Catatan order">
+                @if (! $billId)
+                    <input type="text" wire:model.blur="holdLabel" maxlength="30" placeholder="Penanda pelanggan (opsional, untuk Tahan)" aria-label="Penanda pelanggan">
+                @endif
             </div>
         @endif
 
@@ -151,11 +170,15 @@
         <div class="pos-actions">
             <button type="button" class="site-btn site-btn-outline" wire:click="clearCart" @disabled($cart === [])
                 wire:confirm="Kosongkan keranjang? Open bill yang tersimpan tidak terhapus.">{{ $billId ? 'Tutup' : 'Kosongkan' }}</button>
+            @unless ($billId)
+                <button type="button" class="site-btn site-btn-outline" wire:click="hold" @disabled($cart === [])
+                    title="Simpan sementara, layani pelanggan berikutnya">Tahan</button>
+            @endunless
             <button type="button" class="site-btn site-btn-outline" wire:click="saveBill" @disabled($cart === [] || $totals === null)>Simpan bill</button>
-            <button type="button" class="site-btn site-btn-primary site-btn-lg" wire:click="openPayment" @disabled($totals === null)>
-                Bayar {{ $totals ? $money($totals->grandTotal) : '' }}
-            </button>
         </div>
+        <button type="button" class="site-btn site-btn-primary pos-pay-btn" wire:click="openPayment" @disabled($totals === null)>
+            Bayar {{ $totals ? $money(\App\Support\Money::sub($totals->grandTotal, $billPaid)) : '' }}
+        </button>
     </aside>
 
     {{-- Dialog opsi / ubah item --}}
@@ -171,7 +194,7 @@
                         @if ($group->max_select === 1 && $group->min_select === 0)
                             <label class="pos-option">
                                 <input type="radio" wire:model="pickOptions.{{ $group->id }}" value="">
-                                <span>Tanpa {{ mb_strtolower($group->name) }}</span>
+                                <span>Tidak dipilih</span>
                             </label>
                         @endif
                         @foreach ($group->options as $option)
@@ -221,11 +244,21 @@
                 @foreach ($payments as $i => $payment)
                     @php($isCash = $this->isCash($payment['payment_method_id']))
                     <div class="pos-pay-row" wire:key="pay-{{ $payment['id'] }}">
-                        <select wire:model.live="payments.{{ $i }}.payment_method_id" aria-label="Metode bayar">
+                        <div class="pos-methods" role="radiogroup" aria-label="Metode bayar">
                             @foreach ($catalog['payment_methods'] as $method)
-                                <option value="{{ $method->id }}">{{ $method->name }}</option>
+                                @php($active = $payment['payment_method_id'] === $method->id)
+                                <button type="button" role="radio" aria-checked="{{ $active ? 'true' : 'false' }}" @class(['pos-method', 'is-active' => $active])
+                                    wire:click="setMethod({{ (int) $i }}, '{{ $method->id }}')">
+                                    @svg(match ($method->category->value) {
+                                        'cash' => 'heroicon-o-banknotes',
+                                        'qris' => 'heroicon-o-qr-code',
+                                        'transfer' => 'heroicon-o-building-library',
+                                        default => 'heroicon-o-credit-card',
+                                    })
+                                    <span>{{ $method->name }}</span>
+                                </button>
                             @endforeach
-                        </select>
+                        </div>
                         <label>Nominal <input type="number" min="0" step="any" inputmode="decimal" wire:model.live.debounce.400ms="payments.{{ $i }}.amount"></label>
                         @if ($isCash)
                             <label>Uang diterima <input type="number" min="0" step="any" inputmode="decimal" wire:model.live.debounce.400ms="payments.{{ $i }}.tendered" placeholder="{{ $payment['amount'] }}"></label>

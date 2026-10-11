@@ -114,6 +114,9 @@ final class PointOfSale extends Component
 
     public bool $showBills = false;
 
+    /** Label opsional keranjang yang ditahan, mis. "Mbak baju merah" */
+    public string $holdLabel = '';
+
     // Approval PIN (diskon di atas batas role): muncul setelah server meminta
     public bool $needsApproval = false;
 
@@ -420,6 +423,14 @@ final class PointOfSale extends Component
         $this->payments = array_values($this->payments);
     }
 
+    /** Pilih metode bayar lewat kartu; hanya metode aktif di outlet ini. */
+    public function setMethod(int $index, string $methodId): void
+    {
+        if (isset($this->payments[$index]) && $this->catalog['payment_methods']->contains('id', $methodId)) {
+            $this->payments[$index]['payment_method_id'] = $methodId;
+        }
+    }
+
     /** Tombol uang pas ('exact') / nominal cepat (pecahan tetap) untuk baris tunai. */
     public function setTendered(int $index, string $preset): void
     {
@@ -486,6 +497,102 @@ final class PointOfSale extends Component
         $this->completedOrderId = $order->id;
         $this->completedChange = $order->change_total;
         $this->resetOrder();
+    }
+
+    // ---------- Tahan transaksi (park) ----------
+
+    /** Maks. keranjang ditahan per browser */
+    public const MAX_HELD = 10;
+
+    /**
+     * Keranjang ditahan di browser ini (session per device): belum jadi order, belum memotong stok.
+     *
+     * @return list<array{id: string, label: string, order_id: string, cart: list<array<string, mixed>>, order_type: string, table_label: string, notes: string, discount_type: string, discount_value: string, total: string|null, items: int, held_at: string}>
+     */
+    public function heldCarts(): array
+    {
+        $held = session($this->heldKey(), []);
+
+        return is_array($held) ? array_values($held) : [];
+    }
+
+    /** Tahan keranjang saat ini lalu kosongkan layar untuk pelanggan berikutnya. */
+    public function hold(): void
+    {
+        if ($this->cart === [] || $this->billId !== null) {
+            return;
+        }
+
+        $held = $this->heldCarts();
+
+        if (count($held) >= self::MAX_HELD) {
+            $this->message = 'Maksimal '.self::MAX_HELD.' transaksi ditahan. Selesaikan salah satu dulu.';
+            $this->messageTone = 'warning';
+
+            return;
+        }
+
+        $number = count($held) + 1;
+        $held[] = [
+            'id' => (string) Str::uuid7(),
+            'label' => filled(trim($this->holdLabel)) ? mb_substr(trim($this->holdLabel), 0, 30) : 'Pelanggan '.$number,
+            'order_id' => $this->orderId,
+            'cart' => $this->cart,
+            'order_type' => $this->orderType,
+            'table_label' => $this->tableLabel,
+            'notes' => $this->notes,
+            'discount_type' => $this->discountType,
+            'discount_value' => $this->discountValue,
+            'total' => $this->quote['totals']?->grandTotal,
+            'items' => (int) array_sum(array_column($this->cart, 'qty')),
+            'held_at' => now()->toIso8601String(),
+        ];
+        session()->put($this->heldKey(), $held);
+
+        $label = $held[array_key_last($held)]['label'];
+        $this->resetOrder();
+        $this->message = "Transaksi {$label} ditahan. Lanjutkan kapan saja dari tombol di atas keranjang.";
+        $this->messageTone = 'success';
+    }
+
+    /** Lanjutkan keranjang ditahan; keranjang yang sedang terisi otomatis ditahan dulu (bertukar). */
+    public function resume(string $heldId): void
+    {
+        $held = $this->heldCarts();
+        $index = array_search($heldId, array_column($held, 'id'), true);
+
+        if ($index === false) {
+            return;
+        }
+
+        $entry = $held[$index];
+        unset($held[$index]);
+        session()->put($this->heldKey(), array_values($held));
+
+        if ($this->cart !== [] && $this->billId === null) {
+            $this->hold();
+        }
+
+        $this->resetOrder();
+        // ID order ikut kembali: kirim ulang tetap satu transaksi (idempotency)
+        $this->orderId = $entry['order_id'];
+        $this->cart = $entry['cart'];
+        $this->orderType = $entry['order_type'];
+        $this->tableLabel = $entry['table_label'];
+        $this->notes = $entry['notes'];
+        $this->discountType = $entry['discount_type'];
+        $this->discountValue = $entry['discount_value'];
+        $this->holdLabel = str_starts_with($entry['label'], 'Pelanggan ') ? '' : $entry['label'];
+    }
+
+    public function discardHeld(string $heldId): void
+    {
+        session()->put($this->heldKey(), array_values(array_filter($this->heldCarts(), fn (array $h): bool => $h['id'] !== $heldId)));
+    }
+
+    private function heldKey(): string
+    {
+        return 'cashier.held.'.WebCashier::device()->id;
     }
 
     // ---------- Open bill ----------
@@ -615,7 +722,7 @@ final class PointOfSale extends Component
     private function resetOrder(): void
     {
         $this->reset('cart', 'orderType', 'tableLabel', 'notes', 'discountType', 'discountValue', 'paying', 'payments', 'payError', 'message',
-            'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'messageTone');
+            'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'messageTone', 'holdLabel');
         $this->orderId = (string) Str::uuid7();
     }
 
