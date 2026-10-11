@@ -26,8 +26,33 @@ final class SwitchOutletController extends Controller
 
         // Kembali ke halaman asal (hanya URL panel ini; selain itu ke beranda)
         $back = url()->previous();
-        $home = Filament::getUrl();
+        $home = (string) Filament::getUrl();
 
-        return redirect()->to(str_starts_with($back, rtrim((string) $home, '/')) ? $back : $home);
+        return redirect()->to(self::isWithinPanel($back, $home) ? $back : $home);
+    }
+
+    /**
+     * URL berada di panel ini: skema, host, dan port sama persis, path di bawah path panel. Bukan
+     * perbandingan awalan string — "https://app.gspos.id.evil.tld" lolos cara itu (GSPOS-SEC-023).
+     */
+    private static function isWithinPanel(string $url, string $home): bool
+    {
+        $target = parse_url($url);
+        $panel = parse_url($home);
+
+        if (! is_array($target) || ! is_array($panel) || ! isset($target['host'], $panel['host'])) {
+            return false;
+        }
+
+        foreach (['scheme', 'host', 'port'] as $part) {
+            if (strtolower((string) ($target[$part] ?? '')) !== strtolower((string) ($panel[$part] ?? ''))) {
+                return false;
+            }
+        }
+
+        $base = rtrim($panel['path'] ?? '', '/');
+        $path = $target['path'] ?? '/';
+
+        return $base === '' || $path === $base || str_starts_with($path, $base.'/');
     }
 }
