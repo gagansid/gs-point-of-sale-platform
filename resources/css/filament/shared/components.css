@@ -478,6 +478,17 @@
 }
 
 /*
+ * Jarak antarkartu seragam 1rem (16px), acuan Beranda & Laporan (dashboard/home.css): antarblok halaman,
+ * antar section/tabel dalam schema (form, detail), vertikal maupun horizontal. Jarak antar field di dalam
+ * section tidak diubah (hanya schema yang kolomnya berisi kartu, termasuk lewat Group/Grid).
+ */
+.fi-page-content,
+.fi-page-content .fi-sc.fi-sc-has-gap:has(> .fi-grid-col > .fi-sc-component .fi-section:not(.fi-section-not-contained)),
+.fi-page-content .fi-sc.fi-sc-has-gap:has(> .fi-grid-col > .fi-sc-component .fi-ta-ctn) {
+    gap: 1rem;
+}
+
+/*
  * Section/card: judul + deskripsi di atas isi tanpa garis pemisah (lebih lega), padding 20px.
  */
 .fi-section:not(.fi-section-not-contained):not(.fi-aside) > .fi-section-header {
