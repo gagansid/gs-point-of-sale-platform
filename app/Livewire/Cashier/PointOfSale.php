@@ -220,16 +220,48 @@ final class PointOfSale extends Component
             return;
         }
 
-        // Produk tanpa opsi & catatan digabung ke baris yang sama
-        foreach ($this->cart as $i => $line) {
-            if ($line['product_id'] === $product->id && $line['option_ids'] === [] && $line['notes'] === null && $line['discount'] === '0.00') {
-                $this->cart[$i]['qty'] = min(999, $line['qty'] + 1);
+        $this->putLine(['product_id' => $product->id, 'name' => $product->name, 'qty' => 1, 'option_ids' => [], 'option_names' => [], 'notes' => null, 'discount' => '0.00']);
+    }
 
-                return;
+    /**
+     * Masukkan baris ke keranjang. Produk & pilihan opsi sama, tanpa catatan & tanpa diskon item → qty digabung
+     * ke baris yang ada; beda opsi/catatan/diskon → baris baru. $replace = indeks baris yang sedang diubah.
+     *
+     * @param  array{product_id: string, name: string, qty: int, option_ids: list<string>, option_names: list<string>, notes: ?string, discount: string}  $line
+     */
+    private function putLine(array $line, ?int $replace = null): void
+    {
+        $mergeable = fn (array $l): bool => $l['notes'] === null && $l['discount'] === '0.00';
+        /** @param array{option_ids: list<string>} $l */
+        $options = function (array $l): array {
+            $ids = $l['option_ids'];
+            sort($ids);
+
+            return $ids;
+        };
+
+        if ($mergeable($line)) {
+            foreach ($this->cart as $i => $existing) {
+                if ($i !== $replace && $existing['product_id'] === $line['product_id'] && $mergeable($existing)
+                    && $options($existing) === $options($line)) {
+                    $this->cart[$i]['qty'] = min(999, $existing['qty'] + $line['qty']);
+
+                    if ($replace !== null) {
+                        $this->remove($replace);
+                    }
+
+                    return;
+                }
             }
         }
 
-        $this->cart[] = ['product_id' => $product->id, 'name' => $product->name, 'qty' => 1, 'option_ids' => [], 'option_names' => [], 'notes' => null, 'discount' => '0.00'];
+        if ($replace !== null && isset($this->cart[$replace])) {
+            $this->cart[$replace] = $line;
+
+            return;
+        }
+
+        $this->cart[] = $line;
     }
 
     /** Enter di kolom cari: barcode/SKU persis (scanner USB) langsung masuk keranjang. */
@@ -355,12 +387,7 @@ final class PointOfSale extends Component
             'discount' => Money::of($discount === '' ? '0' : $discount),
         ];
 
-        if ($this->pickIndex !== null && isset($this->cart[$this->pickIndex])) {
-            $this->cart[$this->pickIndex] = $line;
-        } else {
-            $this->cart[] = $line;
-        }
-
+        $this->putLine($line, $this->pickIndex !== null && isset($this->cart[$this->pickIndex]) ? $this->pickIndex : null);
         $this->closePicker();
     }
 

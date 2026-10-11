@@ -75,6 +75,56 @@ it('produk dengan opsi wajib: dialog opsi, opsi pertama terpilih, harga opsi iku
     expect($page->instance()->quote['totals']?->lines[0]['line_total'])->toBe('27000.00');
 });
 
+function pickCoffee(object $page, stdClass $pos, string $sizeId, array $extra = []): object
+{
+    $page->call('addProduct', $pos->coffee->id)->set("pickOptions.{$pos->size->id}", $sizeId);
+
+    foreach ($extra as $key => $value) {
+        $page->set($key, $value);
+    }
+
+    return $page->call('savePick');
+}
+
+it('produk dengan opsi sama tanpa catatan & diskon digabung ke satu baris', function () {
+    $page = Livewire::test(PointOfSale::class);
+    pickCoffee($page, $this->pos, $this->pos->large->id);
+    pickCoffee($page, $this->pos, $this->pos->large->id, ['pickQty' => 2]);
+
+    $page->assertCount('cart', 1)->assertSet('cart.0.qty', 3);
+});
+
+it('beda opsi, ada catatan, atau ada diskon item → baris baru', function () {
+    $page = Livewire::test(PointOfSale::class);
+    pickCoffee($page, $this->pos, $this->pos->large->id);
+    pickCoffee($page, $this->pos, $this->pos->regular->id);
+    pickCoffee($page, $this->pos, $this->pos->large->id, ['pickNotes' => 'less ice']);
+    pickCoffee($page, $this->pos, $this->pos->large->id, ['pickDiscount' => '1000']);
+    // Catatan sama pun tetap baris terpisah (catatan per pesanan)
+    pickCoffee($page, $this->pos, $this->pos->large->id, ['pickNotes' => 'less ice']);
+
+    $page->assertCount('cart', 5)->assertSet('cart.0.qty', 1);
+});
+
+it('ubah baris menjadi sama dengan baris lain → digabung', function () {
+    $page = Livewire::test(PointOfSale::class);
+    pickCoffee($page, $this->pos, $this->pos->large->id);
+    pickCoffee($page, $this->pos, $this->pos->regular->id);
+
+    $page->call('editLine', 1)->set("pickOptions.{$this->pos->size->id}", $this->pos->large->id)->call('savePick')
+        ->assertCount('cart', 1)
+        ->assertSet('cart.0.option_ids', [$this->pos->large->id])
+        ->assertSet('cart.0.qty', 2);
+});
+
+it('ubah qty baris tanpa mengubah opsi tetap satu baris', function () {
+    $page = Livewire::test(PointOfSale::class);
+    pickCoffee($page, $this->pos, $this->pos->large->id);
+
+    $page->call('editLine', 0)->set('pickQty', 4)->call('savePick')
+        ->assertCount('cart', 1)->assertSet('cart.0.qty', 4);
+});
+
 it('bayar tunai: order di device web & shift browser, kembalian, keranjang kosong, ID order baru', function () {
     $page = Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)->call('openPayment');
     $orderId = $page->get('orderId');
