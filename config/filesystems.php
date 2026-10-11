@@ -40,6 +40,15 @@ return [
             'report' => false,
         ],
 
+        // Backup database & unggahan (spatie/laravel-backup); privat, diunduh lewat panel admin
+        'backups' => [
+            'driver' => 'local',
+            'root' => storage_path('app/backups'),
+            'serve' => false,
+            'throw' => false,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

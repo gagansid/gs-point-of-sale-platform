@@ -19,3 +19,8 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 
 // Token reset kata sandi kedaluwarsa
 Schedule::command('auth:clear-resets')->daily();
+
+// Backup (spatie/laravel-backup) — jam WIB, saat transaksi paling sepi
+Schedule::command('backup:run')->dailyAt('02:00')->timezone('Asia/Jakarta')->withoutOverlapping(60);
+Schedule::command('backup:clean')->dailyAt('03:00')->timezone('Asia/Jakarta');
+Schedule::command('backup:monitor')->dailyAt('04:00')->timezone('Asia/Jakarta');

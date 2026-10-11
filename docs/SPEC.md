@@ -509,9 +509,13 @@ Cron (satu saja): `* * * * * cd /home/{user}/gs-point-of-sale-platform && php ar
 | Jadwal di `routes/console.php` | Frekuensi |
 |---|---|
 | `queue:work --stop-when-empty --max-time=50` | Setiap menit |
-| `backup:run` | Harian 02:00 |
-| `backup:clean` | Harian 03:00 |
+| `backup:run` (database + `storage/app/public`, disk privat `backups`) | Harian 02:00 WIB |
+| `backup:clean` (maks. `BACKUP_MAX_MB`) | Harian 03:00 WIB |
+| `backup:monitor` (email bila backup terlalu lama/besar) | Harian 04:00 WIB |
 | `sanctum:prune-expired` | Harian |
+| `auth:clear-resets` | Harian |
+
+Backup MySQL butuh `mysqldump`; bila tidak ada di PATH hosting, isi `dump.dump_binary_path` koneksi `mysql` di `config/database.php`. Isi `BACKUP_NOTIFY_EMAIL` dan `BACKUP_ARCHIVE_PASSWORD` (zip terenkripsi) di `.env` production.
 
 `.env` penting:
 
