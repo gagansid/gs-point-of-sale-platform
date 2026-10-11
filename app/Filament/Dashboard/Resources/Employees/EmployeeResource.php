@@ -13,6 +13,7 @@ use App\Enums\UserRole;
 use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Resources\Employees\Pages\ManageEmployees;
 use App\Filament\Shared\Actions\ActiveStatusActions;
+use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Forms\OutletPickList;
 use App\Filament\Shared\Schemas\AuditInfo;
@@ -273,21 +274,7 @@ final class EmployeeResource extends Resource
      */
     public static function orNotify(Closure $callback, Action $action): mixed
     {
-        try {
-            return $callback();
-        } catch (BusinessException $e) {
-            $details = is_array($e->details) ? implode(' ', array_merge(...array_values(array_map(
-                fn (mixed $messages): array => array_map('strval', (array) $messages),
-                $e->details,
-            )))) : null;
-
-            Notification::make()->danger()->title($e->getMessage())->body($details)->send();
-
-            // halt() melempar Halt: modal tetap terbuka
-            $action->halt();
-
-            throw $e;
-        }
+        return RunBusinessAction::run($callback, $action);
     }
 
     /**
