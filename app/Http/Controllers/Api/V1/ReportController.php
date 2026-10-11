@@ -242,7 +242,8 @@ final class ReportController extends Controller
      * PDF rekap satu shift (X/Z-report).
      *
      * Izin sama dengan rekap shift (pemilik shift, report.view, report.view_shift ≤ 31 hari).
-     * Respons `application/pdf` (unduhan), bukan JSON.
+     * Respons `application/pdf` (unduhan), bukan JSON. Maks. 10 export/menit per user (bersama export
+     * dashboard), lebih → 429 `TOO_MANY_REQUESTS`.
      */
     public function shiftRecapPdf(Request $request, Shift $shift, ShiftRecap $recap, ReportExporter $exporter): Response
     {

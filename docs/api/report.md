@@ -20,6 +20,7 @@ beranda dashboard, halaman Laporan, dan file Excel/PDF.
 | GET | `/reports/employees` | view / view_shift | Per kasir: transaksi, omzet, rata-rata, diskon, void |
 | GET | `/reports/shifts` | view / view_shift | Shift yang dibuka pada rentang: kas awal, tunai, kas seharusnya vs aktual, selisih |
 | GET | `/reports/shifts/{id}` | view / view_shift (≤ 31 hari) / view_own (shift sendiri) | Rekap satu shift: `type` `x_report` (berjalan) / `z_report` (ditutup), penjualan, kas, metode bayar, produk |
+| GET | `/reports/shifts/{id}/pdf` | sama dengan `shifts/{id}` | PDF rekap shift (`application/pdf`), maks. 10 export/menit per user |
 | GET | `/reports/audit` | view / view_shift | Void, diskon dengan approval PIN, shift selisih kas (20 terbaru + jumlah) |
 | GET | `/reports/categories` | view | Per kategori dari snapshot `order_items.category_name` (Q51) |
 | GET | `/reports/options` | view | Opsi/add-on: `qty` (dipilih × qty item), `revenue` (tambahan omzet) |
@@ -91,6 +92,7 @@ beranda dashboard, halaman Laporan, dan file Excel/PDF.
 | 403 | `FORBIDDEN` | Tanpa izin endpoint (lihat tabel akses); shift orang lain untuk kasir |
 | 404 | `NOT_FOUND` | `outlet_id` / shift di luar outlet yang dipegang user |
 | 422 | `VALIDATION_ERROR` | Format tanggal/UUID salah, `to` < `from`, rentang > 366 hari, supervisor `from` > 31 hari ke belakang, `granularity` tidak dikenal |
+| 429 | `TOO_MANY_REQUESTS` | `shifts/{id}/pdf` lebih dari 10 export/menit per user (bersama export dashboard) |
 
 Test: `tests/Feature/Api/V1/Report/ReportTest.php`, `ReportModuleApiTest.php`, `tests/Feature/Report/ReportServiceTest.php`
 (batas hari 23.30 / 00.30 WIB, minggu Senin, bulan, kabisat, isolasi tenant, batas supervisor, rekap shift kasir).
