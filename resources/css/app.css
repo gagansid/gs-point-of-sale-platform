@@ -881,33 +881,7 @@
     color: var(--site-muted);
 }
 
-/* Kasir web (Q54): tab cara masuk & daftar pilih outlet */
-.site-segment {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4px;
-    margin-bottom: 20px;
-    padding: 4px;
-    border-radius: 10px;
-    background: var(--site-bg);
-}
-
-.site-segment a {
-    padding: 7px 0;
-    border-radius: 7px;
-    color: var(--site-muted);
-    font-size: 13.5px;
-    font-weight: 600;
-    text-align: center;
-    text-decoration: none;
-}
-
-.site-segment a.is-active {
-    background: #ffffff;
-    color: var(--site-navy);
-    box-shadow: 0 1px 3px rgb(27 42 85 / 0.12);
-}
-
+/* Kasir web (Q54): daftar pilihan (open bill) */
 .site-choice {
     display: flex;
     align-items: center;
@@ -1922,4 +1896,446 @@
     border-color: #d63939;
     background: #d63939;
     color: #ffffff;
+}
+
+/*
+ * Kasir web: halaman masuk (login, masuk ulang, pilih outlet). Latar navy brand + pola titik,
+ * kartu ringkas; field & tombol 32px seperti dashboard (--control-h).
+ */
+.cashier-auth {
+    --control-h: 32px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    min-height: 100dvh;
+    padding: 32px 20px;
+    overflow: hidden;
+    background:
+        radial-gradient(55% 45% at 12% 8%, rgb(77 104 186 / 0.55), transparent 70%),
+        radial-gradient(45% 40% at 92% 95%, rgb(184 192 212 / 0.22), transparent 70%),
+        linear-gradient(155deg, #1f3166 0%, var(--site-navy) 45%, #131d3d 100%);
+    isolation: isolate;
+}
+
+/* Pola titik halus, memudar ke tepi */
+.cashier-auth::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1px);
+    background-size: 22px 22px;
+    content: '';
+    mask-image: radial-gradient(70% 60% at 50% 45%, #000 30%, transparent 100%);
+}
+
+.cashier-auth-inner {
+    display: grid;
+    align-items: center;
+    gap: 56px;
+    width: 100%;
+    max-width: 380px;
+}
+
+.cashier-auth-brand {
+    display: none;
+    color: var(--site-mist);
+}
+
+.cashier-auth-brand .site-logo {
+    font-size: 15px;
+}
+
+.cashier-auth-brand h2 {
+    margin: 28px 0 10px;
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+}
+
+.cashier-auth-brand p {
+    margin: 0 0 24px;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.cashier-auth-brand ul {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cashier-auth-brand li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #e4e8f2;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.cashier-auth-brand li .site-icon {
+    width: 32px;
+    height: 32px;
+    padding: 7px;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.06);
+    color: #ffffff;
+}
+
+@media (min-width: 900px) {
+    .cashier-auth-inner {
+        grid-template-columns: minmax(0, 1fr) 380px;
+        max-width: 880px;
+    }
+
+    .cashier-auth-brand {
+        display: block;
+    }
+}
+
+.cashier-auth-card {
+    width: 100%;
+    padding: 28px 24px 24px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgb(8 14 33 / 0.35), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.cashier-auth-logo {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 900px) {
+    /* Logo sudah tampil di panel brand */
+    .cashier-auth-logo {
+        display: none;
+    }
+}
+
+.cashier-auth-title {
+    margin: 0 0 4px;
+    color: var(--site-navy);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.cashier-auth-sub {
+    margin: 0 0 20px;
+    color: var(--site-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.cashier-auth-sub strong {
+    color: var(--site-text);
+    font-weight: 600;
+}
+
+.cashier-auth-alert {
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    border: 1px solid rgb(245 159 0 / 0.35);
+    border-radius: 8px;
+    background: rgb(245 159 0 / 0.1);
+    color: #8a5a00;
+    font-size: 13px;
+}
+
+.cashier-auth-form {
+    display: grid;
+    gap: 16px;
+}
+
+/* Tab cara masuk: radio di form (tidak mengubah URL) */
+.cashier-tabs {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 2px;
+    height: var(--control-h);
+    padding: 2px;
+    border-radius: 8px;
+    background: #eef0f5;
+}
+
+.cashier-tabs label {
+    position: relative;
+    display: flex;
+}
+
+.cashier-tabs input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.cashier-tabs span {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: var(--site-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 120ms, color 120ms;
+}
+
+.cashier-tabs input:checked + span {
+    background: #ffffff;
+    color: var(--site-navy);
+    box-shadow: 0 1px 2px rgb(27 42 85 / 0.14);
+}
+
+.cashier-tabs input:focus-visible + span {
+    outline: 2px solid var(--site-primary);
+    outline-offset: 1px;
+}
+
+/* Bagian khusus satu tab disembunyikan saat tab lain aktif */
+.cashier-auth-form:has(input[name='mode'][value='email']:checked) [data-mode='username'],
+.cashier-auth-form:has(input[name='mode'][value='username']:checked) [data-mode='email'],
+.cashier-auth-form:has(input[name='method'][value='password']:checked) [data-mode='pin'],
+.cashier-auth-form:has(input[name='method'][value='pin']:checked) [data-mode='password'] {
+    display: none;
+}
+
+.cashier-field {
+    display: grid;
+    gap: 6px;
+}
+
+.cashier-field label {
+    color: var(--site-text);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.cashier-field input {
+    width: 100%;
+    height: var(--control-h);
+    padding: 0 10px;
+    border: 1px solid #dcdee3;
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--site-text);
+    font: inherit;
+    font-size: 14px;
+    transition: border-color 120ms, box-shadow 120ms;
+}
+
+.cashier-field input::placeholder {
+    color: #a3a9b4;
+}
+
+.cashier-field input:hover {
+    border-color: #c4c8cf;
+}
+
+.cashier-field input:focus-visible {
+    border-color: var(--site-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.14);
+}
+
+.cashier-field input[aria-invalid='true'] {
+    border-color: #d63939;
+}
+
+.cashier-field-error {
+    margin: 0;
+    color: #d63939;
+    font-size: 12px;
+}
+
+.cashier-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: var(--control-h);
+    margin-top: 4px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--site-primary);
+    color: #ffffff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 120ms;
+}
+
+.cashier-auth-btn:hover {
+    background: var(--site-navy);
+}
+
+.cashier-auth-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.25);
+}
+
+.cashier-auth-foot {
+    margin: 20px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--site-border);
+    color: var(--site-muted);
+    font-size: 12.5px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.cashier-auth-version {
+    margin: 0;
+    color: rgb(184 192 212 / 0.7);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+}
+
+/* Pilihan outlet: daftar (≤ 3) atau dropdown dengan pencarian (> 3) */
+.cashier-option-list {
+    display: grid;
+    gap: 8px;
+}
+
+.cashier-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid var(--site-border);
+    border-radius: 8px;
+    background: #ffffff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 120ms, background-color 120ms;
+}
+
+.cashier-option[hidden] {
+    display: none;
+}
+
+.cashier-option:hover,
+.cashier-option:focus-visible {
+    border-color: var(--site-primary);
+    background: var(--site-primary-lt);
+    outline: none;
+}
+
+.cashier-option-name {
+    color: var(--site-navy);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.cashier-option-meta {
+    color: var(--site-muted);
+    font-size: 12px;
+}
+
+.cashier-select summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--control-h);
+    padding: 0 10px;
+    border: 1px solid #dcdee3;
+    border-radius: 8px;
+    color: var(--site-text);
+    font-size: 14px;
+    list-style: none;
+    cursor: pointer;
+}
+
+.cashier-select summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Panah dropdown */
+.cashier-select summary::after {
+    width: 7px;
+    height: 7px;
+    margin: -3px 2px 0 8px;
+    border-right: 1.5px solid var(--site-muted);
+    border-bottom: 1.5px solid var(--site-muted);
+    content: '';
+    transform: rotate(45deg);
+    transition: transform 120ms;
+}
+
+.cashier-select[open] summary {
+    border-color: var(--site-primary);
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.14);
+}
+
+.cashier-select[open] summary::after {
+    margin-top: 3px;
+    transform: rotate(-135deg);
+}
+
+.cashier-select-count {
+    margin-left: auto;
+    color: var(--site-muted);
+    font-size: 12px;
+}
+
+.cashier-select-panel {
+    margin-top: 6px;
+    padding: 6px;
+    border: 1px solid var(--site-border);
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgb(27 42 85 / 0.1);
+}
+
+.cashier-select-search {
+    width: 100%;
+    height: var(--control-h);
+    margin-bottom: 6px;
+    padding: 0 10px;
+    border: 1px solid #dcdee3;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 14px;
+}
+
+.cashier-select-search:focus-visible {
+    border-color: var(--site-primary);
+    outline: none;
+}
+
+.cashier-select-list {
+    display: grid;
+    gap: 2px;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.cashier-select-list .cashier-option {
+    min-height: 36px;
+    border-color: transparent;
+}
+
+.cashier-select-empty {
+    margin: 0;
+    padding: 12px;
+    color: var(--site-muted);
+    font-size: 13px;
+    text-align: center;
 }

@@ -1,52 +1,45 @@
-{{-- /cashier/login: kasir web (Q54). Tab email (owner/manager) atau kode bisnis + username (supervisor/kasir). --}}
-<x-site.layout title="Kasir web — gs.POS">
-    <main class="site-auth">
-        <div class="site-auth-card">
-            <span class="site-auth-logo"><x-site.logo /></span>
-            <h1>Kasir web</h1>
-            <p class="site-auth-sub">Cadangan bila tablet kasir tidak bisa dipakai</p>
+{{-- /cashier/login: kasir web (Q54). Tab username (kode bisnis + username) atau email; tab dipilih di form, bukan di URL. --}}
+<x-cashier.auth title="Masuk kasir web">
+    <h1 class="cashier-auth-title">Masuk ke kasir</h1>
+    <p class="cashier-auth-sub">Catat pesanan dan terima pembayaran langsung dari browser.</p>
 
-            @if (session('status'))
-                <div class="site-alert site-alert-warning" role="status">{{ session('status') }}</div>
-            @endif
+    @if (session('status'))
+        <div class="cashier-auth-alert" role="status">{{ session('status') }}</div>
+    @endif
 
-            <nav class="site-segment" aria-label="Cara masuk">
-                <a href="{{ route('cashier.login', ['mode' => 'username']) }}" @class(['is-active' => $mode === 'username']) @if ($mode === 'username') aria-current="page" @endif>Username</a>
-                <a href="{{ route('cashier.login', ['mode' => 'email']) }}" @class(['is-active' => $mode === 'email']) @if ($mode === 'email') aria-current="page" @endif>Email</a>
-            </nav>
+    <form method="POST" action="{{ route('cashier.login.store') }}" class="cashier-auth-form" novalidate>
+        @csrf
 
-            <form method="POST" action="{{ route('cashier.login.store') }}" class="site-form" novalidate>
-                @csrf
-                <input type="hidden" name="mode" value="{{ $mode }}">
-
-                @if ($mode === 'username')
-                    <div class="site-field">
-                        <label for="business">Kode bisnis<span class="site-required" aria-hidden="true">*</span></label>
-                        <input id="business" name="business" type="text" value="{{ $business }}" required autocomplete="organization"
-                            autocapitalize="none" spellcheck="false" @if (blank($business)) autofocus @endif
-                            @error('business') aria-invalid="true" aria-describedby="business-error" @enderror>
-                        @error('business') <p id="business-error" class="site-error">{{ $message }}</p> @enderror
-                    </div>
-                @endif
-
-                <div class="site-field">
-                    <label for="login">{{ $mode === 'username' ? 'Username' : 'Alamat email' }}<span class="site-required" aria-hidden="true">*</span></label>
-                    <input id="login" name="login" type="{{ $mode === 'username' ? 'text' : 'email' }}" value="{{ old('login') }}" required
-                        autocomplete="username" autocapitalize="none" spellcheck="false" @if ($mode === 'email' || filled($business)) autofocus @endif
-                        @error('login') aria-invalid="true" aria-describedby="login-error" @enderror>
-                    @error('login') <p id="login-error" class="site-error">{{ $message }}</p> @enderror
-                </div>
-
-                <div class="site-field">
-                    <label for="password">Kata sandi<span class="site-required" aria-hidden="true">*</span></label>
-                    <input id="password" name="password" type="password" required autocomplete="current-password">
-                    @error('password') <p class="site-error">{{ $message }}</p> @enderror
-                </div>
-
-                <button type="submit" class="site-btn site-btn-primary site-btn-lg site-btn-block">Masuk</button>
-            </form>
-
-            <p class="site-auth-foot">Akses kasir web diatur owner di menu Karyawan.</p>
+        <div class="cashier-tabs" role="radiogroup" aria-label="Cara masuk">
+            <label><input type="radio" name="mode" value="username" @checked($mode === 'username')><span>Username</span></label>
+            <label><input type="radio" name="mode" value="email" @checked($mode === 'email')><span>Email</span></label>
         </div>
-    </main>
-</x-site.layout>
+
+        <div class="cashier-field" data-mode="username">
+            <label for="business">Kode bisnis</label>
+            <input id="business" name="business" type="text" value="{{ $business }}" autocomplete="organization" autocapitalize="none"
+                spellcheck="false" placeholder="mis. kopi-senja" @if ($mode === 'username' && blank($business)) autofocus @endif
+                @error('business') aria-invalid="true" aria-describedby="business-error" @enderror>
+            @error('business') <p id="business-error" class="cashier-field-error">{{ $message }}</p> @enderror
+        </div>
+
+        <div class="cashier-field">
+            <label for="login"><span data-mode="username">Username</span><span data-mode="email">Alamat email</span></label>
+            <input id="login" name="login" type="text" value="{{ old('login') }}" autocomplete="username" autocapitalize="none"
+                spellcheck="false" @if ($mode === 'email' || filled($business)) autofocus @endif
+                @error('login') aria-invalid="true" aria-describedby="login-error" @enderror>
+            @error('login') <p id="login-error" class="cashier-field-error">{{ $message }}</p> @enderror
+        </div>
+
+        <div class="cashier-field">
+            <label for="password">Kata sandi</label>
+            <input id="password" name="password" type="password" autocomplete="current-password"
+                @error('password') aria-invalid="true" aria-describedby="password-error" @enderror>
+            @error('password') <p id="password-error" class="cashier-field-error">{{ $message }}</p> @enderror
+        </div>
+
+        <button type="submit" class="cashier-auth-btn">Masuk</button>
+    </form>
+
+    <p class="cashier-auth-foot">Belum bisa masuk? Minta owner mengaktifkan akses kasir web untuk akun Anda.</p>
+</x-cashier.auth>

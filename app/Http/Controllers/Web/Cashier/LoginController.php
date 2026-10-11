@@ -8,8 +8,10 @@ use App\Actions\Cashier\LoginWebCashier;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\CashierLoginRequest;
 use App\Support\WebCashier;
+use Filament\Facades\Filament;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -33,7 +35,8 @@ final class LoginController extends Controller
         $business = $request->cookie(WebCashier::BUSINESS_COOKIE);
 
         return view('cashier.login', [
-            'mode' => $request->query('mode', old('mode', is_string($business) ? 'username' : 'email')) === 'username' ? 'username' : 'email',
+            // Tab cara masuk tidak di URL: input lama, atau username bila browser pernah memakai kode bisnis
+            'mode' => old('mode', is_string($business) ? 'username' : 'email') === 'username' ? 'username' : 'email',
             'business' => old('business', is_string($business) ? $business : ''),
         ]);
     }
@@ -75,9 +78,14 @@ final class LoginController extends Controller
         return redirect()->route('cashier.outlet');
     }
 
+    /** Keluar kasir web → kembali ke dashboard bila sesi /dashboard masih aktif (datang dari menu Kasir, Q55). */
     public function destroy(Request $request): RedirectResponse
     {
         WebCashier::logout($request);
+
+        if (Auth::guard('web')->check()) {
+            return redirect()->to(Filament::getPanel('dashboard')->getUrl());
+        }
 
         return redirect()->route('cashier.login')->with('status', 'Anda sudah keluar dari kasir web.');
     }

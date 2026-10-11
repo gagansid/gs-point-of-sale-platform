@@ -22,7 +22,7 @@ beforeEach(function () {
 
 function confirmCashier(object $test, array $body): TestResponse
 {
-    return $test->post(route('cashier.confirm.store'), ['method' => 'password', 'secret' => 'rahasia-123', ...$body]);
+    return $test->post(route('cashier.confirm.store'), ['method' => 'password', 'password' => 'rahasia-123', ...$body]);
 }
 
 it('tanpa sesi dashboard diarahkan ke login kasir biasa', function () {
@@ -36,8 +36,11 @@ it('owner masuk ulang dengan kata sandi; sesi dashboard tetap login', function (
 
     $this->get(route('cashier.confirm'))->assertOk()
         ->assertSee('Masuk sebagai')->assertSee($this->owner->name)
-        ->assertSee('PIN')
-        ->assertDontSee('Lupa');
+        ->assertSee('value="pin"', false)
+        ->assertSee('v'.config('app.version'))
+        ->assertDontSee('Lupa')
+        // Tab cara masuk dipilih di form, bukan lewat URL
+        ->assertDontSee('confirm?method', false);
 
     confirmCashier($this, [])->assertRedirect(route('cashier.outlet'));
 
@@ -49,8 +52,9 @@ it('owner masuk ulang dengan kata sandi; sesi dashboard tetap login', function (
 it('owner masuk ulang dengan PIN', function () {
     $this->actingAs($this->owner, 'web');
 
-    $this->get(route('cashier.confirm', ['method' => 'pin']))->assertOk()->assertSee('inputmode="numeric"', false);
-    confirmCashier($this, ['method' => 'pin', 'secret' => '123456'])->assertRedirect(route('cashier.outlet'));
+    // Punya PIN → tab PIN terpilih lebih dulu
+    $this->get(route('cashier.confirm'))->assertOk()->assertSee('value="pin" checked', false);
+    confirmCashier($this, ['method' => 'pin', 'pin' => '123456'])->assertRedirect(route('cashier.outlet'));
 
     $this->assertAuthenticatedAs($this->owner, WebCashier::GUARD);
 });
@@ -64,37 +68,39 @@ it('sudah masuk kasir: halaman konfirmasi langsung ke kasir', function () {
     $this->assertAuthenticatedAs($this->owner, WebCashier::GUARD);
 });
 
-it('kata sandi atau PIN salah ditolak', function (array $body, string $message) {
+it('kata sandi atau PIN salah ditolak', function (array $body, array $message) {
     $this->actingAs($this->owner, 'web');
 
-    confirmCashier($this, $body)->assertSessionHasErrors(['secret' => $message]);
+    confirmCashier($this, $body)->assertSessionHasErrors($message);
     $this->assertGuest(WebCashier::GUARD);
 })->with([
-    'kata sandi salah' => [['secret' => 'salah-sekali'], 'Kata sandi salah.'],
-    'PIN salah' => [['method' => 'pin', 'secret' => '000000'], 'PIN salah'],
+    'kata sandi salah' => [['password' => 'salah-sekali'], ['password' => 'Kata sandi salah.']],
+    'PIN salah' => [['method' => 'pin', 'pin' => '000000'], ['pin' => 'PIN salah']],
 ]);
 
-it('validasi: PIN harus 6 digit dan wajib diisi', function (array $body) {
+it('validasi: PIN harus 6 digit dan wajib diisi', function (array $body, string $field) {
     $this->actingAs($this->owner, 'web');
 
-    confirmCashier($this, $body)->assertSessionHasErrors('secret');
+    confirmCashier($this, $body)->assertSessionHasErrors($field);
     $this->assertGuest(WebCashier::GUARD);
 })->with([
-    'kosong' => [['secret' => '']],
-    'PIN huruf' => [['method' => 'pin', 'secret' => 'abcdef']],
-    'PIN pendek' => [['method' => 'pin', 'secret' => '1234']],
+    'kata sandi kosong' => [['password' => ''], 'password'],
+    'PIN kosong' => [['method' => 'pin', 'pin' => ''], 'pin'],
+    'PIN huruf' => [['method' => 'pin', 'pin' => 'abcdef'], 'pin'],
+    'PIN pendek' => [['method' => 'pin', 'pin' => '1234'], 'pin'],
+    'cara masuk tidak dikenal' => [['method' => 'face'], 'method'],
 ]);
 
 it('PIN salah berulang mengunci PIN', function () {
     $this->actingAs($this->owner, 'web');
 
     foreach (range(1, 5) as $i) {
-        confirmCashier($this, ['method' => 'pin', 'secret' => '000000']);
+        confirmCashier($this, ['method' => 'pin', 'pin' => '000000']);
     }
 
     // PIN benar pun ditolak selama terkunci
-    confirmCashier($this, ['method' => 'pin', 'secret' => '123456'])->assertSessionHasErrors('secret');
-    expect(session('errors')->first('secret'))->toContain('terkunci');
+    confirmCashier($this, ['method' => 'pin', 'pin' => '123456'])->assertSessionHasErrors('pin');
+    expect(session('errors')->first('pin'))->toContain('terkunci');
     $this->assertGuest(WebCashier::GUARD);
 });
 
@@ -102,11 +108,11 @@ it('kata sandi salah berulang dibatasi', function () {
     $this->actingAs($this->owner, 'web');
 
     foreach (range(1, 5) as $i) {
-        confirmCashier($this, ['secret' => 'salah-sekali']);
+        confirmCashier($this, ['password' => 'salah-sekali']);
     }
 
-    confirmCashier($this, [])->assertSessionHasErrors('secret');
-    expect(session('errors')->first('secret'))->toContain('Terlalu banyak percobaan');
+    confirmCashier($this, [])->assertSessionHasErrors('password');
+    expect(session('errors')->first('password'))->toContain('Terlalu banyak percobaan');
     $this->assertGuest(WebCashier::GUARD);
 });
 
@@ -114,11 +120,11 @@ it('user tanpa PIN: tab PIN disembunyikan dan login PIN ditolak', function () {
     $this->owner->forceFill(['pin' => null])->save();
     $this->actingAs($this->owner, 'web');
 
-    $this->get(route('cashier.confirm', ['method' => 'pin']))->assertOk()
-        ->assertSee('PIN belum diatur')
+    $this->get(route('cashier.confirm'))->assertOk()
+        ->assertSee('Atur PIN')
         ->assertDontSee('inputmode="numeric"', false);
 
-    confirmCashier($this, ['method' => 'pin', 'secret' => '123456'])->assertSessionHasErrors('secret');
+    confirmCashier($this, ['method' => 'pin', 'pin' => '123456'])->assertSessionHasErrors('pin');
     $this->assertGuest(WebCashier::GUARD);
 });
 
@@ -163,4 +169,13 @@ it('menu Kasir tersembunyi untuk manager tanpa akses kasir web', function () {
     $this->actingAs($this->manager, 'web');
 
     $this->get(Filament::getPanel('dashboard')->getUrl())->assertOk()->assertDontSee(route('cashier.confirm'), false);
+});
+
+it('keluar dari kasir kembali ke dashboard bila sesi dashboard aktif', function () {
+    $this->actingAs($this->owner, 'web');
+    confirmCashier($this, []);
+
+    $this->post(route('cashier.logout'))->assertRedirect(Filament::getPanel('dashboard')->getUrl());
+    $this->assertGuest(WebCashier::GUARD);
+    $this->assertAuthenticatedAs($this->owner, 'web');
 });

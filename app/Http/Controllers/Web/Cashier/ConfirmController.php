@@ -38,7 +38,8 @@ final class ConfirmController extends Controller
         }
 
         $hasPin = $user->pin !== null;
-        $method = $request->query('method', old('method')) === ConfirmWebCashierUser::METHOD_PIN && $hasPin
+        // Tab cara masuk tidak di URL: input lama, atau PIN bila user punya PIN (lebih cepat di kasir)
+        $method = old('method', $hasPin ? ConfirmWebCashierUser::METHOD_PIN : ConfirmWebCashierUser::METHOD_PASSWORD) === ConfirmWebCashierUser::METHOD_PIN && $hasPin
             ? ConfirmWebCashierUser::METHOD_PIN
             : ConfirmWebCashierUser::METHOD_PASSWORD;
 
@@ -59,12 +60,12 @@ final class ConfirmController extends Controller
 
         if (! $isPin && RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
             throw ValidationException::withMessages([
-                'secret' => 'Terlalu banyak percobaan. Coba lagi dalam '.RateLimiter::availableIn($throttleKey).' detik.',
+                'password' => 'Terlalu banyak percobaan. Coba lagi dalam '.RateLimiter::availableIn($throttleKey).' detik.',
             ]);
         }
 
         try {
-            $confirm->handle($user, $request->loginMethod(), $request->string('secret')->toString(), (string) $request->ip());
+            $confirm->handle($user, $request->loginMethod(), $request->secret(), (string) $request->ip());
         } catch (ValidationException $e) {
             if (! $isPin) {
                 RateLimiter::hit($throttleKey, 60);

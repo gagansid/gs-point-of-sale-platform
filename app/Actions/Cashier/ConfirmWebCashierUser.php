@@ -37,7 +37,7 @@ final class ConfirmWebCashierUser
         if ($method === self::METHOD_PIN) {
             $this->checkPin($user, $secret, $source);
         } elseif (! Hash::check($secret, (string) $user->password)) {
-            throw ValidationException::withMessages(['secret' => 'Kata sandi salah.']);
+            throw ValidationException::withMessages(['password' => 'Kata sandi salah.']);
         }
 
         $this->login->ensureCanEnter($user);
@@ -51,14 +51,14 @@ final class ConfirmWebCashierUser
     private function checkPin(User $user, string $pin, string $source): void
     {
         if ($user->pin === null) {
-            throw ValidationException::withMessages(['secret' => 'PIN belum diatur. Masuk dengan kata sandi.']);
+            throw ValidationException::withMessages(['pin' => 'PIN belum diatur. Masuk dengan kata sandi.']);
         }
 
         try {
             $this->verifyPin->handle($user, $pin, 'web-cashier-login:'.$source);
         } catch (BusinessException $e) {
             // INVALID_PIN / PIN_LOCKED / TOO_MANY_REQUESTS → pesan di bawah field, bukan halaman error
-            throw ValidationException::withMessages(['secret' => $e->getMessage()]);
+            throw ValidationException::withMessages(['pin' => $e->getMessage()]);
         }
     }
 }

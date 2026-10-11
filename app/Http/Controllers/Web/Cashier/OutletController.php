@@ -66,7 +66,7 @@ final class OutletController extends Controller
     /** @return Collection<int, Outlet> */
     private function outlets(User $user): Collection
     {
-        return $user->accessibleOutlets()->where('is_active', true)->get();
+        return $user->accessibleOutlets()->where('is_active', true)->reorder('name')->get();
     }
 
     private static function user(): User

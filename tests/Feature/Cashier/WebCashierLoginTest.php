@@ -41,7 +41,10 @@ function webDevices(): Collection
 
 it('tamu diarahkan ke login kasir web', function () {
     $this->get(route('cashier.home'))->assertRedirect(route('cashier.login'));
-    $this->get(route('cashier.login'))->assertOk()->assertSee('Kasir web');
+    $this->get(route('cashier.login'))->assertOk()->assertSee('Masuk ke kasir')
+        ->assertSee('v'.config('app.version'))
+        // Tab cara masuk dipilih di form, bukan lewat URL
+        ->assertDontSee('?mode=', false);
 });
 
 it('kasir: kode bisnis + username → satu outlet langsung terpilih, browser jadi device web', function () {
@@ -144,6 +147,30 @@ it('multi outlet: pilih hanya outlet yang ditugaskan; outlet lain 404', function
     $this->post(route('cashier.outlet.store'), ['outlet_id' => $cilandak->id])->assertRedirect(route('cashier.home'));
     $this->get(route('cashier.shift'))->assertOk()->assertSee('Cilandak');
     expect(webDevices()->sole()->outlet_id)->toBe($cilandak->id);
+});
+
+it('pilih outlet: maks. 3 outlet tampil sebagai daftar urut nama', function () {
+    Outlet::factory()->create(['tenant_id' => $this->tenant->id, 'name' => 'Bintaro']);
+
+    $this->post(route('cashier.login.store'), ['mode' => 'email', 'login' => 'owner@kopi.test', 'password' => 'rahasia-123']);
+
+    $this->get(route('cashier.outlet'))->assertOk()
+        ->assertSeeInOrder(['Bintaro', 'Kemang'])
+        ->assertDontSee('Cari nama atau kode outlet');
+});
+
+it('pilih outlet: lebih dari 3 outlet tampil sebagai dropdown dengan pencarian', function () {
+    foreach (['Bintaro', 'Cilandak', 'Depok'] as $name) {
+        Outlet::factory()->create(['tenant_id' => $this->tenant->id, 'name' => $name]);
+    }
+
+    $this->post(route('cashier.login.store'), ['mode' => 'email', 'login' => 'owner@kopi.test', 'password' => 'rahasia-123']);
+
+    $this->get(route('cashier.outlet'))->assertOk()
+        ->assertSee('data-outlet-select', false)
+        ->assertSee('Cari nama atau kode outlet')
+        ->assertSee('4 outlet')
+        ->assertSeeInOrder(['Bintaro', 'Cilandak', 'Depok', 'Kemang']);
 });
 
 it('akses dicabut, akun nonaktif, atau kata sandi diganti → sesi kasir web keluar', function (Closure $change) {
