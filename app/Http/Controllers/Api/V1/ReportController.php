@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Report\ReportRequest;
@@ -252,7 +253,7 @@ final class ReportController extends Controller
         }
 
         if (($wait = ExportThrottle::attempt($user)) !== null) {
-            throw new BusinessException('TOO_MANY_REQUESTS', ExportThrottle::message($wait), 429);
+            throw BusinessException::of(ErrorCode::TooManyRequests, ExportThrottle::message($wait));
         }
 
         return $exporter->shiftPdf($user, $shift, $recap);
