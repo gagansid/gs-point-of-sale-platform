@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\OutletController;
 use App\Http\Controllers\Api\V1\PaymentMethodController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\SelfOrderController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\SystemController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -103,6 +104,13 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
         });
         Route::get('vouchers/check', [VoucherController::class, 'check'])->name('vouchers.check');
 
+        // ---------- Self-order QR meja (ADR 0014) ----------
+        Route::controller(SelfOrderController::class)->prefix('self-orders')->name('self-orders.')->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::post('{selfOrderId}/accept', 'accept')->whereUuid('selfOrderId')->name('accept');
+            Route::post('{selfOrderId}/reject', 'reject')->whereUuid('selfOrderId')->name('reject');
+        });
+
         // ---------- Laporan ----------
         Route::controller(ReportController::class)->prefix('reports')->name('reports.')->group(function (): void {
             Route::get('summary', 'summary')->name('summary');
@@ -115,6 +123,7 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('categories', 'categories')->name('categories');
             Route::get('profit', 'profit')->name('profit');
             Route::get('members', 'members')->name('members');
+            Route::get('channels', 'channels')->name('channels');
             Route::get('options', 'options')->name('options');
             Route::get('employees', 'employees')->name('employees');
             Route::get('shifts', 'shifts')->name('shifts');

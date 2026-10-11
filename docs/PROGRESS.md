@@ -1,7 +1,7 @@
 # Progres Pengerjaan
 
-> Terakhir diperbarui: 2026-10-11 · Branch: `feature/pos` (ADR 0003) · Program member M1–M7 selesai
-> Status kualitas: **1214 test** lulus (SQLite) + 3 uji E2E Dusk, Pint & Larastan level 6 bersih. Uji MySQL
+> Terakhir diperbarui: 2026-10-11 · Branch: `feature/pos` (ADR 0003) · Program member M1–M7 & self-order S1–S4 selesai
+> Status kualitas: **1249 test** lulus (SQLite) + 3 uji E2E Dusk, Pint & Larastan level 6 bersih. Uji MySQL
 > untuk fitur 9–11 Okt belum dijalankan ulang. Ringkasan sesi terbaru: `docs/HANDOFF.md`.
 
 Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#cara-melanjutkan) dan
@@ -33,6 +33,7 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | Kasir web | Q54–Q55: login, shift, transaksi, open bill, tahan, PIN approval, void, menu Kasir di dashboard, toast | ✅ | `a178508` … `6a58a6d` |
 | Import produk | Excel/CSV + template, validasi per baris, upsert SKU (Q59) | ✅ | `489e114` |
 | **Program member** | ADR 0013: M1 data & menu, M2 poin, M3 tukar poin & diskon member, M4 halaman member, M5 tier, M6 kartu stempel, M7 voucher + laporan member + ringkasan harian + import/export ✅ | ✅ | `0dd6186` … |
+| **Self-order QR meja** | ADR 0014: S1 meja & QR + setelan, S2 halaman HP + Pesanan meja di kasir web + kedaluwarsa, S3 Midtrans owner + webhook, S4 API Flutter + laporan kanal + bayar poin dari HP ✅ | ✅ | `2381693` … |
 | Self-order meja | ADR 0014 (S1–S4), setelah M5–M7 | ⏳ | — |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ✅ 2026-10-11 (sisa: OWASP ZAP & uji manual di staging) | `38a67cd`..`fe6d252` |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |

@@ -14,6 +14,7 @@ use App\Filament\Dashboard\Widgets\PaymentMethodsChartWidget;
 use App\Filament\Dashboard\Widgets\PeakHoursChartWidget;
 use App\Filament\Dashboard\Widgets\Reports\CategoriesChartWidget;
 use App\Filament\Dashboard\Widgets\Reports\CategoriesTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\ChannelsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\DiscountsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\EmployeesTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\FinancialBreakdownWidget;
@@ -219,7 +220,7 @@ final class Reports extends Page
             ReportTab::Employees => [EmployeesTableWidget::class],
             ReportTab::Shifts => [ShiftsTableWidget::class],
             ReportTab::Time => [PeakHoursChartWidget::class, PeakHoursTableWidget::class, HeatmapWidget::class],
-            ReportTab::OrderTypes => [OrderTypesWidget::class],
+            ReportTab::OrderTypes => [OrderTypesWidget::class, ChannelsTableWidget::class],
             ReportTab::Outlets => [OutletComparisonWidget::class],
             ReportTab::Discounts => [VoidsTableWidget::class, DiscountsTableWidget::class, ShiftDifferencesTableWidget::class],
             ReportTab::Stock => [StockTableWidget::class],

@@ -119,6 +119,7 @@ final class OrderController extends Controller
                 $query->whereBetween('created_at', CurrentOutlet::utcRange($date, $date));
             })
             ->when($request->filled('status'), fn (Builder $q) => $q->where('status', $request->string('status')->toString()))
+            ->when($request->filled('channel'), fn (Builder $q) => $q->where('channel', $request->string('channel')->toString()))
             ->when($request->filled('shift_id'), fn (Builder $q) => $q->where('shift_id', $request->string('shift_id')->toString()))
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $like = '%'.addcslashes($search, '%_\\').'%';

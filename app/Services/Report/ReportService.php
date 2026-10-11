@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Report;
 
+use App\Enums\OrderChannel;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Enums\PaymentCategory;
@@ -286,6 +287,30 @@ class ReportService
             'order_count' => (int) ($rows[$type->value]->order_count ?? 0),
             'revenue' => Money::fromDb($rows[$type->value]->revenue ?? null),
         ], OrderType::cases());
+    }
+
+    /**
+     * Penjualan per kanal (ADR 0014, S4): kasir vs pesan sendiri dari QR meja, termasuk bagian yang dibayar online.
+     *
+     * @return list<array{channel: string, label: string, order_count: int, revenue: string, online_total: string}>
+     */
+    public function channels(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        $rows = $this->completed($start, $end, $filters)->toBase()
+            ->select('channel', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(grand_total) as revenue'))
+            ->groupBy('channel')->get()->keyBy('channel');
+        $onlineByChannel = $this->completed($start, $end, $filters)->toBase()
+            ->join('payments', 'payments.order_id', '=', 'orders.id')
+            ->where('payments.category', PaymentCategory::Online)->where('payments.status', PaymentStatus::Paid)
+            ->groupBy('orders.channel')->select('orders.channel', DB::raw('SUM(payments.amount) as total'))->pluck('total', 'channel');
+
+        return array_map(fn (OrderChannel $channel): array => [
+            'channel' => $channel->value,
+            'label' => $channel->getLabel(),
+            'order_count' => (int) ($rows[$channel->value]->order_count ?? 0),
+            'revenue' => Money::fromDb($rows[$channel->value]->revenue ?? null),
+            'online_total' => Money::fromDb($onlineByChannel[$channel->value] ?? null),
+        ], OrderChannel::cases());
     }
 
     /**
@@ -949,8 +974,8 @@ class ReportService
     private function completed(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): Builder
     {
         $query = CurrentOutlet::scope(Order::query())
-            ->where('status', OrderStatus::Completed)
-            ->whereBetween('completed_at', [$start, $end]);
+            ->where('orders.status', OrderStatus::Completed)
+            ->whereBetween('orders.completed_at', [$start, $end]);
 
         return $filters !== null ? $filters->apply($query) : $query;
     }
@@ -959,8 +984,8 @@ class ReportService
     private function voided(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): Builder
     {
         $query = CurrentOutlet::scope(Order::query())
-            ->where('status', OrderStatus::Voided)
-            ->whereBetween('voided_at', [$start, $end]);
+            ->where('orders.status', OrderStatus::Voided)
+            ->whereBetween('orders.voided_at', [$start, $end]);
 
         return $filters !== null ? $filters->apply($query) : $query;
     }

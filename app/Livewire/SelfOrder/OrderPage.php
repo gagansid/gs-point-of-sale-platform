@@ -8,6 +8,7 @@ use App\Actions\Catalog\GetCatalog;
 use App\Actions\Member\Data\BenefitSelection;
 use App\Actions\Order\QuoteOrder;
 use App\Actions\Payment\StartOnlinePayment;
+use App\Actions\SelfOrder\PayWithPointsFromPhone;
 use App\Actions\SelfOrder\SubmitSelfOrder;
 use App\Enums\OrderStatus;
 use App\Enums\SelfOrderStatus;
@@ -305,6 +306,40 @@ final class OrderPage extends Component
         }
 
         $this->redirect((string) $transaction->redirect_url);
+    }
+
+    /** Bayar sebagian/seluruh tagihan dengan poin member yang masuk (bukti = sesi member). */
+    public function payWithPoints(string $selfOrderId): void
+    {
+        $selfOrder = $this->myOrders->firstWhere('id', $selfOrderId);
+        $order = $selfOrder?->order_id !== null ? Order::query()->find($selfOrder->order_id) : null;
+        $member = $this->member();
+
+        if ($order === null || $member === null) {
+            return;
+        }
+
+        try {
+            app(PayWithPointsFromPhone::class)->handle($order, $member);
+        } catch (BusinessException $e) {
+            $this->error = $e->getMessage();
+
+            return;
+        }
+
+        $this->error = null;
+        unset($this->myOrders);
+    }
+
+    /** Poin yang bisa dipakai member yang masuk untuk order ini (0 = tidak ditawarkan). */
+    public function pointsFor(SelfOrder $selfOrder): int
+    {
+        $member = $this->member();
+        $order = $selfOrder->order_id !== null ? Order::query()->find($selfOrder->order_id) : null;
+
+        return $member !== null && $order !== null && $order->member_id === $member->id && $order->status === OrderStatus::AwaitingPayment
+            ? PayWithPointsFromPhone::maxPoints($order, $member)
+            : 0;
     }
 
     #[Computed]

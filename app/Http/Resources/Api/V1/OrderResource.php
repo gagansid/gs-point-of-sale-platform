@@ -21,6 +21,11 @@ final class OrderResource extends JsonResource
             'order_type' => $this->order_type->value,
             'table_label' => $this->table_label,
             'status' => $this->status->value,
+            // Kanal & meja self-order (ADR 0014)
+            'channel' => $this->channel->value,
+            'dining_table_id' => $this->dining_table_id,
+            'accepted_at' => Iso::dateTime($this->accepted_at),
+            'refund_required' => $this->refund_required,
             'notes' => $this->notes,
             // Snapshot nama saat transaksi (ADR 0013)
             'member' => $this->member_id !== null ? ['id' => $this->member_id, 'name' => $this->member_name, 'tier' => $this->member_tier] : null,

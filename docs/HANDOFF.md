@@ -1,8 +1,8 @@
 # Catatan Lanjut Pengerjaan
 
 > Diperbarui: 2026-10-11 · Branch: `feature/pos`
-> Status: **Program member M1–M7 selesai** (ADR 0013); self-order S1–S4 (ADR 0014) berikutnya. Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1214 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih.
+> Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014). Deploy ditunda atas keputusan pemilik.
+> Kualitas: 1249 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
@@ -119,9 +119,22 @@ Catatan non-obvious: semua potongan member lewat `ResolveMemberPricing` → `Mem
 `BenefitSelection`); benefit dicatat di `AwardOrderBenefits` (voucher juga tanpa member) dan dibalik di
 `ReverseOrderBenefits`. Stempel/voucher di open bill: field tidak dikirim = pilihan lama tetap.
 
-**Berikutnya (lanjut dari sini):** self-order S1–S4 (ADR 0014).
+### Self-order QR meja + Midtrans (ADR 0014, SPEC Q68–Q73, Q76–Q78) — S1–S4 selesai 2026-10-11
+| Commit | Isi |
+|---|---|
+| `2381693` (S1) | Pengaturan → **Meja & QR** (`dining_tables`, cetak kartu QR dari browser, ganti token), setelan self-order per outlet (aktif, batas waktu bayar, jam layanan, bayar di kasir, sambutan), status order `awaiting_payment`/`expired`, `orders.channel` |
+| `5f7c5f5` (S2) | Halaman HP `gspos.id/order/t/{token}` (Livewire: menu, opsi, keranjang, voucher, member dari sesi halaman member, status polling); `self_orders` (order dibuat saat kasir **Terima**); kasir web menu **Pesanan meja** (badge + bunyi, terima/tolak, Belum dibayar → Bayar dengan item terkunci); `pos:expire-self-orders` tiap menit |
+| `f357563` (S3) | Pengaturan → **Pembayaran online** (Midtrans owner, key terenkripsi, tes koneksi, URL webhook), metode sistem Online, tombol Bayar online di HP (Snap redirect), webhook `POST /webhooks/midtrans/{tenant}` (tanda tangan + cek ulang API + nominal), `refund_required` |
+| (S4) | API `GET /v1/self-orders`, `accept`, `reject`; laporan per kanal (`/reports/channels`); bayar poin dari HP |
 
-Catatan untuk tim Flutter (repo aplikasi): **F5** tampilkan `tier` member & `member_tier` di struk; **F6** kartu stempel
+Catatan non-obvious: Livewire halaman HP membaca ulang meja dari token di `hydrate()` (request update tidak lewat
+middleware route); pembayaran online dicatat atas nama kasir yang menerima & di shift penerima; dibayar setelah
+kedaluwarsa tetap diselesaikan, setelah void/lunas = refund manual. Cron `schedule:run` tiap menit wajib di cPanel.
+
+**Berikutnya (lanjut dari sini):** tanya pemilik — deploy (L2/L4/OWASP/deploy.md) atau fitur lain. Uji Midtrans
+sandbox dengan akun sungguhan belum dilakukan (test memakai `Http::fake`).
+
+Catatan untuk tim Flutter (repo aplikasi): **F8** menu Pesanan masuk & Belum dibayar (`docs/api/self-order.md`), status order baru `awaiting_payment`/`expired`, jangan tampilkan metode `online`; **F5** tampilkan `tier` member & `member_tier` di struk; **F6** kartu stempel
 (`stamp_cards` di detail member → kirim `stamp_program_ids`; struk `member_stamps`); **F7** voucher (`vouchers` di detail
 member → `voucher_id`, kode promo → `GET /v1/vouchers/check` lalu `voucher_code`; tangani `VOUCHER_INVALID`).
 **F3** cari/daftar member (`/v1/members`), pasang `member_id`; **F4** metode

@@ -42,6 +42,7 @@ final class ListOrders extends ListRecords
             'all' => Tab::make('Semua'),
             'completed' => self::statusTab('Selesai', OrderStatus::Completed),
             'open' => self::statusTab('Open bill', OrderStatus::Open),
+            'awaiting' => self::statusTab('Menunggu bayar', OrderStatus::AwaitingPayment),
             'voided' => self::statusTab('Void', OrderStatus::Voided),
         ];
     }

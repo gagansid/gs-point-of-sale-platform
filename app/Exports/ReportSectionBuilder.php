@@ -156,8 +156,14 @@ final class ReportSectionBuilder
             ReportTab::OrderTypes => (function () use ($start, $end, $filters): array {
                 $rows = $this->reports->orderTypes($start, $end, $filters);
 
-                return [$this->section('Per tipe order', ['Tipe', 'Transaksi', 'Omzet'],
-                    array_map(fn (array $r): array => [$r['label'], $r['order_count'], $r['revenue']], $rows), [2])];
+                $channels = $this->reports->channels($start, $end, $filters);
+
+                return [
+                    $this->section('Per tipe order', ['Tipe', 'Transaksi', 'Omzet'],
+                        array_map(fn (array $r): array => [$r['label'], $r['order_count'], $r['revenue']], $rows), [2]),
+                    $this->section('Per kanal', ['Kanal', 'Transaksi', 'Omzet', 'Dibayar online'],
+                        array_map(fn (array $r): array => [$r['label'], $r['order_count'], $r['revenue'], $r['online_total']], $channels), [2, 3]),
+                ];
             })(),
             ReportTab::Outlets => (function () use ($start, $end, $filters): array {
                 $rows = $this->reports->outlets($start, $end, $filters);

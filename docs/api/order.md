@@ -135,7 +135,8 @@ Upsert berdasarkan `{id}` (UUID v7 dari app). Body sama dengan checkout **tanpa*
 
 Body `{ "payments": [ { "id", "payment_method_id", "amount", "tendered"?, "reference"? } ] }`.
 
-- Boleh sebagian (split bill); order tetap `open` sampai `paid_total ≥ grand_total`.
+- Boleh sebagian (split bill); order tetap `open` sampai `paid_total ≥ grand_total`. Juga untuk pesanan meja
+  `awaiting_payment` (ADR 0014, lihat [`self-order.md`](self-order.md)); kedaluwarsa → `409 ORDER_EXPIRED`.
 - Saat lunas: `status: completed`, stok dipotong, dan **order pindah ke shift yang menerima uang**
   (Q20) agar rekap kas laci benar walau open bill dibuat di shift sebelumnya.
 - Order dikunci saat menambah pembayaran: pembayaran bersamaan tidak bisa melebihi sisa
@@ -146,7 +147,8 @@ Body `{ "payments": [ { "id", "payment_method_id", "amount", "tendered"?, "refer
 
 ## `GET /v1/orders`
 
-Query: `date` (YYYY-MM-DD, **tanggal lokal outlet**), `status` (`open`/`completed`/`voided`),
+Query: `date` (YYYY-MM-DD, **tanggal lokal outlet**), `status` (`open`/`awaiting_payment`/`completed`/`voided`/`expired`),
+`channel` (`pos`/`self_order`),
 `shift_id`, `search` (nomor order / meja), `page`, `per_page`. Urut terbaru.
 
 Visibilitas (Q21):

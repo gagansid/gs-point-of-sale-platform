@@ -199,6 +199,19 @@ final class ReportController extends Controller
     }
 
     /**
+     * Penjualan per kanal.
+     *
+     * Kasir (`pos`) vs pesan dari QR meja (`self_order`, ADR 0014): transaksi, omzet, dan bagian yang dibayar online
+     * (Midtrans). Hanya report.view.
+     */
+    public function channels(ReportRequest $request, ReportService $reports): JsonResponse
+    {
+        [$start, $end] = $request->utcRange();
+
+        return ApiResponse::success(['period' => $request->period(), 'channels' => $reports->channels($start, $end, $request->filters())]);
+    }
+
+    /**
      * Laporan member.
      *
      * Program member (ADR 0013): member vs non-member, member aktif/berulang/baru, poin (didapat, ditukar,

@@ -129,12 +129,17 @@
                         <h2 class="member-subtitle">{{ $selfOrder->order?->order_number ?? 'Pesanan '.$selfOrder->created_at->setTimezone($context->outlet->timezone)->format('H.i') }}</h2>
                         <span @class(['self-order-badge', 'is-'.$status['tone']])>{{ $status['label'] }}</span>
                     </div>
-                    <p class="member-muted">{{ $selfOrder->itemCount() }} item · {{ $money($selfOrder->order->grand_total ?? $selfOrder->estimated_total) }}</p>
+                    <p class="member-muted">{{ $selfOrder->itemCount() }} item · {{ $money($selfOrder->order->grand_total ?? $selfOrder->estimated_total) }}@if ($selfOrder->order && \App\Support\Money::isPositive($selfOrder->order->paid_total) && $selfOrder->order->status === \App\Enums\OrderStatus::AwaitingPayment) · sisa {{ $money(\App\Support\Money::sub($selfOrder->order->grand_total, $selfOrder->order->paid_total)) }}@endif</p>
                     @if ($status['note'] !== '')
                         <p>{{ $status['note'] }}</p>
                     @endif
                     @if ($selfOrder->order?->status === \App\Enums\OrderStatus::AwaitingPayment)
                         <div class="self-order-pay">
+                            @if (($points = $this->pointsFor($selfOrder)) > 0)
+                                <button type="button" class="site-btn site-btn-outline" wire:click="payWithPoints('{{ $selfOrder->id }}')" wire:loading.attr="disabled">
+                                    Pakai {{ number_format($points, 0, ',', '.') }} poin ({{ $money(\App\Support\Money::mul((string) \App\Models\MemberSetting::current()->redeem_value, $points)) }})
+                                </button>
+                            @endif
                             @if ($this->onlineReady)
                                 <button type="button" class="site-btn site-btn-primary" wire:click="payOnline('{{ $selfOrder->id }}')" wire:loading.attr="disabled">Bayar online (QRIS / e-wallet)</button>
                             @endif

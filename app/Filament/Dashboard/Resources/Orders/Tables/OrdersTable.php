@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Resources\Orders\Tables;
 
+use App\Enums\OrderChannel;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Filament\Dashboard\Resources\Orders\Actions\VoidOrderAction;
@@ -54,6 +55,7 @@ final class OrdersTable
             ->filters([
                 DateRangeFilter::make('created_at'),
                 SelectFilter::make('order_type')->label('Tipe')->options(OrderType::class),
+                SelectFilter::make('channel')->label('Kanal')->options(OrderChannel::class),
                 SelectFilter::make('user_id')->label('Kasir')
                     ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all()),
             ])
