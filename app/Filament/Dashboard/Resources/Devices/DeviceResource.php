@@ -9,6 +9,7 @@ use App\Actions\Device\SetDeviceRevoked;
 use App\Enums\AppPlatform;
 use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Resources\Devices\Pages\ManageDevices;
+use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Device;
 use App\Models\Outlet;
@@ -19,6 +20,7 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -80,9 +82,14 @@ final class DeviceResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([
-            TextInput::make('name')->label('Nama')->required()->maxLength(100)->autofocus()
+        return $schema->columns(1)->components([
+            TextInput::make('name')->label('Nama')->required()->maxLength(100)->autofocus()->columnSpanFull()
                 ->helperText('Mis. "Kasir depan" atau "Laptop bar"'),
+            // Aktif = tidak dicabut; dimatikan = cabut (token & sesi langsung tidak berlaku)
+            Toggle::make('is_active')->label('Aktif')->columnSpanFull()
+                ->helperText(fn (?Device $record): string => $record?->platform === AppPlatform::Web
+                    ? 'Nonaktif = browser ini keluar dari kasir web. Untuk menghentikan karyawan, matikan "Akses kasir web" di menu Karyawan.'
+                    : 'Nonaktif = perangkat langsung keluar dan tidak bisa bertransaksi. Ditolak bila shift masih terbuka.'),
         ]);
     }
 
@@ -117,8 +124,14 @@ final class DeviceResource extends Resource
                     ),
             ])
             ->recordActions([
-                EditAction::make()->iconButton()->tooltip('Ganti nama')->modalWidth('md')
-                    ->using(fn (Device $record, array $data): Device => app(RenameDevice::class)->handle($record, (string) $data['name'])),
+                EditAction::make()->iconButton()->tooltip('Ubah')->modalWidth('lg')
+                    ->mutateRecordDataUsing(fn (array $data, Device $record): array => [...$data, 'is_active' => ! $record->isRevoked()])
+                    ->using(fn (Device $record, array $data, EditAction $action): Device => RunBusinessAction::run(function () use ($record, $data): Device {
+                        $device = app(RenameDevice::class)->handle($record, (string) $data['name']);
+                        $active = (bool) ($data['is_active'] ?? true);
+
+                        return $active === $device->isRevoked() ? app(SetDeviceRevoked::class)->handle($device, ! $active) : $device;
+                    }, $action)),
                 ActionGroup::make([
                     Action::make('revoke')->label('Cabut')->icon(Heroicon::OutlinedNoSymbol)->color('danger')
                         ->visible(fn (Device $record): bool => ! $record->isRevoked())

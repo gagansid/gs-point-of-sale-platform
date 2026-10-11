@@ -42,6 +42,23 @@ it('isolasi tenant: perangkat tenant lain tidak tampil', function () {
     Livewire::test(ManageDevices::class)->assertCanNotSeeTableRecords([$foreign->device]);
 });
 
+it('ubah: nonaktifkan lewat status di modal = cabut; shift terbuka ditolak', function () {
+    Livewire::test(ManageDevices::class)
+        ->callAction(TestAction::make('edit')->table($this->pos->device), ['name' => 'Kasir depan', 'is_active' => false])
+        ->assertHasNoFormErrors();
+    expect($this->pos->device->fresh()?->isRevoked())->toBeTrue();
+
+    Livewire::test(ManageDevices::class)
+        ->callAction(TestAction::make('edit')->table($this->pos->device), ['name' => 'Kasir depan', 'is_active' => true]);
+    expect($this->pos->device->fresh()?->isRevoked())->toBeFalse();
+
+    Shift::factory()->forDevice($this->web, $this->pos->cashier)->create();
+    Livewire::test(ManageDevices::class)
+        ->callAction(TestAction::make('edit')->table($this->web), ['name' => 'Laptop', 'is_active' => false])
+        ->assertNotified();
+    expect($this->web->fresh()?->isRevoked())->toBeFalse();
+});
+
 it('ganti nama', function () {
     Livewire::test(ManageDevices::class)
         ->callAction(TestAction::make('edit')->table($this->web), ['name' => 'Laptop bar'])
