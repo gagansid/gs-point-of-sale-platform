@@ -11,6 +11,8 @@ use App\Livewire\Cashier\PointOfSale;
 use App\Models\Admin;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
+use App\Services\Report\CachedReportService;
+use App\Services\Report\ReportService;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
 use App\Support\TrustedProxies;
@@ -40,6 +42,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Laporan memakai cache agregat 60 detik (R2)
+        $this->app->bind(ReportService::class, CachedReportService::class);
+
         // Scoped: direset setiap request & job, sehingga tenant tidak bocor antar request
         $this->app->scoped(TenantContext::class);
         $this->app->scoped(CurrentOutlet::class);

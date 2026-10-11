@@ -129,7 +129,7 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 
 | # | Hal | Kapan |
 |---|---|---|
-| T1 | Widget beranda & laporan belum di-cache (wajar untuk volume MVP); `daily`/`hourly`/`heatmap` mengelompokkan di PHP | Bila beranda/laporan melambat (rekomendasi R2) |
+| T1 | ~~Widget beranda & laporan belum di-cache~~ — selesai lewat R2 (`CachedReportService`); `daily`/`hourly`/`heatmap` masih mengelompokkan di PHP | ✅ cache |
 | T2 | Gambar produk lama tidak dihapus dari storage saat diganti | Bersama menu Setelan |
 | T3 | Cetak struk dari web: **sementara selesai** — tombol "Cetak ulang struk" di detail order membuka `/dashboard/orders/{id}/receipt` (80mm, data `ReceiptResource`). Desain struk final & printer thermal menyusul | Desain struk |
 | T4 | Node.js lokal 20.18 < syarat Vite 20.19 (build tetap berhasil) | Upgrade Node lokal |

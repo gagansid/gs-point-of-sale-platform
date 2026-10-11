@@ -79,6 +79,11 @@ return [
         'max_devices_per_outlet' => (int) env('POS_WEB_CASHIER_MAX_DEVICES', 10),
     ],
 
+    // Cache agregat laporan (R2, CachedReportService); 0 = nonaktif
+    'reports' => [
+        'cache_seconds' => (int) env('POS_REPORT_CACHE_SECONDS', 60),
+    ],
+
     'rate_limits' => [
         'auth' => 5,
         'api' => 120,

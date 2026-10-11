@@ -10,10 +10,12 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\Shift;
 use App\Models\User;
+use App\Services\Report\CachedReportService;
 use App\Services\Report\ReportContext;
 use App\Services\Report\ReportFilterLabels;
 use App\Services\Report\ReportPeriod;
 use App\Support\CurrentOutlet;
+use App\Support\TenantContext;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -175,6 +177,11 @@ trait InteractsWithReportFilters
             ->icon(Heroicon::OutlinedArrowPath)
             ->color('gray')
             ->action(function (): void {
+                // Angka terbaru, bukan dari cache 60 detik (R2)
+                if (($tenantId = TenantContext::id()) !== null) {
+                    CachedReportService::flush($tenantId);
+                }
+
                 $this->touchRefreshedAt();
                 $this->dispatch('dashboard-refresh');
             });

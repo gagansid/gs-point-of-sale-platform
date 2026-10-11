@@ -36,7 +36,7 @@ use Illuminate\Support\Facades\DB;
  * - Rentang waktu dalam UTC (konversi dari tanggal lokal outlet lewat CurrentOutlet::utcRange).
  * - ReportFilters (opsional): tipe order, metode bayar, kasir.
  */
-final class ReportService
+class ReportService
 {
     /**
      * Rincian finansial: subtotal_total (bruto) − discount_total = penjualan; + service + pajak + pembulatan
