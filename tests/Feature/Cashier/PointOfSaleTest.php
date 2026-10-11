@@ -144,7 +144,7 @@ it('produk habis & produk tenant lain tidak bisa masuk keranjang', function () {
         ->call('addProduct', $this->pos->croissant->id)
         ->call('addProduct', $foreign->coffee->id)
         ->assertSet('cart', [])
-        ->assertSet('message', 'Produk tidak tersedia');
+        ->assertDispatched('cashier-toast', message: 'Produk tidak tersedia', tone: 'warning');
 });
 
 it('toggle habis: kasir ditolak, supervisor boleh', function () {

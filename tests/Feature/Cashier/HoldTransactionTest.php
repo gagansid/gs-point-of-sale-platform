@@ -34,7 +34,10 @@ it('tahan: keranjang kosong untuk pelanggan berikutnya; belum jadi order & stok 
         ->call('hold')
         ->assertSet('cart', [])
         ->assertSet('holdLabel', '')
-        ->assertSee('Baju merah');
+        ->assertSee('Baju merah')
+        ->assertDispatched('cashier-toast', message: 'Transaksi Baju merah ditahan', tone: 'success')
+        // Total keranjang yang ditahan tidak tertinggal di layar
+        ->assertDontSee('Bayar Rp');
 
     $held = $page->instance()->heldCarts();
     expect($held)->toHaveCount(1)
@@ -83,11 +86,13 @@ it('buang keranjang ditahan; maks. 10; keranjang kosong / open bill tidak bisa d
         $page->call('addProduct', $this->pos->croissant->id)->call('hold');
     }
     $page->call('addProduct', $this->pos->croissant->id)->call('hold')
-        ->assertSet('messageTone', 'warning')
+        ->assertDispatched('cashier-toast', tone: 'warning')
         ->assertSet('cart.0.product_id', $this->pos->croissant->id);
     expect($page->instance()->heldCarts())->toHaveCount(PointOfSale::MAX_HELD);
 
-    $page->call('discardHeld', $page->instance()->heldCarts()[0]['id']);
+    $first = $page->instance()->heldCarts()[0];
+    $page->call('discardHeld', $first['id'])
+        ->assertDispatched('cashier-toast', message: "Transaksi {$first['label']} dihapus", tone: 'success');
     expect($page->instance()->heldCarts())->toHaveCount(PointOfSale::MAX_HELD - 1);
 });
 

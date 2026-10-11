@@ -1191,11 +1191,6 @@
     background: var(--site-navy);
     color: #ffffff;
 }
-
-.pos-message {
-    margin-bottom: 12px;
-}
-
 .pos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -2197,8 +2192,14 @@
     text-align: center;
 }
 
+.cashier-auth-column {
+    display: grid;
+    gap: 14px;
+}
+
 .cashier-auth-version {
     margin: 0;
+    text-align: center;
     color: rgb(184 192 212 / 0.7);
     font-size: 12px;
     letter-spacing: 0.02em;
@@ -2338,4 +2339,97 @@
     color: var(--site-muted);
     font-size: 13px;
     text-align: center;
+}
+
+/* Kasir web: toast kanan atas (gaya notifikasi dashboard), hilang sendiri */
+.cashier-toasts {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 60;
+    display: grid;
+    gap: 8px;
+    width: min(360px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.cashier-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 12px 12px 14px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 12px 32px rgb(27 42 85 / 0.16), 0 0 0 1px rgb(27 42 85 / 0.06);
+    pointer-events: auto;
+    animation: cashier-toast-in 180ms ease-out;
+}
+
+.cashier-toast.is-leaving {
+    opacity: 0;
+    transform: translateX(12px);
+    transition: opacity 200ms, transform 200ms;
+}
+
+.cashier-toast svg {
+    flex: none;
+    width: 22px;
+    height: 22px;
+}
+
+.cashier-toast.is-success svg {
+    color: #16a34a;
+}
+
+.cashier-toast.is-info svg {
+    color: var(--site-primary);
+}
+
+.cashier-toast.is-warning svg {
+    color: #d97706;
+}
+
+.cashier-toast.is-danger svg {
+    color: #d63939;
+}
+
+.cashier-toast p {
+    flex: 1;
+    margin: 2px 0 0;
+    color: var(--site-text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.cashier-toast button {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--site-gray);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.cashier-toast button:hover {
+    background: var(--site-bg);
+    color: var(--site-text);
+}
+
+@keyframes cashier-toast-in {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cashier-toast {
+        animation: none;
+    }
 }

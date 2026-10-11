@@ -26,12 +26,14 @@
                 </ul>
             </section>
 
-            <div class="cashier-auth-card">
-                <span class="cashier-auth-logo"><x-site.logo /></span>
-                {{ $slot }}
+            <div class="cashier-auth-column">
+                <div class="cashier-auth-card">
+                    <span class="cashier-auth-logo"><x-site.logo /></span>
+                    {{ $slot }}
+                </div>
+                <p class="cashier-auth-version">gs.POS Kasir web · v{{ config('app.version') }}</p>
             </div>
         </div>
-        <p class="cashier-auth-version">gs.POS Kasir web · v{{ config('app.version') }}</p>
     </main>
     <script>
         // Ganti tab cara masuk → fokus ke field pertama yang terlihat & masih kosong

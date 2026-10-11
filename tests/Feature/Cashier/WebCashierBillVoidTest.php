@@ -42,7 +42,7 @@ it('simpan open bill → buka lagi → tambah item → lunasi', function () {
         ->call('addProduct', $this->pos->croissant->id)
         ->call('saveBill')
         ->assertSet('cart', [])
-        ->assertSet('message', 'Open bill Meja 5 disimpan');
+        ->assertDispatched('cashier-toast', message: 'Open bill Meja 5 disimpan', tone: 'success');
 
     $bill = Order::query()->sole();
     expect($bill->status)->toBe(OrderStatus::Open)->and($bill->device_id)->toBe($this->pos->webDevice->id);
@@ -80,7 +80,7 @@ it('open bill tenant lain / sudah selesai tidak bisa dibuka', function () {
 
     Livewire::test(PointOfSale::class)->call('loadBill', $foreignBill->id)
         ->assertSet('billId', null)
-        ->assertSet('message', 'Open bill tidak ditemukan atau sudah ditutup');
+        ->assertDispatched('cashier-toast', message: 'Open bill tidak ditemukan atau sudah ditutup', tone: 'warning');
 });
 
 it('diskon 20%: kasir (batas 10%) diminta PIN; PIN salah ditolak; supervisor (25%) menyetujui', function () {

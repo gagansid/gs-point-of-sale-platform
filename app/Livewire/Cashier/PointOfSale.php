@@ -129,11 +129,6 @@ final class PointOfSale extends Component
 
     public ?string $completedChange = null;
 
-    public ?string $message = null;
-
-    /** Warna pesan: 'warning' (gagal) atau 'success' */
-    public string $messageTone = 'warning';
-
     public function mount(): void
     {
         $this->orderId = (string) Str::uuid7();
@@ -214,8 +209,7 @@ final class PointOfSale extends Component
         $product = $this->product($productId);
 
         if ($product === null || ! $product->is_available) {
-            $this->message = 'Produk tidak tersedia';
-            $this->messageTone = 'warning';
+            $this->toast('Produk tidak tersedia', 'warning');
 
             return;
         }
@@ -393,7 +387,7 @@ final class PointOfSale extends Component
         $totals = $this->quote['totals'];
 
         if ($totals === null) {
-            $this->message = $this->quote['error'] ?? 'Keranjang kosong';
+            $this->toast($this->quote['error'] ?? 'Keranjang kosong', 'warning');
 
             return;
         }
@@ -526,8 +520,7 @@ final class PointOfSale extends Component
         $held = $this->heldCarts();
 
         if (count($held) >= self::MAX_HELD) {
-            $this->message = 'Maksimal '.self::MAX_HELD.' transaksi ditahan. Selesaikan salah satu dulu.';
-            $this->messageTone = 'warning';
+            $this->toast('Maksimal '.self::MAX_HELD.' transaksi ditahan. Selesaikan salah satu dulu.', 'warning');
 
             return;
         }
@@ -551,8 +544,7 @@ final class PointOfSale extends Component
 
         $label = $held[array_key_last($held)]['label'];
         $this->resetOrder();
-        $this->message = "Transaksi {$label} ditahan. Lanjutkan kapan saja dari tombol di atas keranjang.";
-        $this->messageTone = 'success';
+        $this->toast("Transaksi {$label} ditahan");
     }
 
     /** Lanjutkan keranjang ditahan; keranjang yang sedang terisi otomatis ditahan dulu (bertukar). */
@@ -583,11 +575,26 @@ final class PointOfSale extends Component
         $this->discountType = $entry['discount_type'];
         $this->discountValue = $entry['discount_value'];
         $this->holdLabel = str_starts_with($entry['label'], 'Pelanggan ') ? '' : $entry['label'];
+        $this->toast("Transaksi {$entry['label']} dilanjutkan", 'info');
     }
 
     public function discardHeld(string $heldId): void
     {
-        session()->put($this->heldKey(), array_values(array_filter($this->heldCarts(), fn (array $h): bool => $h['id'] !== $heldId)));
+        $held = $this->heldCarts();
+        $entry = collect($held)->firstWhere('id', $heldId);
+
+        if ($entry === null) {
+            return;
+        }
+
+        session()->put($this->heldKey(), array_values(array_filter($held, fn (array $h): bool => $h['id'] !== $heldId)));
+        $this->toast("Transaksi {$entry['label']} dihapus");
+    }
+
+    /** Notifikasi toast kanan atas (layout kasir), seperti notifikasi dashboard. */
+    private function toast(string $message, string $tone = 'success'): void
+    {
+        $this->dispatch('cashier-toast', message: $message, tone: $tone);
     }
 
     private function heldKey(): string
@@ -613,16 +620,14 @@ final class PointOfSale extends Component
 
         try {
             if ($validator->fails()) {
-                $this->message = $validator->errors()->first();
-                $this->messageTone = 'warning';
+                $this->toast($validator->errors()->first(), 'warning');
 
                 return;
             }
 
             $result = app(SaveOpenBill::class)->handle($this->user(), WebCashier::device(), $this->orderId, OpenBillData::fromArray($input));
         } catch (BusinessException $e) {
-            $this->message = $this->failed($e);
-            $this->messageTone = 'warning';
+            $this->toast($this->failed($e), 'warning');
 
             return;
         } finally {
@@ -632,8 +637,7 @@ final class PointOfSale extends Component
 
         $label = $result['order']->table_label ?? $result['order']->order_number;
         $this->resetOrder();
-        $this->message = "Open bill {$label} disimpan";
-        $this->messageTone = 'success';
+        $this->toast("Open bill {$label} disimpan");
         unset($this->openBills);
     }
 
@@ -644,7 +648,7 @@ final class PointOfSale extends Component
             ->with('items.options')->find($orderId);
 
         if ($order === null) {
-            $this->message = 'Open bill tidak ditemukan atau sudah ditutup';
+            $this->toast('Open bill tidak ditemukan atau sudah ditutup', 'warning');
 
             return;
         }
@@ -721,9 +725,11 @@ final class PointOfSale extends Component
 
     private function resetOrder(): void
     {
-        $this->reset('cart', 'orderType', 'tableLabel', 'notes', 'discountType', 'discountValue', 'paying', 'payments', 'payError', 'message',
-            'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'messageTone', 'holdLabel');
+        $this->reset('cart', 'orderType', 'tableLabel', 'notes', 'discountType', 'discountValue', 'paying', 'payments', 'payError',
+            'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'holdLabel');
         $this->orderId = (string) Str::uuid7();
+        // Total yang sudah dihitung di request ini (mis. saat menahan) jangan ikut ter-render
+        unset($this->quote);
     }
 
     /** @return array<string, mixed> */

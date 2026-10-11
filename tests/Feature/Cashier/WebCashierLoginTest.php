@@ -210,3 +210,14 @@ it('logout kasir web tidak mengeluarkan sesi dashboard', function () {
     $this->assertGuest(WebCashier::GUARD);
     $this->assertAuthenticatedAs($this->owner, 'web');
 });
+
+it('pesan kasir tampil sebagai toast kanan atas, bukan alert di dalam halaman', function () {
+    cashierLogin($this, []);
+    $this->get(route('cashier.outlet'));
+
+    $this->post(route('cashier.shift.store'), ['opening_cash' => '100000'])->assertRedirect();
+    $this->followingRedirects()->get(route('cashier.home'))->assertOk()
+        ->assertSee('data-toasts', false)
+        ->assertSeeInOrder(['window.cashierToast(', 'Shift berhasil dibuka', "'success'"], false)
+        ->assertDontSee('site-alert-success', false);
+});

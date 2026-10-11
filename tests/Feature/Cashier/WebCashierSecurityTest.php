@@ -33,7 +33,7 @@ beforeEach(function () {
 it('simpan bill dengan qty/tipe order hasil manipulasi browser ditolak validasi', function (string $prop, mixed $value) {
     Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)
         ->set($prop, $value)->call('saveBill')
-        ->assertSet('messageTone', 'warning');
+        ->assertDispatched('cashier-toast', tone: 'warning');
 
     expect(Order::query()->count())->toBe(0);
 })->with([

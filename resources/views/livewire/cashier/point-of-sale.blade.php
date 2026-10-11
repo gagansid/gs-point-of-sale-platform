@@ -23,10 +23,6 @@
             @endforeach
         </nav>
 
-        @if ($message)
-            <div @class(['site-alert pos-message', 'site-alert-success' => $messageTone === 'success', 'site-alert-warning' => $messageTone !== 'success']) role="status">{{ $message }}</div>
-        @endif
-
         <div class="pos-grid">
             @forelse ($this->visibleProducts as $product)
                 <div @class(['pos-tile', 'is-unavailable' => ! $product->is_available]) wire:key="p-{{ $product->id }}">

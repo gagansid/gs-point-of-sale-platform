@@ -37,10 +37,5 @@
         <button type="submit" class="cashier-auth-btn">Masuk kasir</button>
     </form>
 
-    <p class="cashier-auth-foot">
-        @unless ($hasPin)
-            Atur PIN di menu Karyawan agar bisa masuk lebih cepat.<br>
-        @endunless
-        Akun terkunci? Owner bisa membukanya dari dashboard, menu Karyawan.
-    </p>
+    <p class="cashier-auth-foot">PIN atau kata sandi terkunci? Hubungi owner.</p>
 </x-cashier.auth>
