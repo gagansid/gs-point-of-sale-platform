@@ -52,7 +52,7 @@ final class VoidOrder
         $this->ensureShiftOpen($order);
 
         // Di luar transaksi: percobaan PIN salah harus tetap tercatat untuk penguncian
-        $approverId = $this->verifyApproval->handle($actor, 'order.void', $approval);
+        $approverId = $this->verifyApproval->handle($actor, $order->outlet_id, 'order.void', $approval);
 
         $result = DB::transaction(function () use ($actor, $order, $reason, $approverId): array {
             $locked = Order::query()->lockForUpdate()->findOrFail($order->id);

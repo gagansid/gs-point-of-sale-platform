@@ -19,12 +19,13 @@ final class VerifyApproval
     public function __construct(private readonly VerifyPin $verifyPin) {}
 
     /**
+     * @param  string  $outletId  outlet tempat aksi dilakukan; approver wajib ditugaskan di sana (ADR 0010)
      * @param  ErrorCode  $missingCode  kode bila approval tidak dikirim (APPROVAL_REQUIRED / DISCOUNT_OVER_LIMIT)
      * @param  array<string, mixed>|null  $details
      *
      * @throws BusinessException
      */
-    public function handle(User $actor, string $permission, ?ApprovalData $approval, ErrorCode $missingCode = ErrorCode::ApprovalRequired, ?array $details = null): ?string
+    public function handle(User $actor, string $outletId, string $permission, ?ApprovalData $approval, ErrorCode $missingCode = ErrorCode::ApprovalRequired, ?array $details = null): ?string
     {
         if ($actor->can($permission)) {
             return null;
@@ -49,6 +50,11 @@ final class VerifyApproval
 
         if (! $approver->can($permission)) {
             throw BusinessException::of(ErrorCode::Forbidden, 'Approver tidak memiliki wewenang untuk aksi ini');
+        }
+
+        // Supervisor/manager outlet lain tidak boleh meng-approve; owner memegang semua outlet (GSPOS-SEC-003)
+        if (! $approver->canAccessOutlet($outletId)) {
+            throw BusinessException::of(ErrorCode::Forbidden, 'Approver tidak ditugaskan di outlet ini');
         }
 
         return $approver->id;

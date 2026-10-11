@@ -65,6 +65,7 @@ final class PriceOrder
 
         return $this->verifyApproval->handle(
             $actor,
+            $outlet->id,
             'order.discount_over_limit',
             $approval,
             ErrorCode::DiscountOverLimit,
