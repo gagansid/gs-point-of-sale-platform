@@ -7,7 +7,7 @@
     >
         <dl class="grid gap-6 sm:grid-cols-2">
             <div>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Kebijakan untuk semua super admin</dt>
+                <dt class="text-[13px] font-medium text-gray-500 dark:text-gray-400">Kebijakan untuk semua super admin</dt>
                 <dd class="mt-2">
                     @if ($this->isTwoFactorRequired())
                         <x-filament::badge color="success" icon="heroicon-o-lock-closed">Wajib</x-filament::badge>
@@ -15,7 +15,7 @@
                         <x-filament::badge color="warning" icon="heroicon-o-lock-open">Tidak wajib</x-filament::badge>
                     @endif
                 </dd>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <p class="mt-2 text-[13px] text-gray-500 dark:text-gray-400">
                     @if ($this->isTwoFactorRequired())
                         Admin tanpa 2FA wajib mengaturnya sebelum bisa memakai panel.
                     @else
@@ -25,7 +25,7 @@
             </div>
 
             <div>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Akun Anda</dt>
+                <dt class="text-[13px] font-medium text-gray-500 dark:text-gray-400">Akun Anda</dt>
                 <dd class="mt-2">
                     @if ($this->currentAdminHasTwoFactor())
                         <x-filament::badge color="success" icon="heroicon-o-check-circle">2FA aktif</x-filament::badge>
@@ -33,7 +33,7 @@
                         <x-filament::badge color="gray" icon="heroicon-o-minus-circle">2FA belum aktif</x-filament::badge>
                     @endif
                 </dd>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                <p class="mt-2 text-[13px] text-gray-500 dark:text-gray-400">
                     Aktifkan atau matikan 2FA akun Anda dari
                     <x-filament::link :href="filament()->getProfileUrl()">halaman profil</x-filament::link>.
                 </p>

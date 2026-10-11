@@ -2702,3 +2702,25 @@ select.fi-select-input {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+/* ---------- Ukuran teks tabel seragam (isi 12,5px, label 13px) ----------
+   Sisa bawaan Filament 14px: label paginasi, baris total (summary), indikator filter, deskripsi tabel kosong */
+.fi-pagination .fi-pagination-item-label,
+.fi-pagination .fi-pagination-overview,
+.fi-ta-filter-indicators-label,
+.fi-ta-empty-state-description {
+    font-size: 12.5px;
+    line-height: 20px;
+}
+
+.fi-ta-summary-row,
+.fi-ta-summary-row *,
+.fi-ta-text-summary,
+.fi-ta-text-summary * {
+    font-size: 12.5px;
+    line-height: 20px;
+}
+
+.fi-ta-text-summary-label {
+    font-weight: 600;
+}

@@ -34,23 +34,23 @@
 
 .pos-dash-table {
     width: 100%;
-    font-size: 0.875rem;
+    /* Sama dengan tabel Filament (menu Produk/Kategori): isi 12,5px, header 13px */
+    font-size: 12.5px;
+    line-height: 20px;
     border-collapse: separate;
     border-spacing: 0;
 }
 
 .pos-dash-table th,
 .pos-dash-table td {
-    padding: 0.55rem 0.5rem;
+    padding: 8px 12px;
     white-space: nowrap;
 }
 
 .pos-dash-table thead th {
-    font-size: 0.75rem;
+    font-size: 13px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    color: var(--text-muted);
+    color: var(--text);
     text-align: left;
     border-bottom: 1px solid var(--border-color-light);
     background: var(--bg-surface);
@@ -184,7 +184,7 @@ td.pos-dash-table__share span.tabular-nums {
     align-items: center;
     gap: 0.5rem;
     padding: 2rem 1rem;
-    font-size: 0.875rem;
+    font-size: 12.5px;
     color: var(--text-muted);
 }
 
@@ -218,7 +218,7 @@ td.pos-dash-table__share span.tabular-nums {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    font-size: 0.875rem;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text);
 }
@@ -228,7 +228,8 @@ td.pos-dash-table__share span.tabular-nums {
     padding: 0.5rem 0.5rem;
     margin-inline: -0.5rem;
     border-radius: var(--radius-sm);
-    font-size: 0.875rem;
+    font-size: 12.5px;
+    line-height: 20px;
     transition: background-color 0.15s;
 }
 
@@ -242,7 +243,7 @@ td.pos-dash-table__share span.tabular-nums {
 
 .pos-dash-audit__meta {
     margin-top: 0.15rem;
-    font-size: 0.75rem;
+    font-size: 12px;
     color: var(--text-muted);
     overflow: hidden;
     text-overflow: ellipsis;
@@ -253,7 +254,7 @@ td.pos-dash-table__share span.tabular-nums {
     align-items: center;
     gap: 0.4rem;
     padding: 1rem 0;
-    font-size: 0.875rem;
+    font-size: 12.5px;
     color: var(--text-muted);
 }
 
@@ -278,8 +279,9 @@ td.pos-dash-table__share span.tabular-nums {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.5rem 0;
-    font-size: 0.875rem;
+    padding: 8px 0;
+    font-size: 12.5px;
+    line-height: 20px;
     border-bottom: 1px solid var(--border-color-light);
 }
 
@@ -435,4 +437,10 @@ td.pos-dash-table__share span.tabular-nums {
 .pos-report-page .fi-tabs-item {
     height: var(--control-h);
     padding-block: 0;
+}
+
+/* Teks isi widget kustom setara isi tabel (12,5px) */
+.pos-dash-text {
+    font-size: 12.5px;
+    line-height: 20px;
 }
