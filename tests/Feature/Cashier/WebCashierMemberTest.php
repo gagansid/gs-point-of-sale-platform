@@ -33,13 +33,13 @@ function memberPayCash(object $page, object $test): void
 
 it('cari member lalu bayar: order tersimpan dengan member', function () {
     $page = Livewire::test(PointOfSale::class)
-        ->assertSee('+ Member')
+        ->assertSee('Member: kode / no. HP')
         ->set('memberSearch', '0812 3456 7890')
         ->assertSet('memberResults.0.name', 'Rina Kusuma')
         ->assertSet('memberResults.0.phone', '•••• 7890')
         ->call('selectMember', $this->member->id)
         ->assertSet('memberName', 'Rina Kusuma')
-        ->assertSee('★ Rina Kusuma')
+        ->assertSeeHtml('class="pos-member-chip"')->assertSee('Rina Kusuma')
         ->call('addProduct', $this->pos->croissant->id);
     memberPayCash($page, $this);
 
@@ -49,6 +49,10 @@ it('cari member lalu bayar: order tersimpan dengan member', function () {
 
 it('daftar cepat: wajib persetujuan; setelah daftar langsung terpasang', function () {
     Livewire::test(PointOfSale::class)
+        ->set('memberSearch', '0812 9999 0000')
+        ->call('openMemberRegistration')
+        ->assertSet('showMembers', true)
+        ->assertSet('newMemberPhone', '0812 9999 0000')
         ->set('newMemberName', 'Budi')->set('newMemberPhone', '0812 9999 0000')
         ->call('registerMember')
         ->assertSet('memberError', 'Pelanggan harus menyetujui pemakaian data untuk program member')
@@ -97,5 +101,25 @@ it('ID member dari browser divalidasi server: member tenant lain / nonaktif dito
 it('program nonaktif: tombol member tidak tampil', function () {
     TenantContext::run($this->pos->tenantId, fn () => app(UpdateMemberProgram::class)->handle(false, []));
 
-    Livewire::test(PointOfSale::class)->assertDontSee('+ Member');
+    Livewire::test(PointOfSale::class)->assertDontSee('Member: kode / no. HP');
+});
+
+it('Enter / scanner: kode atau nomor HP persis langsung dipasang', function (string $term) {
+    Livewire::test(PointOfSale::class)
+        ->set('memberSearch', $term)
+        ->call('pickMember')
+        ->assertSet('memberId', $this->member->id)
+        ->assertSet('memberSearch', '');
+})->with(['kode' => fn () => mb_strtolower($this->member->code), 'nomor HP' => '0812-3456-7890']);
+
+it('nama kembar: hasil dibedakan kode & 4 digit HP; Enter meminta memilih', function () {
+    $twin = Member::factory()->create(['name' => 'Rina Kusuma', 'phone' => '+6281200001111']);
+
+    $page = Livewire::test(PointOfSale::class)->set('memberSearch', 'rina kusuma');
+    expect(collect($page->get('memberResults'))->pluck('phone')->sort()->values()->all())->toBe(['•••• 1111', '•••• 7890']);
+
+    $page->call('pickMember')
+        ->assertSet('memberId', null)
+        ->assertSet('memberError', 'Pilih member dari daftar')
+        ->assertSee($twin->code)->assertSee($this->member->code);
 });

@@ -34,6 +34,7 @@ use App\Models\User;
 use App\Services\Order\CalculationResult;
 use App\Support\CurrentOutlet;
 use App\Support\Money;
+use App\Support\Phone;
 use App\Support\WebCashier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -138,7 +139,7 @@ final class PointOfSale extends Component
 
     public string $memberSearch = '';
 
-    /** @var list<array{id: string, name: string, code: string, phone: string, visits: int}> */
+    /** @var list<array{id: string, name: string, code: string, phone: string, last_visit: string|null}> */
     public array $memberResults = [];
 
     public string $newMemberName = '';
@@ -579,7 +580,11 @@ final class PointOfSale extends Component
 
         $this->memberResults = Member::query()->whereNull('anonymized_at')->where('is_active', true)
             ->search($term)->orderByDesc('last_visit_at')->orderBy('name')->limit(8)->get()
-            ->map(fn (Member $m): array => ['id' => $m->id, 'name' => $m->name, 'code' => $m->code, 'phone' => $m->maskedPhone(), 'visits' => $m->visit_count])
+            ->map(fn (Member $m): array => [
+                'id' => $m->id, 'name' => $m->name, 'code' => $m->code, 'phone' => $m->maskedPhone(),
+                // Pembeda nama yang sama: kode, 4 digit HP, kunjungan terakhir
+                'last_visit' => $m->last_visit_at?->setTimezone($this->outlet()->timezone)->locale('id')->translatedFormat('j M Y'),
+            ])
             ->all();
     }
 
@@ -598,6 +603,42 @@ final class PointOfSale extends Component
         $this->memberId = $member->id;
         $this->memberName = $member->name;
         $this->reset('showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
+    }
+
+    /**
+     * Enter di kolom member (ketik atau scanner barcode): kode/nomor HP persis → langsung dipasang;
+     * selain itu satu-satunya hasil pencarian.
+     */
+    public function pickMember(): void
+    {
+        $term = trim($this->memberSearch);
+
+        if (! $this->memberProgramEnabled() || $term === '') {
+            return;
+        }
+
+        $phone = Phone::normalize($term);
+        $exact = Member::query()->whereNull('anonymized_at')->where('is_active', true)
+            ->where(fn ($q) => $q->where('code', mb_strtoupper($term))->when($phone !== null, fn ($w) => $w->orWhere('phone', $phone)))
+            ->value('id');
+
+        $id = $exact ?? (count($this->memberResults) === 1 ? $this->memberResults[0]['id'] : null);
+
+        if ($id === null) {
+            $this->memberError = $this->memberResults === [] ? 'Member tidak ditemukan' : 'Pilih member dari daftar';
+
+            return;
+        }
+
+        $this->selectMember($id);
+    }
+
+    /** Buka form daftar member; nomor HP dari kolom cari ikut terisi. */
+    public function openMemberRegistration(): void
+    {
+        abort_unless($this->memberProgramEnabled() && $this->user()->can('member.create'), 403);
+        $this->newMemberPhone = Phone::normalize($this->memberSearch) !== null ? trim($this->memberSearch) : '';
+        $this->showMembers = true;
     }
 
     public function clearMember(): void

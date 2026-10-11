@@ -102,11 +102,39 @@
             @if ($this->memberProgramEnabled)
                 @if ($memberId)
                     <div class="pos-member-chip">
-                        <span>★ {{ $memberName }}</span>
+                        <span class="pos-member-chip-name"><span aria-hidden="true">★</span> {{ $memberName }}</span>
                         <button type="button" wire:click="clearMember" aria-label="Lepas member">&times;</button>
                     </div>
                 @else
-                    <button type="button" class="site-btn site-btn-outline pos-member-btn" wire:click="$set('showMembers', true)">+ Member</button>
+                    {{-- Kode member / nomor HP: Enter (atau scanner barcode) langsung memasang bila cocok persis --}}
+                    <div class="pos-member-field">
+                        <div class="pos-member-input">
+                            <input type="search" wire:model.live.debounce.400ms="memberSearch" wire:keydown.enter.prevent="pickMember"
+                                placeholder="Member: kode / no. HP" aria-label="Cari member (kode atau nomor HP)" autocomplete="off">
+                            @can('member.create')
+                                <button type="button" wire:click="openMemberRegistration" aria-label="Daftar member baru" title="Daftar member baru">
+                                    @svg('heroicon-o-user-plus', ['aria-hidden' => 'true'])
+                                </button>
+                            @endcan
+                        </div>
+                        @if ($memberError)
+                            <p class="pos-member-error" role="alert">{{ $memberError }}</p>
+                        @endif
+                        @if ($memberResults !== [])
+                            <ul class="pos-member-results" role="listbox" aria-label="Hasil member">
+                                @foreach ($memberResults as $result)
+                                    <li wire:key="m-{{ $result['id'] }}">
+                                        <button type="button" role="option" wire:click="selectMember('{{ $result['id'] }}')">
+                                            <span class="pos-member-result-name">{{ $result['name'] }}</span>
+                                            <span class="pos-member-result-meta">{{ $result['code'] }} · {{ $result['phone'] }}{{ $result['last_visit'] ? ' · terakhir '.$result['last_visit'] : '' }}</span>
+                                        </button>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @elseif (mb_strlen(trim($memberSearch)) >= 2 && ! $memberError)
+                            <p class="pos-member-error">Tidak ditemukan. Tekan ikon + untuk mendaftarkan.</p>
+                        @endif
+                    </div>
                 @endif
             @endif
         </div>
@@ -348,43 +376,23 @@
         </div>
     @endif
 
-    {{-- Pilih / daftar member (ADR 0013) --}}
+    {{-- Daftar member baru (ADR 0013) --}}
     @if ($showMembers)
         <div class="pos-modal" role="dialog" aria-modal="true" aria-labelledby="members-title" wire:keydown.escape="$set('showMembers', false)">
             <div class="pos-modal-card">
-                <h2 id="members-title">Member</h2>
-                <input type="search" class="pos-member-search" wire:model.live.debounce.400ms="memberSearch" placeholder="Cari nomor HP, kode, atau nama" aria-label="Cari member" x-init="$nextTick(() => $el.focus())">
-                @if ($memberError)
-                    <p class="site-error" role="alert">{{ $memberError }}</p>
-                @endif
-
-                @foreach ($memberResults as $result)
-                    <button type="button" class="site-choice" wire:click="selectMember('{{ $result['id'] }}')" wire:key="m-{{ $result['id'] }}">
-                        <span>
-                            <span class="site-choice-name">{{ $result['name'] }}</span>
-                            <span class="site-choice-meta">{{ $result['code'] }} · {{ $result['phone'] }}</span>
-                        </span>
-                        <span class="site-choice-meta">{{ $result['visits'] }} kunjungan</span>
-                    </button>
-                @endforeach
-
-                @if (mb_strlen(trim($memberSearch)) >= 2 && $memberResults === [] && ! $memberError)
-                    <p class="cashier-muted">Member tidak ditemukan.</p>
-                @endif
-
-                @can('member.create')
-                    <form wire:submit="registerMember" class="pos-member-new">
-                        <h3>Daftar member baru</h3>
-                        <input type="text" wire:model="newMemberName" maxlength="100" placeholder="Nama" aria-label="Nama member" required>
-                        <input type="tel" wire:model="newMemberPhone" maxlength="30" placeholder="Nomor HP, mis. 0812 3456 7890" aria-label="Nomor HP" required>
-                        <label class="pos-member-consent"><input type="checkbox" wire:model="newMemberConsent"> Pelanggan setuju datanya dipakai untuk program member</label>
+                <h2 id="members-title">Daftar member baru</h2>
+                <form wire:submit="registerMember" class="pos-member-new">
+                    <input type="text" wire:model="newMemberName" maxlength="100" placeholder="Nama" aria-label="Nama member" required x-init="$nextTick(() => $el.focus())">
+                    <input type="tel" wire:model="newMemberPhone" maxlength="30" placeholder="Nomor HP, mis. 0812 3456 7890" aria-label="Nomor HP" required>
+                    <label class="pos-member-consent"><input type="checkbox" wire:model="newMemberConsent"> Pelanggan setuju datanya dipakai untuk program member</label>
+                    @if ($memberError)
+                        <p class="site-error" role="alert">{{ $memberError }}</p>
+                    @endif
+                    <div class="pos-actions">
+                        <button type="button" class="site-btn site-btn-outline" wire:click="$set('showMembers', false)">Batal</button>
                         <button type="submit" class="site-btn site-btn-primary">Daftar &amp; pakai</button>
-                    </form>
-                @endcan
-
-                <div class="pos-actions">
-                    <button type="button" class="site-btn site-btn-outline" wire:click="$set('showMembers', false)">Tutup</button>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     @endif
