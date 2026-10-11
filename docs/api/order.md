@@ -48,7 +48,7 @@ yang dikirim aplikasi diabaikan.
 | `order_type` | `takeaway` / `dine_in` |
 | `discount` | opsional; `type` `fixed`/`percent` (≤ 100), `value` ≥ 0 |
 | `items` | 1–100; `qty` 1–999; `option_ids` maks. 20; `discount` per item (nominal) |
-| `payments` | 1–10; `id` UUID unik; `amount` > 0; `tendered` untuk tunai; `reference` wajib bila metode `requires_reference` |
+| `payments` | wajib ada, 0–10; `[]` hanya bila total akhir 0 (mis. diskon 100%), selain itu `422` pembayaran kurang; `id` UUID unik; `amount` > 0; `tendered` untuk tunai; `reference` wajib bila metode `requires_reference` |
 | `approver_user_id` + `approver_pin` | hanya bila diskon di atas batas role (PIN 6 digit) |
 
 ### Aturan
@@ -135,6 +135,8 @@ Body `{ "payments": [ { "id", "payment_method_id", "amount", "tendered"?, "refer
 - Order dikunci saat menambah pembayaran: pembayaran bersamaan tidak bisa melebihi sisa
   (diuji 6 pembayaran paralel → hanya yang muat yang diterima).
 - Semua `payments[].id` sudah tercatat di order ini → `200` replay.
+- `payments: []` melunasi open bill yang sisa tagihannya 0 (diskon 100%); bila masih ada sisa → `422`.
+  Kiriman ulang setelah selesai → `200` replay.
 
 ## `GET /v1/orders`
 

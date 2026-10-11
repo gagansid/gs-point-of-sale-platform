@@ -41,7 +41,12 @@ final class AddPayment
         $ids = array_column($payments, 'id');
         $existingOnOrder = Payment::query()->where('order_id', $order->id)->whereIn('id', $ids)->count();
 
-        if ($existingOnOrder === count($ids)) {
+        if ($ids !== [] && $existingOnOrder === count($ids)) {
+            return ['order' => CheckoutOrder::load($order->refresh()), 'replayed' => true];
+        }
+
+        // Kiriman ulang pelunasan tagihan 0 (tanpa pembayaran) setelah order selesai
+        if ($ids === [] && $order->status === OrderStatus::Completed && ! Money::isPositive($order->grand_total)) {
             return ['order' => CheckoutOrder::load($order->refresh()), 'replayed' => true];
         }
 
@@ -64,6 +69,14 @@ final class AddPayment
             }
 
             $remaining = Money::sub($locked->grand_total, $locked->paid_total);
+
+            // Tanpa pembayaran hanya untuk melunasi tagihan yang sisanya 0 (mis. diskon 100%)
+            if ($payments === [] && Money::isPositive($remaining)) {
+                throw BusinessException::of(ErrorCode::ValidationError, 'Pembayaran wajib diisi', [
+                    'payments' => ['Sisa tagihan '.Money::format($remaining)],
+                    'remaining' => $remaining,
+                ]);
+            }
             $allocated = $this->allocatePayments->handle($payments, $remaining, $locked->outlet_id);
 
             $this->writer->addPayments($locked, $allocated, $actor);

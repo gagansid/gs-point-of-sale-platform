@@ -44,7 +44,8 @@ final class CheckoutRequest extends FormRequest
             'items.*.notes' => ['nullable', 'string', 'max:255'],
             'items.*.discount' => ['nullable', ...$money, 'min:0'],
 
-            'payments' => ['required', 'array', 'min:1', 'max:10'],
+            // Boleh kosong hanya bila total akhir 0 (diskon 100%); kurang bayar dicek CheckoutOrder (GSPOS-BUG-001)
+            'payments' => ['present', 'array', 'max:10'],
             'payments.*.id' => ['required', 'uuid', 'distinct'],
             'payments.*.payment_method_id' => ['required', 'uuid'],
             'payments.*.amount' => ['required', ...$money, 'gt:0'],

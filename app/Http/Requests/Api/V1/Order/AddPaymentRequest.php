@@ -19,7 +19,8 @@ final class AddPaymentRequest extends FormRequest
         $money = ['decimal:0,2', 'max:9999999999999.99', 'gt:0'];
 
         return [
-            'payments' => ['required', 'array', 'min:1', 'max:10'],
+            // Kosong = melunasi open bill yang sisa tagihannya 0 (GSPOS-BUG-001)
+            'payments' => ['present', 'array', 'max:10'],
             'payments.*.id' => ['required', 'uuid', 'distinct'],
             'payments.*.payment_method_id' => ['required', 'uuid'],
             'payments.*.amount' => ['required', ...$money],
