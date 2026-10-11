@@ -89,12 +89,16 @@
         @php($memberDiscount = $t['member_discount'] ?? '0.00')
         @php($stampFree = $t['stamp_free_total'] ?? '0.00')
         {{-- Diskon kasir (item + order); potongan program member ditampilkan terpisah --}}
-        @php($manualDiscount = Money::sub(Money::sub($t['discount_total'], $memberDiscount), $stampFree))
+        @php($voucherDiscount = $t['voucher_discount'] ?? '0.00')
+        @php($manualDiscount = Money::sub(Money::sub(Money::sub($t['discount_total'], $memberDiscount), $stampFree), $voucherDiscount))
         @if (Money::isPositive($manualDiscount))
             <div class="row"><span>Diskon</span><span>-{{ $rp($manualDiscount) }}</span></div>
         @endif
         @if (Money::isPositive($stampFree))
             <div class="row"><span>Gratis stempel</span><span>-{{ $rp($stampFree) }}</span></div>
+        @endif
+        @if (Money::isPositive($voucherDiscount))
+            <div class="row"><span>Voucher {{ $t['voucher_code'] ?? '' }}</span><span>-{{ $rp($voucherDiscount) }}</span></div>
         @endif
         @if (Money::isPositive($memberDiscount))
             <div class="row"><span>Diskon member</span><span>-{{ $rp($memberDiscount) }}</span></div>

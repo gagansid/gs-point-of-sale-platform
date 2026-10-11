@@ -58,12 +58,15 @@
 
     <div class="gs-nota-section gs-nota-totals">
         <div class="gs-nota-row"><span>Subtotal</span><span>{{ $rp($order->subtotal) }}</span></div>
-        @php($manualDiscount = Money::sub(Money::sub($order->discount_total, $order->member_discount), $order->stamp_free_total))
+        @php($manualDiscount = Money::sub(Money::sub(Money::sub($order->discount_total, $order->member_discount), $order->stamp_free_total), $order->voucher_discount))
         @if (Money::isPositive($manualDiscount))
             <div class="gs-nota-row"><span>Diskon</span><span>-{{ $rp($manualDiscount) }}</span></div>
         @endif
         @if (Money::isPositive($order->stamp_free_total))
             <div class="gs-nota-row"><span>Gratis stempel</span><span>-{{ $rp($order->stamp_free_total) }}</span></div>
+        @endif
+        @if (Money::isPositive($order->voucher_discount))
+            <div class="gs-nota-row"><span>Voucher {{ $order->voucher_code }}</span><span>-{{ $rp($order->voucher_discount) }}</span></div>
         @endif
         @if (Money::isPositive($order->member_discount))
             <div class="gs-nota-row"><span>Diskon member</span><span>-{{ $rp($order->member_discount) }}</span></div>

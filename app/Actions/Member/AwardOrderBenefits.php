@@ -14,6 +14,7 @@ use App\Models\OutletMemberProgram;
 use App\Services\Member\PointLedger;
 use App\Services\Member\StampCards;
 use App\Services\Member\TierEvaluator;
+use App\Services\Member\Vouchers;
 use App\Support\Money;
 
 /**
@@ -29,10 +30,14 @@ final class AwardOrderBenefits
         private readonly PointLedger $ledger,
         private readonly TierEvaluator $tiers,
         private readonly StampCards $stamps,
+        private readonly Vouchers $vouchers,
     ) {}
 
     public function handle(Order $order): void
     {
+        // Voucher (M7) berlaku juga untuk order tanpa member (kode promo umum)
+        $this->vouchers->redeem($order);
+
         if ($order->member_id === null || $order->member === null) {
             return;
         }

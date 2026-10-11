@@ -52,6 +52,7 @@ yang dikirim aplikasi diabaikan.
 | `approver_user_id` + `approver_pin` | hanya bila diskon di atas batas role (PIN 6 digit) |
 | `member_id` | opsional (ADR 0013): member aktif bisnis ini, selain itu `404 MEMBER_NOT_FOUND`; program nonaktif `422 MEMBER_PROGRAM_DISABLED`. Open bill: tidak dikirim = tetap, `null` = dilepas. Lihat [`member.md`](member.md) |
 | `stamp_program_ids` | opsional (M6): kartu stempel yang ditukar, maks. 5 UUID unik; 1 item termurah yang memenuhi per kartu jadi gratis. Butuh member. Open bill: tidak dikirim = pilihan lama tetap. Gagal → `422 VALIDATION_ERROR` field `stamp_program_ids` |
+| `voucher_code` / `voucher_id` | opsional (M7), salah satu: kode promo (tidak peka huruf besar) atau ID voucher pribadi dari `GET /members/{id}` → `vouchers`. Open bill: tidak dikirim = voucher lama tetap, `null` = dilepas. Tidak berlaku → `422 VOUCHER_INVALID` (`details.reason`) |
 
 ### Aturan
 

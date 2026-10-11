@@ -2786,6 +2786,18 @@
     font-size: 13px;
 }
 
+/* Voucher pribadi di halaman member (M7) */
+.member-voucher {
+    border: 2px dashed rgb(45 66 130 / 0.3);
+}
+
+.member-voucher-value {
+    margin: 0 0 6px;
+    color: var(--site-primary);
+    font-size: 22px;
+    font-weight: 800;
+}
+
 /* Kartu stempel di halaman member (M6) */
 .member-stamps {
     display: grid;

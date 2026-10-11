@@ -57,10 +57,14 @@ final class SaveOpenBill
         // Member yang berlaku untuk harga: baru (dikirim) atau yang sudah terpasang di open bill
         $pricingMember = $data->memberProvided ? $member : ($existing?->member_id !== null ? Member::query()->find($existing->member_id) : null);
         $lines = $this->resolveLines->handle($data->items, $outlet);
-        // Kartu stempel: dikirim = pilihan baru; tidak dikirim = pilihan lama tetap (selama member sama)
-        $benefits = $data->benefitsProvided || $existing === null || $pricingMember?->id !== $existing->member_id
-            ? $data->benefits
-            : new BenefitSelection(stampProgramIds: array_column($existing->stamp_redemptions ?? [], 'stamp_program_id'));
+        // Kartu stempel & voucher: dikirim = pilihan baru; tidak dikirim = pilihan lama tetap (stempel: selama member sama)
+        $benefits = new BenefitSelection(
+            stampProgramIds: $data->benefitsProvided || $existing === null || $pricingMember?->id !== $existing->member_id
+                ? $data->benefits->stampProgramIds
+                : array_column($existing->stamp_redemptions ?? [], 'stamp_program_id'),
+            voucherCode: $data->voucherProvided || $existing === null ? $data->benefits->voucherCode : null,
+            voucherId: $data->voucherProvided || $existing === null ? $data->benefits->voucherId : $existing->voucher_id,
+        );
         $pricing = app(ResolveMemberPricing::class)->handle($pricingMember, $outlet, $lines, $benefits);
         $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval, $pricing);
         $totals = $priced['totals'];
@@ -108,6 +112,8 @@ final class SaveOpenBill
                 $order->forceFill([
                     'member_tier' => $order->member_id !== null ? $pricing->tierName : null,
                     'stamp_redemptions' => $pricing->stampRedemptions !== [] ? $pricing->stampRedemptions : null,
+                    'voucher_id' => $pricing->voucherId,
+                    'voucher_code' => $pricing->voucherLabel,
                 ]);
 
                 $this->writer->applyTotals($order, $totals, $outlet);

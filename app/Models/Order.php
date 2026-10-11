@@ -34,6 +34,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $stamp_free_total potongan gratis stempel (M6)
  * @property list<array{stamp_program_id: string, name: string, product_id: string, product_name: string, amount: string}>|null $stamp_redemptions
  * @property int $stamps_earned
+ * @property string|null $voucher_id voucher dipakai (M7)
+ * @property string|null $voucher_code snapshot kode / nama voucher
+ * @property string $voucher_discount
  * @property OrderStatus $status
  * @property string|null $notes
  * @property DiscountType|null $discount_type
@@ -66,6 +69,7 @@ final class Order extends Model
         'points_earned' => 0,
         'stamps_earned' => 0,
         'stamp_free_total' => '0.00',
+        'voucher_discount' => '0.00',
         'paid_total' => '0.00',
         'change_total' => '0.00',
         'order_discount' => '0.00',
@@ -83,6 +87,7 @@ final class Order extends Model
             'discount_value' => 'decimal:2',
             'order_discount' => 'decimal:2',
             'stamp_free_total' => 'decimal:2',
+            'voucher_discount' => 'decimal:2',
             'stamp_redemptions' => 'array',
             'stamps_earned' => 'integer',
             'subtotal' => 'decimal:2',

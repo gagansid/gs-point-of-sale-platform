@@ -126,6 +126,19 @@
                             @endforeach
                         </div>
                     @endif
+                    {{-- Voucher pribadi member (ulang tahun, M7) --}}
+                    @if ($this->memberVouchers !== [])
+                        <div class="pos-stamps" role="group" aria-label="Voucher member">
+                            @foreach ($this->memberVouchers as $voucher)
+                                @php($used = $voucherId === $voucher['id'] && $appliedVoucherCode === null)
+                                <button type="button" wire:key="mv-{{ $voucher['id'] }}" wire:click="togglePersonalVoucher('{{ $voucher['id'] }}')"
+                                    @class(['pos-stamp', 'is-active' => $used]) aria-pressed="{{ $used ? 'true' : 'false' }}">
+                                    <span class="pos-stamp-name">{{ $voucher['label'] }}</span>
+                                    <span class="pos-stamp-count">{{ $used ? 'dipakai' : 'pakai voucher' }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
                 @else
                     {{-- Kode member / nomor HP: Enter (atau scanner barcode) langsung memasang bila cocok persis --}}
                     <div class="pos-member-field">
@@ -197,6 +210,23 @@
                         <input type="number" min="0" step="any" inputmode="decimal" wire:model.live.debounce.400ms="discountValue" aria-label="Nilai diskon order">
                     @endif
                 </div>
+                {{-- Kode promo (M7): dicek server saat Pakai; potongan masuk pratinjau total --}}
+                @if ($this->memberProgramEnabled)
+                    @if ($appliedVoucherCode)
+                        <div class="pos-member-chip">
+                            <span class="pos-member-chip-name">Voucher {{ $appliedVoucherCode }}</span>
+                            <button type="button" wire:click="removeVoucher" aria-label="Lepas voucher">&times;</button>
+                        </div>
+                    @else
+                        <form class="pos-discount" wire:submit="applyVoucher">
+                            <input type="text" wire:model="voucherInput" maxlength="30" placeholder="Kode voucher" aria-label="Kode voucher" autocomplete="off">
+                            <button type="submit" class="site-btn site-btn-outline">Pakai</button>
+                        </form>
+                        @if ($voucherError)
+                            <p class="pos-member-error" role="alert">{{ $voucherError }}</p>
+                        @endif
+                    @endif
+                @endif
                 <input type="text" wire:model.blur="notes" maxlength="255" placeholder="Catatan order" aria-label="Catatan order">
                 @if (! $billId)
                     <input type="text" wire:model.blur="holdLabel" maxlength="30" placeholder="Penanda pelanggan (opsional, untuk Tahan)" aria-label="Penanda pelanggan">
@@ -220,6 +250,9 @@
                 @endif
                 @if (\App\Support\Money::isPositive($totals->stampDiscount))
                     <dt>Gratis stempel</dt><dd>−{{ $money($totals->stampDiscount) }}</dd>
+                @endif
+                @if (\App\Support\Money::isPositive($totals->voucherDiscount))
+                    <dt>Voucher</dt><dd>−{{ $money($totals->voucherDiscount) }}</dd>
                 @endif
                 @if (\App\Support\Money::isPositive($totals->memberDiscount))
                     <dt>Diskon member{{ $this->memberTier ? ' · '.$this->memberTier : '' }}</dt><dd>−{{ $money($totals->memberDiscount) }}</dd>

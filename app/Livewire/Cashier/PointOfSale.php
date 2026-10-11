@@ -33,7 +33,9 @@ use App\Models\OutletMemberProgram;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Voucher;
 use App\Services\Member\StampCards;
+use App\Services\Member\Vouchers;
 use App\Services\Order\CalculationResult;
 use App\Support\CurrentOutlet;
 use App\Support\Money;
@@ -59,6 +61,7 @@ use Livewire\Component;
  * @property-read array{categories: Collection<int, Category>, products: Collection<int, Product>, option_groups: Collection<int, OptionGroup>, payment_methods: Collection<int, PaymentMethod>} $catalog
  * @property-read Collection<int, Product> $visibleProducts
  * @property-read array{totals: CalculationResult|null, error: string|null} $quote
+ * @property-read list<array{id: string, label: string}> $memberVouchers
  * @property-read list<array{id: string, name: string, stamps_required: int, balance: int, rewards_available: int, product_ids: list<string>, category_ids: list<string>}> $stampCards
  * @property-read Collection<int, Order> $openBills
  * @property-read Collection<int, User> $approvers
@@ -167,6 +170,15 @@ final class PointOfSale extends Component
      */
     public array $stampProgramIds = [];
 
+    // Voucher (M7): kode yang diketik kasir; yang dipakai = appliedVoucherCode (sudah dicek) atau voucherId (pribadi)
+    public string $voucherInput = '';
+
+    public ?string $appliedVoucherCode = null;
+
+    public ?string $voucherId = null;
+
+    public ?string $voucherError = null;
+
     #[Locked]
     public ?string $completedOrderId = null;
 
@@ -217,7 +229,7 @@ final class PointOfSale extends Component
             $member = $this->memberId !== null ? Member::query()->find($this->memberId) : null;
 
             return ['totals' => app(QuoteOrder::class)->handle($this->outlet(), $this->checkoutItems(), $this->orderDiscountType(), $this->orderDiscountValue(),
-                $member, new BenefitSelection(stampProgramIds: $this->stampProgramIds)), 'error' => null];
+                $member, $this->benefits()), 'error' => null];
         } catch (BusinessException $e) {
             return ['totals' => null, 'error' => self::describe($e)];
         }
@@ -525,6 +537,7 @@ final class PointOfSale extends Component
             'notes' => filled(trim($this->notes)) ? trim($this->notes) : null,
             'member_id' => $this->memberId,
             'stamp_program_ids' => $this->stampProgramIds,
+            ...$this->voucherPayload(),
             'discount' => $this->orderDiscountType() !== null ? ['type' => $this->discountType, 'value' => $this->orderDiscountValue()] : null,
             'items' => $this->checkoutItems(),
             'payments' => array_map(fn (array $p): array => [
@@ -663,7 +676,7 @@ final class PointOfSale extends Component
 
         $this->memberId = $member->id;
         $this->memberName = $member->name;
-        $this->reset('stampProgramIds', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
+        $this->reset('stampProgramIds', 'voucherId', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
     }
 
     /**
@@ -710,7 +723,85 @@ final class PointOfSale extends Component
 
     public function clearMember(): void
     {
-        $this->reset('memberId', 'memberName', 'stampProgramIds');
+        $this->reset('memberId', 'memberName', 'stampProgramIds', 'voucherId');
+        // Kode promo khusus member ikut dicek ulang di pratinjau
+    }
+
+    // ---------- Voucher (M7) ----------
+
+    /**
+     * Voucher pribadi member terpasang (ulang tahun) yang masih bisa dipakai.
+     *
+     * @return list<array{id: string, label: string}>
+     */
+    #[Computed]
+    public function memberVouchers(): array
+    {
+        $member = $this->memberId !== null ? Member::query()->find($this->memberId) : null;
+
+        if ($member === null || ! $member->isUsable() || ! OutletMemberProgram::activeAt($this->outlet()->id)) {
+            return [];
+        }
+
+        return app(Vouchers::class)->personalFor($member)
+            ->map(fn (Voucher $v): array => ['id' => $v->id, 'label' => $v->name.' '.$v->benefitLabel()])->values()->all();
+    }
+
+    /** Pakai kode promo: dicek dulu dengan keranjang & member saat ini; gagal = pesan di bawah kolom kode. */
+    public function applyVoucher(): void
+    {
+        $code = Voucher::normalizeCode(mb_substr($this->voucherInput, 0, 30));
+        $this->voucherError = null;
+
+        if ($code === '') {
+            return;
+        }
+
+        try {
+            $member = $this->memberId !== null ? Member::query()->find($this->memberId) : null;
+            app(QuoteOrder::class)->handle($this->outlet(), $this->checkoutItems(), $this->orderDiscountType(), $this->orderDiscountValue(),
+                $member, new BenefitSelection(stampProgramIds: $this->stampProgramIds, voucherCode: $code));
+        } catch (BusinessException $e) {
+            $this->voucherError = $e->getMessage();
+
+            return;
+        }
+
+        $this->appliedVoucherCode = $code;
+        $this->reset('voucherInput', 'voucherId');
+        unset($this->quote);
+    }
+
+    /** Pakai / batalkan voucher pribadi member (ulang tahun). */
+    public function togglePersonalVoucher(string $voucherId): void
+    {
+        $this->voucherId = $this->voucherId === $voucherId || ! in_array($voucherId, array_column($this->memberVouchers, 'id'), true) ? null : $voucherId;
+        $this->appliedVoucherCode = null;
+        unset($this->quote);
+    }
+
+    public function removeVoucher(): void
+    {
+        $this->reset('appliedVoucherCode', 'voucherId', 'voucherError');
+        unset($this->quote);
+    }
+
+    private function benefits(): BenefitSelection
+    {
+        return new BenefitSelection(
+            stampProgramIds: $this->stampProgramIds,
+            voucherCode: $this->appliedVoucherCode,
+            voucherId: $this->appliedVoucherCode === null ? $this->voucherId : null,
+        );
+    }
+
+    /** @return array{voucher_code?: string, voucher_id?: string} */
+    private function voucherPayload(): array
+    {
+        return array_filter([
+            'voucher_code' => $this->appliedVoucherCode,
+            'voucher_id' => $this->appliedVoucherCode === null ? $this->voucherId : null,
+        ]);
     }
 
     /**
@@ -772,7 +863,7 @@ final class PointOfSale extends Component
     /**
      * Keranjang ditahan di browser ini (session per device): belum jadi order, belum memotong stok.
      *
-     * @return list<array{id: string, label: string, order_id: string, cart: list<array<string, mixed>>, order_type: string, table_label: string, notes: string, discount_type: string, discount_value: string, member_id?: string|null, member_name?: string, stamp_program_ids?: list<string>, total: string|null, items: int, held_at: string}>
+     * @return list<array{id: string, label: string, order_id: string, cart: list<array<string, mixed>>, order_type: string, table_label: string, notes: string, discount_type: string, discount_value: string, member_id?: string|null, member_name?: string, stamp_program_ids?: list<string>, voucher_code?: string|null, voucher_id?: string|null, total: string|null, items: int, held_at: string}>
      */
     public function heldCarts(): array
     {
@@ -810,6 +901,8 @@ final class PointOfSale extends Component
             'member_id' => $this->memberId,
             'member_name' => $this->memberName,
             'stamp_program_ids' => $this->stampProgramIds,
+            'voucher_code' => $this->appliedVoucherCode,
+            'voucher_id' => $this->voucherId,
             'total' => $this->quote['totals']?->grandTotal,
             'items' => (int) array_sum(array_column($this->cart, 'qty')),
             'held_at' => now()->toIso8601String(),
@@ -853,6 +946,8 @@ final class PointOfSale extends Component
         $this->memberId = $entry['member_id'] ?? null;
         $this->memberName = $entry['member_name'] ?? '';
         $this->stampProgramIds = $entry['stamp_program_ids'] ?? [];
+        $this->appliedVoucherCode = $entry['voucher_code'] ?? null;
+        $this->voucherId = $entry['voucher_id'] ?? null;
         $this->toast("Transaksi {$entry['label']} dilanjutkan", 'info');
     }
 
@@ -941,6 +1036,8 @@ final class PointOfSale extends Component
         $this->memberId = $order->member_id;
         $this->memberName = (string) $order->member_name;
         $this->stampProgramIds = array_column($order->stamp_redemptions ?? [], 'stamp_program_id');
+        // Voucher open bill dipakai lagi lewat ID (kode promo maupun voucher pribadi)
+        $this->voucherId = $order->voucher_id;
         $this->discountType = $order->discount_type->value ?? '';
         $this->discountValue = $order->discount_value ?? '';
         $this->cart = $order->items->sortBy('sort_order')->map(fn ($item): array => [
@@ -1008,7 +1105,7 @@ final class PointOfSale extends Component
     {
         $this->reset('cart', 'orderType', 'tableLabel', 'notes', 'discountType', 'discountValue', 'paying', 'payments', 'payError',
             'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'holdLabel', 'memberCode', 'memberPin',
-            'memberId', 'memberName', 'stampProgramIds', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
+            'memberId', 'memberName', 'stampProgramIds', 'voucherInput', 'appliedVoucherCode', 'voucherId', 'voucherError', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
         $this->orderId = (string) Str::uuid7();
         // Total yang sudah dihitung di request ini (mis. saat menahan) jangan ikut ter-render
         unset($this->quote);
@@ -1025,6 +1122,9 @@ final class PointOfSale extends Component
             'member_id' => $this->memberId,
             // Selalu dikirim: pilihan kartu stempel menggantikan yang lama
             'stamp_program_ids' => $this->stampProgramIds,
+            // Selalu dikirim: null = voucher dilepas dari open bill
+            'voucher_code' => $this->appliedVoucherCode,
+            'voucher_id' => $this->appliedVoucherCode === null ? $this->voucherId : null,
             'discount' => $this->orderDiscountType() !== null ? ['type' => $this->discountType, 'value' => $this->orderDiscountValue()] : null,
             'items' => $this->checkoutItems(),
             ...$this->approvalInput(),

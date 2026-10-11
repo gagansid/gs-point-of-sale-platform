@@ -102,6 +102,12 @@ final class Member extends Model implements AuthenticatableContract
         return $this->belongsTo(MemberTier::class, 'tier_id');
     }
 
+    /** @return HasMany<Voucher, $this> voucher pribadi (ulang tahun) */
+    public function vouchers(): HasMany
+    {
+        return $this->hasMany(Voucher::class);
+    }
+
     /** @return HasMany<Order, $this> */
     public function orders(): HasMany
     {

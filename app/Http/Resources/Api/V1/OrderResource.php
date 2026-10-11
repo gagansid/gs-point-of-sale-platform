@@ -38,6 +38,9 @@ final class OrderResource extends JsonResource
             'stamp_free_total' => $this->stamp_free_total,
             'stamp_redemptions' => $this->stamp_redemptions ?? [],
             'stamps_earned' => $this->stamps_earned,
+            // Voucher (M7): bagian dari discount_total
+            'voucher' => $this->voucher_id !== null ? ['id' => $this->voucher_id, 'code' => $this->voucher_code] : null,
+            'voucher_discount' => $this->voucher_discount,
             'points_redeemed' => $this->points_redeemed,
             'service_total' => $this->service_total,
             'tax_total' => $this->tax_total,

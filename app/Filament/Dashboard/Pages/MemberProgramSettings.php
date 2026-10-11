@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Pages;
 
 use App\Actions\Member\SaveMemberTiers;
+use App\Actions\Member\UpdateBirthdayVoucher;
 use App\Actions\Member\UpdateMemberProgram;
+use App\Enums\DiscountType;
 use App\Exceptions\BusinessException;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Filament\Shared\Forms\MoneyInput;
@@ -23,6 +25,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
@@ -41,7 +44,7 @@ use UnitEnum;
 
 /**
  * Pengaturan → Program member (ADR 0013, Q60, member.settings): aktifkan program, outlet yang ikut, aturan poin,
- * diskon member, dan tier (M5).
+ * diskon member, tier (M5), dan voucher ulang tahun (M7).
  */
 final class MemberProgramSettings extends Page
 {
@@ -80,6 +83,7 @@ final class MemberProgramSettings extends Page
             'enabled' => $setting->enabled,
             'outlet_ids' => Outlet::query()->whereNotIn('id', $excluded)->pluck('id')->all(),
             // Kunci acak per baris (pola Repeater); id tier lama dibawa di field tersembunyi
+            'birthday' => $setting->birthdayVoucher(),
             'tiers' => MemberTier::ordered()->mapWithKeys(fn (MemberTier $t): array => [(string) Str::uuid() => [
                 'id' => $t->id, 'name' => $t->name, 'min_spend_12m' => $t->min_spend_12m,
                 'point_multiplier' => $t->point_multiplier, 'discount_percent' => $t->discount_percent,
@@ -135,6 +139,7 @@ final class MemberProgramSettings extends Page
                     ]),
 
                 self::tierSection(),
+                self::birthdaySection(),
             ]);
     }
 
@@ -168,6 +173,11 @@ final class MemberProgramSettings extends Page
             DB::transaction(function () use ($data, $outletIds, $rules): void {
                 app(UpdateMemberProgram::class)->handle((bool) $data['enabled'], $outletIds, array_map(fn (mixed $v): string => (string) $v, $rules));
 
+                if (array_key_exists('birthday', $data)) {
+                    // Field tersembunyi (voucher nonaktif) tidak ikut state: nilai lama dipertahankan
+                    app(UpdateBirthdayVoucher::class)->handle([...MemberSetting::current()->birthdayVoucher(), ...(array) $data['birthday']]);
+                }
+
                 if (array_key_exists('tiers', $data)) {
                     app(SaveMemberTiers::class)->handle(array_values(array_map(fn (array $t): array => [
                         'id' => filled($t['id'] ?? null) ? (string) $t['id'] : null,
@@ -185,6 +195,32 @@ final class MemberProgramSettings extends Page
         }
 
         Notification::make()->success()->title('Program member disimpan')->send();
+    }
+
+    /** Voucher ulang tahun (M7, Q66): dibuat otomatis di awal bulan lahir, berlaku sampai akhir bulan. */
+    private static function birthdaySection(): Section
+    {
+        $percent = fn (Get $get): bool => $get('birthday.type') === DiscountType::Percent->value;
+
+        return Section::make('Voucher ulang tahun')
+            ->description('Dibuat otomatis untuk member di bulan lahirnya (sekali, berlaku sampai akhir bulan). Butuh tanggal lahir member')
+            ->visible(fn (Get $get): bool => (bool) $get('enabled'))
+            ->columns(2)
+            ->schema([
+                Toggle::make('birthday.enabled')->label('Aktifkan voucher ulang tahun')->live()->columnSpanFull(),
+                ToggleButtons::make('birthday.type')->label('Jenis potongan')->inline()->live()
+                    ->options([DiscountType::Fixed->value => 'Nominal', DiscountType::Percent->value => 'Persen'])
+                    ->visible(fn (Get $get): bool => (bool) $get('birthday.enabled')),
+                TextInput::make('birthday.value')->label('Nilai')->numeric()->required()->minValue(0)
+                    ->maxValue(fn (Get $get): ?int => $percent($get) ? 100 : null)
+                    ->prefix(fn (Get $get): ?string => $percent($get) ? null : 'Rp')
+                    ->suffix(fn (Get $get): ?string => $percent($get) ? '%' : null)
+                    ->visible(fn (Get $get): bool => (bool) $get('birthday.enabled')),
+                MoneyInput::make('birthday.max_discount')->label('Maks. potongan')->helperText('Kosong = tanpa batas')
+                    ->visible(fn (Get $get): bool => (bool) $get('birthday.enabled') && $percent($get)),
+                MoneyInput::make('birthday.min_spend')->label('Minimal belanja')
+                    ->visible(fn (Get $get): bool => (bool) $get('birthday.enabled')),
+            ]);
     }
 
     /** Tier member (M5, Q64): tabel ringkas seperti opsi produk, tombol tambah di kanan atas card. */

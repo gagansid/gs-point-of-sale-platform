@@ -5,15 +5,18 @@ declare(strict_types=1);
 use App\Actions\Member\AdjustMemberPoints;
 use App\Actions\Member\SaveMemberTiers;
 use App\Actions\Member\SaveStampProgram;
+use App\Actions\Member\SaveVoucher;
 use App\Actions\Member\SetMemberPin;
 use App\Actions\Member\UpdateMemberProgram;
 use App\Enums\PaymentCategory;
+use App\Enums\VoucherSource;
 use App\Livewire\Cashier\PointOfSale;
 use App\Models\Member;
 use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Shift;
 use App\Models\User;
+use App\Models\Voucher;
 use App\Services\Member\TierEvaluator;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
@@ -185,4 +188,31 @@ it('tier & kartu stempel: chip menampilkan tier, gratis stempel dipakai lalu iku
 
     $held = $page->instance()->heldCarts();
     $page->call('resume', $held[0]['id'])->assertSet('stampProgramIds', [$program->id]);
+});
+
+it('voucher: kode salah tampil pesan, kode sah dipakai & tersimpan di order; voucher ulang tahun dari member', function () {
+    app(SaveVoucher::class)->handle(null, ['code' => 'HEMAT5', 'name' => 'Hemat', 'type' => 'fixed', 'value' => '5000']);
+
+    $page = Livewire::test(PointOfSale::class)
+        ->call('addProduct', $this->pos->croissant->id)
+        ->set('voucherInput', 'salah')->call('applyVoucher')
+        ->assertSet('voucherError', 'Kode voucher tidak ditemukan')->assertSet('appliedVoucherCode', null)
+        ->set('voucherInput', 'hemat5')->call('applyVoucher')
+        ->assertSet('appliedVoucherCode', 'HEMAT5')->assertSet('voucherError', null)
+        ->assertSee('Voucher HEMAT5');
+    memberPayCash($page, $this);
+
+    expect(Order::query()->sole()->voucher_discount)->toBe('5000.00');
+
+    $birthday = new Voucher(['name' => 'Voucher ulang tahun', 'type' => 'fixed', 'value' => '10000', 'quota' => 1, 'member_only' => true]);
+    $birthday->forceFill(['source' => VoucherSource::Birthday, 'member_id' => $this->member->id])->save();
+
+    $page->call('selectMember', $this->member->id)
+        ->assertSee('Voucher ulang tahun Rp10.000')
+        ->call('addProduct', $this->pos->croissant->id)
+        ->call('togglePersonalVoucher', $birthday->id)
+        ->assertSet('voucherId', $birthday->id);
+    memberPayCash($page, $this);
+
+    expect(Order::query()->where('voucher_id', $birthday->id)->sole()->voucher_discount)->toBe('10000.00');
 });

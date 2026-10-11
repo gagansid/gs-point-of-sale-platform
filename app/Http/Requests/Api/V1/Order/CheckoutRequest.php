@@ -34,6 +34,9 @@ final class CheckoutRequest extends FormRequest
             // Kartu stempel yang ditukar (M6): 1 item gratis per program; saldo & item dicek Action
             'stamp_program_ids' => ['nullable', 'array', 'max:5'],
             'stamp_program_ids.*' => ['uuid', 'distinct'],
+            // Voucher (M7): kode promo atau ID voucher pribadi (ulang tahun), salah satu; aturan pakai dicek Action
+            'voucher_code' => ['nullable', 'string', 'max:30', 'prohibits:voucher_id'],
+            'voucher_id' => ['nullable', 'uuid'],
             // Bukti pemilik saat membayar dengan poin (kode QR halaman member / PIN member)
             'member_code' => ['nullable', 'string', 'digits:6'],
             'member_pin' => ['nullable', 'string', 'digits:4'],

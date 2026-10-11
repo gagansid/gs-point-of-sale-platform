@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ShiftController;
 use App\Http\Controllers\Api\V1\SystemController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\VoucherController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -100,6 +101,7 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('{memberId}', 'show')->whereUuid('memberId')->name('show');
             Route::get('{memberId}/points', 'points')->whereUuid('memberId')->name('points');
         });
+        Route::get('vouchers/check', [VoucherController::class, 'check'])->name('vouchers.check');
 
         // ---------- Laporan ----------
         Route::controller(ReportController::class)->prefix('reports')->name('reports.')->group(function (): void {

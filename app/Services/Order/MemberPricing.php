@@ -28,6 +28,9 @@ final readonly class MemberPricing
         public ?string $tierName = null,
         // Rincian gratis stempel (orders.stamp_redemptions, M6); jumlahnya = $stampFree
         public array $stampRedemptions = [],
+        // Snapshot voucher untuk order (orders.voucher_id & voucher_code, M7)
+        public ?string $voucherId = null,
+        public ?string $voucherLabel = null,
     ) {}
 
     public static function none(): self

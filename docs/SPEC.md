@@ -155,7 +155,7 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `member.create` | Daftar member baru (daftar cepat di kasir) | ✅ | ✅ | ✅ | ✅ |
 | `member.manage` | Ubah, nonaktifkan, hapus (anonimkan) member | ✅ | ✅ | ❌ | ❌ |
 | `member.points_adjust` | Tambah/kurangi poin manual dengan alasan | ✅ | ✅ | ❌ | ❌ |
-| `member.settings` | Program member: aktif/nonaktif, outlet ikut, poin, diskon, tier (M5), kartu stempel (M6) | ✅ | ❌ | ❌ | ❌ |
+| `member.settings` | Program member: aktif/nonaktif, outlet ikut, poin, diskon, tier (M5), kartu stempel (M6), voucher (M7) | ✅ | ❌ | ❌ | ❌ |
 
 ```php
 enum UserRole: string
@@ -243,19 +243,21 @@ tabel master memakai soft delete.
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
 | Transaksi | `shifts` | tenant_id, outlet_id, device_id, opened_by, closed_by, opening_cash, expected_cash, actual_cash, difference, status, close_note, open_device_key (unik: 1 shift terbuka per device), opened_at, closed_at |
 | Transaksi | `order_sequences` | outlet_id, date, last_number (penomoran order harian) |
-| Transaksi | `orders` | tenant_id, outlet_id, shift_id, device_id, user_id, member_id, member_name, member_tier (snapshot, ADR 0013), points_earned, points_redeemed, member_discount, stamp_free_total, stamp_redemptions (json snapshot), stamps_earned, order_number, order_type, table_label, status, notes, discount_type, discount_value, order_discount, subtotal, discount_total (item + order), service_total, tax_total, rounding, grand_total, paid_total, change_total, service_rate, tax_rate, tax_inclusive (setelan saat transaksi), void_reason, voided_by, void_approved_by, voided_at, approved_by (approver diskon), completed_at |
+| Transaksi | `orders` | tenant_id, outlet_id, shift_id, device_id, user_id, member_id, member_name, member_tier (snapshot, ADR 0013), points_earned, points_redeemed, member_discount, stamp_free_total, stamp_redemptions (json snapshot), stamps_earned, voucher_id, voucher_code (snapshot), voucher_discount, order_number, order_type, table_label, status, notes, discount_type, discount_value, order_discount, subtotal, discount_total (item + order), service_total, tax_total, rounding, grand_total, paid_total, change_total, service_rate, tax_rate, tax_inclusive (setelan saat transaksi), void_reason, voided_by, void_approved_by, voided_at, approved_by (approver diskon), completed_at |
 | Transaksi | `order_items` | order_id, product_id, product_name, category_name, unit_price, unit_cost, options_total, qty, discount, line_total, notes |
 | Transaksi | `order_item_options` | order_item_id, option_id, option_name, price_delta |
 | Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit; sistem: points — ADR 0013), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |
 | Pembayaran | `outlet_payment_method` | tenant_id, outlet_id, payment_method_id (unik per outlet), is_active — metode bayar per outlet (Q44) |
 | Produk | `stock_movements` | tenant_id, outlet_id, product_id, user_id, type (adjustment/sale/void_return), qty_change, qty_after, reason, reference_id — riwayat stok (Q14) |
 | Member | `members` | tenant_id, code (6 karakter acak, unik per tenant), name, phone (+62…, unik per tenant), email, birth_day, birth_month, notes, password & pin (M3–M4), tier_id, points_balance, spend_12m, total_spent, visit_count, last_visit_at, joined_outlet_id, consent_at, is_active, anonymized_at (ADR 0013) |
-| Member | `member_settings` | tenant_id (unik), enabled, earn_amount, earn_points, redeem_value, min_redeem_points, max_redeem_percent, expiry_months, member_discount_percent (Q62–Q63) |
+| Member | `member_settings` | tenant_id (unik), enabled, earn_amount, earn_points, redeem_value, min_redeem_points, max_redeem_percent, expiry_months, member_discount_percent (Q62–Q63), birthday_voucher (json: enabled, type, value, max_discount, min_spend — Q66) |
 | Member | `member_point_ledger` | tenant_id, member_id, outlet_id, order_id, payment_id, type (earn/redeem/void_reversal/adjust/expire), points (+/−), remaining (FIFO), balance_after, expires_at, reason, user_id — append-only (Q62) |
 | Member | `outlet_member_program` | tenant_id, outlet_id (unik), is_enabled — tanpa baris = outlet ikut program |
 | Member | `member_tiers` | tenant_id, name, min_spend_12m (batas belanja 12 bulan bergulir), point_multiplier, discount_percent (ditambahkan ke diskon member) — maks. 10 per bisnis (Q64) |
 | Member | `stamp_programs` + `stamp_program_items` | tenant_id, name, stamps_required (2–100), is_active; item: stamp_program_id, product_id **atau** category_id (Q65) |
 | Member | `member_stamps` | tenant_id, member_id, stamp_program_id, outlet_id, order_id, type (earn/redeem/void_reversal/adjust), change (+/−), balance_after, reason, user_id — append-only, saldo = Σ change (Q65) |
+| Member | `vouchers` | tenant_id, code (huruf besar, unik per tenant; null = voucher pribadi), name, source (owner/birthday), type (fixed/percent), value, max_discount, min_spend, quota, per_member_quota, used_count, starts_at, ends_at, member_only, tier_ids, outlet_ids (json), member_id (voucher pribadi), is_active (Q66) |
+| Member | `voucher_redemptions` | tenant_id, voucher_id, member_id, order_id (unik per voucher), outlet_id, amount, status (used/voided) (Q66) |
 | Pembayaran | `payments` | tenant_id, order_id, payment_method_id, user_id, category, amount (dipakai membayar), tendered (uang diterima), change, reference (approval code), status |
 | Sistem Laravel | `personal_access_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs` | Bawaan Laravel / Sanctum |
 
@@ -400,8 +402,9 @@ Contoh `POST /checkout`:
 | POST | `/members` | Semua | Daftar cepat (persetujuan wajib, HP unik per bisnis) |
 | GET | `/members/{id}` | Semua | Detail member |
 | GET | `/members/{id}/points` | Semua | Saldo & riwayat poin |
+| GET | `/vouchers/check?code=` | Semua | Cek kode promo untuk outlet perangkat (+ `member_id`, `subtotal` opsional), 30/menit |
 
-`/checkout` & `PUT /orders/{id}` menerima `member_id` (lihat `docs/api/member.md`).
+`/checkout` & `PUT /orders/{id}` menerima `member_id`, `stamp_program_ids`, `voucher_code` / `voucher_id` (lihat `docs/api/member.md`).
 
 ### Laporan & setelan
 
@@ -447,6 +450,7 @@ berdasarkan `error.code`, bukan teks `message`. Detail & contoh:
 | 422 | `MEMBER_PROGRAM_DISABLED` | Program member nonaktif di bisnis atau outlet dikecualikan (ADR 0013) |
 | 422 | `INSUFFICIENT_POINTS` | Poin ditukar melebihi saldo, di bawah minimal, atau di atas maksimal persen tagihan (ADR 0013) |
 | 422 | `INVALID_MEMBER_PROOF` | Penukaran poin tanpa/dengan PIN member atau kode QR yang salah/kedaluwarsa |
+| 422 | `VOUCHER_INVALID` | Voucher tidak bisa dipakai; `error.details.reason`: not_found, inactive, not_started, expired, quota_exhausted, member_quota_exhausted, min_spend, member_only, tier, outlet, not_owner (ADR 0013, Q66) |
 | 422 | `PAYMENT_EXCEEDS_BALANCE` | Non-tunai melebihi sisa tagihan |
 | 422 | `DISCOUNT_OVER_LIMIT` | Diskon melebihi batas role tanpa approval |
 | 423 | `PIN_LOCKED` | PIN dikunci 15 menit: 5 kali salah dari satu sumber (login / approval, per perangkat) atau 15 kali salah dari semua perangkat (`error.details.retry_after` detik) |
@@ -668,7 +672,7 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q63 | Diskon member & urutan potongan | Diskon member % tetap (+ diskon tier) dicatat sebagai diskon order. Urutan di `OrderCalculator`: diskon item manual → gratis stempel → diskon order manual → voucher → diskon member/tier → service → pajak → pembulatan → pembayaran (termasuk Poin). | Diterima | ADR 0013 |
 | Q64 | Tier member | Tingkatan (mis. Reguler/Silver/Gold) diatur owner: batas **total belanja 12 bulan bergulir**, pengali poin & diskon. Dievaluasi saat order selesai & jadwal harian (bisa naik/turun). Implementasi M5: belanja = Σ `grand_total` order selesai (void tidak dihitung) 12 bulan terakhir; di bawah tier terendah = tanpa tier (tidak ada baris "Reguler" wajib); diskon tier **ditambahkan** ke diskon member dasar (maks. 100%); pengali poin memakai tier **sebelum** order dihitung (tier baru berlaku di transaksi berikutnya); order menyimpan snapshot `member_tier`; `pos:evaluate-member-tiers` harian 01.45 WIB. | Diterima | ADR 0013 |
 | Q65 | Kartu stempel | Program per produk/kategori terpilih: 1 item = 1 stempel; N stempel = 1 item gratis (item termurah yang memenuhi, dicatat diskon item). Beberapa program bisa aktif. Stempel masuk saat selesai, dikembalikan saat void. Implementasi M6: kasir memilih kartu (`stamp_program_ids`, maks. 5, 1 gratis per kartu per order); harga satuan termurah setelah diskon item menjadi potongan `stamp_free_total` sebelum diskon order manual (bagian `discount_total`, bukan baris item); satu unit tidak digratiskan dua kartu; unit gratis tidak menghasilkan stempel; saldo dicek ulang saat order selesai (stempel tidak terpakai dua kali), gagal = `422 VALIDATION_ERROR` field `stamp_program_ids`; tanpa bukti QR/PIN (nilai kecil, seperti memasang member). | Diterima | ADR 0013 |
-| Q66 | Voucher | Voucher **ulang tahun** otomatis di bulan lahir (sekali, sampai akhir bulan) dan **kode promo owner** (nominal/persen, maks. potongan, minimal belanja, kuota total & per member, periode, outlet, khusus member/tier). Dicatat sebagai diskon order; void mengembalikan kuota. | Diterima | ADR 0013 |
+| Q66 | Voucher | Voucher **ulang tahun** otomatis di bulan lahir (sekali, sampai akhir bulan) dan **kode promo owner** (nominal/persen, maks. potongan, minimal belanja, kuota total & per member, periode, outlet, khusus member/tier). Dicatat sebagai diskon order; void mengembalikan kuota.  Implementasi M7: kode tidak peka huruf besar; voucher berlaku hanya di outlet yang ikut program; kode promo tanpa syarat member boleh untuk transaksi tanpa member, `per_member_quota` atau tier = otomatis khusus member; minimal belanja dibanding subtotal setelah diskon item; pemakaian dicatat saat order selesai dengan kuota dicek ulang di bawah kunci; voucher ulang tahun dibuat `pos:issue-birthday-vouchers` (harian 00.15 WIB) untuk bulan lahir WIB, sekali per bulan; gagal = `422 VOUCHER_INVALID` + `details.reason`.| Diterima | ADR 0013 |
 | Q67 | Halaman member | `gspos.id/m/{kode-bisnis}` (per bisnis), guard `member`. Login **nomor HP + kata sandi**; daftar mandiri (nomor yang sudah didaftarkan kasir diaktifkan lewat kata sandi sementara) (tanpa OTP/email); lupa kata sandi = kasir/owner membuat kata sandi sementara (wajib diganti). Pesan umum, batas percobaan & kunci 15 menit. Isi: QR dinamis, saldo & riwayat poin, tier, stempel, voucher, transaksi, profil, ganti kata sandi, hapus akun. | Diterima | ADR 0013 |
 | Q68 | Alur self-order meja | **Terima kasir dulu, lalu bayar** (bayar dulu sebelum diproses): `pending` → kasir terima (`awaiting_payment`) atau tolak (`rejected` + alasan) → lunas online/tunai (`completed`, stok dipotong saat lunas) atau `expired` setelah `payment_timeout_minutes` (bawaan 15). Masuk shift kasir yang menerima; `orders.channel = self_order`; harga dihitung ulang server, snapshot saat diterima. | Diterima | ADR 0014 |
 | Q69 | Meja & QR | Tabel `tables` per outlet (nama, area, `qr_token` acak, aktif). QR `order.gspos.id/t/{token}` (tanpa subdomain `/order/t/{token}`); token bisa diganti; cetak QR per meja/semua dari dashboard (`table.manage`). Setelan per outlet: aktif, batas waktu bayar, jam layanan, metode online. | Diterima | ADR 0014 |

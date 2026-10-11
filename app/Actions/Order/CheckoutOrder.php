@@ -103,6 +103,8 @@ final class CheckoutOrder
                     'member_name' => $member?->name,
                     'member_tier' => $pricing->tierName,
                     'stamp_redemptions' => $pricing->stampRedemptions !== [] ? $pricing->stampRedemptions : null,
+                    'voucher_id' => $pricing->voucherId,
+                    'voucher_code' => $pricing->voucherLabel,
                 ]);
                 $this->writer->applyTotals($order, $totals, $outlet);
                 $order->save();

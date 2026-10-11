@@ -26,6 +26,23 @@
         </section>
     @endif
 
+    @foreach ($vouchers as $voucher)
+        {{-- Voucher pribadi (M7): disebutkan ke kasir, dipakai lewat member terpasang --}}
+        <section class="member-card member-voucher">
+            <h2 class="member-subtitle">{{ $voucher->name }}</h2>
+            <p class="member-voucher-value">{{ $voucher->benefitLabel() }}</p>
+            <p class="member-muted">
+                @if (\App\Support\Money::isPositive($voucher->min_spend))
+                    Minimal belanja {{ \App\Support\Money::format($voucher->min_spend) }}.
+                @endif
+                @if ($voucher->ends_at)
+                    Berlaku s/d {{ $voucher->ends_at->setTimezone(\App\Actions\Member\IssueBirthdayVouchers::TIMEZONE)->locale('id')->translatedFormat('j F Y') }}.
+                @endif
+                Sebutkan ke kasir saat membayar.
+            </p>
+        </section>
+    @endforeach
+
     @foreach ($stampCards as $card)
         {{-- Kartu stempel (M6): satu lingkaran per stempel menuju 1 gratis --}}
         @php($filled = $card['balance'] > 0 ? $card['balance'] % $card['stamps_required'] : 0)

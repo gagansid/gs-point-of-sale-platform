@@ -32,6 +32,7 @@ enum ErrorCode: string
     case InsufficientPoints = 'INSUFFICIENT_POINTS';
     case InvalidMemberProof = 'INVALID_MEMBER_PROOF';
     case MemberPinLocked = 'MEMBER_PIN_LOCKED';
+    case VoucherInvalid = 'VOUCHER_INVALID';
     case PaymentExceedsBalance = 'PAYMENT_EXCEEDS_BALANCE';
     case DiscountOverLimit = 'DISCOUNT_OVER_LIMIT';
     case PinLocked = 'PIN_LOCKED';
@@ -51,7 +52,7 @@ enum ErrorCode: string
             self::NotFound, self::MemberNotFound => 404,
             self::ShiftNotOpen, self::OrderAlreadyClosed, self::LastOwnerRequired, self::OutletLimitReached => 409,
             self::ValidationError, self::PaymentExceedsBalance, self::DiscountOverLimit, self::MemberProgramDisabled,
-            self::InsufficientPoints, self::InvalidMemberProof => 422,
+            self::InsufficientPoints, self::InvalidMemberProof, self::VoucherInvalid => 422,
             self::PinLocked, self::MemberPinLocked => 423,
             self::AppUpdateRequired => 426,
             self::TooManyRequests => 429,
@@ -79,6 +80,7 @@ enum ErrorCode: string
             self::InsufficientPoints => 'Poin member tidak cukup',
             self::InvalidMemberProof => 'PIN atau kode QR member salah atau kedaluwarsa',
             self::MemberPinLocked => 'PIN member terkunci sementara karena terlalu banyak percobaan',
+            self::VoucherInvalid => 'Voucher tidak bisa dipakai',
             self::ShiftNotOpen => 'Shift belum dibuka',
             self::OrderAlreadyClosed => 'Transaksi sudah selesai atau dibatalkan',
             self::LastOwnerRequired => 'Bisnis wajib memiliki minimal satu owner aktif',

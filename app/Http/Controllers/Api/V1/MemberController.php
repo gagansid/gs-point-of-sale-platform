@@ -11,10 +11,12 @@ use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Member\MemberRequest;
 use App\Http\Resources\Api\V1\MemberResource;
+use App\Http\Resources\Api\V1\VoucherResource;
 use App\Models\Member;
 use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
 use App\Services\Member\StampCards;
+use App\Services\Member\Vouchers;
 use App\Support\ApiResponse;
 use App\Support\CurrentOutlet;
 use Dedoc\Scramble\Attributes\Group;
@@ -78,8 +80,9 @@ final class MemberController extends Controller
      *
      * Permission member.view. Member tenant lain atau dihapus → `404 MEMBER_NOT_FOUND`. `stamp_cards`: kartu stempel
      * aktif dengan saldo, `rewards_available` (gratis yang bisa ditukar), dan produk/kategori yang memenuhi.
+     * `vouchers`: voucher pribadi (ulang tahun) yang masih bisa dipakai; kirim `voucher_id` saat checkout.
      */
-    public function show(Request $request, string $memberId, StampCards $stamps): JsonResponse
+    public function show(Request $request, string $memberId, StampCards $stamps, Vouchers $vouchers): JsonResponse
     {
         abort_unless($request->user()?->can('member.view') ?? false, 403);
         self::ensureProgramEnabled();
@@ -90,6 +93,7 @@ final class MemberController extends Controller
         return ApiResponse::success([
             ...MemberResource::make($member)->resolve($request),
             'stamp_cards' => $stamps->summary($member),
+            'vouchers' => VoucherResource::collection($vouchers->personalFor($member))->resolve($request),
         ], 'Detail member');
     }
 

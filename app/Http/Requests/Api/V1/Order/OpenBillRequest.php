@@ -30,6 +30,9 @@ final class OpenBillRequest extends FormRequest
             // Kartu stempel yang ditukar (M6): 1 item gratis per program; saldo & item dicek Action
             'stamp_program_ids' => ['nullable', 'array', 'max:5'],
             'stamp_program_ids.*' => ['uuid', 'distinct'],
+            // Voucher (M7): kode promo atau ID voucher pribadi (ulang tahun), salah satu; aturan pakai dicek Action
+            'voucher_code' => ['nullable', 'string', 'max:30', 'prohibits:voucher_id'],
+            'voucher_id' => ['nullable', 'uuid'],
             'discount' => ['nullable', 'array'],
             'discount.type' => ['required_with:discount', Rule::enum(DiscountType::class)],
             'discount.value' => ['required_with:discount', ...$money, 'min:0', Rule::when($this->input('discount.type') === 'percent', ['max:100'])],

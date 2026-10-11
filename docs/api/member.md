@@ -10,11 +10,12 @@ Keputusan: [ADR 0013](../adr/0013-member-loyalty-program.md), SPEC Q60–Q67 (ta
 | POST | `/v1/members` | `member.create` | `id` opsional | `SaveMember` |
 | GET | `/v1/members/{id}` | `member.view` | baca | — |
 | GET | `/v1/members/{id}/points` | `member.view` | baca | — |
+| GET | `/v1/vouchers/check?code=` | `order.create` | baca | — |
 | POST | `/v1/checkout`, PUT `/v1/orders/{id}` (+ `member_id`) | `order.create` | ya | `ResolveOrderMember` |
 
 Error umum: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `403 SUBSCRIPTION_EXPIRED`, `404 MEMBER_NOT_FOUND`,
 `422 MEMBER_PROGRAM_DISABLED` (program belum diaktifkan owner di **Pengaturan → Program member**),
-`422 VALIDATION_ERROR`, `429 TOO_MANY_REQUESTS`.
+`422 VALIDATION_ERROR`, `422 VOUCHER_INVALID`, `429 TOO_MANY_REQUESTS`.
 
 Member milik **bisnis** dan berlaku di semua outlet. Owner bisa mengecualikan outlet; di outlet itu member tetap
 bisa dipasang (tercatat kunjungan) tanpa benefit. Nomor HP disamarkan untuk kasir (`phone_masked`); field
@@ -150,4 +151,32 @@ sementara di dashboard (Member → Kata sandi sementara); member wajib mengganti
   Void: stempel didapat ditarik, stempel yang ditukar dikembalikan. Struk: `totals.stamp_free_total`,
   `member_stamps: [{ name, earned, balance, stamps_required }]`.
 
-Voucher menyusul (ADR 0013, M7).
+## Voucher (M7, SPEC Q66)
+
+- **Kode promo** dibuat owner di **Pelanggan → Voucher**: nominal/persen (+ maks. potongan), minimal belanja
+  (subtotal setelah diskon item), kuota total & per member, periode, khusus member/tier, outlet.
+- **Voucher ulang tahun** (Pengaturan → Program member): dibuat otomatis untuk member di bulan lahirnya (WIB),
+  berlaku sampai akhir bulan, sekali pakai. Muncul di `GET /v1/members/{id}` → `vouchers` dan halaman member.
+- Semua voucher hanya berlaku di outlet yang ikut program member. Kode promo tanpa syarat member boleh dipakai
+  tanpa member.
+- Pakai: `voucher_code` (kode promo) **atau** `voucher_id` (voucher pribadi) di `POST /checkout` /
+  `PUT /orders/{id}`. Potongan `voucher_discount` (bagian `discount_total`) dihitung setelah diskon order manual,
+  sebelum diskon member, tidak dihitung ke batas diskon kasir. Order: `voucher: { id, code }`; struk:
+  `totals.voucher_code`, `totals.voucher_discount`.
+- Pemakaian & kuota dicatat saat order **selesai** (dicek ulang; open bill yang kuotanya keburu habis ditolak saat
+  dibayar). Void mengembalikan kuota.
+
+### `GET /v1/vouchers/check?code=HEMAT10&member_id=&subtotal=`
+
+Cek kode untuk outlet perangkat sebelum checkout (pratinjau). `member_id` & `subtotal` opsional (tanpa `subtotal`
+minimal belanja tidak dicek). Maks. 30 cek/menit per user.
+
+```json
+{ "data": { "id": "…", "code": "HEMAT10", "name": "Promo akhir pekan", "source": "owner", "type": "percent",
+  "value": "10.00", "max_discount": "20000.00", "min_spend": "50000.00", "member_only": false,
+  "ends_at": "2026-10-31T16:59:59Z" } }
+```
+
+`422 VOUCHER_INVALID` → `error.details.reason`: `not_found`, `inactive`, `not_started`, `expired`,
+`quota_exhausted`, `member_quota_exhausted`, `min_spend` (+ `min_spend`), `member_only`, `tier`, `outlet`,
+`not_owner`.

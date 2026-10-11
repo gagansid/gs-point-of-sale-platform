@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Services\Member\PointLedger;
 use App\Services\Member\StampCards;
 use App\Services\Member\TierEvaluator;
+use App\Services\Member\Vouchers;
 use App\Support\Money;
 
 /**
@@ -23,10 +24,14 @@ final class ReverseOrderBenefits
         private readonly PointLedger $ledger,
         private readonly TierEvaluator $tiers,
         private readonly StampCards $stamps,
+        private readonly Vouchers $vouchers,
     ) {}
 
     public function handle(Order $order): void
     {
+        // Kuota voucher kembali (M7), juga untuk order tanpa member
+        $this->vouchers->reverse($order);
+
         if ($order->member_id === null || $order->member === null) {
             return;
         }

@@ -32,6 +32,8 @@ final readonly class OpenBillData
         // Benefit member (kartu stempel, M6): benefitsProvided = false → pilihan lama di open bill tetap
         public BenefitSelection $benefits = new BenefitSelection,
         public bool $benefitsProvided = false,
+        // Voucher (M7): voucherProvided = false → voucher lama di open bill tetap; null = dilepas
+        public bool $voucherProvided = false,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -51,6 +53,7 @@ final readonly class OpenBillData
             memberProvided: array_key_exists('member_id', $data),
             benefits: BenefitSelection::fromArray($data),
             benefitsProvided: array_key_exists('stamp_program_ids', $data),
+            voucherProvided: array_key_exists('voucher_code', $data) || array_key_exists('voucher_id', $data),
         );
     }
 }

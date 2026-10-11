@@ -24,6 +24,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $max_redeem_percent
  * @property int $expiry_months 0 = tidak kedaluwarsa
  * @property string $member_discount_percent diskon member % (Q63)
+ * @property array{enabled?: bool, type?: string, value?: string, max_discount?: string|null, min_spend?: string}|null $birthday_voucher voucher ulang tahun (M7)
  */
 final class MemberSetting extends Model
 {
@@ -54,6 +55,25 @@ final class MemberSetting extends Model
             'max_redeem_percent' => 'integer',
             'expiry_months' => 'integer',
             'member_discount_percent' => 'decimal:2',
+            'birthday_voucher' => 'array',
+        ];
+    }
+
+    /**
+     * Aturan voucher ulang tahun (M7, Q66) dengan nilai bawaan (nonaktif).
+     *
+     * @return array{enabled: bool, type: string, value: string, max_discount: string|null, min_spend: string}
+     */
+    public function birthdayVoucher(): array
+    {
+        $rule = $this->birthday_voucher ?? [];
+
+        return [
+            'enabled' => (bool) ($rule['enabled'] ?? false),
+            'type' => (string) ($rule['type'] ?? 'fixed'),
+            'value' => (string) ($rule['value'] ?? '0'),
+            'max_discount' => filled($rule['max_discount'] ?? null) ? (string) $rule['max_discount'] : null,
+            'min_spend' => (string) ($rule['min_spend'] ?? '0'),
         ];
     }
 
