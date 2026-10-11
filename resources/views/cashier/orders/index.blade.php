@@ -13,7 +13,7 @@
                 <tbody>
                     @foreach ($orders as $order)
                         <tr>
-                            <td>{{ $order->order_number }}@if ($order->table_label) · {{ $order->table_label }}@endif</td>
+                            <td><a href="{{ route('cashier.orders.show', $order->id) }}">{{ $order->order_number }}</a>@if ($order->table_label) · {{ $order->table_label }}@endif</td>
                             <td>{{ $order->created_at->setTimezone($timezone)->format('H.i') }}</td>
                             <td>{{ $order->user?->name }}</td>
                             <td><span @class(['cashier-badge', 'is-'.$order->status->value])>{{ $order->status->getLabel() }}</span></td>

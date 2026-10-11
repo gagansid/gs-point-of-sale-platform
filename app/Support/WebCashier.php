@@ -49,6 +49,14 @@ final class WebCashier
         $device === null ? app()->forgetInstance(self::DEVICE_BINDING) : app()->instance(self::DEVICE_BINDING, $device);
     }
 
+    /** Device kasir web request ini, null di luar kasir web (API, dashboard). */
+    public static function deviceOrNull(): ?Device
+    {
+        $device = app()->bound(self::DEVICE_BINDING) ? app(self::DEVICE_BINDING) : null;
+
+        return $device instanceof Device ? $device : null;
+    }
+
     public static function device(): Device
     {
         $device = app()->bound(self::DEVICE_BINDING) ? app(self::DEVICE_BINDING) : null;

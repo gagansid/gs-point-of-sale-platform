@@ -9,6 +9,7 @@ use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
+use App\Support\WebCashier;
 use Closure;
 
 /**
@@ -49,9 +50,10 @@ final class VerifyApproval
             throw BusinessException::of(ErrorCode::InvalidPin);
         }
 
-        // Penghitung terpisah dari login PIN, per perangkat pelaku (GSPOS-SEC-002)
+        // Penghitung terpisah dari login PIN, per perangkat pelaku (GSPOS-SEC-002). Kasir web memakai
+        // device browser (Q54); tanpa ini semua sesi web berbagi satu penghitung "approval:none".
         $token = $actor->currentAccessToken();
-        $deviceId = $token instanceof PersonalAccessToken ? $token->device_id : null;
+        $deviceId = $token instanceof PersonalAccessToken ? $token->device_id : WebCashier::deviceOrNull()?->id;
         $this->verifyPin->handle($approver, $approval->pin, 'approval:'.($deviceId ?? 'none'), $deviceId);
 
         $authorizes ??= fn (User $user): bool => $user->can($permission);

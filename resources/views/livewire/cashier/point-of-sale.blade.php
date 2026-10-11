@@ -24,7 +24,7 @@
         </nav>
 
         @if ($message)
-            <div class="site-alert site-alert-warning pos-message" role="alert">{{ $message }}</div>
+            <div @class(['site-alert pos-message', 'site-alert-success' => $messageTone === 'success', 'site-alert-warning' => $messageTone !== 'success']) role="status">{{ $message }}</div>
         @endif
 
         <div class="pos-grid">
@@ -55,6 +55,14 @@
     {{-- Keranjang --}}
     <aside class="pos-cart" aria-label="Keranjang">
         <div class="pos-cart-head">
+            <div class="pos-bill-bar">
+                @if ($billId)
+                    <span class="pos-bill-tag">Open bill {{ $tableLabel ?: '' }}</span>
+                @endif
+                <button type="button" class="site-btn site-btn-outline" wire:click="$set('showBills', true)">
+                    Open bill ({{ $this->openBills->count() }})
+                </button>
+            </div>
             <div class="pos-segment" role="group" aria-label="Tipe order">
                 <button type="button" wire:click="$set('orderType', 'takeaway')" @class(['is-active' => $orderType === 'takeaway'])>Bawa pulang</button>
                 <button type="button" wire:click="$set('orderType', 'dine_in')" @class(['is-active' => $orderType === 'dine_in'])>Makan di tempat</button>
@@ -105,6 +113,10 @@
             </div>
         @endif
 
+        @if ($needsApproval && ! $paying)
+            @include('livewire.cashier.partials.approval')
+        @endif
+
         @if ($quote['error'])
             <div class="site-alert site-alert-warning" role="alert">{{ $quote['error'] }}</div>
         @endif
@@ -125,12 +137,16 @@
                     <dt>Pembulatan</dt><dd>{{ $money($totals->rounding) }}</dd>
                 @endif
                 <dt class="pos-grand">Total</dt><dd class="pos-grand">{{ $money($totals->grandTotal) }}</dd>
+                @if (\App\Support\Money::isPositive($billPaid))
+                    <dt>Sudah dibayar</dt><dd>{{ $money($billPaid) }}</dd>
+                @endif
             </dl>
         @endif
 
         <div class="pos-actions">
             <button type="button" class="site-btn site-btn-outline" wire:click="clearCart" @disabled($cart === [])
-                wire:confirm="Kosongkan keranjang?">Kosongkan</button>
+                wire:confirm="Kosongkan keranjang? Open bill yang tersimpan tidak terhapus.">{{ $billId ? 'Tutup' : 'Kosongkan' }}</button>
+            <button type="button" class="site-btn site-btn-outline" wire:click="saveBill" @disabled($cart === [] || $totals === null)>Simpan bill</button>
             <button type="button" class="site-btn site-btn-primary site-btn-lg" wire:click="openPayment" @disabled($totals === null)>
                 Bayar {{ $totals ? $money($totals->grandTotal) : '' }}
             </button>
@@ -195,7 +211,7 @@
         @php($remaining = $this->remaining())
         <div class="pos-modal" role="dialog" aria-modal="true" aria-labelledby="pay-title" wire:keydown.escape="$set('paying', false)">
             <form class="pos-modal-card pos-pay" wire:submit="pay">
-                <h2 id="pay-title">Bayar {{ $money($totals->grandTotal) }}</h2>
+                <h2 id="pay-title">Bayar {{ $money(\App\Support\Money::sub($totals->grandTotal, $billPaid)) }}</h2>
 
                 @foreach ($payments as $i => $payment)
                     @php($isCash = $this->isCash($payment['payment_method_id']))
@@ -235,6 +251,9 @@
                 @if ($payError)
                     <p class="site-error" role="alert">{{ $payError }}</p>
                 @endif
+                @if ($needsApproval)
+                    @include('livewire.cashier.partials.approval')
+                @endif
 
                 <div class="pos-actions">
                     <button type="button" class="site-btn site-btn-outline" wire:click="addPaymentRow">+ Split</button>
@@ -242,6 +261,29 @@
                     <button type="submit" class="site-btn site-btn-primary site-btn-lg" wire:loading.attr="disabled" wire:target="pay">Selesaikan</button>
                 </div>
             </form>
+        </div>
+    @endif
+
+    {{-- Daftar open bill --}}
+    @if ($showBills)
+        <div class="pos-modal" role="dialog" aria-modal="true" aria-labelledby="bills-title" wire:keydown.escape="$set('showBills', false)">
+            <div class="pos-modal-card">
+                <h2 id="bills-title">Open bill</h2>
+                @forelse ($this->openBills as $bill)
+                    <button type="button" class="site-choice" wire:click="loadBill('{{ $bill->id }}')" wire:key="b-{{ $bill->id }}">
+                        <span>
+                            <span class="site-choice-name">{{ $bill->table_label ?: $bill->order_number }}</span>
+                            <span class="site-choice-meta">{{ $bill->order_number }} · {{ $bill->user?->name }} · {{ $bill->created_at->setTimezone($outlet->timezone)->format('H.i') }}</span>
+                        </span>
+                        <span class="site-choice-name">{{ $money($bill->grand_total) }}</span>
+                    </button>
+                @empty
+                    <p class="cashier-muted">Belum ada open bill.</p>
+                @endforelse
+                <div class="pos-actions">
+                    <button type="button" class="site-btn site-btn-outline" wire:click="$set('showBills', false)">Tutup</button>
+                </div>
+            </div>
         </div>
     @endif
 
