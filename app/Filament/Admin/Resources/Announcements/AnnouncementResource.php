@@ -28,7 +28,7 @@ use UnitEnum;
 
 /**
  * Aplikasi → Pengumuman: banner ke semua tenant di dashboard, kasir web, dan aplikasi
- * (GET /v1/announcements). Maks. 3 pengumuman tayang ditampilkan.
+ * (GET /v1/system/status). Maks. 3 pengumuman tayang ditampilkan.
  */
 final class AnnouncementResource extends Resource
 {

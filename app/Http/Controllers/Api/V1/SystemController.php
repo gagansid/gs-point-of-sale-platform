@@ -31,7 +31,8 @@ final class SystemController extends Controller
             'maintenance' => false,
             'server_time' => Iso::dateTime(now()),
             'app_versions' => AppVersionResource::collection(AppVersion::query()->orderBy('platform')->get())->resolve(),
-            'announcements' => AnnouncementResource::collection(Announcement::query()->active()->latest('starts_at')->get())->resolve(),
+            // Sama dengan banner dashboard & kasir web: maks. 3 terbaru, cache 60 detik (dipanggil setiap app dibuka)
+            'announcements' => AnnouncementResource::collection(Announcement::current())->resolve(),
         ]);
     }
 }

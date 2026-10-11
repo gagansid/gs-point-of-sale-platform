@@ -10,7 +10,7 @@ use App\Models\Announcement;
 use Carbon\CarbonInterface;
 
 /**
- * Pengumuman super admin ke semua tenant: banner dashboard, kasir web, dan GET /v1/announcements.
+ * Pengumuman super admin ke semua tenant: banner dashboard, kasir web, dan GET /v1/system/status.
  * Teks polos (di-escape saat tampil). ends_at null = tayang sampai diakhiri.
  */
 final class SaveAnnouncement

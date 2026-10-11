@@ -10,7 +10,7 @@ use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
 
-/** Aplikasi → Pengumuman: admin, banner dashboard & kasir web, GET /v1/announcements. */
+/** Aplikasi → Pengumuman: admin, banner dashboard & kasir web, GET /v1/system/status. */
 beforeEach(function () {
     Filament::setCurrentPanel('admin');
     $this->actingAs(Admin::factory()->withTwoFactor()->create(), 'admin');
@@ -23,8 +23,7 @@ it('buat pengumuman; tampil di API dan banner dashboard', function () {
 
     $pos = posSetup();
     freshAuth();
-    $this->withToken($pos->token)->getJson('/api/v1/announcements', apiHeaders())
-        ->assertOk()->assertJsonPath('data.0.title', 'Maintenance')->assertJsonPath('data.0.ends_at', null);
+    $this->getJson('/api/v1/system/status')->assertOk()->assertJsonPath('data.announcements.0.title', 'Maintenance');
 
     $owner = User::factory()->owner()->create(['tenant_id' => $pos->tenantId]);
     Filament::setCurrentPanel('dashboard');
@@ -56,9 +55,4 @@ it('banner kasir web', function () {
     webCashierLogin($this, $pos, $pos->cashier);
 
     $this->get(route('cashier.shift'))->assertOk()->assertSee('Update harga');
-});
-
-it('API butuh token user', function () {
-    freshAuth();
-    $this->getJson('/api/v1/announcements', apiHeaders())->assertUnauthorized();
 });

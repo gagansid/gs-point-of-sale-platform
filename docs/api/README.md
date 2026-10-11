@@ -5,14 +5,14 @@ Satu file per domain, berisi semua endpoint domain tersebut dengan format
 
 | Domain | File | Status |
 |---|---|---|
-| Auth & sistem | [`auth.md`](auth.md) | ✅ 8 endpoint |
+| Auth & sistem | [`auth.md`](auth.md) | ✅ 7 endpoint |
 | Katalog & produk | [`product.md`](product.md) | ✅ 14 endpoint |
 | Shift | [`shift.md`](shift.md) | ✅ 5 endpoint |
 | Order & pembayaran | [`order.md`](order.md) | ✅ 7 endpoint |
 | Laporan | [`report.md`](report.md) | ✅ 15 endpoint (termasuk PDF rekap shift) + export Excel/PDF di dashboard |
 | Setelan (outlet, karyawan, metode bayar) | [`settings.md`](settings.md) | 🟡 10 endpoint (outlet, daftar outlet, karyawan, metode bayar); perangkat menyusul |
 
-**Total: 59 endpoint** (cek: `php artisan scramble:analyze`). Dokumentasi interaktif (Scramble) dibuat
+**Total: 58 endpoint** (cek: `php artisan scramble:analyze`). Dokumentasi interaktif (Scramble) dibuat
 otomatis dari route & docblock controller — tidak perlu diperbarui manual; cukup jaga docblock tetap akurat.
 
 File dibuat bersamaan dengan endpoint pertama di domain tersebut.

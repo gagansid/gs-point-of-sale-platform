@@ -54,6 +54,9 @@ Status sistem, versi minimal app, dan pengumuman aktif. Dipanggil saat app dibuk
 }
 ```
 
+`announcements`: pengumuman tayang dari panel admin → Pengumuman, maks. 3 terbaru, cache server ±60 detik.
+Teks polos; tampilkan sebagai banner (boleh disembunyikan per `id` yang sudah ditutup pengguna).
+
 ### Error
 
 | HTTP | `error.code` | Kapan |
@@ -261,20 +264,6 @@ dengan respons login tanpa `token`, `token_type`, `expires_at`.
 | 401 | `UNAUTHENTICATED` | Tanpa token / device token / user dinonaktifkan |
 | 403 | `DEVICE_NOT_REGISTERED` | Token kasir dari device yang sudah dicabut |
 | 403 | `TENANT_SUSPENDED` | Tenant ditangguhkan / langganan habis |
-
-## `GET /v1/announcements`
-
-Token user. Pengumuman tim gs.POS yang sedang tayang (dari panel admin → Pengumuman), maks. 3,
-terbaru dulu; cache server ±60 detik. Teks polos — tampilkan sebagai banner, boleh disembunyikan
-per `id` yang sudah ditutup pengguna.
-
-```json
-{ "success": true, "message": "OK", "data": [
-  { "id": "…", "title": "Maintenance terjadwal", "body": "Minggu 02.00–03.00 WIB", "starts_at": "2026-10-12T00:00:00Z", "ends_at": null }
-], "meta": { "request_id": "…" } }
-```
-
-Test: `tests/Feature/Filament/Admin/AnnouncementResourceTest.php`
 
 ## `POST /v1/auth/logout`
 
