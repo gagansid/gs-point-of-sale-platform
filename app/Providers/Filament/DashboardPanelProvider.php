@@ -119,7 +119,11 @@ final class DashboardPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::CONTENT_START, function (): string {
                 $user = Filament::auth()->user();
 
-                return $user instanceof User ? view('filament.dashboard.subscription-banner', ['tenant' => $user->tenant])->render() : '';
+                return $user instanceof User
+                    ? view('filament.dashboard.subscription-banner', ['tenant' => $user->tenant])->render()
+                        // Pengumuman super admin ke semua tenant
+                        .view('filament.dashboard.announcements')->render()
+                    : '';
             })
             // Persistent: juga berjalan di request Livewire (aksi tabel, simpan form)
             ->authMiddleware([

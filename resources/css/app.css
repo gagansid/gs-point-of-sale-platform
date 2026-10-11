@@ -1657,3 +1657,11 @@
     background: #ffffff;
     font: inherit;
 }
+
+.cashier-announcement {
+    padding: 8px 20px;
+    border-bottom: 1px solid #b2ddff;
+    background: #eff8ff;
+    color: #175cd3;
+    font-size: 13.5px;
+}

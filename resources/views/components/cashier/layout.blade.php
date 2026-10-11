@@ -38,6 +38,12 @@
         </form>
     </header>
 
+    @foreach (\App\Models\Announcement::current() as $announcement)
+        <div class="cashier-announcement" role="status">
+            <strong>{{ $announcement->title }}</strong> {{ $announcement->body }}
+        </div>
+    @endforeach
+
     <main @class(['cashier-main', 'cashier-main-wide' => $wide])>
         @if (session('status'))
             <div class="site-alert site-alert-success" role="status">{{ session('status') }}</div>

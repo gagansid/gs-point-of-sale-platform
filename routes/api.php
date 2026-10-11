@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\AnnouncementController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CategoryController;
@@ -49,6 +50,7 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
     // ---------- Token user ----------
     Route::middleware(['auth:sanctum', 'tenant', 'token.user', 'tenant.active'])->group(function (): void {
         Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
+        Route::get('announcements', [AnnouncementController::class, 'index'])->name('announcements.index');
         Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
         Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
 
