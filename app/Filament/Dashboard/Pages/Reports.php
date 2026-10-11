@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Pages;
 
 use App\Enums\ReportTab;
-use App\Exports\SalesReportExport;
+use App\Exceptions\ReportTooLargeException;
 use App\Filament\Dashboard\Pages\Concerns\InteractsWithReportFilters;
 use App\Filament\Dashboard\Widgets\OrderTypesWidget;
 use App\Filament\Dashboard\Widgets\OutletComparisonWidget;
@@ -28,16 +28,16 @@ use App\Filament\Dashboard\Widgets\Reports\SlowProductsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\StockTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\VoidsTableWidget;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
-use App\Models\Category;
 use App\Models\Outlet;
-use App\Models\PaymentMethod;
-use App\Models\Product;
 use App\Models\Shift;
 use App\Models\User;
-use App\Services\Report\ReportService;
+use App\Services\Report\ReportExporter;
+use App\Services\Report\ReportFilterLabels;
 use App\Support\CurrentOutlet;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedSchema;
@@ -47,8 +47,7 @@ use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Livewire\Attributes\Url;
-use Maatwebsite\Excel\Facades\Excel;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 use UnitEnum;
 
 /**
@@ -197,31 +196,7 @@ final class Reports extends Page
      */
     public function activeFilterPills(): array
     {
-        $filters = $this->reportContext()->filters;
-        $pills = [];
-
-        if ($filters->orderType !== null) {
-            $pills[] = 'Tipe: '.$filters->orderType->getLabel();
-        }
-
-        $named = [
-            'Metode' => [$filters->paymentMethodIds, fn (array $ids) => PaymentMethod::query()->whereIn('id', $ids)->pluck('name')],
-            'Kasir' => [$filters->userIds, fn (array $ids) => User::query()->whereIn('id', $ids)->pluck('name')],
-            'Kategori' => [$filters->categoryIds, fn (array $ids) => Category::query()->whereIn('id', $ids)->pluck('name')],
-            'Produk' => [$filters->productIds, fn (array $ids) => Product::query()->withTrashed()->whereIn('id', $ids)->pluck('name')],
-        ];
-
-        foreach ($named as $label => [$ids, $names]) {
-            if ($ids !== []) {
-                $pills[] = $label.': '.$names($ids)->implode(', ');
-            }
-        }
-
-        if ($filters->shiftIds !== []) {
-            $pills[] = 'Shift: '.CurrentOutlet::scope(Shift::query())->whereIn('id', $filters->shiftIds)->count().' dipilih';
-        }
-
-        return $pills;
+        return ReportFilterLabels::describe($this->reportContext()->filters);
     }
 
     /** @return list<class-string> */
@@ -248,22 +223,47 @@ final class Reports extends Page
         return [
             $this->refreshReportAction(),
             $this->resetReportFiltersAction(),
-            Action::make('export')
-                ->label('Export Excel')
+            ActionGroup::make([
+                $this->makeExportAction('excel_tab', 'Excel — tab ini', 'excel', lengkap: false),
+                $this->makeExportAction('excel_full', 'Excel — lengkap', 'excel', lengkap: true),
+                $this->makeExportAction('pdf_tab', 'PDF — tab ini', 'pdf', lengkap: false),
+                $this->makeExportAction('pdf_full', 'PDF — lengkap', 'pdf', lengkap: true),
+            ])
+                ->label('Export')
                 ->icon(Heroicon::OutlinedArrowDownTray)
                 ->color('gray')
-                ->visible(fn (): bool => self::user()?->can('report.export') ?? false)
-                ->action(function (): BinaryFileResponse {
-                    $context = $this->reportContext();
-                    [$start, $end] = $context->range();
-                    $period = $context->period;
-
-                    return Excel::download(
-                        new SalesReportExport(app(ReportService::class), $period->from, $period->to, CurrentOutlet::timezone(), $start, $end, $context->filters),
-                        "laporan-penjualan-{$period->from}-{$period->to}.xlsx",
-                    );
-                }),
+                ->button()
+                ->visible(fn (): bool => self::user()?->can('report.export') ?? false),
         ];
+    }
+
+    /**
+     * Export sinkron (Q52): filter & batas periode sama dengan layar; data terlalu besar ditolak
+     * dengan notifikasi "Persempit rentang tanggal".
+     */
+    private function makeExportAction(string $name, string $label, string $format, bool $lengkap): Action
+    {
+        return Action::make($name)
+            ->label($label)
+            ->icon($format === 'pdf' ? Heroicon::OutlinedDocumentText : Heroicon::OutlinedTableCells)
+            ->action(function () use ($format, $lengkap): ?Response {
+                $user = self::user();
+                abort_unless($user?->can('report.export') ?? false, 403);
+
+                try {
+                    $exporter = app(ReportExporter::class);
+                    $tab = $lengkap ? null : $this->activeTab();
+
+                    return $format === 'pdf'
+                        ? $exporter->pdf($user, $this->reportContext(), $tab)
+                        : $exporter->excel($user, $this->reportContext(), $tab);
+                } catch (ReportTooLargeException $e) {
+                    Notification::make()->danger()->title($e->getMessage())
+                        ->body('Batas '.number_format($e->limit, 0, ',', '.').' baris per file.')->send();
+
+                    return null;
+                }
+            });
     }
 
     private static function user(): ?User

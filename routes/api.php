@@ -106,6 +106,7 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('employees', 'employees')->name('employees');
             Route::get('shifts', 'shifts')->name('shifts');
             Route::get('shifts/{shift}', 'shiftRecap')->whereUuid('shift')->name('shifts.show');
+            Route::get('shifts/{shift}/pdf', 'shiftRecapPdf')->whereUuid('shift')->name('shifts.pdf');
             Route::get('heatmap', 'heatmap')->name('heatmap');
             Route::get('stock', 'stock')->name('stock');
         });

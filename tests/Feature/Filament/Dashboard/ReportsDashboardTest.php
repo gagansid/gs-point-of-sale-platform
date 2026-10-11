@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Actions\Order\CheckoutOrder;
 use App\Actions\Order\Data\CheckoutData;
 use App\Exports\SafeCell;
+use App\Exports\ReportWorkbookExport;
 use App\Exports\SalesReportExport;
 use App\Filament\Dashboard\Pages\Reports;
 use App\Filament\Dashboard\Resources\Orders\Pages\ListOrders;
@@ -99,10 +100,10 @@ it('halaman laporan & export Excel', function () {
         ->assertSee('Rp28.000')
         ->set('tab', 'products')
         ->assertSee('Croissant')
-        ->callAction('export');
+        ->callAction('excel_tab');
 
-    Excel::assertDownloaded('laporan-penjualan-'.now('Asia/Jakarta')->startOfMonth()->toDateString().'-'.now('Asia/Jakarta')->toDateString().'.xlsx',
-        fn (SalesReportExport $export): bool => count($export->sheets()) === 4);
+    Excel::assertDownloaded('laporan-products-'.now('Asia/Jakarta')->startOfMonth()->toDateString().'-'.now('Asia/Jakarta')->toDateString().'.xlsx',
+        fn (ReportWorkbookExport $export): bool => array_map(fn ($s) => $s->title(), $export->sheets()) === ['Info', 'Per produk']);
 });
 
 it('laporan supervisor terbatas tab operasional (Q49/Q50); kasir tertutup', function () {

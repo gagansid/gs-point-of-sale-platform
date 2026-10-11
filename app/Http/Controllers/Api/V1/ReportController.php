@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Report\ReportRequest;
 use App\Models\Shift;
+use App\Services\Report\ReportExporter;
 use App\Services\Report\ReportService;
 use App\Services\Report\ShiftRecap;
 use App\Support\ApiActor;
@@ -16,6 +17,7 @@ use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Semua angka dari ReportService (sama dengan beranda dashboard web & Excel).
@@ -231,6 +233,23 @@ final class ReportController extends Controller
         }
 
         return ApiResponse::success($recap->for($shift));
+    }
+
+    /**
+     * PDF rekap satu shift (X/Z-report).
+     *
+     * Izin sama dengan rekap shift (pemilik shift, report.view, report.view_shift ≤ 31 hari).
+     * Respons `application/pdf` (unduhan), bukan JSON.
+     */
+    public function shiftRecapPdf(Request $request, Shift $shift, ShiftRecap $recap, ReportExporter $exporter): Response
+    {
+        $user = ApiActor::user($request);
+
+        if (! ShiftRecap::canView($user, $shift)) {
+            throw new AuthorizationException;
+        }
+
+        return $exporter->shiftPdf($user, $shift, $recap);
     }
 
     /**

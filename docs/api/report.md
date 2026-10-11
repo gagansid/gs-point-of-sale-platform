@@ -95,9 +95,22 @@ beranda dashboard, halaman Laporan, dan file Excel/PDF.
 Test: `tests/Feature/Api/V1/Report/ReportTest.php`, `ReportModuleApiTest.php`, `tests/Feature/Report/ReportServiceTest.php`
 (batas hari 23.30 / 00.30 WIB, minggu Senin, bulan, kabisat, isolasi tenant, batas supervisor, rekap shift kasir).
 
-## Export Excel (dashboard)
+## Export (dashboard & API) — Q52, ADR 0012
 
-Menu **Laporan → Export Excel** (permission `report.export`): satu file `.xlsx` berisi sheet
-Ringkasan, Harian, Per Produk, Per Metode Bayar. Nominal disimpan sebagai angka (bisa dijumlah di
-Excel). Teks dari pengguna yang diawali `=`, `+`, `-`, `@` diberi awalan `'` untuk mencegah
-**formula injection** (`App\Exports\SafeCell`).
+Menu **Laporan → Export** (permission `report.export`: owner, manager, supervisor) — grup aksi gray:
+
+| Aksi | Isi | Nama file |
+|---|---|---|
+| Excel — tab ini / lengkap | Sheet **Info** (outlet, periode, pembanding, filter aktif, dicetak oleh, waktu) + satu sheet per bagian | `laporan-{tab\|lengkap}-{from}-{to}.xlsx` |
+| PDF — tab ini / lengkap | Kop gs.POS + bisnis/outlet, info filter, 4 stat, satu tabel per bagian, nomor halaman (landscape bila tabel lebar) | `laporan-{tab\|lengkap}-{from}-{to}.pdf` |
+
+- Filter & batas periode sama dengan layar; "lengkap" = semua tab yang boleh dilihat user (supervisor
+  tidak pernah mendapat Kategori/Opsi/Waktu/Tipe order/Outlet/Stok).
+- Sinkron (tanpa queue). Maks. 50.000 baris (Excel) / 5.000 baris (PDF) per file; lebih → ditolak dengan
+  "Data terlalu besar untuk diekspor. Persempit rentang tanggal." (tidak dipotong diam-diam).
+- Excel: nominal sebagai angka; teks pengguna diawali `= + - @` diberi awalan `'` (`SafeCell`, anti
+  formula injection). PDF: teks di-escape Blade, dompdf `enable_php`/`enable_remote`/`enable_javascript` = false.
+- Beranda tetap punya **Export Excel** ringkas (Ringkasan, Harian, Per Produk, Per Metode Bayar).
+
+API: `GET /reports/shifts/{id}/pdf` — PDF rekap shift (X/Z-report), izin sama dengan `shifts/{id}`
+(pemilik shift termasuk kasir). Respons `application/pdf`.
