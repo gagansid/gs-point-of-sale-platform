@@ -2634,6 +2634,53 @@
     font-weight: 500;
 }
 
+/* Kartu stempel di kasir (M6): tombol 40px seperti tombol kasir lain */
+.pos-stamps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.pos-stamp {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 40px;
+    padding: 4px 10px;
+    border: 1px dashed rgb(45 66 130 / 0.35);
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--site-navy);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.pos-stamp:disabled {
+    border-style: solid;
+    border-color: #e5e7eb;
+    color: var(--site-muted);
+    cursor: default;
+}
+
+.pos-stamp.is-active {
+    border-style: solid;
+    border-color: var(--site-primary);
+    background: var(--site-primary-lt);
+}
+
+.pos-stamp-name {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.pos-stamp-count {
+    color: var(--site-muted);
+    font-size: 12px;
+}
+
 /* Tier member (M5) */
 .pos-member-chip-tier {
     padding: 1px 8px;
@@ -2737,6 +2784,35 @@
     margin: 0;
     color: var(--site-muted);
     font-size: 13px;
+}
+
+/* Kartu stempel di halaman member (M6) */
+.member-stamps {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin: 4px 0 10px;
+    padding: 0;
+    list-style: none;
+}
+
+.member-stamps li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    border: 2px dashed rgb(45 66 130 / 0.3);
+    border-radius: 999px;
+    color: var(--site-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.member-stamps li.is-filled {
+    border-style: solid;
+    border-color: var(--site-primary);
+    background: var(--site-primary);
+    color: #ffffff;
 }
 
 /* Tier & progres tier (M5) */

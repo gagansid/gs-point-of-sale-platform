@@ -34,6 +34,10 @@ final class OrderResource extends JsonResource
             'order_discount' => $this->order_discount,
             'discount_total' => $this->discount_total,
             'member_discount' => $this->member_discount,
+            // Gratis kartu stempel (M6): bagian dari discount_total
+            'stamp_free_total' => $this->stamp_free_total,
+            'stamp_redemptions' => $this->stamp_redemptions ?? [],
+            'stamps_earned' => $this->stamps_earned,
             'points_redeemed' => $this->points_redeemed,
             'service_total' => $this->service_total,
             'tax_total' => $this->tax_total,

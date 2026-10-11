@@ -87,8 +87,14 @@
         <div class="rule"></div>
         <div class="row"><span>Subtotal</span><span>{{ $rp($t['subtotal']) }}</span></div>
         @php($memberDiscount = $t['member_discount'] ?? '0.00')
-        @if (Money::isPositive(Money::sub($t['discount_total'], $memberDiscount)))
-            <div class="row"><span>Diskon</span><span>-{{ $rp(Money::sub($t['discount_total'], $memberDiscount)) }}</span></div>
+        @php($stampFree = $t['stamp_free_total'] ?? '0.00')
+        {{-- Diskon kasir (item + order); potongan program member ditampilkan terpisah --}}
+        @php($manualDiscount = Money::sub(Money::sub($t['discount_total'], $memberDiscount), $stampFree))
+        @if (Money::isPositive($manualDiscount))
+            <div class="row"><span>Diskon</span><span>-{{ $rp($manualDiscount) }}</span></div>
+        @endif
+        @if (Money::isPositive($stampFree))
+            <div class="row"><span>Gratis stempel</span><span>-{{ $rp($stampFree) }}</span></div>
         @endif
         @if (Money::isPositive($memberDiscount))
             <div class="row"><span>Diskon member</span><span>-{{ $rp($memberDiscount) }}</span></div>
@@ -120,6 +126,9 @@
             <div class="rule"></div>
             <div class="row"><span>Poin didapat</span><span>+{{ number_format($receipt['member_points']['earned'], 0, ',', '.') }}</span></div>
             <div class="row"><span>Saldo poin</span><span>{{ number_format((int) $receipt['member_points']['balance'], 0, ',', '.') }}</span></div>
+            @foreach ($receipt['member_stamps'] ?? [] as $card)
+                <div class="row"><span>Stempel {{ $card['name'] }}{{ $card['earned'] > 0 ? ' +'.$card['earned'] : '' }}</span><span>{{ $card['balance'] }}/{{ $card['stamps_required'] }}</span></div>
+            @endforeach
         @endif
 
         <div class="rule"></div>

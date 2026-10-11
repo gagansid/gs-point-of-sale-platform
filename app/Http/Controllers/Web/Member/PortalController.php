@@ -16,6 +16,7 @@ use App\Models\MemberSetting;
 use App\Models\MemberTier;
 use App\Models\Order;
 use App\Services\Member\MemberProof;
+use App\Services\Member\StampCards;
 use App\Support\MemberPortal;
 use App\Support\Money;
 use App\Support\QrSvg;
@@ -32,7 +33,7 @@ use Illuminate\View\View;
  */
 final class PortalController extends Controller
 {
-    public function home(): View
+    public function home(StampCards $stamps): View
     {
         $member = self::member();
 
@@ -45,6 +46,8 @@ final class PortalController extends Controller
             // Tier & progres ke tier berikutnya (M5)
             'tier' => $tier,
             'nextTier' => MemberTier::nextAfter($tier, Money::fromDb($member->spend_12m), $tiers),
+            // Kartu stempel aktif (M6)
+            'stampCards' => $stamps->summary($member),
             'proof' => self::proof($member),
             'expiring' => MemberPointEntry::query()->where('member_id', $member->id)->where('remaining', '>', 0)
                 ->whereNotNull('expires_at')->orderBy('expires_at')->first(),

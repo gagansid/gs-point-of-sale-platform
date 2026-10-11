@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Cashier;
 
 use App\Actions\Catalog\GetCatalog;
+use App\Actions\Member\Data\BenefitSelection;
 use App\Actions\Member\Data\MemberData;
-use App\Actions\Member\ResolveMemberPricing;
 use App\Actions\Member\SaveMember;
 use App\Actions\Order\AddPayment;
 use App\Actions\Order\CheckoutOrder;
@@ -33,6 +33,7 @@ use App\Models\OutletMemberProgram;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\Member\StampCards;
 use App\Services\Order\CalculationResult;
 use App\Support\CurrentOutlet;
 use App\Support\Money;
@@ -58,6 +59,7 @@ use Livewire\Component;
  * @property-read array{categories: Collection<int, Category>, products: Collection<int, Product>, option_groups: Collection<int, OptionGroup>, payment_methods: Collection<int, PaymentMethod>} $catalog
  * @property-read Collection<int, Product> $visibleProducts
  * @property-read array{totals: CalculationResult|null, error: string|null} $quote
+ * @property-read list<array{id: string, name: string, stamps_required: int, balance: int, rewards_available: int, product_ids: list<string>, category_ids: list<string>}> $stampCards
  * @property-read Collection<int, Order> $openBills
  * @property-read Collection<int, User> $approvers
  */
@@ -158,6 +160,13 @@ final class PointOfSale extends Component
 
     public string $memberPin = '';
 
+    /**
+     * Kartu stempel yang ditukar di order ini (M6); nominal gratis dihitung server.
+     *
+     * @var list<string>
+     */
+    public array $stampProgramIds = [];
+
     #[Locked]
     public ?string $completedOrderId = null;
 
@@ -208,7 +217,7 @@ final class PointOfSale extends Component
             $member = $this->memberId !== null ? Member::query()->find($this->memberId) : null;
 
             return ['totals' => app(QuoteOrder::class)->handle($this->outlet(), $this->checkoutItems(), $this->orderDiscountType(), $this->orderDiscountValue(),
-                app(ResolveMemberPricing::class)->handle($member, $this->outlet())), 'error' => null];
+                $member, new BenefitSelection(stampProgramIds: $this->stampProgramIds)), 'error' => null];
         } catch (BusinessException $e) {
             return ['totals' => null, 'error' => self::describe($e)];
         }
@@ -515,6 +524,7 @@ final class PointOfSale extends Component
             'table_label' => $this->orderType === 'dine_in' && filled(trim($this->tableLabel)) ? trim($this->tableLabel) : null,
             'notes' => filled(trim($this->notes)) ? trim($this->notes) : null,
             'member_id' => $this->memberId,
+            'stamp_program_ids' => $this->stampProgramIds,
             'discount' => $this->orderDiscountType() !== null ? ['type' => $this->discountType, 'value' => $this->orderDiscountValue()] : null,
             'items' => $this->checkoutItems(),
             'payments' => array_map(fn (array $p): array => [
@@ -653,7 +663,7 @@ final class PointOfSale extends Component
 
         $this->memberId = $member->id;
         $this->memberName = $member->name;
-        $this->reset('showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
+        $this->reset('stampProgramIds', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
     }
 
     /**
@@ -700,7 +710,38 @@ final class PointOfSale extends Component
 
     public function clearMember(): void
     {
-        $this->reset('memberId', 'memberName');
+        $this->reset('memberId', 'memberName', 'stampProgramIds');
+    }
+
+    /**
+     * Kartu stempel member terpasang (M6); kosong bila tanpa member / outlet dikecualikan.
+     *
+     * @return list<array{id: string, name: string, stamps_required: int, balance: int, rewards_available: int, product_ids: list<string>, category_ids: list<string>}>
+     */
+    #[Computed]
+    public function stampCards(): array
+    {
+        $member = $this->memberId !== null ? Member::query()->find($this->memberId) : null;
+
+        if ($member === null || ! $member->isUsable() || ! OutletMemberProgram::activeAt($this->outlet()->id)) {
+            return [];
+        }
+
+        return app(StampCards::class)->summary($member);
+    }
+
+    /** Pakai / batalkan 1 gratis dari kartu stempel; kelayakan item & saldo dicek server di pratinjau. */
+    public function toggleStamp(string $programId): void
+    {
+        $card = collect($this->stampCards)->firstWhere('id', $programId);
+
+        if (in_array($programId, $this->stampProgramIds, true)) {
+            $this->stampProgramIds = array_values(array_diff($this->stampProgramIds, [$programId]));
+        } elseif ($card !== null && $card['rewards_available'] > 0) {
+            $this->stampProgramIds[] = $programId;
+        }
+
+        unset($this->quote);
     }
 
     /** Daftar cepat member (nama + HP + persetujuan) lalu langsung dipasang ke keranjang. */
@@ -731,7 +772,7 @@ final class PointOfSale extends Component
     /**
      * Keranjang ditahan di browser ini (session per device): belum jadi order, belum memotong stok.
      *
-     * @return list<array{id: string, label: string, order_id: string, cart: list<array<string, mixed>>, order_type: string, table_label: string, notes: string, discount_type: string, discount_value: string, member_id?: string|null, member_name?: string, total: string|null, items: int, held_at: string}>
+     * @return list<array{id: string, label: string, order_id: string, cart: list<array<string, mixed>>, order_type: string, table_label: string, notes: string, discount_type: string, discount_value: string, member_id?: string|null, member_name?: string, stamp_program_ids?: list<string>, total: string|null, items: int, held_at: string}>
      */
     public function heldCarts(): array
     {
@@ -768,6 +809,7 @@ final class PointOfSale extends Component
             'discount_value' => $this->discountValue,
             'member_id' => $this->memberId,
             'member_name' => $this->memberName,
+            'stamp_program_ids' => $this->stampProgramIds,
             'total' => $this->quote['totals']?->grandTotal,
             'items' => (int) array_sum(array_column($this->cart, 'qty')),
             'held_at' => now()->toIso8601String(),
@@ -810,6 +852,7 @@ final class PointOfSale extends Component
         // Sesi lama (sebelum member) tidak punya kunci ini
         $this->memberId = $entry['member_id'] ?? null;
         $this->memberName = $entry['member_name'] ?? '';
+        $this->stampProgramIds = $entry['stamp_program_ids'] ?? [];
         $this->toast("Transaksi {$entry['label']} dilanjutkan", 'info');
     }
 
@@ -897,6 +940,7 @@ final class PointOfSale extends Component
         $this->notes = (string) $order->notes;
         $this->memberId = $order->member_id;
         $this->memberName = (string) $order->member_name;
+        $this->stampProgramIds = array_column($order->stamp_redemptions ?? [], 'stamp_program_id');
         $this->discountType = $order->discount_type->value ?? '';
         $this->discountValue = $order->discount_value ?? '';
         $this->cart = $order->items->sortBy('sort_order')->map(fn ($item): array => [
@@ -964,7 +1008,7 @@ final class PointOfSale extends Component
     {
         $this->reset('cart', 'orderType', 'tableLabel', 'notes', 'discountType', 'discountValue', 'paying', 'payments', 'payError',
             'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'holdLabel', 'memberCode', 'memberPin',
-            'memberId', 'memberName', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
+            'memberId', 'memberName', 'stampProgramIds', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
         $this->orderId = (string) Str::uuid7();
         // Total yang sudah dihitung di request ini (mis. saat menahan) jangan ikut ter-render
         unset($this->quote);
@@ -979,6 +1023,8 @@ final class PointOfSale extends Component
             'notes' => filled(trim($this->notes)) ? mb_substr(trim($this->notes), 0, 255) : null,
             // Selalu dikirim: null = member dilepas dari open bill
             'member_id' => $this->memberId,
+            // Selalu dikirim: pilihan kartu stempel menggantikan yang lama
+            'stamp_program_ids' => $this->stampProgramIds,
             'discount' => $this->orderDiscountType() !== null ? ['type' => $this->discountType, 'value' => $this->orderDiscountValue()] : null,
             'items' => $this->checkoutItems(),
             ...$this->approvalInput(),

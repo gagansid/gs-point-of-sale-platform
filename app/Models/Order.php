@@ -31,6 +31,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $member_id member terpasang (ADR 0013)
  * @property string|null $member_name snapshot nama member saat transaksi
  * @property string|null $member_tier snapshot nama tier yang diskonnya dipakai (M5)
+ * @property string $stamp_free_total potongan gratis stempel (M6)
+ * @property list<array{stamp_program_id: string, name: string, product_id: string, product_name: string, amount: string}>|null $stamp_redemptions
+ * @property int $stamps_earned
  * @property OrderStatus $status
  * @property string|null $notes
  * @property DiscountType|null $discount_type
@@ -61,6 +64,8 @@ final class Order extends Model
     /** Default sama dengan database agar order baru di memori sudah punya nilai pembayaran. */
     protected $attributes = [
         'points_earned' => 0,
+        'stamps_earned' => 0,
+        'stamp_free_total' => '0.00',
         'paid_total' => '0.00',
         'change_total' => '0.00',
         'order_discount' => '0.00',
@@ -77,6 +82,9 @@ final class Order extends Model
             'discount_type' => DiscountType::class,
             'discount_value' => 'decimal:2',
             'order_discount' => 'decimal:2',
+            'stamp_free_total' => 'decimal:2',
+            'stamp_redemptions' => 'array',
+            'stamps_earned' => 'integer',
             'subtotal' => 'decimal:2',
             'discount_total' => 'decimal:2',
             'service_total' => 'decimal:2',

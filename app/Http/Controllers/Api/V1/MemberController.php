@@ -14,6 +14,7 @@ use App\Http\Resources\Api\V1\MemberResource;
 use App\Models\Member;
 use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
+use App\Services\Member\StampCards;
 use App\Support\ApiResponse;
 use App\Support\CurrentOutlet;
 use Dedoc\Scramble\Attributes\Group;
@@ -75,9 +76,10 @@ final class MemberController extends Controller
     /**
      * Detail member.
      *
-     * Permission member.view. Member tenant lain atau dihapus → `404 MEMBER_NOT_FOUND`.
+     * Permission member.view. Member tenant lain atau dihapus → `404 MEMBER_NOT_FOUND`. `stamp_cards`: kartu stempel
+     * aktif dengan saldo, `rewards_available` (gratis yang bisa ditukar), dan produk/kategori yang memenuhi.
      */
-    public function show(Request $request, string $memberId): JsonResponse
+    public function show(Request $request, string $memberId, StampCards $stamps): JsonResponse
     {
         abort_unless($request->user()?->can('member.view') ?? false, 403);
         self::ensureProgramEnabled();
@@ -85,7 +87,10 @@ final class MemberController extends Controller
         $member = Member::query()->whereNull('anonymized_at')->find($memberId)
             ?? throw BusinessException::of(ErrorCode::MemberNotFound);
 
-        return ApiResponse::success(MemberResource::make($member)->resolve($request), 'Detail member');
+        return ApiResponse::success([
+            ...MemberResource::make($member)->resolve($request),
+            'stamp_cards' => $stamps->summary($member),
+        ], 'Detail member');
     }
 
     /**

@@ -9,6 +9,7 @@ use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
 use App\Models\Order;
 use App\Services\Member\PointLedger;
+use App\Services\Member\StampCards;
 use App\Services\Member\TierEvaluator;
 use App\Support\Money;
 
@@ -21,6 +22,7 @@ final class ReverseOrderBenefits
     public function __construct(
         private readonly PointLedger $ledger,
         private readonly TierEvaluator $tiers,
+        private readonly StampCards $stamps,
     ) {}
 
     public function handle(Order $order): void
@@ -36,6 +38,8 @@ final class ReverseOrderBenefits
         ])->save();
         // Status void ditulis setelah ini: order dikecualikan dari belanja 12 bulan (tier bisa turun, M5)
         $this->tiers->refresh($member, excludeOrderId: $order->id);
+        // Stempel didapat ditarik, stempel yang ditukar dikembalikan (M6)
+        $this->stamps->reverse($member, $order);
 
         $earned = MemberPointEntry::query()->where('order_id', $order->id)->where('type', PointEntryType::Earn)->first();
         $reversed = MemberPointEntry::query()->where('order_id', $order->id)->where('type', PointEntryType::VoidReversal)->where('points', '<', 0)->exists();

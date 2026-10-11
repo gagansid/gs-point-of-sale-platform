@@ -7,15 +7,17 @@ namespace App\Actions\Member;
 use App\Enums\PaymentCategory;
 use App\Enums\PaymentStatus;
 use App\Enums\PointEntryType;
+use App\Models\Member;
 use App\Models\MemberSetting;
 use App\Models\Order;
 use App\Models\OutletMemberProgram;
 use App\Services\Member\PointLedger;
+use App\Services\Member\StampCards;
 use App\Services\Member\TierEvaluator;
 use App\Support\Money;
 
 /**
- * Benefit member saat order SELESAI (ADR 0013, Q62): statistik kunjungan & belanja, poin didapat.
+ * Benefit member saat order SELESAI (ADR 0013, Q62–Q65): statistik kunjungan & belanja, tier, stempel, poin didapat.
  * Dipanggil OrderWriter::complete di dalam transaksi order; idempotent per order (poin hanya sekali).
  *
  * Poin = floor(dasar / earn_amount) × earn_points × pengali tier (M5); dasar = subtotal setelah diskon item & order, sebelum
@@ -26,6 +28,7 @@ final class AwardOrderBenefits
     public function __construct(
         private readonly PointLedger $ledger,
         private readonly TierEvaluator $tiers,
+        private readonly StampCards $stamps,
     ) {}
 
     public function handle(Order $order): void
@@ -45,13 +48,24 @@ final class AwardOrderBenefits
         // Belanja 12 bulan & tier (M5): order ini sudah berstatus selesai di transaksi yang sama
         $this->tiers->refresh($member);
 
-        $settings = MemberSetting::current();
+        // Gratis stempel yang sudah jadi potongan harga selalu dipotong dari kartu (M6)
+        $this->stamps->redeem($member, $order);
 
-        if (! $member->isUsable() || ! OutletMemberProgram::activeAt($order->outlet_id) || $order->points_earned > 0) {
+        if (! $member->isUsable() || ! OutletMemberProgram::activeAt($order->outlet_id)) {
             return;
         }
 
-        $points = self::pointsFor(self::earnBase($order), $settings, $multiplier);
+        if (($stamps = $this->stamps->earn($member, $order)) > 0) {
+            $order->forceFill(['stamps_earned' => $stamps])->save();
+        }
+
+        $this->awardPoints($member, $order, $multiplier);
+    }
+
+    private function awardPoints(Member $member, Order $order, string $multiplier): void
+    {
+        $settings = MemberSetting::current();
+        $points = $order->points_earned > 0 ? 0 : self::pointsFor(self::earnBase($order), $settings, $multiplier);
 
         if ($points <= 0) {
             return;

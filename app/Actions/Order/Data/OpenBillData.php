@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Order\Data;
 
 use App\Actions\Auth\Data\ApprovalData;
+use App\Actions\Member\Data\BenefitSelection;
 use App\Enums\DiscountType;
 use App\Enums\OrderType;
 use App\Support\Money;
@@ -28,6 +29,9 @@ final readonly class OpenBillData
         // Member (ADR 0013): memberProvided = false (field tidak dikirim) → member lama tetap; null = dilepas
         public ?string $memberId = null,
         public bool $memberProvided = false,
+        // Benefit member (kartu stempel, M6): benefitsProvided = false → pilihan lama di open bill tetap
+        public BenefitSelection $benefits = new BenefitSelection,
+        public bool $benefitsProvided = false,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -45,6 +49,8 @@ final readonly class OpenBillData
             approval: CheckoutData::parseApproval($data),
             memberId: filled($data['member_id'] ?? null) ? (string) $data['member_id'] : null,
             memberProvided: array_key_exists('member_id', $data),
+            benefits: BenefitSelection::fromArray($data),
+            benefitsProvided: array_key_exists('stamp_program_ids', $data),
         );
     }
 }

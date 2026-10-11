@@ -64,7 +64,7 @@ final class CheckoutOrder
 
         $member = app(ResolveOrderMember::class)->handle($data->memberId);
         $lines = $this->resolveLines->handle($data->items, $outlet);
-        $pricing = app(ResolveMemberPricing::class)->handle($member, $outlet);
+        $pricing = app(ResolveMemberPricing::class)->handle($member, $outlet, $lines, $data->benefits);
         $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval, $pricing);
         $totals = $priced['totals'];
         $payments = $this->allocatePayments->handle($data->payments, $totals->grandTotal, $outlet->id);
@@ -102,6 +102,7 @@ final class CheckoutOrder
                     'member_id' => $member?->id,
                     'member_name' => $member?->name,
                     'member_tier' => $pricing->tierName,
+                    'stamp_redemptions' => $pricing->stampRedemptions !== [] ? $pricing->stampRedemptions : null,
                 ]);
                 $this->writer->applyTotals($order, $totals, $outlet);
                 $order->save();

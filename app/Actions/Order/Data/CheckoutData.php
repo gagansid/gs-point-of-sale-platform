@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Order\Data;
 
 use App\Actions\Auth\Data\ApprovalData;
+use App\Actions\Member\Data\BenefitSelection;
 use App\Enums\DiscountType;
 use App\Enums\OrderType;
 use App\Support\Money;
@@ -34,6 +35,8 @@ final readonly class CheckoutData
         // Bukti pemilik saat membayar dengan poin (ADR 0013): kode QR halaman member atau PIN member
         public ?string $memberCode = null,
         public ?string $memberPin = null,
+        // Benefit member yang dipilih (kartu stempel, M6)
+        public BenefitSelection $benefits = new BenefitSelection,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -54,6 +57,7 @@ final readonly class CheckoutData
             memberId: filled($data['member_id'] ?? null) ? (string) $data['member_id'] : null,
             memberCode: filled($data['member_code'] ?? null) ? (string) $data['member_code'] : null,
             memberPin: filled($data['member_pin'] ?? null) ? (string) $data['member_pin'] : null,
+            benefits: BenefitSelection::fromArray($data),
         );
     }
 

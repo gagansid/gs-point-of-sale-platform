@@ -51,6 +51,7 @@ yang dikirim aplikasi diabaikan.
 | `payments` | wajib ada, 0–10; `[]` hanya bila total akhir 0 (mis. diskon 100%), selain itu `422` pembayaran kurang; `id` UUID unik; `amount` > 0; `tendered` untuk tunai; `reference` wajib bila metode `requires_reference` |
 | `approver_user_id` + `approver_pin` | hanya bila diskon di atas batas role (PIN 6 digit) |
 | `member_id` | opsional (ADR 0013): member aktif bisnis ini, selain itu `404 MEMBER_NOT_FOUND`; program nonaktif `422 MEMBER_PROGRAM_DISABLED`. Open bill: tidak dikirim = tetap, `null` = dilepas. Lihat [`member.md`](member.md) |
+| `stamp_program_ids` | opsional (M6): kartu stempel yang ditukar, maks. 5 UUID unik; 1 item termurah yang memenuhi per kartu jadi gratis. Butuh member. Open bill: tidak dikirim = pilihan lama tetap. Gagal → `422 VALIDATION_ERROR` field `stamp_program_ids` |
 
 ### Aturan
 

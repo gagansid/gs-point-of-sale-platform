@@ -20,7 +20,9 @@ use App\Http\Requests\Api\V1\Member\MemberRequest;
 use App\Models\Member;
 use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
+use App\Models\StampProgram;
 use App\Models\User;
+use App\Services\Member\StampCards;
 use App\Support\Money;
 use App\Support\Phone;
 use BackedEnum;
@@ -158,6 +160,13 @@ final class MemberResource extends Resource
                         ->modalContent(fn (Member $record) => view('filament.dashboard.members.points', [
                             'member' => $record,
                             'entries' => MemberPointEntry::query()->with('user:id,name')->where('member_id', $record->id)->latest()->limit(100)->get(),
+                        ]))
+                        ->modalSubmitAction(false)->modalCancelActionLabel('Tutup'),
+                    Action::make('stamps')->label('Kartu stempel')->icon(Heroicon::OutlinedTicket)
+                        ->visible(fn (): bool => StampProgram::query()->where('is_active', true)->exists())
+                        ->modalHeading(fn (Member $record): string => 'Kartu stempel · '.$record->name)
+                        ->modalContent(fn (Member $record) => view('filament.dashboard.members.stamps', [
+                            'cards' => app(StampCards::class)->summary($record),
                         ]))
                         ->modalSubmitAction(false)->modalCancelActionLabel('Tutup'),
                     Action::make('adjustPoints')->label('Sesuaikan poin')->icon(Heroicon::OutlinedAdjustmentsHorizontal)

@@ -112,6 +112,20 @@
                         </span>
                         <button type="button" wire:click="clearMember" aria-label="Lepas member">&times;</button>
                     </div>
+                    {{-- Kartu stempel (M6): pakai 1 gratis per kartu; item termurah yang memenuhi dihitung server --}}
+                    @if ($this->stampCards !== [])
+                        <div class="pos-stamps" role="group" aria-label="Kartu stempel">
+                            @foreach ($this->stampCards as $card)
+                                @php($used = in_array($card['id'], $stampProgramIds, true))
+                                <button type="button" wire:key="stamp-{{ $card['id'] }}" wire:click="toggleStamp('{{ $card['id'] }}')"
+                                    @class(['pos-stamp', 'is-active' => $used]) aria-pressed="{{ $used ? 'true' : 'false' }}"
+                                    @disabled(! $used && $card['rewards_available'] < 1)>
+                                    <span class="pos-stamp-name">{{ $card['name'] }}</span>
+                                    <span class="pos-stamp-count">{{ $card['balance'] }}/{{ $card['stamps_required'] }}{{ $used ? ' · dipakai' : ($card['rewards_available'] > 0 ? ' · pakai gratis' : '') }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @endif
                 @else
                     {{-- Kode member / nomor HP: Enter (atau scanner barcode) langsung memasang bila cocok persis --}}
                     <div class="pos-member-field">
@@ -203,6 +217,9 @@
                 <dt>Subtotal</dt><dd>{{ $money($totals->grossTotal) }}</dd>
                 @if (\App\Support\Money::isPositive($totals->manualDiscount))
                     <dt>Diskon</dt><dd>−{{ $money($totals->manualDiscount) }}</dd>
+                @endif
+                @if (\App\Support\Money::isPositive($totals->stampDiscount))
+                    <dt>Gratis stempel</dt><dd>−{{ $money($totals->stampDiscount) }}</dd>
                 @endif
                 @if (\App\Support\Money::isPositive($totals->memberDiscount))
                     <dt>Diskon member{{ $this->memberTier ? ' · '.$this->memberTier : '' }}</dt><dd>−{{ $money($totals->memberDiscount) }}</dd>

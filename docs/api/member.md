@@ -128,4 +128,26 @@ sementara di dashboard (Member → Kata sandi sementara); member wajib mengganti
 - Member (`GET /members`, `/members/{id}`): `tier: { id, name, point_multiplier, discount_percent }` atau `null`.
 - Order: `member: { id, name, tier }` (snapshot nama tier yang diskonnya dipakai); struk: `member_tier`.
 
-Stempel dan voucher menyusul (ADR 0013, M6–M7).
+## Kartu stempel (M6, SPEC Q65)
+
+- Owner membuat program di **Pelanggan → Kartu stempel** (nama, stempel untuk 1 gratis, produk/kategori).
+- `GET /v1/members/{id}` memuat `stamp_cards`:
+
+```json
+"stamp_cards": [
+  { "id": "…", "name": "Kopi ke-10 gratis", "stamps_required": 10, "balance": 12, "rewards_available": 1,
+    "product_ids": ["…"], "category_ids": ["…"] }
+]
+```
+
+- Tukar: kirim `stamp_program_ids: ["…"]` di `POST /checkout` / `PUT /orders/{id}` (maks. 5, 1 gratis per kartu).
+  Server memilih item **termurah** yang memenuhi (harga satuan setelah diskon item) dan mencatatnya sebagai
+  `stamp_free_total` (bagian `discount_total`, sebelum diskon order manual). Order: `stamp_redemptions`
+  (`stamp_program_id`, `name`, `product_id`, `product_name`, `amount`), `stamps_earned`.
+- Ditolak `422 VALIDATION_ERROR` field `stamp_program_ids`: tanpa member, outlet dikecualikan, kartu nonaktif/bisnis
+  lain, stempel kurang, atau tidak ada item yang memenuhi. Saldo dicek ulang saat lunas (open bill).
+- Stempel didapat saat order selesai: 1 item = 1 stempel per kartu; unit yang digratiskan tidak dihitung.
+  Void: stempel didapat ditarik, stempel yang ditukar dikembalikan. Struk: `totals.stamp_free_total`,
+  `member_stamps: [{ name, earned, balance, stamps_required }]`.
+
+Voucher menyusul (ADR 0013, M7).

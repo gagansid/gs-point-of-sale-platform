@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Actions\Member\AdjustMemberPoints;
+use App\Actions\Member\SaveMemberTiers;
+use App\Actions\Member\SaveStampProgram;
 use App\Actions\Member\SetMemberPin;
 use App\Actions\Member\UpdateMemberProgram;
 use App\Enums\PaymentCategory;
@@ -12,6 +14,7 @@ use App\Models\Order;
 use App\Models\PaymentMethod;
 use App\Models\Shift;
 use App\Models\User;
+use App\Services\Member\TierEvaluator;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
 use App\Support\WebCashier;
@@ -151,4 +154,35 @@ it('metode Poin hanya muncul bila member terpasang; bayar poin dengan PIN member
 
     expect(Order::query()->sole()->points_redeemed)->toBe(100)
         ->and($this->member->refresh()->points_balance)->toBe(300 - 100 + Order::query()->sole()->points_earned);
+});
+
+it('tier & kartu stempel: chip menampilkan tier, gratis stempel dipakai lalu ikut ditahan', function () {
+    app(SaveMemberTiers::class)->handle([['name' => 'Gold', 'min_spend_12m' => '0', 'point_multiplier' => '1', 'discount_percent' => '0']]);
+    app(TierEvaluator::class)->refresh($this->member);
+    $program = app(SaveStampProgram::class)->handle(null, ['name' => 'Roti', 'stamps_required' => 2, 'product_ids' => [$this->pos->croissant->id]]);
+
+    // Belum cukup stempel: tombol nonaktif, toggle diabaikan
+    $page = Livewire::test(PointOfSale::class)
+        ->call('selectMember', $this->member->id)
+        ->assertSeeHtml('class="pos-member-chip-tier"')->assertSee('Gold')
+        ->assertSee('Roti')
+        ->call('toggleStamp', $program->id)
+        ->assertSet('stampProgramIds', []);
+
+    // Dapat 2 stempel dari transaksi ini
+    $page->call('addProduct', $this->pos->croissant->id)->call('increment', 0)
+        ->call('openPayment')->set('payments.0.tendered', '100000')->call('pay')->assertSet('payError', null);
+    expect(Order::query()->sole()->stamps_earned)->toBe(2);
+
+    // Transaksi berikutnya: pakai gratis → Croissant 0, total 0 (tanpa pembayaran)
+    $page->call('selectMember', $this->member->id)
+        ->call('addProduct', $this->pos->croissant->id)
+        ->call('toggleStamp', $program->id)
+        ->assertSet('stampProgramIds', [$program->id])
+        ->assertSee('Gratis stempel')
+        ->call('hold')
+        ->assertSet('stampProgramIds', []);
+
+    $held = $page->instance()->heldCarts();
+    $page->call('resume', $held[0]['id'])->assertSet('stampProgramIds', [$program->id]);
 });

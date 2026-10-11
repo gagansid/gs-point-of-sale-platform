@@ -13,6 +13,9 @@ use App\Enums\DiscountType;
  */
 final readonly class MemberPricing
 {
+    /**
+     * @param  list<array{stamp_program_id: string, name: string, product_id: string, product_name: string, amount: string}>  $stampRedemptions
+     */
     public function __construct(
         public string $stampFree = '0.00',
         public ?DiscountType $voucherType = null,
@@ -23,6 +26,8 @@ final readonly class MemberPricing
         public string $memberPercent = '0.00',
         // Snapshot nama tier untuk order (orders.member_tier); tidak dipakai OrderCalculator
         public ?string $tierName = null,
+        // Rincian gratis stempel (orders.stamp_redemptions, M6); jumlahnya = $stampFree
+        public array $stampRedemptions = [],
     ) {}
 
     public static function none(): self

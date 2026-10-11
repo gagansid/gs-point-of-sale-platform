@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1;
 
 use App\Enums\OrderStatus;
+use App\Enums\StampEntryType;
+use App\Models\MemberStamp;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderItemOption;
 use App\Models\Payment;
+use App\Models\StampProgram;
+use App\Services\Member\StampCards;
 use App\Support\Iso;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -45,6 +49,8 @@ final class ReceiptResource extends JsonResource
             'member_tier' => $this->member_tier,
             // Poin di struk (ADR 0013): didapat dari order ini & saldo saat struk dibuat
             'member_points' => $this->member_id !== null ? ['earned' => $this->points_earned, 'balance' => $this->member?->points_balance] : null,
+            // Kartu stempel (M6): stempel didapat dari order ini & saldo per program saat struk dibuat
+            'member_stamps' => $this->member_id !== null && $this->member !== null ? self::stamps($this->resource) : [],
             'status' => $this->status->value,
             // Struk void dicetak dengan tanda BATAL
             'is_void' => $this->status === OrderStatus::Voided,
@@ -67,6 +73,7 @@ final class ReceiptResource extends JsonResource
                 'discount_total' => $this->discount_total,
                 // Bagian discount_total dari diskon member (ADR 0013)
                 'member_discount' => $this->member_discount,
+                'stamp_free_total' => $this->stamp_free_total,
                 'service_rate' => $this->service_rate,
                 'service_total' => $this->service_total,
                 'tax_rate' => $this->tax_rate,
@@ -87,5 +94,31 @@ final class ReceiptResource extends JsonResource
                 'status' => $p->status->value,
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * Program stempel yang bergerak di order ini (didapat/ditukar) beserta saldo terkini.
+     *
+     * @return list<array{name: string, earned: int, balance: int, stamps_required: int}>
+     */
+    private static function stamps(Order $order): array
+    {
+        $changes = MemberStamp::query()->where('order_id', $order->id)->where('type', StampEntryType::Earn)
+            ->pluck('change', 'stamp_program_id');
+        $redeemed = array_column($order->stamp_redemptions ?? [], 'stamp_program_id');
+        $ids = array_values(array_unique([...$changes->keys()->all(), ...$redeemed]));
+
+        if ($ids === []) {
+            return [];
+        }
+
+        $balances = app(StampCards::class)->balances($order->member);
+
+        return StampProgram::query()->whereIn('id', $ids)->orderBy('name')->get()->map(fn (StampProgram $p): array => [
+            'name' => $p->name,
+            'earned' => (int) ($changes[$p->id] ?? 0),
+            'balance' => $balances[$p->id] ?? 0,
+            'stamps_required' => $p->stamps_required,
+        ])->values()->all();
     }
 }

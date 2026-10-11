@@ -26,6 +26,26 @@
         </section>
     @endif
 
+    @foreach ($stampCards as $card)
+        {{-- Kartu stempel (M6): satu lingkaran per stempel menuju 1 gratis --}}
+        @php($filled = $card['balance'] > 0 ? $card['balance'] % $card['stamps_required'] : 0)
+        <section class="member-card">
+            <h2 class="member-subtitle">{{ $card['name'] }}</h2>
+            <ol class="member-stamps" aria-label="{{ $filled }} dari {{ $card['stamps_required'] }} stempel">
+                @for ($i = 1; $i <= $card['stamps_required']; $i++)
+                    <li @class(['is-filled' => $i <= $filled || $card['rewards_available'] > 0 && $filled === 0])>{{ $i }}</li>
+                @endfor
+            </ol>
+            <p class="member-muted">
+                @if ($card['rewards_available'] > 0)
+                    {{ $card['rewards_available'] }} gratis siap dipakai — sebutkan ke kasir.
+                @else
+                    {{ $card['stamps_required'] - $filled }} stempel lagi untuk 1 gratis.
+                @endif
+            </p>
+        </section>
+    @endforeach
+
     <section class="member-card member-qr" data-code-url="{{ route('member.code', ['business' => $business->slug]) }}">
         <h2>Tunjukkan ke kasir</h2>
         <div class="member-qr-image" data-qr>{!! $proof['svg'] !!}</div>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Member\Data\BenefitSelection;
 use App\Actions\Member\ResolveMemberPricing;
 use App\Actions\Member\ResolveOrderMember;
 use App\Actions\Order\Data\OpenBillData;
@@ -56,7 +57,11 @@ final class SaveOpenBill
         // Member yang berlaku untuk harga: baru (dikirim) atau yang sudah terpasang di open bill
         $pricingMember = $data->memberProvided ? $member : ($existing?->member_id !== null ? Member::query()->find($existing->member_id) : null);
         $lines = $this->resolveLines->handle($data->items, $outlet);
-        $pricing = app(ResolveMemberPricing::class)->handle($pricingMember, $outlet);
+        // Kartu stempel: dikirim = pilihan baru; tidak dikirim = pilihan lama tetap (selama member sama)
+        $benefits = $data->benefitsProvided || $existing === null || $pricingMember?->id !== $existing->member_id
+            ? $data->benefits
+            : new BenefitSelection(stampProgramIds: array_column($existing->stamp_redemptions ?? [], 'stamp_program_id'));
+        $pricing = app(ResolveMemberPricing::class)->handle($pricingMember, $outlet, $lines, $benefits);
         $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval, $pricing);
         $totals = $priced['totals'];
 
@@ -100,7 +105,10 @@ final class SaveOpenBill
                     $order->forceFill(['member_id' => $member?->id, 'member_name' => $member?->name]);
                 }
                 // Snapshot tier yang diskonnya dipakai di harga ini (M5)
-                $order->forceFill(['member_tier' => $order->member_id !== null ? $pricing->tierName : null]);
+                $order->forceFill([
+                    'member_tier' => $order->member_id !== null ? $pricing->tierName : null,
+                    'stamp_redemptions' => $pricing->stampRedemptions !== [] ? $pricing->stampRedemptions : null,
+                ]);
 
                 $this->writer->applyTotals($order, $totals, $outlet);
                 $order->save();
