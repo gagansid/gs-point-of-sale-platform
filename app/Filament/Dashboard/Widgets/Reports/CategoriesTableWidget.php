@@ -30,7 +30,13 @@ final class CategoriesTableWidget extends ReportTableWidget
 
     public function table(Table $table): Table
     {
-        return $this->reportTable($table, 'Penjualan per kategori')
+        $rows = $this->cachedRows();
+
+        return $this->totalRow($this->reportTable($table, 'Penjualan per kategori'), [
+            'qty' => self::sumCount($rows, 'qty'),
+            'revenue' => Money::format(self::sumMoney($rows, 'revenue')),
+            'share' => '100%',
+        ])
             ->defaultSort('revenue', 'desc')
             ->columns([
                 TextColumn::make('category_name')->label('Kategori')->searchable()->sortable()->weight('medium'),

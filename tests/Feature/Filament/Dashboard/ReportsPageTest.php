@@ -106,8 +106,8 @@ it('owner melihat penjualan lama; granularitas mengikuti rentang', function () {
 it('widget tabel: produk, kategori, karyawan, shift, stok, void', function () {
     $range = ['preset' => 'custom', 'from' => '2026-08-01', 'to' => '2026-10-10'];
 
-    Livewire::test(ProductsTableWidget::class, ['pageFilters' => $range])->assertSee('Croissant')->assertSee('4 item');
-    Livewire::test(CategoriesTableWidget::class, ['pageFilters' => $range])->assertSee('Tanpa kategori');
+    Livewire::test(ProductsTableWidget::class, ['pageFilters' => $range])->assertSee('Croissant')->assertSeeHtml('<tfoot>')->assertSee('produk)');
+    Livewire::test(CategoriesTableWidget::class, ['pageFilters' => $range])->assertSee('Tanpa kategori')->assertSeeHtml('<tfoot>')->assertSee('100%');
     Livewire::test(EmployeesTableWidget::class, ['pageFilters' => $range])->assertSee('Budi');
     Livewire::test(ShiftsTableWidget::class, ['pageFilters' => ['preset' => 'today']])->assertSee('Rekap shift');
     Livewire::test(StockTableWidget::class, ['pageFilters' => $range])->assertSee('Croissant');

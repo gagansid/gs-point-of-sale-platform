@@ -14,7 +14,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 /**
  * Tabel laporan dari data teragregasi (array dari ReportService): cari, urut, dan paginasi
  * dikerjakan di sini karena datanya bukan query Eloquent (table.md: nominal rata kanan,
- * Money::format, kolom prioritas rendah visibleFrom('md')). Total ada di deskripsi tabel.
+ * Money::format, kolom prioritas rendah visibleFrom('md')). Total di baris <tfoot> (totalRow).
  */
 abstract class ReportTableWidget extends TableWidget
 {
@@ -49,6 +49,28 @@ abstract class ReportTableWidget extends TableWidget
             ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Belum ada data pada periode ini')
             ->emptyStateIcon('heroicon-o-chart-bar');
+    }
+
+    /**
+     * Baris total di bawah tabel, dari seluruh baris periode (bukan hanya halaman/pencarian aktif).
+     *
+     * @param  array<string, string>  $totals  nama kolom => teks terformat
+     */
+    protected function totalRow(Table $table, array $totals, string $label = 'Total'): Table
+    {
+        return $table->contentFooter(view('filament.dashboard.widgets.reports.table-total', ['totals' => $totals, 'label' => $label]));
+    }
+
+    /** @param list<array<string, mixed>> $rows */
+    protected static function sumMoney(array $rows, string $column): string
+    {
+        return Money::add('0', ...array_map('strval', array_column($rows, $column)));
+    }
+
+    /** @param list<array<string, mixed>> $rows */
+    protected static function sumCount(array $rows, string $column): string
+    {
+        return number_format(array_sum(array_map('intval', array_column($rows, $column))), 0, ',', '.');
     }
 
     /** @return list<string> kolom yang dicari (teks) */

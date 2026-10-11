@@ -11,7 +11,7 @@ use Filament\Tables\Table;
 
 /**
  * Laporan › Produk: qty, omzet, % kontribusi per produk (nama snapshot transaksi terakhir).
- * HPP/margin belum ada karena data modal belum dicatat.
+ * HPP/margin menyusul dari snapshot order_items.unit_cost (Q53).
  */
 final class ProductsTableWidget extends ReportTableWidget
 {
@@ -39,9 +39,11 @@ final class ProductsTableWidget extends ReportTableWidget
     {
         $rows = $this->cachedRows();
 
-        return $this->reportTable($table, 'Penjualan per produk')
-            ->description(count($rows).' produk · '.number_format(array_sum(array_column($rows, 'qty')), 0, ',', '.').' item · '
-                .Money::format(Money::add('0', ...array_column($rows, 'revenue'))))
+        return $this->totalRow($this->reportTable($table, 'Penjualan per produk'), [
+            'qty' => self::sumCount($rows, 'qty'),
+            'revenue' => Money::format(self::sumMoney($rows, 'revenue')),
+            'share' => '100%',
+        ], 'Total ('.count($rows).' produk)')
             ->defaultSort('revenue', 'desc')
             ->columns([
                 TextColumn::make('product_name')->label('Produk')->searchable()->sortable()->weight('medium'),

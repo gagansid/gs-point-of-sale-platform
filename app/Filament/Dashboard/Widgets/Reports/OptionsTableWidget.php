@@ -30,8 +30,10 @@ final class OptionsTableWidget extends ReportTableWidget
     {
         $rows = $this->cachedRows();
 
-        return $this->reportTable($table, 'Opsi & add-on')
-            ->description('Tambahan omzet dari opsi: '.Money::format(Money::add('0', ...array_column($rows, 'revenue'))))
+        return $this->totalRow($this->reportTable($table, 'Opsi & add-on'), [
+            'qty' => self::sumCount($rows, 'qty'),
+            'revenue' => Money::format(self::sumMoney($rows, 'revenue')),
+        ])
             ->defaultSort('qty', 'desc')
             ->columns([
                 TextColumn::make('option_name')->label('Opsi')->searchable()->sortable()->weight('medium'),
