@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Exceptions\ApiExceptionRenderer;
 use App\Exceptions\BusinessException;
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\Cashier\SetCashierContext;
 use App\Http\Middleware\CheckAppVersion;
 use App\Http\Middleware\EnsureDeviceToken;
 use App\Http\Middleware\EnsureTenantActive;
@@ -16,6 +17,7 @@ use App\Support\Domains;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
 
@@ -60,6 +62,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Outlet perangkat/user diisi sebelum route model binding: order/shift outlet lain → 404 (ADR 0010)
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureDeviceToken::class);
         $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureUserToken::class);
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: SetCashierContext::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Error bisnis adalah alur normal, bukan bug: jangan memenuhi log/Sentry
@@ -75,4 +78,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $exceptions->render(new ApiExceptionRenderer);
+
+        // Kasir web (Q54): error bisnis kembali ke halaman sebelumnya sebagai pesan, bukan 500
+        $exceptions->render(fn (BusinessException $e, Request $request) => $request->routeIs('cashier.*')
+            ? back()->withInput($request->except(['password', 'pin', 'approver_pin']))->withErrors(['cashier' => $e->getMessage()])
+            : null);
     })->create();

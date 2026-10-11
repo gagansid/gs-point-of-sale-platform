@@ -51,7 +51,9 @@ it('kasir: kode bisnis + username → satu outlet langsung terpilih, browser jad
     $this->assertGuest('web');
 
     $this->get(route('cashier.outlet'))->assertRedirect(route('cashier.home'));
-    $this->get(route('cashier.home'))->assertOk()->assertSee('Kemang');
+    // Belum ada shift → layar transaksi mengarahkan ke buka shift
+    $this->get(route('cashier.home'))->assertRedirect(route('cashier.shift'));
+    $this->get(route('cashier.shift'))->assertOk()->assertSee('Kemang')->assertSee('Buka shift');
 
     $device = webDevices()->sole();
     expect($device->outlet_id)->toBe($this->outlet->id)
@@ -140,14 +142,14 @@ it('multi outlet: pilih hanya outlet yang ditugaskan; outlet lain 404', function
     $this->post(route('cashier.outlet.store'), ['outlet_id' => Outlet::factory()->create()->id])->assertNotFound();
 
     $this->post(route('cashier.outlet.store'), ['outlet_id' => $cilandak->id])->assertRedirect(route('cashier.home'));
-    $this->get(route('cashier.home'))->assertOk()->assertSee('Cilandak');
+    $this->get(route('cashier.shift'))->assertOk()->assertSee('Cilandak');
     expect(webDevices()->sole()->outlet_id)->toBe($cilandak->id);
 });
 
 it('akses dicabut, akun nonaktif, atau kata sandi diganti → sesi kasir web keluar', function (Closure $change) {
     cashierLogin($this, []);
     $this->get(route('cashier.outlet'));
-    $this->get(route('cashier.home'))->assertOk();
+    $this->get(route('cashier.shift'))->assertOk();
 
     $change($this->budi);
     Auth::forgetGuards();

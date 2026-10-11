@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\Auth\IssueUserToken;
+use App\Actions\Cashier\RegisterWebDevice;
 use App\Actions\Payment\CreateDefaultPaymentMethods;
 use App\Models\Device;
 use App\Models\Option;
@@ -15,6 +16,7 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
+use App\Support\WebCashier;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -115,6 +117,25 @@ function posSetup(bool $openShift = true): stdClass
     });
 
     return $pos;
+}
+
+/**
+ * Masuk kasir web (Q54) sebagai $user di browser baru: sesi guard "cashier" + device web outlet POS.
+ * $pos->webDevice = device browser; tanpa shift (buka lewat route cashier.shift.store atau factory).
+ */
+function webCashierLogin(object $test, stdClass $pos, User $user): Device
+{
+    $user->forceFill(['web_cashier_access' => true])->save();
+    $user->forgetOutletIds();
+    $device = TenantContext::run($pos->tenantId, fn (): Device => app(RegisterWebDevice::class)->handle($user, $pos->outlet->fresh() ?? $pos->outlet, (string) Str::uuid()));
+    $pos->webDevice = $device;
+
+    $test->actingAs($user, WebCashier::GUARD)->withSession([
+        WebCashier::SESSION_DEVICE => $device->id,
+        WebCashier::SESSION_PASSWORD => WebCashier::passwordFingerprint($user),
+    ]);
+
+    return $device;
 }
 
 /** UUID v7 baru (seperti yang dibuat aplikasi Flutter). */

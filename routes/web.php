@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\Cashier\HomeController as CashierHomeController;
 use App\Http\Controllers\Web\Cashier\LoginController as CashierLoginController;
+use App\Http\Controllers\Web\Cashier\OrderController as CashierOrderController;
 use App\Http\Controllers\Web\Cashier\OutletController as CashierOutletController;
+use App\Http\Controllers\Web\Cashier\ShiftController as CashierShiftController;
 use App\Http\Controllers\Web\DashboardLoginController;
 use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Controllers\Web\PasswordResetController;
@@ -104,5 +106,12 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
 
     Route::middleware(SetCashierContext::class)->group(function (): void {
         Route::get('/', CashierHomeController::class)->name('home');
+        Route::get('orders', [CashierOrderController::class, 'index'])->name('orders');
+
+        Route::get('shift', [CashierShiftController::class, 'show'])->name('shift');
+        Route::post('shift', [CashierShiftController::class, 'store'])->name('shift.store');
+        Route::post('shift/close', [CashierShiftController::class, 'close'])->name('shift.close');
+        Route::get('shifts/{shift}', [CashierShiftController::class, 'recap'])->whereUuid('shift')->name('shifts.show');
+        Route::get('shifts/{shift}/pdf', [CashierShiftController::class, 'pdf'])->whereUuid('shift')->name('shifts.pdf');
     });
 });
