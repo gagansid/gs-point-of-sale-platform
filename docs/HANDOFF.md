@@ -97,20 +97,20 @@ input group tanpa garis pemisah; tanpa `style=""`/hex di Blade (pakai kelas + to
 | # | Pekerjaan | Kenapa | Catatan |
 |---|---|---|---|
 | L1 | Integrasi Flutter | Endpoint laporan baru & izin supervisor/kasir belum dipakai aplikasi | `docs/api/report.md`: supervisor ≤ 31 hari (422 di luar itu), kasir `shifts/{id}` + `/pdf` (X/Z-report) |
-| L2 | Uji migrasi `category_name` di MySQL dengan data besar | Backfill `UPDATE` per kategori; perlu dicek waktu jalannya di hosting | Jalankan di salinan DB produksi sebelum deploy |
+| L2 | Uji migrasi `category_name` & `unit_cost` di MySQL dengan data besar | Backfill `UPDATE` per kategori; perlu dicek waktu jalannya di hosting | Jalankan di salinan DB produksi sebelum deploy |
 | L3 | Font PDF Plus Jakarta Sans | Kini DejaVu Sans | Tambahkan TTF (lisensi OFL) ke `resources/fonts/` — butuh persetujuan pemilik untuk mengunduh |
 | L4 | Uji batas export di hosting | dompdf & Excel sinkron memakai memori/waktu PHP shared hosting | Bila perlu turunkan `ReportExporter::MAX_PDF_ROWS` / `MAX_EXCEL_ROWS` |
-| L5 | Total di footer tabel produk/kategori/opsi | Tabel array Filament tidak mendukung summarizer; total kini di deskripsi tabel | Opsional: `contentFooter()` khusus |
+| L5 | Total di footer tabel produk/kategori/opsi | Tabel array Filament tidak mendukung summarizer; total kini di deskripsi tabel | Opsional: `contentFooter()` khusus — ✅ Selesai (`2990a64`): baris total `<tfoot>` via `ReportTableWidget::totalRow()` |
 | L6 | Seragamkan ukuran tersisa (opsional) | Paginasi 28px, ikon aksi baris 26px, tab garis bawah Penjualan/Shift 39px | Sengaja tidak diubah (standar tabel/navigasi) — tanyakan pemilik |
-| L7 | Perbarui dokumentasi OpenAPI (Scramble) & `docs/api/README.md` (jumlah endpoint) | 9 endpoint laporan baru | — |
+| L7 | Perbarui dokumentasi OpenAPI (Scramble) & `docs/api/README.md` (jumlah endpoint) | 9 endpoint laporan baru | — — ✅ Selesai (`a2a33bd`): 58 endpoint, Scramble tanpa masalah (`scramble:analyze`) |
 
 ### Rekomendasi tambahan
 | # | Rekomendasi | Manfaat |
 |---|---|---|
-| R1 | Snapshot `cost_price` ke `order_items` saat checkout → laporan HPP & margin kotor per produk/kategori | Finance: laba kotor akurat walau harga modal berubah (`products.cost_price` sudah ada) |
+| R1 | Snapshot `cost_price` ke `order_items` saat checkout → laporan HPP & margin kotor per produk/kategori | Finance: laba kotor akurat walau harga modal berubah (`products.cost_price` sudah ada) — ✅ Snapshot selesai (`2a6a926`, Q53: `order_items.unit_cost`); laporan HPP & margin belum |
 | R2 | Cache agregat laporan (driver `database`, 60 detik, kunci tenant + filter; periode yang sudah lewat lebih lama) — sekaligus menutup T1 | Beranda/Laporan lebih ringan di shared hosting; `daily`/`hourly`/`heatmap` kini mengelompokkan di PHP |
-| R3 | Throttle aksi & endpoint export (mis. 10/menit per user) | Export sinkron cukup berat; cegah penyalahgunaan (DoS ringan) |
-| R4 | Wajib email terverifikasi untuk login dashboard supervisor | Supervisor kini bisa login web (Q50); verifikasi (Q46) belum memblokir akses |
+| R3 | Throttle aksi & endpoint export (mis. 10/menit per user) | Export sinkron cukup berat; cegah penyalahgunaan (DoS ringan) — ✅ Selesai (`bd473df`): `ExportThrottle`, `pos.rate_limits.export` |
+| R4 | Wajib email terverifikasi untuk login dashboard supervisor | Supervisor kini bisa login web (Q50); verifikasi (Q46) belum memblokir akses — ✅ Selesai (`ae629f7`) |
 | R5 | Ringkasan harian otomatis (email/WhatsApp) lewat cron cPanel `schedule:run` | Owner tahu omzet & anomali (void, selisih kas) tanpa membuka dashboard |
 | R6 | Target omzet harian/bulanan per outlet + progres di Beranda | Manager punya patokan, bukan hanya pembanding periode lalu |
 | R7 | Audit log (`spatie/laravel-activitylog`, Fase 2) terhubung ke panel Audit | Jejak perubahan harga, diskon, void lebih lengkap |
