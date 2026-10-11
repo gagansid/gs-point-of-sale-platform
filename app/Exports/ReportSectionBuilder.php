@@ -167,6 +167,38 @@ final class ReportSectionBuilder
                     [2, 3, 5])];
             })(),
             ReportTab::Discounts => $this->auditSections($context, $timezone),
+            ReportTab::Members => (function () use ($start, $end, $filters): array {
+                $m = $this->reports->members($start, $end, $filters);
+                $s = $m['summary'];
+
+                return [
+                    $this->section('Ringkasan member', ['Keterangan', 'Nilai'], [
+                        ['Transaksi member', $s['member_orders']],
+                        ['Omzet member', $s['member_revenue']],
+                        ['Transaksi non-member', $s['guest_orders']],
+                        ['Omzet non-member', $s['guest_revenue']],
+                        ['Member aktif', $s['active_members']],
+                        ['Member datang ≥ 2 kali', $s['repeat_members']],
+                        ['Member baru', $s['new_members']],
+                        ['Diskon member', $s['member_discount']],
+                        ['Poin didapat', $s['points_earned']],
+                        ['Poin ditukar', $s['points_redeemed']],
+                        ['Poin kedaluwarsa', $s['points_expired']],
+                        ['Utang poin (poin aktif saat ini)', $s['points_liability']],
+                        ['Utang poin (nilai)', $s['points_liability_value']],
+                        ['Voucher dipakai', $s['voucher_uses']],
+                        ['Potongan voucher', $s['voucher_discount']],
+                        ['Item gratis stempel', $s['stamp_free_count']],
+                        ['Nilai gratis stempel', $s['stamp_free_total']],
+                    ], moneyRows: true),
+                    $this->section('Member teratas', ['Member', 'Tier', 'Transaksi', 'Belanja', 'Poin didapat'],
+                        array_map(fn (array $r): array => [$r['member_name'], $r['tier'] ?? '-', $r['order_count'], $r['revenue'], $r['points_earned']], $m['top_members']),
+                        [3]),
+                    $this->section('Pemakaian voucher', ['Voucher', 'Dipakai', 'Potongan'],
+                        array_map(fn (array $r): array => [$r['voucher_code'], $r['uses'], $r['discount']], $m['vouchers']),
+                        [2], ['Total', array_sum(array_column($m['vouchers'], 'uses')), Money::add('0', ...array_column($m['vouchers'], 'discount'))]),
+                ];
+            })(),
             ReportTab::Stock => (function () use ($start, $end, $filters, $count): array {
                 $rows = $this->reports->stock($start, $end, $filters);
 

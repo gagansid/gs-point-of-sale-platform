@@ -23,6 +23,7 @@ beranda dashboard, halaman Laporan, dan file Excel/PDF.
 | GET | `/reports/shifts/{id}/pdf` | sama dengan `shifts/{id}` | PDF rekap shift (`application/pdf`), maks. 10 export/menit per user |
 | GET | `/reports/audit` | view / view_shift | Void, diskon dengan approval PIN, shift selisih kas (20 terbaru + jumlah) |
 | GET | `/reports/categories` | view | Per kategori dari snapshot `order_items.category_name` (Q51) |
+| GET | `/reports/members` | view | Member (ADR 0013, M7): `summary` (member vs non-member: transaksi & omzet, `member_share` %, member aktif/berulang ≥ 2 kali/baru (outlet daftar), diskon member, poin didapat/ditukar/kedaluwarsa, **utang poin** saat ini = saldo aktif × nilai poin (seluruh bisnis), voucher & gratis stempel), `top_members` (20 teratas), `vouchers` (per kode), `tiers` (sebaran saat ini) |
 | GET | `/reports/profit` | view | Laba kotor per produk (Q53): `net_sales` (setelah diskon order, tanpa pajak & service), `cogs` (qty × harga modal saat transaksi), `gross_profit`, `margin` (%), `uncosted_qty`; `totals` (margin hanya dari item ber-harga modal) |
 | GET | `/reports/options` | view | Opsi/add-on: `qty` (dipilih × qty item), `revenue` (tambahan omzet) |
 | GET | `/reports/hourly` | view | Per jam lokal (0–23) |

@@ -49,6 +49,7 @@ final class ReportRequest extends FormRequest
         'hourly' => ReportTab::Time,
         'heatmap' => ReportTab::Time,
         'stock' => ReportTab::Stock,
+        'members' => ReportTab::Members,
     ];
 
     public function authorize(): bool

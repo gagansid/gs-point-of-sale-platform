@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Models\MemberSetting;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 
@@ -27,6 +28,7 @@ enum ReportTab: string
     case Outlets = 'outlets';
     case Discounts = 'discounts';
     case Stock = 'stock';
+    case Members = 'members';
 
     public function label(): string
     {
@@ -44,6 +46,7 @@ enum ReportTab: string
             self::Outlets => 'Outlet',
             self::Discounts => 'Diskon & void',
             self::Stock => 'Stok',
+            self::Members => 'Member',
         };
     }
 
@@ -63,6 +66,7 @@ enum ReportTab: string
             self::Outlets => 'heroicon-o-building-storefront',
             self::Discounts => 'heroicon-o-shield-check',
             self::Stock => 'heroicon-o-archive-box',
+            self::Members => 'heroicon-o-user-group',
         };
     }
 
@@ -90,6 +94,11 @@ enum ReportTab: string
 
         if ($this === self::Outlets) {
             return CurrentOutlet::selectedId() === null && count($user->outletIds()) > 1;
+        }
+
+        // Program member (ADR 0013) belum pernah diaktifkan: tab tidak relevan
+        if ($this === self::Members) {
+            return MemberSetting::query()->exists();
         }
 
         return true;

@@ -1,8 +1,8 @@
 # Catatan Lanjut Pengerjaan
 
 > Diperbarui: 2026-10-11 · Branch: `feature/pos`
-> Status: **Program member M1–M4 selesai** (ADR 0013); M5–M7 & self-order (ADR 0014) berikutnya. Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1087 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih.
+> Status: **Program member M1–M7 selesai** (ADR 0013); self-order S1–S4 (ADR 0014) berikutnya. Deploy ditunda atas keputusan pemilik.
+> Kualitas: 1214 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
@@ -104,19 +104,27 @@ Aturan untuk tim Flutter (repo `gs-point-of-sale-app`, tidak ada di mesin ini):
 - **F2** — `GET/PUT /v1/outlet` kini memuat `daily_sales_target` & `monthly_sales_target` (nullable, Q56); opsional
   ditampilkan di setelan outlet aplikasi.
 
-### Program member (ADR 0013, SPEC Q60–Q67) — M1–M4 selesai 2026-10-11
+### Program member (ADR 0013, SPEC Q60–Q67, Q75) — M1–M7 selesai 2026-10-11
 | Commit | Isi |
 |---|---|
 | `0dd6186`, `6376280` | **M1** data member (HP +62 unik per bisnis, persetujuan, kode acak, hapus = anonimkan), Pengaturan → Program member (aktif, outlet ikut), Pelanggan → Member, API `/v1/members`, `member_id` di checkout/open bill, kolom cari member di kasir web (Enter/scanner) |
 | `55d0f7a` | **M2** ledger poin append-only (FIFO, saldo cache + lock), poin saat order selesai (subtotal setelah diskon, tanpa pajak/service), void menarik poin, `pos:expire-member-points` harian, penyesuaian manual (`member.points_adjust`), API riwayat poin, struk |
 | `5eb90f7` | **M3** metode bayar sistem **Poin** + bukti QR dinamis / PIN member (kunci 5×), `RedeemPoints` (kelipatan, minimal, maks. % tagihan, saldo), void mengembalikan poin, **diskon member %** di `OrderCalculator` (`MemberPricing`: urutan stempel → manual → voucher → member, tidak dihitung ke batas diskon kasir) |
-| (M4) | **Halaman member** `gspos.id/m/{kode-bisnis}`: masuk HP + kata sandi, daftar mandiri, QR `KODEMEMBER-123456`, riwayat, profil, ganti kata sandi, hapus akun; kata sandi sementara dari dashboard; scan QR di kasir web memasang member + mengisi bukti |
+| `48fbd66` (M4) | **Halaman member** `gspos.id/m/{kode-bisnis}`: masuk HP + kata sandi, daftar mandiri, QR `KODEMEMBER-123456`, riwayat, profil, ganti kata sandi, hapus akun; kata sandi sementara dari dashboard; scan QR di kasir web memasang member + mengisi bukti |
+| `324c98c` (M5) | **Tier** (`member_tiers`, Pengaturan → Program member): belanja 12 bulan bergulir dari order selesai (`TierEvaluator`, saat selesai/void + `pos:evaluate-member-tiers` harian), pengali poin memakai tier sebelum order, diskon tier ditambahkan ke diskon member, snapshot `orders.member_tier`, progres tier di halaman member |
+| `23204f3` (M6) | **Kartu stempel** (Pelanggan → Kartu stempel): 1 item = 1 stempel, `stamp_program_ids` di checkout/open bill → item termurah gratis (`stamp_free_total`), saldo dicek ulang saat lunas, void membalik; kasir web tombol kartu, halaman member lingkaran stempel |
+| `8af65ee` + berikutnya (M7) | **Voucher** (Pelanggan → Voucher): kode promo (nominal/persen, maks., minimal belanja, kuota total/per member, periode, khusus member/tier/outlet) & voucher ulang tahun (`pos:issue-birthday-vouchers`), `voucher_code`/`voucher_id`, kuota dicek ulang saat lunas, error baru `VOUCHER_INVALID`, `GET /v1/vouchers/check`; **laporan Member** (tab + `GET /reports/members` + export), baris member di ringkasan harian, **import/export** member di menu Member |
 
-**Berikutnya (lanjut dari sini):** M5 tier (spend 12 bulan bergulir, pengali poin, diskon tier lewat
-`ResolveMemberPricing`), M6 kartu stempel (`MemberPricing::stampFree`), M7 voucher ulang tahun & kode promo
-(`MemberPricing` voucher) + laporan member + ringkasan harian + import/export. Lalu self-order S1–S4 (ADR 0014).
+Catatan non-obvious: semua potongan member lewat `ResolveMemberPricing` → `MemberPricing` (pilihan kasir di
+`BenefitSelection`); benefit dicatat di `AwardOrderBenefits` (voucher juga tanpa member) dan dibalik di
+`ReverseOrderBenefits`. Stempel/voucher di open bill: field tidak dikirim = pilihan lama tetap.
 
-Catatan untuk tim Flutter (repo aplikasi): **F3** cari/daftar member (`/v1/members`), pasang `member_id`; **F4** metode
+**Berikutnya (lanjut dari sini):** self-order S1–S4 (ADR 0014).
+
+Catatan untuk tim Flutter (repo aplikasi): **F5** tampilkan `tier` member & `member_tier` di struk; **F6** kartu stempel
+(`stamp_cards` di detail member → kirim `stamp_program_ids`; struk `member_stamps`); **F7** voucher (`vouchers` di detail
+member → `voucher_id`, kode promo → `GET /v1/vouchers/check` lalu `voucher_code`; tangani `VOUCHER_INVALID`).
+**F3** cari/daftar member (`/v1/members`), pasang `member_id`; **F4** metode
 bayar `category: points` hanya bila member terpasang, kirim `member_code` (6 digit terakhir hasil scan QR) atau
 `member_pin`; tampilkan `member_discount`, `points_earned`, `member_points` di struk. Error baru: `MEMBER_NOT_FOUND`,
 `MEMBER_PROGRAM_DISABLED`, `INSUFFICIENT_POINTS`, `INVALID_MEMBER_PROOF`, `MEMBER_PIN_LOCKED`.

@@ -18,6 +18,10 @@ use App\Filament\Dashboard\Widgets\Reports\DiscountsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\EmployeesTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\FinancialBreakdownWidget;
 use App\Filament\Dashboard\Widgets\Reports\HeatmapWidget;
+use App\Filament\Dashboard\Widgets\Reports\MemberStatsWidget;
+use App\Filament\Dashboard\Widgets\Reports\MemberTiersTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\MemberTopTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\MemberVouchersTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\OptionsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\PaymentMethodsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\PeakHoursTableWidget;
@@ -209,6 +213,7 @@ final class Reports extends Page
             ReportTab::Products => [ProductsTableWidget::class, SlowProductsTableWidget::class],
             ReportTab::Categories => [CategoriesChartWidget::class, CategoriesTableWidget::class],
             ReportTab::Profit => [ProfitStatsWidget::class, ProfitTableWidget::class],
+            ReportTab::Members => [MemberStatsWidget::class, MemberTopTableWidget::class, MemberVouchersTableWidget::class, MemberTiersTableWidget::class],
             ReportTab::Options => [OptionsTableWidget::class],
             ReportTab::PaymentMethods => [PaymentMethodsChartWidget::class, PaymentMethodsTableWidget::class],
             ReportTab::Employees => [EmployeesTableWidget::class],

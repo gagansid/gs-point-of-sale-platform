@@ -8,8 +8,12 @@ use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Enums\PaymentCategory;
 use App\Enums\PaymentStatus;
+use App\Enums\PointEntryType;
 use App\Enums\ShiftStatus;
 use App\Enums\StockMovementType;
+use App\Models\Member;
+use App\Models\MemberPointEntry;
+use App\Models\MemberSetting;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Outlet;
@@ -601,6 +605,97 @@ class ReportService
     private static function marginPercent(string $profit, string $sales): ?string
     {
         return Money::isPositive($sales) ? Money::round(bcdiv(bcmul($profit, '100', 6), $sales, 6), 1) : null;
+    }
+
+    /**
+     * Laporan member (ADR 0013, M7): member vs non-member, member baru & berulang, member teratas, poin, utang poin,
+     * voucher, dan kartu stempel. Transaksi & poin mengikuti outlet/filter; member baru mengikuti outlet daftar;
+     * utang poin = saldo positif saat ini × nilai 1 poin (seluruh bisnis, bukan per periode).
+     *
+     * @return array{
+     *     summary: array{member_orders: int, member_revenue: string, guest_orders: int, guest_revenue: string, member_share: string|null,
+     *         active_members: int, repeat_members: int, new_members: int, member_discount: string, points_earned: int, points_redeemed: int,
+     *         points_expired: int, points_liability: int, points_liability_value: string, voucher_uses: int, voucher_discount: string,
+     *         stamp_free_count: int, stamp_free_total: string},
+     *     top_members: list<array{member_id: string, member_name: string, tier: string|null, order_count: int, revenue: string, points_earned: int}>,
+     *     vouchers: list<array{voucher_code: string, uses: int, discount: string}>,
+     *     tiers: list<array{tier: string, member_count: int}>
+     * }
+     */
+    public function members(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        $orders = fn (): Builder => $this->completed($start, $end, $filters);
+
+        $split = $orders()->toBase()->selectRaw('CASE WHEN member_id IS NULL THEN 0 ELSE 1 END AS is_member, COUNT(*) AS order_count, SUM(grand_total) AS revenue')
+            ->groupByRaw('CASE WHEN member_id IS NULL THEN 0 ELSE 1 END')->get()->keyBy('is_member');
+        $memberRevenue = Money::fromDb($split[1]->revenue ?? null);
+        $guestRevenue = Money::fromDb($split[0]->revenue ?? null);
+        $allRevenue = Money::add($memberRevenue, $guestRevenue);
+
+        $visits = $orders()->toBase()->whereNotNull('member_id')->groupBy('member_id')->selectRaw('member_id, COUNT(*) AS visits')->pluck('visits', 'member_id');
+        $benefits = $orders()->toBase()->selectRaw('SUM(member_discount) AS member_discount, SUM(voucher_discount) AS voucher_discount,
+            SUM(CASE WHEN voucher_id IS NULL THEN 0 ELSE 1 END) AS voucher_uses, SUM(stamp_free_total) AS stamp_free_total')->first();
+
+        $ledger = fn (PointEntryType $type): int => (int) CurrentOutlet::scope(MemberPointEntry::query())->where('type', $type)
+            ->whereIn('order_id', $orders()->select('id'))->sum('points');
+        $setting = MemberSetting::current();
+        $liability = (int) Member::query()->where('points_balance', '>', 0)->sum('points_balance');
+
+        $outletIds = CurrentOutlet::ids();
+        $newMembers = Member::query()->whereBetween('created_at', [$start, $end])
+            ->where(fn ($q) => $q->whereIn('joined_outlet_id', $outletIds)->when(CurrentOutlet::selectedId() === null, fn ($q) => $q->orWhereNull('joined_outlet_id')))
+            ->count();
+
+        $stampFreeCount = 0;
+        foreach ($orders()->whereNotNull('stamp_redemptions')->pluck('stamp_redemptions') as $redemptions) {
+            $stampFreeCount += is_array($redemptions) ? count($redemptions) : 0;
+        }
+
+        $top = $orders()->toBase()->whereNotNull('orders.member_id')
+            ->leftJoin('members', 'members.id', '=', 'orders.member_id')
+            ->leftJoin('member_tiers', 'member_tiers.id', '=', 'members.tier_id')
+            ->groupBy('orders.member_id')
+            ->selectRaw('orders.member_id, MAX(members.name) AS member_name, MAX(member_tiers.name) AS tier, COUNT(*) AS order_count,
+                SUM(orders.grand_total) AS revenue, SUM(orders.points_earned) AS points_earned')
+            ->orderByDesc('revenue')->limit(20)->get()
+            ->map(fn (object $r): array => [
+                'member_id' => (string) $r->member_id,
+                'member_name' => (string) $r->member_name,
+                'tier' => $r->tier !== null ? (string) $r->tier : null,
+                'order_count' => (int) $r->order_count,
+                'revenue' => Money::fromDb($r->revenue),
+                'points_earned' => (int) $r->points_earned,
+            ])->all();
+
+        return [
+            'summary' => [
+                'member_orders' => (int) ($split[1]->order_count ?? 0),
+                'member_revenue' => $memberRevenue,
+                'guest_orders' => (int) ($split[0]->order_count ?? 0),
+                'guest_revenue' => $guestRevenue,
+                'member_share' => Money::isPositive($allRevenue) ? Money::round(bcdiv(bcmul($memberRevenue, '100', 6), $allRevenue, 6), 1) : null,
+                'active_members' => $visits->count(),
+                'repeat_members' => $visits->filter(fn (mixed $v): bool => (int) $v >= 2)->count(),
+                'new_members' => $newMembers,
+                'member_discount' => Money::fromDb($benefits->member_discount ?? null),
+                'points_earned' => $ledger(PointEntryType::Earn),
+                'points_redeemed' => -$ledger(PointEntryType::Redeem),
+                'points_expired' => -(int) MemberPointEntry::query()->where('type', PointEntryType::Expire)->whereBetween('created_at', [$start, $end])->sum('points'),
+                'points_liability' => $liability,
+                'points_liability_value' => Money::mul((string) $setting->redeem_value, $liability),
+                'voucher_uses' => (int) ($benefits->voucher_uses ?? 0),
+                'voucher_discount' => Money::fromDb($benefits->voucher_discount ?? null),
+                'stamp_free_count' => $stampFreeCount,
+                'stamp_free_total' => Money::fromDb($benefits->stamp_free_total ?? null),
+            ],
+            'top_members' => $top,
+            'vouchers' => $orders()->toBase()->whereNotNull('voucher_id')->groupBy('voucher_code')
+                ->selectRaw('voucher_code, COUNT(*) AS uses, SUM(voucher_discount) AS discount')->orderByDesc('uses')->get()
+                ->map(fn (object $r): array => ['voucher_code' => (string) $r->voucher_code, 'uses' => (int) $r->uses, 'discount' => Money::fromDb($r->discount)])->all(),
+            'tiers' => Member::query()->whereNull('anonymized_at')->leftJoin('member_tiers', 'member_tiers.id', '=', 'members.tier_id')
+                ->groupBy('member_tiers.name')->selectRaw('member_tiers.name AS tier, COUNT(*) AS member_count')->orderByDesc('member_count')->toBase()->get()
+                ->map(fn (object $r): array => ['tier' => $r->tier !== null ? (string) $r->tier : 'Tanpa tier', 'member_count' => (int) $r->member_count])->all(),
+        ];
     }
 
     /**

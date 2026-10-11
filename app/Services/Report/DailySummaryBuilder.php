@@ -6,6 +6,8 @@ namespace App\Services\Report;
 
 use App\Enums\OrderStatus;
 use App\Enums\ShiftStatus;
+use App\Models\Member;
+use App\Models\MemberSetting;
 use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\Shift;
@@ -25,8 +27,10 @@ final class DailySummaryBuilder
 {
     /**
      * @return array{date: string, has_activity: bool, outlets: list<array{name: string, order_count: int, revenue: string, average: string,
-     *     void_count: int, void_total: string, shift_count: int, cash_difference: string, target: string|null, target_percent: string|null}>,
-     *     totals: array{order_count: int, revenue: string, void_count: int, void_total: string, cash_difference: string}}
+     *     void_count: int, void_total: string, shift_count: int, cash_difference: string, target: string|null, target_percent: string|null,
+     *     member_orders: int, member_revenue: string, new_members: int, points_redeemed: int}>,
+     *     totals: array{order_count: int, revenue: string, void_count: int, void_total: string, cash_difference: string},
+     *     members: array{member_orders: int, member_revenue: string, new_members: int, points_redeemed: int}|null}
      */
     public function build(User $user, string $date): array
     {
@@ -38,7 +42,10 @@ final class DailySummaryBuilder
 
             $sales = Order::query()->where('outlet_id', $outlet->id)->where('status', OrderStatus::Completed)
                 ->whereBetween('completed_at', [$start, $end])->toBase()
-                ->selectRaw('COUNT(*) as order_count, SUM(grand_total) as revenue')->first();
+                ->selectRaw('COUNT(*) as order_count, SUM(grand_total) as revenue,
+                    SUM(CASE WHEN member_id IS NULL THEN 0 ELSE 1 END) as member_orders,
+                    SUM(CASE WHEN member_id IS NULL THEN 0 ELSE grand_total END) as member_revenue,
+                    SUM(points_redeemed) as points_redeemed')->first();
             $voids = Order::query()->where('outlet_id', $outlet->id)->where('status', OrderStatus::Voided)
                 ->whereBetween('voided_at', [$start, $end])->toBase()
                 ->selectRaw('COUNT(*) as void_count, SUM(grand_total) as void_total')->first();
@@ -61,6 +68,11 @@ final class DailySummaryBuilder
                 'shift_count' => (int) ($shifts->shift_count ?? 0),
                 'cash_difference' => Money::fromDb($shifts->difference ?? null),
                 'target' => $target,
+                // Program member (ADR 0013, M7)
+                'member_orders' => (int) ($sales->member_orders ?? 0),
+                'member_revenue' => Money::fromDb($sales->member_revenue ?? null),
+                'new_members' => Member::query()->where('joined_outlet_id', $outlet->id)->whereBetween('created_at', [$start, $end])->count(),
+                'points_redeemed' => (int) ($sales->points_redeemed ?? 0),
                 'target_percent' => $target !== null && Money::isPositive($target)
                     ? Money::round(bcdiv(bcmul($revenue, '100', 4), $target, 4), 1)
                     : null,
@@ -80,6 +92,13 @@ final class DailySummaryBuilder
                 'void_total' => $sum('void_total'),
                 'cash_difference' => $sum('cash_difference'),
             ],
+            // Null = program member belum aktif (baris member tidak ditampilkan)
+            'members' => MemberSetting::current()->enabled ? [
+                'member_orders' => (int) array_sum(array_column($rows, 'member_orders')),
+                'member_revenue' => $sum('member_revenue'),
+                'new_members' => (int) array_sum(array_column($rows, 'new_members')),
+                'points_redeemed' => (int) array_sum(array_column($rows, 'points_redeemed')),
+            ] : null,
         ];
     }
 }

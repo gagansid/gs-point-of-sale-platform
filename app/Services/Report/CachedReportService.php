@@ -21,6 +21,11 @@ use Illuminate\Support\Facades\Cache;
  */
 final class CachedReportService extends ReportService
 {
+    public function members(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        return $this->remember(__FUNCTION__, [$start, $end, $filters], fn (): array => parent::members($start, $end, $filters));
+    }
+
     public function summary(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
     {
         return $this->remember(__FUNCTION__, [$start, $end, $filters], fn (): array => parent::summary($start, $end, $filters));

@@ -199,6 +199,20 @@ final class ReportController extends Controller
     }
 
     /**
+     * Laporan member.
+     *
+     * Program member (ADR 0013): member vs non-member, member aktif/berulang/baru, poin (didapat, ditukar,
+     * kedaluwarsa), utang poin saat ini (saldo aktif × nilai poin, seluruh bisnis), voucher, gratis stempel,
+     * 20 member teratas, pemakaian voucher, sebaran tier. Hanya report.view.
+     */
+    public function members(ReportRequest $request, ReportService $reports): JsonResponse
+    {
+        [$start, $end] = $request->utcRange();
+
+        return ApiResponse::success(['period' => $request->period(), ...$reports->members($start, $end, $request->filters())]);
+    }
+
+    /**
      * Opsi & add-on terlaris.
      *
      * qty = dipilih × qty item; revenue = tambahan omzet dari opsi.
