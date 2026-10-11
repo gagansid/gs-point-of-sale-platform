@@ -10,6 +10,7 @@ use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
 use App\Support\WebCashier;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 
@@ -112,4 +113,22 @@ it('kartu metode bayar: hanya metode aktif di outlet yang bisa dipilih', functio
     TenantContext::set($this->pos->tenantId);
     $page->call('setMethod', 0, $foreign->methods['cash']->id)
         ->assertSet('payments.0.payment_method_id', $this->pos->methods['qris']->id);
+});
+
+it('kasir web tidak memakai dialog confirm() browser (bisa diblokir browser tertanam)', function () {
+    $views = collect(File::allFiles(resource_path('views/cashier')))
+        ->merge(File::allFiles(resource_path('views/livewire/cashier')))
+        ->push(new SplFileInfo(resource_path('views/components/cashier/layout.blade.php')));
+
+    foreach ($views as $file) {
+        $content = (string) file_get_contents($file->getPathname());
+        expect($content)->not->toContain('wire:confirm', $file->getFilename())
+            ->and($content)->not->toMatch('/\bconfirm\(/', $file->getFilename());
+    }
+});
+
+it('konfirmasi buang order tertahan ada di halaman', function () {
+    Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)->call('hold')
+        ->assertSeeHtml('class="pos-held-x"')
+        ->assertSee('Buang');
 });

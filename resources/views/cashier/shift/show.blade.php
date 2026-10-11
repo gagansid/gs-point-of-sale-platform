@@ -51,7 +51,7 @@
                             @error('note') <p class="site-error">{{ $message }}</p> @enderror
                         </div>
                         <button type="submit" class="site-btn site-btn-primary site-btn-lg site-btn-block"
-                            onclick="return confirm('Tutup shift sekarang? Transaksi baru butuh shift baru.')">Tutup shift</button>
+                            data-confirm-step="Klik lagi untuk menutup shift">Tutup shift</button>
                     </form>
                     <script>
                         // Selisih langsung terlihat sebelum menutup (angka final tetap dihitung server)

@@ -72,7 +72,7 @@
                         </div>
                     @endunless
 
-                    <button type="submit" class="site-btn site-btn-primary site-btn-block" onclick="return confirm('Void order ini?')">Void</button>
+                    <button type="submit" class="site-btn site-btn-primary site-btn-block" data-confirm-step="Klik lagi untuk void">Void</button>
                 </form>
             </section>
         @endif

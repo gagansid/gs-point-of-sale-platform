@@ -54,5 +54,25 @@
 
         {{ $slot }}
     </main>
+
+    <script>
+        // Konfirmasi dua langkah tanpa dialog bawaan browser (bisa diblokir browser tertanam):
+        // klik pertama mengganti label tombol, klik kedua dalam 5 detik baru mengirim form.
+        document.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-confirm-step]');
+            if (! button) return;
+            if (button.dataset.armed === '1') return;
+            event.preventDefault();
+            button.dataset.armed = '1';
+            button.dataset.label ??= button.textContent;
+            button.textContent = button.dataset.confirmStep;
+            button.classList.add('is-armed');
+            setTimeout(() => {
+                button.dataset.armed = '';
+                button.textContent = button.dataset.label;
+                button.classList.remove('is-armed');
+            }, 5000);
+        });
+    </script>
 </body>
 </html>

@@ -66,12 +66,23 @@
             @if ($held = $this->heldCarts())
                 <div class="pos-held" aria-label="Transaksi ditahan">
                     @foreach ($held as $h)
-                        <span class="pos-held-chip" wire:key="h-{{ $h['id'] }}">
-                            <button type="button" class="site-link-button" wire:click="resume('{{ $h['id'] }}')" title="Lanjutkan {{ $h['label'] }}">
-                                ⏸ {{ $h['label'] }} <small>{{ $h['items'] }} item{{ $h['total'] ? ' · '.$money($h['total']) : '' }}</small>
-                            </button>
-                            <button type="button" class="site-link-button" wire:click="discardHeld('{{ $h['id'] }}')"
-                                wire:confirm="Buang transaksi {{ $h['label'] }}?" aria-label="Buang {{ $h['label'] }}">✕</button>
+                        {{-- Konfirmasi di halaman (bukan dialog browser yang bisa diblokir) --}}
+                        <span class="pos-held-chip" wire:key="h-{{ $h['id'] }}" x-data="{ confirming: false }">
+                            <template x-if="! confirming">
+                                <span class="pos-held-chip-body">
+                                    <button type="button" class="pos-held-resume" wire:click="resume('{{ $h['id'] }}')" title="Lanjutkan {{ $h['label'] }}">
+                                        ⏸ {{ $h['label'] }} <small>{{ $h['items'] }} item{{ $h['total'] ? ' · '.$money($h['total']) : '' }}</small>
+                                    </button>
+                                    <button type="button" class="pos-held-x" x-on:click="confirming = true" aria-label="Buang {{ $h['label'] }}" title="Buang">✕</button>
+                                </span>
+                            </template>
+                            <template x-if="confirming">
+                                <span class="pos-held-chip-body" role="alertdialog" aria-label="Buang {{ $h['label'] }}?">
+                                    <span>Buang {{ $h['label'] }}?</span>
+                                    <button type="button" class="pos-held-danger" wire:click="discardHeld('{{ $h['id'] }}')">Buang</button>
+                                    <button type="button" class="pos-held-cancel" x-on:click="confirming = false">Batal</button>
+                                </span>
+                            </template>
                         </span>
                     @endforeach
                 </div>
@@ -167,9 +178,13 @@
             </dl>
         @endif
 
+        <div class="pos-confirm" x-data="{ confirming: false }" x-show="confirming" x-cloak x-on:pos-confirm-clear.window="confirming = true" role="alertdialog" aria-label="Kosongkan keranjang?">
+            <span>{{ $billId ? 'Tutup open bill ini? Data bill tetap tersimpan.' : 'Kosongkan keranjang?' }}</span>
+            <button type="button" class="site-btn site-btn-outline" x-on:click="confirming = false">Batal</button>
+            <button type="button" class="site-btn pos-btn-danger" wire:click="clearCart" x-on:click="confirming = false">{{ $billId ? 'Tutup' : 'Kosongkan' }}</button>
+        </div>
         <div class="pos-actions">
-            <button type="button" class="site-btn site-btn-outline" wire:click="clearCart" @disabled($cart === [])
-                wire:confirm="Kosongkan keranjang? Open bill yang tersimpan tidak terhapus.">{{ $billId ? 'Tutup' : 'Kosongkan' }}</button>
+            <button type="button" class="site-btn site-btn-outline" x-on:click="$dispatch('pos-confirm-clear')" @disabled($cart === [])>{{ $billId ? 'Tutup' : 'Kosongkan' }}</button>
             @unless ($billId)
                 <button type="button" class="site-btn site-btn-outline" wire:click="hold" @disabled($cart === [])
                     title="Simpan sementara, layani pelanggan berikutnya">Tahan</button>
