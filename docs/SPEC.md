@@ -515,7 +515,7 @@ Cron (satu saja): `* * * * * cd /home/{user}/gs-point-of-sale-platform && php ar
 | `sanctum:prune-expired` | Harian |
 | `auth:clear-resets` | Harian |
 
-Backup MySQL butuh `mysqldump`; bila tidak ada di PATH hosting, isi `dump.dump_binary_path` koneksi `mysql` di `config/database.php`. Isi `BACKUP_NOTIFY_EMAIL` dan `BACKUP_ARCHIVE_PASSWORD` (zip terenkripsi) di `.env` production.
+Folder `storage/` (termasuk `storage/fonts`, cache font PDF dompdf) wajib bisa ditulis PHP. Backup MySQL butuh `mysqldump`; bila tidak ada di PATH hosting, isi `dump.dump_binary_path` koneksi `mysql` di `config/database.php`. Isi `BACKUP_NOTIFY_EMAIL` dan `BACKUP_ARCHIVE_PASSWORD` (zip terenkripsi) di `.env` production.
 
 `.env` penting:
 

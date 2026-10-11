@@ -98,7 +98,7 @@ input group tanpa garis pemisah; tanpa `style=""`/hex di Blade (pakai kelas + to
 |---|---|---|---|
 | L1 | Integrasi Flutter | Endpoint laporan baru & izin supervisor/kasir belum dipakai aplikasi | `docs/api/report.md`: supervisor ≤ 31 hari (422 di luar itu), kasir `shifts/{id}` + `/pdf` (X/Z-report) |
 | L2 | Uji migrasi `category_name` & `unit_cost` di MySQL dengan data besar | Backfill `UPDATE` per kategori; perlu dicek waktu jalannya di hosting | Jalankan di salinan DB produksi sebelum deploy |
-| L3 | Font PDF Plus Jakarta Sans | Kini DejaVu Sans | Tambahkan TTF (lisensi OFL) ke `resources/fonts/` — butuh persetujuan pemilik untuk mengunduh |
+| L3 | Font PDF Plus Jakarta Sans | Kini DejaVu Sans | Tambahkan TTF (lisensi OFL) ke `resources/fonts/` — butuh persetujuan pemilik untuk mengunduh — ✅ Selesai 2026-10-11: TTF Regular/Bold + OFL.txt dari github.com/tokotype/PlusJakartaSans, subsetting aktif, cache `storage/fonts` |
 | L4 | Uji batas export di hosting | dompdf & Excel sinkron memakai memori/waktu PHP shared hosting | Bila perlu turunkan `ReportExporter::MAX_PDF_ROWS` / `MAX_EXCEL_ROWS` |
 | L5 | Total di footer tabel produk/kategori/opsi | Tabel array Filament tidak mendukung summarizer; total kini di deskripsi tabel | Opsional: `contentFooter()` khusus — ✅ Selesai (`2990a64`): baris total `<tfoot>` via `ReportTableWidget::totalRow()` |
 | L6 | Seragamkan ukuran tersisa (opsional) | Paginasi 28px, ikon aksi baris 26px, tab garis bawah Penjualan/Shift 39px | Sengaja tidak diubah (standar tabel/navigasi) — tanyakan pemilik |

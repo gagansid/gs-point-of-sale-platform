@@ -112,7 +112,8 @@ return [
         /**
          * Whether to enable font subsetting or not.
          */
-        'enable_font_subsetting' => false,
+        // Hanya glyph yang dipakai yang disematkan (Plus Jakarta Sans utuh ±600 KB per PDF)
+        'enable_font_subsetting' => true,
 
         /**
          * The PDF rendering backend to use

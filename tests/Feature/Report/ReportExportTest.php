@@ -91,7 +91,9 @@ it('PDF: application/pdf, tab ini & lengkap', function () {
 
     expect($response->headers->get('content-type'))->toBe('application/pdf')
         ->and($response->headers->get('content-disposition'))->toContain('laporan-products-2026-10-01-2026-10-10.pdf')
-        ->and(substr(pdfContent($response), 0, 4))->toBe('%PDF');
+        ->and(substr($pdf = pdfContent($response), 0, 4))->toBe('%PDF')
+        // Font merek tertanam (resources/fonts, lisensi OFL), bukan fallback DejaVu Sans
+        ->and($pdf)->toContain('PlusJakartaSans');
 
     Livewire::test(Reports::class)->callAction('pdf_full')->assertFileDownloaded('laporan-lengkap-2026-10-01-2026-10-10.pdf');
 });

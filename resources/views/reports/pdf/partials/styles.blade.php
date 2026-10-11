@@ -1,7 +1,8 @@
 {{--
     Gaya PDF laporan (dompdf tidak membaca theme.css). Satu-satunya tempat hex untuk PDF;
     nilai WAJIB sama dengan docs/standards/ui/design-tokens.md (ADR 0012).
-    Plus Jakarta Sans dipakai bila TTF ada di resources/fonts, selain itu DejaVu Sans.
+    Plus Jakarta Sans dari resources/fonts (SIL OFL, lihat resources/fonts/OFL.txt); DejaVu Sans sebagai cadangan.
+    Cache metrik font dompdf di storage/fonts (wajib bisa ditulis di hosting).
 --}}
 @php($fontRegular = resource_path('fonts/PlusJakartaSans-Regular.ttf'))
 @php($fontBold = resource_path('fonts/PlusJakartaSans-Bold.ttf'))
