@@ -91,6 +91,17 @@ describe('sukses', function () {
             ->and($order?->items->first()?->unit_price)->toBe('22000.00');
     });
 
+    it('snapshot harga modal tetap walau harga modal berubah; kosong = null (Q53)', function () {
+        $this->pos->coffee->update(['cost_price' => '8000.00']);
+        $this->pos->croissant->update(['cost_price' => null]);
+        $id = checkout($this, cart($this->pos))->json('data.id');
+        $this->pos->coffee->update(['cost_price' => '12000.00']);
+
+        $items = Order::allTenants()->with('items')->find($id)?->items->keyBy('product_id');
+        expect($items?->get($this->pos->coffee->id)?->unit_cost)->toBe('8000.00')
+            ->and($items?->get($this->pos->croissant->id)?->unit_cost)->toBeNull();
+    });
+
     it('split payment debit + tunai: non-tunai pas, tunai menutup sisa dengan kembalian', function () {
         $body = cart($this->pos, ['payments' => [
             ['id' => uuid(), 'payment_method_id' => $this->pos->methods['cash']->id, 'amount' => 50000, 'tendered' => 50000],

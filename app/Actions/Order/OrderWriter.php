@@ -63,6 +63,8 @@ final class OrderWriter
                 // Snapshot kategori untuk laporan Kategori (Q51)
                 'category_name' => $line->product->category->name ?? OrderItem::UNCATEGORIZED,
                 'unit_price' => $line->product->price,
+                // Snapshot harga modal untuk HPP & margin (Q53); null = belum diisi
+                'unit_cost' => $line->product->cost_price,
                 'options_total' => $line->optionsTotal,
                 'qty' => $line->qty,
                 'discount' => $totals->lines[$position]['discount'],

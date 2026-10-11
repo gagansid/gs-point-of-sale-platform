@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Item order dengan snapshot nama & harga produk saat transaksi.
+ * Item order dengan snapshot nama, harga & harga modal produk saat transaksi.
  *
  * @property string $id
  * @property string $tenant_id
@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $product_name
  * @property string $category_name
  * @property string $unit_price
+ * @property string|null $unit_cost
  * @property string $options_total
  * @property int $qty
  * @property string $discount
@@ -33,12 +34,13 @@ final class OrderItem extends Model
     /** Snapshot kategori untuk produk tanpa kategori (Q51) */
     public const UNCATEGORIZED = 'Tanpa kategori';
 
-    protected $fillable = ['order_id', 'product_id', 'product_name', 'category_name', 'unit_price', 'options_total', 'qty', 'discount', 'line_total', 'notes', 'sort_order'];
+    protected $fillable = ['order_id', 'product_id', 'product_name', 'category_name', 'unit_price', 'unit_cost', 'options_total', 'qty', 'discount', 'line_total', 'notes', 'sort_order'];
 
     protected function casts(): array
     {
         return [
             'unit_price' => 'decimal:2',
+            'unit_cost' => 'decimal:2',
             'options_total' => 'decimal:2',
             'qty' => 'integer',
             'discount' => 'decimal:2',
