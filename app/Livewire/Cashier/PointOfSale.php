@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Cashier;
 
 use App\Actions\Catalog\GetCatalog;
+use App\Actions\Member\Data\MemberData;
+use App\Actions\Member\SaveMember;
 use App\Actions\Order\AddPayment;
 use App\Actions\Order\CheckoutOrder;
 use App\Actions\Order\Data\CheckoutData;
@@ -21,6 +23,8 @@ use App\Exceptions\BusinessException;
 use App\Http\Requests\Api\V1\Order\CheckoutRequest;
 use App\Http\Requests\Api\V1\Order\OpenBillRequest;
 use App\Models\Category;
+use App\Models\Member;
+use App\Models\MemberSetting;
 use App\Models\OptionGroup;
 use App\Models\Order;
 use App\Models\Outlet;
@@ -33,6 +37,7 @@ use App\Support\Money;
 use App\Support\WebCashier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -123,6 +128,26 @@ final class PointOfSale extends Component
     public string $approverId = '';
 
     public string $approverPin = '';
+
+    // Member (ADR 0013): dipasang ke order; server memvalidasi ulang saat simpan/bayar (ResolveOrderMember)
+    public ?string $memberId = null;
+
+    public string $memberName = '';
+
+    public bool $showMembers = false;
+
+    public string $memberSearch = '';
+
+    /** @var list<array{id: string, name: string, code: string, phone: string, visits: int}> */
+    public array $memberResults = [];
+
+    public string $newMemberName = '';
+
+    public string $newMemberPhone = '';
+
+    public bool $newMemberConsent = false;
+
+    public ?string $memberError = null;
 
     #[Locked]
     public ?string $completedOrderId = null;
@@ -476,6 +501,7 @@ final class PointOfSale extends Component
             'order_type' => $this->orderType,
             'table_label' => $this->orderType === 'dine_in' && filled(trim($this->tableLabel)) ? trim($this->tableLabel) : null,
             'notes' => filled(trim($this->notes)) ? trim($this->notes) : null,
+            'member_id' => $this->memberId,
             'discount' => $this->orderDiscountType() !== null ? ['type' => $this->discountType, 'value' => $this->orderDiscountValue()] : null,
             'items' => $this->checkoutItems(),
             'payments' => array_map(fn (array $p): array => [
@@ -522,13 +548,92 @@ final class PointOfSale extends Component
 
     // ---------- Tahan transaksi (park) ----------
 
+    // ---------- Member (ADR 0013) ----------
+
+    /** Batas pencarian member per user per menit (cegah menebak nomor HP), sama dengan API */
+    private const MEMBER_SEARCH_PER_MINUTE = 30;
+
+    #[Computed]
+    public function memberProgramEnabled(): bool
+    {
+        return $this->user()->can('member.view') && MemberSetting::current()->enabled;
+    }
+
+    public function updatedMemberSearch(): void
+    {
+        $this->memberResults = [];
+        $term = trim($this->memberSearch);
+
+        if (! $this->memberProgramEnabled() || mb_strlen($term) < 2) {
+            return;
+        }
+
+        $key = 'member-search:'.$this->user()->id;
+        if (RateLimiter::tooManyAttempts($key, self::MEMBER_SEARCH_PER_MINUTE)) {
+            $this->memberError = 'Terlalu banyak pencarian. Coba lagi dalam '.RateLimiter::availableIn($key).' detik';
+
+            return;
+        }
+        RateLimiter::hit($key, 60);
+        $this->memberError = null;
+
+        $this->memberResults = Member::query()->whereNull('anonymized_at')->where('is_active', true)
+            ->search($term)->orderByDesc('last_visit_at')->orderBy('name')->limit(8)->get()
+            ->map(fn (Member $m): array => ['id' => $m->id, 'name' => $m->name, 'code' => $m->code, 'phone' => $m->maskedPhone(), 'visits' => $m->visit_count])
+            ->all();
+    }
+
+    public function selectMember(string $memberId): void
+    {
+        abort_unless($this->memberProgramEnabled(), 403);
+        // ID dari browser: dicari ulang dalam tenant aktif
+        $member = Member::query()->find($memberId);
+
+        if ($member === null || ! $member->isUsable()) {
+            $this->memberError = 'Member tidak ditemukan atau tidak aktif';
+
+            return;
+        }
+
+        $this->memberId = $member->id;
+        $this->memberName = $member->name;
+        $this->reset('showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
+    }
+
+    public function clearMember(): void
+    {
+        $this->reset('memberId', 'memberName');
+    }
+
+    /** Daftar cepat member (nama + HP + persetujuan) lalu langsung dipasang ke keranjang. */
+    public function registerMember(): void
+    {
+        abort_unless($this->memberProgramEnabled() && $this->user()->can('member.create'), 403);
+        $this->memberError = null;
+
+        try {
+            $member = app(SaveMember::class)->handle(null, MemberData::fromArray([
+                'name' => mb_substr(trim($this->newMemberName), 0, 100),
+                'phone' => mb_substr(trim($this->newMemberPhone), 0, 30),
+                'consent' => $this->newMemberConsent,
+            ]), $this->outlet())['member'];
+        } catch (BusinessException $e) {
+            $this->memberError = $this->failed($e);
+
+            return;
+        }
+
+        $this->toast("Member {$member->name} terdaftar");
+        $this->selectMember($member->id);
+    }
+
     /** Maks. keranjang ditahan per browser */
     public const MAX_HELD = 10;
 
     /**
      * Keranjang ditahan di browser ini (session per device): belum jadi order, belum memotong stok.
      *
-     * @return list<array{id: string, label: string, order_id: string, cart: list<array<string, mixed>>, order_type: string, table_label: string, notes: string, discount_type: string, discount_value: string, total: string|null, items: int, held_at: string}>
+     * @return list<array{id: string, label: string, order_id: string, cart: list<array<string, mixed>>, order_type: string, table_label: string, notes: string, discount_type: string, discount_value: string, member_id?: string|null, member_name?: string, total: string|null, items: int, held_at: string}>
      */
     public function heldCarts(): array
     {
@@ -563,6 +668,8 @@ final class PointOfSale extends Component
             'notes' => $this->notes,
             'discount_type' => $this->discountType,
             'discount_value' => $this->discountValue,
+            'member_id' => $this->memberId,
+            'member_name' => $this->memberName,
             'total' => $this->quote['totals']?->grandTotal,
             'items' => (int) array_sum(array_column($this->cart, 'qty')),
             'held_at' => now()->toIso8601String(),
@@ -602,6 +709,9 @@ final class PointOfSale extends Component
         $this->discountType = $entry['discount_type'];
         $this->discountValue = $entry['discount_value'];
         $this->holdLabel = str_starts_with($entry['label'], 'Pelanggan ') ? '' : $entry['label'];
+        // Sesi lama (sebelum member) tidak punya kunci ini
+        $this->memberId = $entry['member_id'] ?? null;
+        $this->memberName = $entry['member_name'] ?? '';
         $this->toast("Transaksi {$entry['label']} dilanjutkan", 'info');
     }
 
@@ -687,6 +797,8 @@ final class PointOfSale extends Component
         $this->orderType = $order->order_type->value;
         $this->tableLabel = (string) $order->table_label;
         $this->notes = (string) $order->notes;
+        $this->memberId = $order->member_id;
+        $this->memberName = (string) $order->member_name;
         $this->discountType = $order->discount_type->value ?? '';
         $this->discountValue = $order->discount_value ?? '';
         $this->cart = $order->items->sortBy('sort_order')->map(fn ($item): array => [
@@ -753,7 +865,8 @@ final class PointOfSale extends Component
     private function resetOrder(): void
     {
         $this->reset('cart', 'orderType', 'tableLabel', 'notes', 'discountType', 'discountValue', 'paying', 'payments', 'payError',
-            'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'holdLabel');
+            'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'holdLabel',
+            'memberId', 'memberName', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
         $this->orderId = (string) Str::uuid7();
         // Total yang sudah dihitung di request ini (mis. saat menahan) jangan ikut ter-render
         unset($this->quote);
@@ -766,6 +879,8 @@ final class PointOfSale extends Component
             'order_type' => $this->orderType,
             'table_label' => $this->orderType === 'dine_in' && filled(trim($this->tableLabel)) ? mb_substr(trim($this->tableLabel), 0, 50) : null,
             'notes' => filled(trim($this->notes)) ? mb_substr(trim($this->notes), 0, 255) : null,
+            // Selalu dikirim: null = member dilepas dari open bill
+            'member_id' => $this->memberId,
             'discount' => $this->orderDiscountType() !== null ? ['type' => $this->discountType, 'value' => $this->orderDiscountValue()] : null,
             'items' => $this->checkoutItems(),
             ...$this->approvalInput(),

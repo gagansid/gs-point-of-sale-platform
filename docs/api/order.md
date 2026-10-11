@@ -50,6 +50,7 @@ yang dikirim aplikasi diabaikan.
 | `items` | 1–100; `qty` 1–999; `option_ids` maks. 20; `discount` per item (nominal) |
 | `payments` | wajib ada, 0–10; `[]` hanya bila total akhir 0 (mis. diskon 100%), selain itu `422` pembayaran kurang; `id` UUID unik; `amount` > 0; `tendered` untuk tunai; `reference` wajib bila metode `requires_reference` |
 | `approver_user_id` + `approver_pin` | hanya bila diskon di atas batas role (PIN 6 digit) |
+| `member_id` | opsional (ADR 0013): member aktif bisnis ini, selain itu `404 MEMBER_NOT_FOUND`; program nonaktif `422 MEMBER_PROGRAM_DISABLED`. Open bill: tidak dikirim = tetap, `null` = dilepas. Lihat [`member.md`](member.md) |
 
 ### Aturan
 
@@ -159,7 +160,7 @@ Order di luar visibilitas → `403` di detail/struk; order tenant lain → `404`
 ## `GET /v1/orders/{id}/receipt`
 
 Data struk siap cetak: `outlet` (nama, alamat, header, footer), `order_number`, `order_type_label`,
-`table_label`, `cashier_name`, `created_at` (UTC) + `created_at_local` (`08/10/2026 12.00`, zona outlet),
+`table_label`, `member_name` (atau `null`), `cashier_name`, `created_at` (UTC) + `created_at_local` (`08/10/2026 12.00`, zona outlet),
 `lines` (nama, opsi, qty, harga, diskon, total, catatan), `totals` (dengan **tarif pajak/service saat
 transaksi**), `payments`, `is_void`, `void_reason`.
 

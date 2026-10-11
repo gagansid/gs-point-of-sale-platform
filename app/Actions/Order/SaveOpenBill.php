@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Member\ResolveOrderMember;
 use App\Actions\Order\Data\OpenBillData;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
@@ -49,12 +50,13 @@ final class SaveOpenBill
         $shift = CheckoutOrder::openShiftOf($device);
         $outlet = Outlet::query()->findOrFail($existing->outlet_id ?? $shift->outlet_id);
 
+        $member = $data->memberProvided ? app(ResolveOrderMember::class)->handle($data->memberId) : null;
         $lines = $this->resolveLines->handle($data->items, $outlet);
         $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval);
         $totals = $priced['totals'];
 
         try {
-            $result = DB::transaction(function () use ($actor, $device, $shift, $outlet, $orderId, $data, $lines, $priced, $totals): array {
+            $result = DB::transaction(function () use ($actor, $device, $shift, $outlet, $orderId, $data, $lines, $priced, $totals, $member): array {
                 $order = Order::query()->lockForUpdate()->find($orderId);
                 self::ensureOpen($order);
                 $created = $order === null;
@@ -87,6 +89,12 @@ final class SaveOpenBill
                     'discount_value' => $data->discountType !== null ? $data->discountValue : null,
                     'approved_by' => $priced['approved_by'],
                 ]);
+
+                // Member (ADR 0013): field tidak dikirim = member lama tetap (aplikasi lama), null = dilepas
+                if ($data->memberProvided) {
+                    $order->forceFill(['member_id' => $member?->id, 'member_name' => $member?->name]);
+                }
+
                 $this->writer->applyTotals($order, $totals, $outlet);
                 $order->save();
 

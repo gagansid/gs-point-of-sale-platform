@@ -29,6 +29,8 @@ final readonly class CheckoutData
         public array $items,
         public array $payments,
         public ?ApprovalData $approval,
+        // Member yang dipasang (ADR 0013); null = tanpa member
+        public ?string $memberId = null,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -46,6 +48,7 @@ final readonly class CheckoutData
             items: self::parseItems($data['items'] ?? []),
             payments: self::parsePayments($data['payments'] ?? []),
             approval: self::parseApproval($data),
+            memberId: filled($data['member_id'] ?? null) ? (string) $data['member_id'] : null,
         );
     }
 

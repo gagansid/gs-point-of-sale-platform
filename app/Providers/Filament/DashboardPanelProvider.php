@@ -64,6 +64,7 @@ final class DashboardPanelProvider extends PanelProvider
             ->navigationGroups([
                 NavigationGroup::make('Transaksi')->collapsible(false),
                 NavigationGroup::make('Katalog')->collapsible(false),
+                NavigationGroup::make('Pelanggan')->collapsible(false),
                 NavigationGroup::make('Laporan')->collapsible(false),
                 NavigationGroup::make('Pengaturan')->collapsible(false),
             ])

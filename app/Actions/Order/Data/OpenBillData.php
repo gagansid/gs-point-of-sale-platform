@@ -25,6 +25,9 @@ final readonly class OpenBillData
         public string $discountValue,
         public array $items,
         public ?ApprovalData $approval,
+        // Member (ADR 0013): memberProvided = false (field tidak dikirim) → member lama tetap; null = dilepas
+        public ?string $memberId = null,
+        public bool $memberProvided = false,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -40,6 +43,8 @@ final readonly class OpenBillData
             discountValue: is_array($discount) ? Money::of((string) $discount['value']) : '0.00',
             items: CheckoutData::parseItems($data['items'] ?? []),
             approval: CheckoutData::parseApproval($data),
+            memberId: filled($data['member_id'] ?? null) ? (string) $data['member_id'] : null,
+            memberProvided: array_key_exists('member_id', $data),
         );
     }
 }

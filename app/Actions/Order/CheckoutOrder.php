@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Member\ResolveOrderMember;
 use App\Actions\Order\Data\CheckoutData;
 use App\Actions\Tenant\EnsureOwnerEmailVerified;
 use App\Enums\ErrorCode;
@@ -59,6 +60,7 @@ final class CheckoutOrder
         $shift = self::openShiftOf($device);
         $outlet = Outlet::query()->findOrFail($shift->outlet_id);
 
+        $member = app(ResolveOrderMember::class)->handle($data->memberId);
         $lines = $this->resolveLines->handle($data->items, $outlet);
         $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval);
         $totals = $priced['totals'];
@@ -74,7 +76,7 @@ final class CheckoutOrder
         }
 
         try {
-            $order = DB::transaction(function () use ($actor, $device, $shift, $outlet, $data, $lines, $priced, $totals, $payments): Order {
+            $order = DB::transaction(function () use ($actor, $device, $shift, $outlet, $data, $lines, $priced, $totals, $payments, $member): Order {
                 $order = new Order([
                     'outlet_id' => $outlet->id,
                     'shift_id' => $shift->id,
@@ -91,6 +93,9 @@ final class CheckoutOrder
                     'discount_type' => $data->discountType,
                     'discount_value' => $data->discountType !== null ? $data->discountValue : null,
                     'approved_by' => $priced['approved_by'],
+                    // Snapshot nama member (tetap terbaca walau member dianonimkan, ADR 0013)
+                    'member_id' => $member?->id,
+                    'member_name' => $member?->name,
                 ]);
                 $this->writer->applyTotals($order, $totals, $outlet);
                 $order->save();

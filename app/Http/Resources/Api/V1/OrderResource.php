@@ -22,6 +22,8 @@ final class OrderResource extends JsonResource
             'table_label' => $this->table_label,
             'status' => $this->status->value,
             'notes' => $this->notes,
+            // Snapshot nama saat transaksi (ADR 0013)
+            'member' => $this->member_id !== null ? ['id' => $this->member_id, 'name' => $this->member_name] : null,
             'shift_id' => $this->shift_id,
             'user_id' => $this->user_id,
             'discount' => $this->discount_type !== null

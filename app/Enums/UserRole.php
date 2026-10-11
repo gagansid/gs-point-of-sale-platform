@@ -49,6 +49,11 @@ enum UserRole: string implements HasColor, HasLabel
         'outlet.access_all',
         // Riwayat perubahan / audit log (Q58)
         'audit.view',
+        // Program member (ADR 0013)
+        'member.view',
+        'member.create',
+        'member.manage',
+        'member.settings',
     ];
 
     /**
@@ -65,6 +70,7 @@ enum UserRole: string implements HasColor, HasLabel
         'report.export',
         'outlet.access_all',
         'audit.view',
+        'member.view',
     ];
 
     public static function isReadPermission(string $permission): bool
@@ -81,19 +87,21 @@ enum UserRole: string implements HasColor, HasLabel
     {
         return match ($this) {
             self::Owner => ['*'],
-            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view'],
+            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view', 'member.view', 'member.create', 'member.manage'],
             // Tanpa order.discount_over_limit: diskon supervisor dibatasi discount_limits.supervisor (Q18, GSPOS-SEC-014)
             self::Supervisor => [
                 'order.create', 'order.view_own', 'order.view_all', 'order.reprint',
                 'order.discount', 'order.void', 'shift.*', 'product.toggle_available',
                 // Laporan operasional maks. 31 hari + rekap shift sendiri + export (Q49, Q52)
                 'report.view_shift', 'report.view_own', 'report.export',
+                'member.view', 'member.create',
             ],
             self::Cashier => [
                 'order.create', 'order.view_own', 'order.reprint',
                 'order.discount', 'shift.operate',
                 // Rekap shift sendiri (X/Z-report), Q49
                 'report.view_own',
+                'member.view', 'member.create',
             ],
         };
     }

@@ -98,6 +98,17 @@
             @if ($orderType === 'dine_in')
                 <input type="text" wire:model.blur="tableLabel" maxlength="50" placeholder="No. meja / nama" aria-label="Nomor meja">
             @endif
+            {{-- Member (ADR 0013) --}}
+            @if ($this->memberProgramEnabled)
+                @if ($memberId)
+                    <div class="pos-member-chip">
+                        <span>★ {{ $memberName }}</span>
+                        <button type="button" wire:click="clearMember" aria-label="Lepas member">&times;</button>
+                    </div>
+                @else
+                    <button type="button" class="site-btn site-btn-outline pos-member-btn" wire:click="$set('showMembers', true)">+ Member</button>
+                @endif
+            @endif
         </div>
 
         <ul class="pos-lines">
@@ -332,6 +343,47 @@
                 @endforelse
                 <div class="pos-actions">
                     <button type="button" class="site-btn site-btn-outline" wire:click="$set('showBills', false)">Tutup</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Pilih / daftar member (ADR 0013) --}}
+    @if ($showMembers)
+        <div class="pos-modal" role="dialog" aria-modal="true" aria-labelledby="members-title" wire:keydown.escape="$set('showMembers', false)">
+            <div class="pos-modal-card">
+                <h2 id="members-title">Member</h2>
+                <input type="search" class="pos-member-search" wire:model.live.debounce.400ms="memberSearch" placeholder="Cari nomor HP, kode, atau nama" aria-label="Cari member" x-init="$nextTick(() => $el.focus())">
+                @if ($memberError)
+                    <p class="site-error" role="alert">{{ $memberError }}</p>
+                @endif
+
+                @foreach ($memberResults as $result)
+                    <button type="button" class="site-choice" wire:click="selectMember('{{ $result['id'] }}')" wire:key="m-{{ $result['id'] }}">
+                        <span>
+                            <span class="site-choice-name">{{ $result['name'] }}</span>
+                            <span class="site-choice-meta">{{ $result['code'] }} · {{ $result['phone'] }}</span>
+                        </span>
+                        <span class="site-choice-meta">{{ $result['visits'] }} kunjungan</span>
+                    </button>
+                @endforeach
+
+                @if (mb_strlen(trim($memberSearch)) >= 2 && $memberResults === [] && ! $memberError)
+                    <p class="cashier-muted">Member tidak ditemukan.</p>
+                @endif
+
+                @can('member.create')
+                    <form wire:submit="registerMember" class="pos-member-new">
+                        <h3>Daftar member baru</h3>
+                        <input type="text" wire:model="newMemberName" maxlength="100" placeholder="Nama" aria-label="Nama member" required>
+                        <input type="tel" wire:model="newMemberPhone" maxlength="30" placeholder="Nomor HP, mis. 0812 3456 7890" aria-label="Nomor HP" required>
+                        <label class="pos-member-consent"><input type="checkbox" wire:model="newMemberConsent"> Pelanggan setuju datanya dipakai untuk program member</label>
+                        <button type="submit" class="site-btn site-btn-primary">Daftar &amp; pakai</button>
+                    </form>
+                @endcan
+
+                <div class="pos-actions">
+                    <button type="button" class="site-btn site-btn-outline" wire:click="$set('showMembers', false)">Tutup</button>
                 </div>
             </div>
         </div>

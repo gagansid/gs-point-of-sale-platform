@@ -28,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $order_number
  * @property OrderType $order_type
  * @property string|null $table_label
+ * @property string|null $member_id member terpasang (ADR 0013)
+ * @property string|null $member_name snapshot nama member saat transaksi
  * @property OrderStatus $status
  * @property string|null $notes
  * @property DiscountType|null $discount_type
@@ -105,6 +107,12 @@ final class Order extends Model
     public function shift(): BelongsTo
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    /** @return BelongsTo<Member, $this> */
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
     }
 
     /** @return BelongsTo<User, $this> */

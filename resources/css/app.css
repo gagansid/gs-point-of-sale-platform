@@ -2444,3 +2444,84 @@
     height: 40px;
     font-size: 14px;
 }
+
+/* Kasir web: member di keranjang (ADR 0013) */
+.pos-member-btn {
+    width: 100%;
+}
+
+.pos-member-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 6px 0 12px;
+    border: 1px solid rgb(45 66 130 / 0.25);
+    border-radius: 10px;
+    background: var(--site-primary-lt);
+    color: var(--site-navy);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pos-member-chip button {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 6px;
+    background: none;
+    color: var(--site-muted);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.pos-member-chip button:hover {
+    background: #ffffff;
+    color: var(--site-text);
+}
+
+.pos-member-search,
+.pos-member-new input[type='text'],
+.pos-member-new input[type='tel'] {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 8px;
+    padding: 0 12px;
+    border: 1px solid #dcdee3;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 14px;
+}
+
+.pos-member-new {
+    display: grid;
+    gap: 0;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--site-border);
+}
+
+.pos-member-new h3 {
+    margin: 0 0 10px;
+    color: var(--site-navy);
+    font-size: 14px;
+}
+
+.pos-member-new .pos-member-consent {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: flex-start;
+    margin: 4px 0 12px;
+    color: var(--site-muted);
+    font-size: 13px;
+}
+
+.pos-member-new .pos-member-consent input[type='checkbox'] {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    min-height: 0;
+    margin: 2px 0 0;
+}

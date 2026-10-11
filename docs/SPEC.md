@@ -151,6 +151,10 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `outlet.manage` | Tambah & nonaktifkan outlet (Q36) | ✅ | ❌ | ❌ | ❌ |
 | `outlet.access_all` | Otomatis memegang semua outlet (Q37) | ✅ | ❌ | ❌ | ❌ |
 | `audit.view` | Riwayat perubahan data (Q58); jenis data mengikuti izin pengelolanya | ✅ | ✅ | ❌ | ❌ |
+| `member.view` | Cari member & pasang ke transaksi (ADR 0013) | ✅ | ✅ | ✅ | ✅ |
+| `member.create` | Daftar member baru (daftar cepat di kasir) | ✅ | ✅ | ✅ | ✅ |
+| `member.manage` | Ubah, nonaktifkan, hapus (anonimkan) member | ✅ | ✅ | ❌ | ❌ |
+| `member.settings` | Program member: aktif/nonaktif, outlet ikut | ✅ | ❌ | ❌ | ❌ |
 
 ```php
 enum UserRole: string
@@ -238,12 +242,15 @@ tabel master memakai soft delete.
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
 | Transaksi | `shifts` | tenant_id, outlet_id, device_id, opened_by, closed_by, opening_cash, expected_cash, actual_cash, difference, status, close_note, open_device_key (unik: 1 shift terbuka per device), opened_at, closed_at |
 | Transaksi | `order_sequences` | outlet_id, date, last_number (penomoran order harian) |
-| Transaksi | `orders` | tenant_id, outlet_id, shift_id, device_id, user_id, order_number, order_type, table_label, status, notes, discount_type, discount_value, order_discount, subtotal, discount_total (item + order), service_total, tax_total, rounding, grand_total, paid_total, change_total, service_rate, tax_rate, tax_inclusive (setelan saat transaksi), void_reason, voided_by, void_approved_by, voided_at, approved_by (approver diskon), completed_at |
+| Transaksi | `orders` | tenant_id, outlet_id, shift_id, device_id, user_id, member_id, member_name (snapshot, ADR 0013), order_number, order_type, table_label, status, notes, discount_type, discount_value, order_discount, subtotal, discount_total (item + order), service_total, tax_total, rounding, grand_total, paid_total, change_total, service_rate, tax_rate, tax_inclusive (setelan saat transaksi), void_reason, voided_by, void_approved_by, voided_at, approved_by (approver diskon), completed_at |
 | Transaksi | `order_items` | order_id, product_id, product_name, category_name, unit_price, unit_cost, options_total, qty, discount, line_total, notes |
 | Transaksi | `order_item_options` | order_item_id, option_id, option_name, price_delta |
 | Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |
 | Pembayaran | `outlet_payment_method` | tenant_id, outlet_id, payment_method_id (unik per outlet), is_active — metode bayar per outlet (Q44) |
 | Produk | `stock_movements` | tenant_id, outlet_id, product_id, user_id, type (adjustment/sale/void_return), qty_change, qty_after, reason, reference_id — riwayat stok (Q14) |
+| Member | `members` | tenant_id, code (6 karakter acak, unik per tenant), name, phone (+62…, unik per tenant), email, birth_day, birth_month, notes, password & pin (M3–M4), tier_id, points_balance, spend_12m, total_spent, visit_count, last_visit_at, joined_outlet_id, consent_at, is_active, anonymized_at (ADR 0013) |
+| Member | `member_settings` | tenant_id (unik), enabled — aturan poin/tier/voucher menyusul (M2–M7) |
+| Member | `outlet_member_program` | tenant_id, outlet_id (unik), is_enabled — tanpa baris = outlet ikut program |
 | Pembayaran | `payments` | tenant_id, order_id, payment_method_id, user_id, category, amount (dipakai membayar), tendered (uang diterima), change, reference (approval code), status |
 | Sistem Laravel | `personal_access_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs` | Bawaan Laravel / Sanctum |
 
@@ -380,6 +387,16 @@ Contoh `POST /checkout`:
 }
 ```
 
+### Member (ADR 0013)
+
+| Method | Endpoint | Role | Fungsi |
+|---|---|---|---|
+| GET | `/members?search=` | Semua | Cari member (HP/kode/nama), HP disamarkan, 30/menit |
+| POST | `/members` | Semua | Daftar cepat (persetujuan wajib, HP unik per bisnis) |
+| GET | `/members/{id}` | Semua | Detail member |
+
+`/checkout` & `PUT /orders/{id}` menerima `member_id` (lihat `docs/api/member.md`).
+
 ### Laporan & setelan
 
 | Method | Endpoint | Role | Fungsi |
@@ -415,11 +432,13 @@ berdasarkan `error.code`, bukan teks `message`. Detail & contoh:
 | 403 | `APPROVAL_REQUIRED` | Aksi butuh PIN approver |
 | 403 | `SELF_APPROVAL_NOT_ALLOWED` | Approver sama dengan pelaku |
 | 404 | `NOT_FOUND` | Data tidak ditemukan / milik tenant lain |
+| 404 | `MEMBER_NOT_FOUND` | Member tidak ada, nonaktif, dihapus, atau milik tenant lain (ADR 0013) |
 | 409 | `SHIFT_NOT_OPEN` | Transaksi tanpa shift terbuka |
 | 409 | `ORDER_ALREADY_CLOSED` | Mengubah order yang sudah selesai/void |
 | 409 | `LAST_OWNER_REQUIRED` | Menonaktifkan/menurunkan role owner aktif terakhir |
 | 409 | `OUTLET_LIMIT_REACHED` | Menambah/mengaktifkan outlet melebihi `tenants.max_outlets` (Q36) |
 | 422 | `VALIDATION_ERROR` | Input tidak valid (detail per field di `error.details`) |
+| 422 | `MEMBER_PROGRAM_DISABLED` | Program member nonaktif di bisnis atau outlet dikecualikan (ADR 0013) |
 | 422 | `PAYMENT_EXCEEDS_BALANCE` | Non-tunai melebihi sisa tagihan |
 | 422 | `DISCOUNT_OVER_LIMIT` | Diskon melebihi batas role tanpa approval |
 | 423 | `PIN_LOCKED` | PIN dikunci 15 menit: 5 kali salah dari satu sumber (login / approval, per perangkat) atau 15 kali salah dari semua perangkat (`error.details.retry_after` detik) |

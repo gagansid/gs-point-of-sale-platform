@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\DeviceController;
+use App\Http\Controllers\Api\V1\MemberController;
 use App\Http\Controllers\Api\V1\OptionGroupController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\OutletController;
@@ -90,6 +91,13 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::post('{order}/payments', 'addPayment')->name('payments.store');
             Route::get('{order}/receipt', 'receipt')->name('receipt');
             Route::post('{order}/void', 'void')->name('void');
+        });
+
+        // ---------- Member (ADR 0013) ----------
+        Route::controller(MemberController::class)->prefix('members')->name('members.')->group(function (): void {
+            Route::get('/', 'index')->name('index');
+            Route::post('/', 'store')->name('store');
+            Route::get('{memberId}', 'show')->whereUuid('memberId')->name('show');
         });
 
         // ---------- Laporan ----------

@@ -26,6 +26,9 @@
     <dl class="gs-nota-meta">
         <div><dt>Kasir</dt><dd>{{ $order->user?->name ?? '—' }}</dd></div>
         <div><dt>Tipe</dt><dd>{{ $order->order_type->getLabel() }}{{ filled($order->table_label) ? ' · '.$order->table_label : '' }}</dd></div>
+        @if (filled($order->member_name))
+            <div><dt>Member</dt><dd>{{ $order->member_name }}</dd></div>
+        @endif
         <div><dt>Pembayaran</dt><dd>{{ $methods !== '' ? $methods : 'Belum dibayar' }}</dd></div>
         @if (filled($order->notes))
             <div class="is-wide"><dt>Catatan</dt><dd>{{ $order->notes }}</dd></div>

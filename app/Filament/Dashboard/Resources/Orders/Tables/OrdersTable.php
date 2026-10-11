@@ -42,6 +42,7 @@ final class OrdersTable
                 TextColumn::make('user.name')->label('Kasir')->sortable()->toggleable(),
                 TextColumn::make('order_type')->label('Tipe')->badge()->color('gray')->sortable()->toggleable(),
                 TextColumn::make('table_label')->label('Meja')->placeholder('—')->searchable()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('member_name')->label('Member')->placeholder('—')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')->label('Status')->badge()->sortable(),
                 MoneyColumn::make('grand_total')->label('Total')->sortable()
                     ->color(fn (Order $record): ?string => $record->status === OrderStatus::Voided ? 'gray' : null),

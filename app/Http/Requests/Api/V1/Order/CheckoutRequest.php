@@ -29,6 +29,8 @@ final class CheckoutRequest extends FormRequest
             'order_type' => ['required', Rule::enum(OrderType::class)],
             'table_label' => ['nullable', 'string', 'max:50'],
             'notes' => ['nullable', 'string', 'max:255'],
+            // Member (ADR 0013); keberadaan & status dicek Action → MEMBER_NOT_FOUND
+            'member_id' => ['nullable', 'uuid'],
 
             'discount' => ['nullable', 'array'],
             'discount.type' => ['required_with:discount', Rule::enum(DiscountType::class)],

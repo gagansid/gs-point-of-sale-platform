@@ -41,6 +41,7 @@ final class ReceiptResource extends JsonResource
             'order_type' => $this->order_type->value,
             'order_type_label' => $this->order_type->getLabel(),
             'table_label' => $this->table_label,
+            'member_name' => $this->member_name,
             'status' => $this->status->value,
             // Struk void dicetak dengan tanda BATAL
             'is_void' => $this->status === OrderStatus::Voided,

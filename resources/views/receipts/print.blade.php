@@ -60,6 +60,9 @@
         <div class="rule"></div>
         <div class="row"><span>{{ $receipt['order_number'] }}</span><span>{{ $receipt['created_at_local'] }}</span></div>
         <div class="row"><span>Kasir: {{ $receipt['cashier_name'] }}</span><span>{{ $receipt['order_type_label'] }}{{ filled($receipt['table_label']) ? ' · '.$receipt['table_label'] : '' }}</span></div>
+        @if (filled($receipt['member_name'] ?? null))
+            <div class="row"><span>Member: {{ $receipt['member_name'] }}</span></div>
+        @endif
         <div class="rule"></div>
 
         @foreach ($receipt['lines'] as $line)
