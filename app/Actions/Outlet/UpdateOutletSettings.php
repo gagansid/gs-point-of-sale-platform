@@ -31,6 +31,8 @@ final class UpdateOutletSettings
             'receipt_footer' => $data->receiptFooter,
             'receipt_show_rounding' => $data->receiptShowRounding,
             'discount_limits' => $data->discountLimits,
+            'daily_sales_target' => $data->dailySalesTarget,
+            'monthly_sales_target' => $data->monthlySalesTarget,
         ])->save());
 
         return $outlet->refresh();

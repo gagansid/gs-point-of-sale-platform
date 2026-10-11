@@ -32,6 +32,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $receipt_footer
  * @property bool $receipt_show_rounding baris pembulatan tampil di struk (Q48)
  * @property array<string, int|float>|null $discount_limits
+ * @property string|null $daily_sales_target target omzet harian (Q56), null = tanpa target
+ * @property string|null $monthly_sales_target target omzet bulanan (Q56)
  * @property bool $is_active
  */
 final class Outlet extends Model
@@ -52,6 +54,8 @@ final class Outlet extends Model
         'receipt_footer',
         'receipt_show_rounding',
         'discount_limits',
+        'daily_sales_target',
+        'monthly_sales_target',
         'is_active',
     ];
 
@@ -64,6 +68,8 @@ final class Outlet extends Model
             'receipt_show_rounding' => 'boolean',
             'rounding' => 'integer',
             'discount_limits' => 'array',
+            'daily_sales_target' => 'decimal:2',
+            'monthly_sales_target' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }

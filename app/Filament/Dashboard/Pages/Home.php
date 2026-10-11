@@ -14,6 +14,7 @@ use App\Filament\Dashboard\Widgets\PaymentMethodsChartWidget;
 use App\Filament\Dashboard\Widgets\PeakHoursChartWidget;
 use App\Filament\Dashboard\Widgets\RevenueChartWidget;
 use App\Filament\Dashboard\Widgets\SalesStatsWidget;
+use App\Filament\Dashboard\Widgets\SalesTargetWidget;
 use App\Filament\Dashboard\Widgets\SetupChecklistWidget;
 use App\Filament\Dashboard\Widgets\TopProductsWidget;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
@@ -97,6 +98,7 @@ final class Home extends Dashboard
         // SetupChecklistWidget dirender terpisah di atas filter (content())
         return [
             SalesStatsWidget::class,
+            SalesTargetWidget::class,
             RevenueChartWidget::class,
             TopProductsWidget::class,
             PaymentMethodsChartWidget::class,

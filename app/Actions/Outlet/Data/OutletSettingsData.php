@@ -28,6 +28,9 @@ final readonly class OutletSettingsData
         public array $discountLimits,
         // Q48: baris pembulatan di struk (bawaan tidak, digabung ke total)
         public bool $receiptShowRounding = false,
+        // Q56: target omzet (null = tanpa target)
+        public ?string $dailySalesTarget = null,
+        public ?string $monthlySalesTarget = null,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -35,6 +38,7 @@ final readonly class OutletSettingsData
     {
         $optional = fn (string $key): ?string => filled($data[$key] ?? null) ? trim((string) $data[$key]) : null;
         $limits = (array) ($data['discount_limits'] ?? []);
+        $target = fn (string $key): ?string => filled($data[$key] ?? null) && (float) $data[$key] > 0 ? Money::of((string) $data[$key]) : null;
 
         return new self(
             name: trim((string) $data['name']),
@@ -51,6 +55,8 @@ final readonly class OutletSettingsData
                 'supervisor' => 0 + ($limits['supervisor'] ?? 0),
             ],
             receiptShowRounding: (bool) ($data['receipt_show_rounding'] ?? false),
+            dailySalesTarget: $target('daily_sales_target'),
+            monthlySalesTarget: $target('monthly_sales_target'),
         );
     }
 }

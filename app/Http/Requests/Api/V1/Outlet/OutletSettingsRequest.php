@@ -39,6 +39,9 @@ final class OutletSettingsRequest extends FormRequest
             // decimal (bukan numeric): "1e-7" lolos numeric lalu merusak bccomp di PriceOrder (GSPOS-BUG-002)
             'discount_limits.cashier' => ['required_with:discount_limits', 'decimal:0,2', 'min:0', 'max:100'],
             'discount_limits.supervisor' => ['required_with:discount_limits', 'decimal:0,2', 'min:0', 'max:100'],
+            // Q56: 0 / kosong = tanpa target; batas DECIMAL(15,2)
+            'daily_sales_target' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
+            'monthly_sales_target' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
         ];
     }
 
@@ -65,6 +68,8 @@ final class OutletSettingsRequest extends FormRequest
             'receipt_show_rounding' => 'tampilkan pembulatan di struk',
             'discount_limits.cashier' => 'batas diskon kasir',
             'discount_limits.supervisor' => 'batas diskon supervisor',
+            'daily_sales_target' => 'target omzet harian',
+            'monthly_sales_target' => 'target omzet bulanan',
         ];
     }
 }

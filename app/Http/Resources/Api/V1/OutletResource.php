@@ -32,6 +32,8 @@ final class OutletResource extends JsonResource
             'receipt_footer' => $this->receipt_footer,
             'receipt_show_rounding' => $this->receipt_show_rounding,
             'discount_limits' => $this->discount_limits,
+            'daily_sales_target' => $this->daily_sales_target,
+            'monthly_sales_target' => $this->monthly_sales_target,
         ];
     }
 }

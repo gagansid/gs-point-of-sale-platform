@@ -285,6 +285,53 @@ class ReportService
     }
 
     /**
+     * Progres target omzet (Q56) outlet yang boleh diakses & aktif yang punya target: hari ini dan bulan
+     * berjalan menurut zona waktu masing-masing outlet. Tidak mengikuti filter periode Beranda.
+     * month_pace = persen hari bulan ini yang sudah lewat (patokan "sesuai jalur").
+     *
+     * @return list<array{outlet_id: string, name: string, daily_target: string|null, daily_revenue: string, daily_percent: string|null,
+     *     monthly_target: string|null, monthly_revenue: string, monthly_percent: string|null, month_pace: string}>
+     */
+    public function salesTargets(?CarbonImmutable $now = null): array
+    {
+        $now ??= CarbonImmutable::now();
+
+        return Outlet::query()
+            ->whereIn('id', CurrentOutlet::ids())
+            ->where('is_active', true)
+            ->where(fn (Builder $q) => $q->whereNotNull('daily_sales_target')->orWhereNotNull('monthly_sales_target'))
+            ->orderBy('name')
+            ->get()
+            ->map(function (Outlet $outlet) use ($now): array {
+                $local = $now->setTimezone($outlet->timezone);
+                $revenueSince = fn (CarbonImmutable $from): string => Money::fromDb(
+                    Order::query()->where('outlet_id', $outlet->id)->where('status', OrderStatus::Completed)
+                        ->whereBetween('completed_at', [$from->utc(), $now->utc()])->toBase()->sum('grand_total'),
+                );
+                $percent = fn (string $revenue, ?string $target): ?string => $target !== null && Money::isPositive($target)
+                    ? Money::round(bcdiv(bcmul($revenue, '100', 4), $target, 4), 1)
+                    : null;
+
+                $daily = $revenueSince($local->startOfDay());
+                $monthly = $revenueSince($local->startOfMonth());
+
+                return [
+                    'outlet_id' => (string) $outlet->id,
+                    'name' => $outlet->name,
+                    'daily_target' => $outlet->daily_sales_target,
+                    'daily_revenue' => $daily,
+                    'daily_percent' => $percent($daily, $outlet->daily_sales_target),
+                    'monthly_target' => $outlet->monthly_sales_target,
+                    'monthly_revenue' => $monthly,
+                    'monthly_percent' => $percent($monthly, $outlet->monthly_sales_target),
+                    'month_pace' => Money::round(bcdiv(bcmul((string) $local->day, '100', 4), (string) $local->daysInMonth, 4), 1),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
      * Perbandingan antar-outlet yang boleh diakses (urut omzet terbesar).
      *
      * @return list<array{outlet_id: string, name: string, order_count: int, revenue: string, average: string, void_count: int, void_total: string}>

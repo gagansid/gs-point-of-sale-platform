@@ -444,3 +444,97 @@ td.pos-dash-table__share span.tabular-nums {
     font-size: 12.5px;
     line-height: 20px;
 }
+
+/* Target omzet (Q56): kartu per outlet, bar hijau = tercapai, kuning = di bawah jalur bulan berjalan */
+.pos-target-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+
+.pos-target {
+    display: grid;
+    gap: 12px;
+}
+
+.pos-target__outlet {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.pos-target__row {
+    display: grid;
+    gap: 6px;
+}
+
+.pos-target__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.pos-target__label {
+    color: var(--text-secondary, #626d7d);
+}
+
+.pos-target__pct {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.pos-target__pct.is-reached {
+    color: var(--success-600, #2fb344);
+}
+
+.pos-target__pct.is-behind {
+    color: var(--warning-500, #f59f00);
+}
+
+.pos-target__bar {
+    appearance: none;
+    display: block;
+    width: 100%;
+    height: 0.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--bg-surface-secondary);
+    overflow: hidden;
+}
+
+.pos-target__bar::-webkit-progress-bar {
+    background: var(--bg-surface-secondary);
+    border-radius: 999px;
+}
+
+.pos-target__bar::-webkit-progress-value {
+    background: var(--primary);
+    border-radius: 999px;
+}
+
+.pos-target__bar::-moz-progress-bar {
+    background: var(--primary);
+    border-radius: 999px;
+}
+
+.pos-target__bar.is-reached::-webkit-progress-value {
+    background: var(--success-600, #2fb344);
+}
+
+.pos-target__bar.is-reached::-moz-progress-bar {
+    background: var(--success-600, #2fb344);
+}
+
+.pos-target__bar.is-behind::-webkit-progress-value {
+    background: var(--warning-500, #f59f00);
+}
+
+.pos-target__bar.is-behind::-moz-progress-bar {
+    background: var(--warning-500, #f59f00);
+}
+
+.pos-target__meta {
+    font-size: 12px;
+    color: var(--text-secondary, #626d7d);
+}

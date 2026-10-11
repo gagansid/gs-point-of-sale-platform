@@ -79,7 +79,7 @@ final class OutletSettings extends Page
         $limits = $outlet->discount_limits ?? config('pos.outlet_defaults.discount_limits');
 
         $this->settingsForm()->fill([
-            ...$outlet->only(['code', 'name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer', 'receipt_show_rounding']),
+            ...$outlet->only(['code', 'name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer', 'receipt_show_rounding', 'daily_sales_target', 'monthly_sales_target']),
             'discount_limits' => ['cashier' => $limits['cashier'] ?? 0, 'supervisor' => $limits['supervisor'] ?? 0],
         ]);
     }
@@ -145,6 +145,15 @@ final class OutletSettings extends Page
                                 ->rules($rules['discount_limits.cashier']),
                             TextInput::make('discount_limits.supervisor')->label('Supervisor')->suffix('%')->numeric()->required()
                                 ->rules($rules['discount_limits.supervisor']),
+                        ]),
+
+                    Section::make('Target omzet')
+                        ->description('Progres tampil di Beranda. Kosongkan bila tidak memakai target')
+                        ->schema([
+                            TextInput::make('daily_sales_target')->label('Harian')->prefix('Rp')->numeric()
+                                ->rules($rules['daily_sales_target'])->placeholder('3000000'),
+                            TextInput::make('monthly_sales_target')->label('Bulanan')->prefix('Rp')->numeric()
+                                ->rules($rules['monthly_sales_target'])->placeholder('90000000'),
                         ]),
                 ]),
             ]);
