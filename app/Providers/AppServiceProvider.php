@@ -6,6 +6,8 @@ namespace App\Providers;
 
 use App\Auth\TenantUserProvider;
 use App\Enums\UserRole;
+use App\Http\Middleware\Cashier\SetCashierContext;
+use App\Livewire\Cashier\PointOfSale;
 use App\Models\Admin;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
@@ -32,6 +34,7 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Sanctum\Sanctum;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -49,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
         $this->configureModels();
         $this->configureSecurity();
         $this->configureRateLimiting();
+        $this->configureWebCashier();
         $this->configureApiDocs();
     }
 
@@ -175,5 +179,15 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute((int) config('pos.rate_limits.auth') * 4)->by('auth-ip:'.$request->ip()),
             ];
         });
+    }
+
+    /**
+     * Kasir web (Q54): komponen Livewire di luar Filament. Middleware konteks ikut dijalankan ulang
+     * pada setiap request /livewire/update agar guard, tenant, outlet, dan device tetap tervalidasi.
+     */
+    private function configureWebCashier(): void
+    {
+        Livewire::component('cashier.point-of-sale', PointOfSale::class);
+        Livewire::addPersistentMiddleware([SetCashierContext::class]);
     }
 }

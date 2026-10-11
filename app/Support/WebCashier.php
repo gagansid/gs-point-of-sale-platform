@@ -13,7 +13,8 @@ use RuntimeException;
 
 /**
  * Konteks kasir web (Q54): guard "cashier", cookie browser, dan device terpilih di sesi.
- * Device diisi middleware SetCashierContext ke atribut request.
+ * Device diisi middleware SetCashierContext ke container (bukan atribut request: Livewire menjalankan
+ * middleware persisten pada salinan request saat /livewire/update).
  */
 final class WebCashier
 {
@@ -41,9 +42,16 @@ final class WebCashier
         return $user instanceof User ? $user : null;
     }
 
-    public static function device(Request $request): Device
+    private const DEVICE_BINDING = 'cashier.device';
+
+    public static function setDevice(?Device $device): void
     {
-        $device = $request->attributes->get('cashier.device');
+        $device === null ? app()->forgetInstance(self::DEVICE_BINDING) : app()->instance(self::DEVICE_BINDING, $device);
+    }
+
+    public static function device(): Device
+    {
+        $device = app()->bound(self::DEVICE_BINDING) ? app(self::DEVICE_BINDING) : null;
 
         return $device instanceof Device ? $device : throw new RuntimeException('Device kasir web belum dipilih');
     }

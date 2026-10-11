@@ -25,7 +25,7 @@ final class HomeController extends Controller
         return view('cashier.home', [
             'user' => WebCashier::user(),
             'outlet' => CurrentOutlet::getOrFail(),
-            'device' => WebCashier::device($request),
+            'device' => WebCashier::device(),
             'shift' => $shift,
         ]);
     }

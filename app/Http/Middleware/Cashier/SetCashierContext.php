@@ -22,6 +22,7 @@ final class SetCashierContext
 {
     public function handle(Request $request, Closure $next, ?string $mode = null): Response
     {
+        WebCashier::setDevice(null);
         $user = WebCashier::user();
 
         if ($user === null) {
@@ -63,7 +64,7 @@ final class SetCashierContext
         }
 
         CurrentOutlet::set($user, $device->outlet_id);
-        $request->attributes->set('cashier.device', $device);
+        WebCashier::setDevice($device);
 
         return $next($request);
     }

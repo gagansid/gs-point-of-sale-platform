@@ -18,7 +18,7 @@
                             <td>{{ $order->user?->name }}</td>
                             <td><span @class(['cashier-badge', 'is-'.$order->status->value])>{{ $order->status->getLabel() }}</span></td>
                             <td class="num">{{ \App\Support\Money::format($order->grand_total) }}</td>
-                            <td class="num"></td>
+                            <td class="num">@can('reprint', $order)<a href="{{ route('cashier.orders.receipt', ['order' => $order->id, 'print' => 1]) }}" target="_blank" rel="noopener">Struk</a>@endcan</td>
                         </tr>
                     @endforeach
                 </tbody>

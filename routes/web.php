@@ -107,6 +107,7 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
     Route::middleware(SetCashierContext::class)->group(function (): void {
         Route::get('/', CashierHomeController::class)->name('home');
         Route::get('orders', [CashierOrderController::class, 'index'])->name('orders');
+        Route::get('orders/{order}/receipt', [CashierOrderController::class, 'receipt'])->whereUuid('order')->name('orders.receipt');
 
         Route::get('shift', [CashierShiftController::class, 'show'])->name('shift');
         Route::post('shift', [CashierShiftController::class, 'store'])->name('shift.store');

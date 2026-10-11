@@ -34,6 +34,20 @@ final class PriceOrder
      */
     public function handle(User $actor, Outlet $outlet, array $lines, ?DiscountType $discountType, string $discountValue, ?ApprovalData $approval): array
     {
+        $totals = $this->totals($outlet, $lines, $discountType, $discountValue);
+
+        return ['totals' => $totals, 'approved_by' => $this->checkDiscountLimit($actor, $outlet, $totals, $approval)];
+    }
+
+    /**
+     * Total saja (tanpa cek batas diskon), mis. pratinjau keranjang kasir web.
+     *
+     * @param  list<ResolvedLine>  $lines
+     *
+     * @throws BusinessException
+     */
+    public function totals(Outlet $outlet, array $lines, ?DiscountType $discountType, string $discountValue): CalculationResult
+    {
         $totals = $this->calculator->calculate(
             array_map(fn (ResolvedLine $l): CalculatorLine => new CalculatorLine($l->product->price, $l->optionsTotal, $l->qty, $l->discount), $lines),
             $discountType,
@@ -46,7 +60,7 @@ final class PriceOrder
 
         self::ensureFitsStorage($totals);
 
-        return ['totals' => $totals, 'approved_by' => $this->checkDiscountLimit($actor, $outlet, $totals, $approval)];
+        return $totals;
     }
 
     /**

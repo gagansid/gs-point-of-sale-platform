@@ -48,7 +48,7 @@ final class ShiftController extends Controller
         abort_unless(self::user()->can('shift.operate'), 403);
         $data = $request->validate(['opening_cash' => self::moneyRule()], [], ['opening_cash' => 'kas awal']);
 
-        $result = $open->handle(self::user(), WebCashier::device($request), Money::of((string) $data['opening_cash']));
+        $result = $open->handle(self::user(), WebCashier::device(), Money::of((string) $data['opening_cash']));
 
         return redirect()->route('cashier.home')
             ->with('status', $result['replayed'] ? 'Shift sudah terbuka' : 'Shift berhasil dibuka');
@@ -91,7 +91,7 @@ final class ShiftController extends Controller
 
     public static function openShift(Request $request): ?Shift
     {
-        return Shift::query()->with('openedBy')->where('open_device_key', WebCashier::device($request)->id)->first();
+        return Shift::query()->with('openedBy')->where('open_device_key', WebCashier::device()->id)->first();
     }
 
     /** @return list<string> */
