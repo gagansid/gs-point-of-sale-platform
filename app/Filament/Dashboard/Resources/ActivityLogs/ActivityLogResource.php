@@ -7,6 +7,7 @@ namespace App\Filament\Dashboard\Resources\ActivityLogs;
 use App\Enums\PaymentCategory;
 use App\Enums\UserRole;
 use App\Filament\Dashboard\Resources\ActivityLogs\Pages\ListActivityLogs;
+use App\Filament\Shared\Filters\DateRangeFilter;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\ActivityLog;
 use App\Models\Admin;
@@ -19,15 +20,14 @@ use App\Models\Product;
 use App\Models\User;
 use App\Support\Money;
 use BackedEnum;
-use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use UnitEnum;
 
 /**
@@ -132,24 +132,18 @@ final class ActivityLogResource extends Resource
                         default => 'gray',
                     }),
                 TextColumn::make('changes_summary')->label('Perubahan')->wrap()
-                    ->state(fn (ActivityLog $record): string => self::summary($record)),
+                    ->state(fn (ActivityLog $record): string => self::summary($record))
+                    // Kotak "Cari" tabel: dicari di server (isi perubahan, nama pelaku, jenis data)
+                    ->searchable(query: fn (Builder $query, string $search): Builder => self::search($query, $search)),
             ])
             ->filters([
+                DateRangeFilter::make('created_at', defaultToday: false),
                 SelectFilter::make('subject_type')->label('Jenis data')
                     ->options(fn (): array => collect(self::SUBJECTS)
                         ->filter(fn (array $s): bool => self::user()->hasPermission($s[1]))
                         ->map(fn (array $s): string => $s[0])->all()),
                 SelectFilter::make('causer_id')->label('Oleh')
-                    ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all())
-                    ->searchable(),
-                Filter::make('period')->label('Tanggal')
-                    ->schema([
-                        DatePicker::make('from')->label('Dari')->native(false),
-                        DatePicker::make('until')->label('Sampai')->native(false),
-                    ])
-                    ->query(fn (Builder $query, array $data): Builder => $query
-                        ->when($data['from'] ?? null, fn (Builder $q, string $d) => $q->where('created_at', '>=', now()->parse($d)->startOfDay()))
-                        ->when($data['until'] ?? null, fn (Builder $q, string $d) => $q->where('created_at', '<=', now()->parse($d)->endOfDay()))),
+                    ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->all()),
             ])
             ->persistFiltersInSession();
 
@@ -173,6 +167,31 @@ final class ActivityLogResource extends Resource
             ->when(! $user->hasPermission('outlet.access_all'), fn (Builder $q) => $q->where(fn (Builder $w) => $w
                 ->where('subject_type', '!=', Outlet::class)
                 ->orWhereIn('subject_id', $user->outletIds())));
+    }
+
+    /**
+     * Cari teks di nama/nilai yang berubah (JSON properties), nama pelaku, dan label jenis data.
+     *
+     * @param  Builder<ActivityLog>  $query
+     * @return Builder<ActivityLog>
+     */
+    public static function search(Builder $query, string $search): Builder
+    {
+        $term = '%'.mb_strtolower(trim($search)).'%';
+        $types = array_keys(array_filter(self::SUBJECTS, fn (array $s): bool => str_contains(mb_strtolower($s[0]), mb_strtolower(trim($search)))));
+
+        return $query->where(function (Builder $q) use ($term, $types): void {
+            $q->whereRaw('LOWER(CAST(properties AS CHAR)) LIKE ?', [$term])
+                ->orWhereIn('causer_id', User::query()->whereRaw('LOWER(name) LIKE ?', [$term])->select('id'))
+                ->when($types !== [], fn (Builder $w) => $w->orWhereIn('subject_type', $types));
+
+            // Nama data saat ini (log perubahan hanya menyimpan kolom yang berubah); tetap dalam tenant aktif
+            foreach (array_keys(self::SUBJECTS) as $type) {
+                $q->orWhere(fn (Builder $w) => $w->where('subject_type', $type)
+                    ->whereIn('subject_id', $type::query()->withoutGlobalScope(SoftDeletingScope::class)
+                        ->whereRaw('LOWER(name) LIKE ?', [$term])->select('id')));
+            }
+        });
     }
 
     private static function user(): User

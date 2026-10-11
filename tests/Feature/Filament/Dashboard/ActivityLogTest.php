@@ -104,3 +104,21 @@ it('simpan tanpa perubahan tidak membuat log', function () {
 
     expect(ActivityLog::query()->count())->toBe($before);
 });
+
+it('kotak cari: nama data, nilai, nama pelaku, dan jenis data dicari di server', function () {
+    $this->product->update(['price' => '26000']);
+    $tea = Product::factory()->create(['name' => 'Es Teh']);
+    $tea->update(['price' => '9000']);
+    $this->outlet->update(['tax_rate' => '10']);
+
+    $page = Livewire::test(ListActivityLogs::class);
+    $productLog = ActivityLog::query()->where('subject_id', $this->product->id)->where('event', 'updated')->get();
+    $teaLog = ActivityLog::query()->where('subject_id', $tea->id)->where('event', 'updated')->get();
+    $outletLog = ActivityLog::query()->where('subject_type', Outlet::class)->get();
+
+    $page->searchTable('croissant')->assertCanSeeTableRecords($productLog)->assertCanNotSeeTableRecords($teaLog);
+    $page->searchTable('26000')->assertCanSeeTableRecords($productLog)->assertCanNotSeeTableRecords($teaLog);
+    $page->searchTable('Outlet')->assertCanSeeTableRecords($outletLog)->assertCanNotSeeTableRecords($productLog);
+    $page->searchTable('rina')->assertCanSeeTableRecords([...$productLog, ...$teaLog]);
+    $page->searchTable('tidak-ada-apa-apa')->assertCanNotSeeTableRecords([...$productLog, ...$teaLog, ...$outletLog]);
+});
