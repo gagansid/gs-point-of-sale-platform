@@ -31,6 +31,11 @@
             @forelse ($this->visibleProducts as $product)
                 <div @class(['pos-tile', 'is-unavailable' => ! $product->is_available]) wire:key="p-{{ $product->id }}">
                     <button type="button" class="pos-tile-main" wire:click="addProduct('{{ $product->id }}')" @disabled(! $product->is_available)>
+                        @if ($image = $product->imageUrl())
+                            <img src="{{ $image }}" alt="" class="pos-tile-image" loading="lazy" decoding="async" width="400" height="400">
+                        @else
+                            <span class="pos-tile-image pos-tile-image--empty" aria-hidden="true">{{ mb_strtoupper(mb_substr($product->name, 0, 1)) }}</span>
+                        @endif
                         <span class="pos-tile-name">{{ $product->name }}</span>
                         <span class="pos-tile-price">{{ $money($product->price) }}</span>
                         @if (! $product->is_available)

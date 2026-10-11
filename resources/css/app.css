@@ -1665,3 +1665,32 @@
     color: #175cd3;
     font-size: 13.5px;
 }
+
+/* Gambar produk di tile kasir web: persegi, sudut membulat; tanpa gambar = inisial */
+.pos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.pos-tile-image {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    background: var(--site-bg);
+    object-fit: cover;
+}
+
+.pos-tile-image--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b8c0d4;
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.pos-tile-main {
+    min-height: 0;
+    padding: 8px 8px 10px;
+}
