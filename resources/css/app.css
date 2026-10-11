@@ -2433,3 +2433,14 @@
         animation: none;
     }
 }
+
+/* Halaman masuk gspos.id (login, lupa/reset kata sandi): field & tombol 40px, sama dengan login kasir & admin */
+.site-auth .site-field :is(input, select) {
+    min-height: 40px;
+    padding-block: 0;
+}
+
+.site-auth .site-btn-lg {
+    height: 40px;
+    font-size: 14px;
+}
