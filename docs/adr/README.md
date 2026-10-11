@@ -16,3 +16,4 @@ template: `docs/templates/adr.md`.
 | [0009](0009-onboarding-and-editions.md) | Onboarding daftar sendiri + sales, edisi SaaS & jual putus | Diterima |
 | [0010](0010-multi-outlet.md) | Multi-outlet: penugasan banyak-ke-banyak, katalog bersama, stok per outlet | Diterima |
 | [0011](0011-per-outlet-catalog-and-payment-methods.md) | Menu & metode bayar per outlet: katalog bersama, dipilih per outlet, harga sama | Diterima |
+| [0012](0012-pdf-export-dompdf.md) | Export laporan PDF dengan dompdf (PHP murni, tanpa Chrome/biner) | Diterima |

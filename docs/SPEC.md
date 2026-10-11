@@ -60,6 +60,7 @@ Intinya Laravel + MySQL + Filament; package lain ditambahkan hanya jika menghema
 | `spatie/laravel-backup` | Backup database + file terjadwal via cron | MVP |
 | `sentry/sentry-laravel` | Error tracking | MVP |
 | `maatwebsite/excel` | Export laporan ke Excel | MVP |
+| `barryvdh/laravel-dompdf` ^3.1 | Export laporan ke PDF (PHP murni, tanpa Chrome/biner — ADR 0012) | MVP |
 | `opcodesio/log-viewer` | Membaca log Laravel dari panel admin | MVP |
 | `spatie/laravel-activitylog` | Audit log (void, ubah harga, diskon manual) | Fase 2 |
 | `pestphp/pest` | Testing | Dev |
@@ -139,8 +140,10 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `product.toggle_available` | Tandai menu habis/tersedia | ✅ | ✅ | ✅ | ❌ |
 | `product.manage` | Kategori, produk, opsi | ✅ | ✅ | ❌ | ❌ |
 | `stock.adjust` | Penyesuaian stok | ✅ | ✅ | ❌ | ❌ |
-| `report.view` | Lihat laporan | ✅ | ✅ | ❌ | ❌ |
-| `report.export` | Export Excel | ✅ | ✅ | ❌ | ❌ |
+| `report.view` | Semua laporan, semua periode (maks. 366 hari per query) | ✅ | ✅ | ❌ | ❌ |
+| `report.view_shift` | Laporan operasional (Ringkasan, Produk, Metode bayar, Karyawan, Shift, Diskon & void), maks. 31 hari ke belakang (Q49) | ✅ | ✅ | ✅ | ❌ |
+| `report.view_own` | Rekap shift sendiri: X-report (shift berjalan) & Z-report (saat tutup), Q49 | ✅ | ✅ | ✅ | ✅ |
+| `report.export` | Export Excel & PDF untuk laporan yang boleh dilihat, batas periode sama dengan layar (Q52) | ✅ | ✅ | ✅ | ❌ |
 | `user.manage` | Karyawan & PIN | ✅ | ❌ | ❌ | ❌ |
 | `device.manage` | Perangkat | ✅ | ❌ | ❌ | ❌ |
 | `payment_method.manage` | Metode bayar | ✅ | ❌ | ❌ | ❌ |
@@ -615,5 +618,9 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q46 | Email karyawan | Email **wajib untuk semua role** (unik global). Email baru/diganti = belum terverifikasi; link verifikasi (3 hari, tanpa login) dikirim ke email itu; kirim ulang dari Karyawan maks. 3×/10 menit. Belum memblokir akses (dipakai nanti mis. lupa kata sandi kasir web). | Diterima | `docs/api/settings.md` |
 | Q47 | Audit pembuat & pengubah | Kolom `created_by`, `updated_by` (uuid, tanpa FK) di categories, products, option_groups, payment_methods, outlets, users, orders, shifts (→ users) dan tenants, sales_leads (→ admins). Ditampilkan di detail ("oleh {nama}") dan kolom tabel tersembunyi. | Diterima | `docs/standards/ui/components/audit-info.md` |
 | Q48 | Pembulatan di struk | Bawaan pembulatan **digabung ke Total** (tanpa baris). Setelan outlet `receipt_show_rounding` (Profil outlet → Struk; API `PUT /outlet`) menampilkan barisnya. Hanya tampilan struk; perhitungan & data order tidak berubah; detail order di dashboard tetap menampilkan pembulatan (audit). | Diterima | `docs/api/settings.md` |
+| Q49 | Akses laporan per role | `report.view` (owner, manager): semua tab & periode. `report.view_shift` (+ supervisor): tab operasional, outlet yang dipegang, **maks. 31 hari ke belakang** (`ReportPeriod::SUPERVISOR_LOOKBACK_DAYS`), dipotong di server; API di luar batas → `422 VALIDATION_ERROR`. `report.view_own` (+ kasir): rekap shift sendiri (X/Z-report). Cakupan selalu diterapkan di query, bukan hanya UI. | Diterima | `docs/api/report.md` |
+| Q50 | Supervisor di panel `/dashboard` | Supervisor boleh masuk `/dashboard` **hanya untuk menu Laporan** (tab `report.view_shift`); menu lain disembunyikan lewat permission. Kasir tidak masuk panel: rekap shift sendiri lewat API Flutter (+ PDF) dan nanti kasir web (Q35). Akses panel ditentukan dari permission, bukan role. | Diterima | ADR 0007 |
+| Q51 | Snapshot kategori | `order_items.category_name` disimpan saat checkout (seperti nama & harga). Transaksi lama diisi dari kategori produk saat migrasi; produk tanpa kategori = "Tanpa kategori". Laporan Kategori memakai snapshot ini. | Diterima | `docs/api/report.md` |
+| Q52 | Export laporan | Excel & PDF **sinkron** (tanpa queue, shared hosting): data teragregasi SQL, maks. 366 hari, tabel detail memakai cursor/chunk; terlalu berat → ditolak dengan pesan "Persempit rentang tanggal", tidak dipotong diam-diam. PDF via dompdf (ADR 0012). Nama file `laporan-{tab|lengkap}-{from}-{to}.{xlsx|pdf}`. | Diterima | ADR 0012 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

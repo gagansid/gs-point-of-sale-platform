@@ -38,6 +38,8 @@ enum UserRole: string implements HasColor, HasLabel
         'product.manage',
         'stock.adjust',
         'report.view',
+        'report.view_shift',
+        'report.view_own',
         'report.export',
         'user.manage',
         'device.manage',
@@ -56,6 +58,8 @@ enum UserRole: string implements HasColor, HasLabel
         'order.reprint',
         'shift.view_all',
         'report.view',
+        'report.view_shift',
+        'report.view_own',
         'report.export',
         'outlet.access_all',
     ];
@@ -79,10 +83,14 @@ enum UserRole: string implements HasColor, HasLabel
             self::Supervisor => [
                 'order.create', 'order.view_own', 'order.view_all', 'order.reprint',
                 'order.discount', 'order.void', 'shift.*', 'product.toggle_available',
+                // Laporan operasional maks. 31 hari + rekap shift sendiri + export (Q49, Q52)
+                'report.view_shift', 'report.view_own', 'report.export',
             ],
             self::Cashier => [
                 'order.create', 'order.view_own', 'order.reprint',
                 'order.discount', 'shift.operate',
+                // Rekap shift sendiri (X/Z-report), Q49
+                'report.view_own',
             ],
         };
     }
