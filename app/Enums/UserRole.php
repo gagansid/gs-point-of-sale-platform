@@ -55,6 +55,8 @@ enum UserRole: string implements HasColor, HasLabel
         'member.manage',
         'member.points_adjust',
         'member.settings',
+        // Self-order QR meja (ADR 0014)
+        'table.manage',
     ];
 
     /**
@@ -88,7 +90,7 @@ enum UserRole: string implements HasColor, HasLabel
     {
         return match ($this) {
             self::Owner => ['*'],
-            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view', 'member.view', 'member.create', 'member.manage', 'member.points_adjust'],
+            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view', 'member.view', 'member.create', 'member.manage', 'member.points_adjust', 'table.manage'],
             // Tanpa order.discount_over_limit: diskon supervisor dibatasi discount_limits.supervisor (Q18, GSPOS-SEC-014)
             self::Supervisor => [
                 'order.create', 'order.view_own', 'order.view_all', 'order.reprint',

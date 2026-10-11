@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\DiscountType;
+use App\Enums\OrderChannel;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Models\Concerns\BelongsToOutlet;
@@ -37,6 +38,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $voucher_id voucher dipakai (M7)
  * @property string|null $voucher_code snapshot kode / nama voucher
  * @property string $voucher_discount
+ * @property OrderChannel $channel pos / self_order (ADR 0014)
+ * @property string|null $dining_table_id meja self-order
+ * @property CarbonImmutable|null $accepted_at self-order diterima kasir
  * @property OrderStatus $status
  * @property string|null $notes
  * @property DiscountType|null $discount_type
@@ -67,6 +71,7 @@ final class Order extends Model
     /** Default sama dengan database agar order baru di memori sudah punya nilai pembayaran. */
     protected $attributes = [
         'points_earned' => 0,
+        'channel' => 'pos',
         'stamps_earned' => 0,
         'stamp_free_total' => '0.00',
         'voucher_discount' => '0.00',
@@ -83,6 +88,8 @@ final class Order extends Model
         return [
             'order_type' => OrderType::class,
             'status' => OrderStatus::class,
+            'channel' => OrderChannel::class,
+            'accepted_at' => 'immutable_datetime',
             'discount_type' => DiscountType::class,
             'discount_value' => 'decimal:2',
             'order_discount' => 'decimal:2',

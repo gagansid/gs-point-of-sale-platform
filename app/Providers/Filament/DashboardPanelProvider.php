@@ -12,6 +12,7 @@ use App\Filament\Shared\Theme;
 use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Controllers\Web\ReceiptController;
 use App\Http\Controllers\Web\SwitchOutletController;
+use App\Http\Controllers\Web\TableQrController;
 use App\Http\Middleware\Filament\SetDashboardTenant;
 use App\Models\User;
 use App\Support\CurrentOutlet;
@@ -111,6 +112,8 @@ final class DashboardPanelProvider extends PanelProvider
                 Route::get('orders/{order}/receipt', ReceiptController::class)
                     ->where('order', '[0-9a-fA-F-]{36}')
                     ->name('orders.receipt');
+                // Cetak QR meja self-order (ADR 0014)
+                Route::get('tables/print', TableQrController::class)->name('tables.print');
                 // Pemilih outlet sidebar (ADR 0010)
                 Route::post('switch-outlet/{outlet}', SwitchOutletController::class)
                     ->where('outlet', 'all|[0-9a-fA-F-]{36}')

@@ -2786,6 +2786,16 @@
     font-size: 13px;
 }
 
+/* Pesan dari meja (ADR 0014) */
+.self-order-table-badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.14);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+}
+
 /* Voucher pribadi di halaman member (M7) */
 .member-voucher {
     border: 2px dashed rgb(45 66 130 / 0.3);

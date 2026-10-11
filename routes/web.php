@@ -13,10 +13,12 @@ use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Controllers\Web\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Web\Member\PortalController as MemberPortalController;
 use App\Http\Controllers\Web\PasswordResetController;
+use App\Http\Controllers\Web\SelfOrder\TableController as SelfOrderTableController;
 use App\Http\Controllers\Web\SignupController;
 use App\Http\Controllers\Web\SiteController;
 use App\Http\Middleware\Cashier\SetCashierContext;
 use App\Http\Middleware\Member\SetMemberPortal;
+use App\Http\Middleware\SelfOrder\SetSelfOrderTable;
 use App\Support\Domains;
 use App\Support\Edition;
 use Filament\Facades\Filament;
@@ -93,6 +95,16 @@ if (Domains::enabled()) {
         ->middleware('throttle:auth')
         ->name('dashboard.login.ticket');
 }
+
+/*
+ * Pesan dari meja (ADR 0014, Q69–Q70): gspos.id/order/t/{token} (tanpa subdomain: /order/t/{token}). Publik; meja &
+ * tenant dari token QR (SetSelfOrderTable).
+ */
+Route::domain(Domains::main())->prefix('order')->name('self-order.')
+    ->middleware(SetSelfOrderTable::class)
+    ->group(function (): void {
+        Route::get('t/{token}', [SelfOrderTableController::class, 'show'])->where('token', '[A-Za-z0-9]{32}')->name('table');
+    });
 
 /*
  * Halaman member (ADR 0013, Q67): gspos.id/m/{kode-bisnis}, atau /m/{kode-bisnis} tanpa subdomain. Guard "member",

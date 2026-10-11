@@ -156,6 +156,7 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `member.manage` | Ubah, nonaktifkan, hapus (anonimkan) member | ✅ | ✅ | ❌ | ❌ |
 | `member.points_adjust` | Tambah/kurangi poin manual dengan alasan | ✅ | ✅ | ❌ | ❌ |
 | `member.settings` | Program member: aktif/nonaktif, outlet ikut, poin, diskon, tier (M5), kartu stempel (M6), voucher (M7) | ✅ | ❌ | ❌ | ❌ |
+| `table.manage` | Meja & QR self-order, setelan self-order per outlet (ADR 0014) | ✅ | ✅ | ❌ | ❌ |
 
 ```php
 enum UserRole: string
@@ -243,7 +244,7 @@ tabel master memakai soft delete.
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
 | Transaksi | `shifts` | tenant_id, outlet_id, device_id, opened_by, closed_by, opening_cash, expected_cash, actual_cash, difference, status, close_note, open_device_key (unik: 1 shift terbuka per device), opened_at, closed_at |
 | Transaksi | `order_sequences` | outlet_id, date, last_number (penomoran order harian) |
-| Transaksi | `orders` | tenant_id, outlet_id, shift_id, device_id, user_id, member_id, member_name, member_tier (snapshot, ADR 0013), points_earned, points_redeemed, member_discount, stamp_free_total, stamp_redemptions (json snapshot), stamps_earned, voucher_id, voucher_code (snapshot), voucher_discount, order_number, order_type, table_label, status, notes, discount_type, discount_value, order_discount, subtotal, discount_total (item + order), service_total, tax_total, rounding, grand_total, paid_total, change_total, service_rate, tax_rate, tax_inclusive (setelan saat transaksi), void_reason, voided_by, void_approved_by, voided_at, approved_by (approver diskon), completed_at |
+| Transaksi | `orders` | tenant_id, outlet_id, shift_id, device_id, user_id, member_id, member_name, member_tier (snapshot, ADR 0013), channel (pos/self_order), dining_table_id, accepted_at (ADR 0014), points_earned, points_redeemed, member_discount, stamp_free_total, stamp_redemptions (json snapshot), stamps_earned, voucher_id, voucher_code (snapshot), voucher_discount, order_number, order_type, table_label, status (open/awaiting_payment/completed/voided/expired), notes, discount_type, discount_value, order_discount, subtotal, discount_total (item + order), service_total, tax_total, rounding, grand_total, paid_total, change_total, service_rate, tax_rate, tax_inclusive (setelan saat transaksi), void_reason, voided_by, void_approved_by, voided_at, approved_by (approver diskon), completed_at |
 | Transaksi | `order_items` | order_id, product_id, product_name, category_name, unit_price, unit_cost, options_total, qty, discount, line_total, notes |
 | Transaksi | `order_item_options` | order_item_id, option_id, option_name, price_delta |
 | Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit; sistem: points — ADR 0013), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |
@@ -258,6 +259,8 @@ tabel master memakai soft delete.
 | Member | `member_stamps` | tenant_id, member_id, stamp_program_id, outlet_id, order_id, type (earn/redeem/void_reversal/adjust), change (+/−), balance_after, reason, user_id — append-only, saldo = Σ change (Q65) |
 | Member | `vouchers` | tenant_id, code (huruf besar, unik per tenant; null = voucher pribadi), name, source (owner/birthday), type (fixed/percent), value, max_discount, min_spend, quota, per_member_quota, used_count, starts_at, ends_at, member_only, tier_ids, outlet_ids (json), member_id (voucher pribadi), is_active (Q66) |
 | Member | `voucher_redemptions` | tenant_id, voucher_id, member_id, order_id (unik per voucher), outlet_id, amount, status (used/voided) (Q66) |
+| Self-order | `dining_tables` | tenant_id, outlet_id, name (unik per outlet), area, qr_token (acak 32, unik), is_active, sort_order — nama `dining_tables` karena `tables` kata kunci MySQL (ADR 0014, Q69) |
+| Self-order | `self_order_settings` | tenant_id, outlet_id (unik), enabled, payment_timeout_minutes (5–120, bawaan 15), opens_at, closes_at (lokal outlet), allow_pay_at_cashier, welcome_text |
 | Pembayaran | `payments` | tenant_id, order_id, payment_method_id, user_id, category, amount (dipakai membayar), tendered (uang diterima), change, reference (approval code), status |
 | Sistem Laravel | `personal_access_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs` | Bawaan Laravel / Sanctum |
 
