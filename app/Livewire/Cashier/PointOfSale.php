@@ -19,6 +19,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentCategory;
 use App\Exceptions\BusinessException;
 use App\Http\Requests\Api\V1\Order\CheckoutRequest;
+use App\Http\Requests\Api\V1\Order\OpenBillRequest;
 use App\Models\Category;
 use App\Models\OptionGroup;
 use App\Models\Order;
@@ -53,6 +54,9 @@ use Livewire\Component;
  */
 final class PointOfSale extends Component
 {
+    /** Nominal cepat uang tunai */
+    public const QUICK_CASH = ['20000', '50000', '100000'];
+
     public string $search = '';
 
     /** null = semua, 'favorites' = favorit, selain itu ID kategori */
@@ -276,9 +280,10 @@ final class PointOfSale extends Component
     public function toggleAvailability(string $productId): void
     {
         abort_unless($this->user()->can('product.toggle_available'), 403);
-        $product = Product::query()->findOrFail($productId);
+        // Hanya produk yang dijual di outlet ini (katalog outlet), bukan seluruh tenant
+        $product = $this->product($productId) ?? abort(404);
 
-        app(SetProductAvailability::class)->handle($product, $this->outlet(), ! $this->product($productId)?->is_available);
+        app(SetProductAvailability::class)->handle(Product::query()->findOrFail($product->id), $this->outlet(), ! $product->is_available);
         unset($this->catalog, $this->visibleProducts);
     }
 
@@ -415,12 +420,18 @@ final class PointOfSale extends Component
         $this->payments = array_values($this->payments);
     }
 
-    /** Tombol uang pas / nominal cepat untuk baris tunai. */
-    public function setTendered(int $index, string $amount): void
+    /** Tombol uang pas ('exact') / nominal cepat (pecahan tetap) untuk baris tunai. */
+    public function setTendered(int $index, string $preset): void
     {
-        if (isset($this->payments[$index])) {
-            $this->payments[$index]['tendered'] = $amount;
+        if (! isset($this->payments[$index])) {
+            return;
         }
+
+        $this->payments[$index]['tendered'] = match (true) {
+            $preset === 'exact' => $this->payments[$index]['amount'],
+            in_array($preset, self::QUICK_CASH, true) => $preset,
+            default => $this->payments[$index]['tendered'],
+        };
     }
 
     public function pay(): void
@@ -444,6 +455,10 @@ final class PointOfSale extends Component
             ], $this->payments),
         ];
 
+        $data = [...$data, ...$this->approvalInput()];
+        // PIN hanya dipakai di request ini; tidak boleh tertinggal di snapshot Livewire (terlihat di DOM)
+        $this->approverPin = '';
+
         // Aturan bentuk data sama dengan API POST /checkout
         $request = new CheckoutRequest([], $data);
         $validator = Validator::make($data, $request->rules(), [], $request->attributes());
@@ -453,8 +468,6 @@ final class PointOfSale extends Component
 
             return;
         }
-
-        $data = [...$data, ...$this->approvalInput()];
 
         try {
             $order = $this->billId === null
@@ -486,13 +499,28 @@ final class PointOfSale extends Component
             return;
         }
 
+        // State Livewire bisa diubah dari browser: aturan bentuk data sama dengan API PUT /orders/{id}
+        $input = $this->billInput();
+        $request = new OpenBillRequest([], $input);
+        $validator = Validator::make($input, $request->rules());
+
         try {
-            $result = app(SaveOpenBill::class)->handle($this->user(), WebCashier::device(), $this->orderId, OpenBillData::fromArray($this->billInput()));
+            if ($validator->fails()) {
+                $this->message = $validator->errors()->first();
+                $this->messageTone = 'warning';
+
+                return;
+            }
+
+            $result = app(SaveOpenBill::class)->handle($this->user(), WebCashier::device(), $this->orderId, OpenBillData::fromArray($input));
         } catch (BusinessException $e) {
             $this->message = $this->failed($e);
             $this->messageTone = 'warning';
 
             return;
+        } finally {
+            // PIN approver tidak boleh tertinggal di snapshot Livewire (terlihat di DOM)
+            $this->approverPin = '';
         }
 
         $label = $result['order']->table_label ?? $result['order']->order_number;

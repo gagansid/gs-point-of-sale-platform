@@ -21,6 +21,9 @@ final class LoginController extends Controller
 {
     private const MAX_ATTEMPTS = 5;
 
+    /** Batas kedua per IP (password spraying ke banyak username), SPEC Keamanan */
+    private const MAX_ATTEMPTS_PER_IP = 20;
+
     public function create(Request $request): View|RedirectResponse
     {
         if (WebCashier::user() !== null) {
@@ -39,17 +42,21 @@ final class LoginController extends Controller
     {
         $identity = Str::lower(trim(($request->business() ?? '').'|'.$request->string('login')));
         $throttleKey = 'cashier-login:'.$identity.'|'.$request->ip();
+        $ipKey = 'cashier-login-ip:'.$request->ip();
 
-        if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
-            throw ValidationException::withMessages([
-                'login' => 'Terlalu banyak percobaan. Coba lagi dalam '.RateLimiter::availableIn($throttleKey).' detik.',
-            ]);
+        foreach ([$throttleKey => self::MAX_ATTEMPTS, $ipKey => self::MAX_ATTEMPTS_PER_IP] as $key => $max) {
+            if (RateLimiter::tooManyAttempts($key, $max)) {
+                throw ValidationException::withMessages([
+                    'login' => 'Terlalu banyak percobaan. Coba lagi dalam '.RateLimiter::availableIn($key).' detik.',
+                ]);
+            }
         }
 
         try {
             $user = $login->handle($request->business(), $request->string('login')->toString(), $request->string('password')->toString());
         } catch (ValidationException $e) {
             RateLimiter::hit($throttleKey, 60);
+            RateLimiter::hit($ipKey, 60);
 
             throw $e;
         }

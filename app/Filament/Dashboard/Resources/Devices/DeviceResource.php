@@ -124,7 +124,9 @@ final class DeviceResource extends Resource
                         ->visible(fn (Device $record): bool => ! $record->isRevoked())
                         ->requiresConfirmation()
                         ->modalHeading(fn (Device $record): string => "Cabut {$record->name}?")
-                        ->modalDescription('Perangkat langsung keluar dan tidak bisa dipakai bertransaksi sampai diaktifkan lagi (tablet: daftar ulang oleh owner).')
+                        ->modalDescription(fn (Device $record): string => $record->platform === AppPlatform::Web
+                            ? 'Browser ini langsung keluar dari kasir web. Karyawan tetap bisa masuk dari browser lain: untuk menghentikan karyawan, matikan "Akses kasir web" di menu Karyawan.'
+                            : 'Perangkat langsung keluar dan tidak bisa dipakai bertransaksi sampai diaktifkan lagi (tablet: daftar ulang oleh owner).')
                         ->action(fn (Device $record) => self::setRevoked($record, true)),
                     Action::make('restore')->label('Aktifkan lagi')->icon(Heroicon::OutlinedCheckCircle)
                         ->visible(fn (Device $record): bool => $record->isRevoked())

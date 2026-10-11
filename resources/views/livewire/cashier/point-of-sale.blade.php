@@ -225,10 +225,11 @@
                         @if ($isCash)
                             <label>Uang diterima <input type="number" min="0" step="any" inputmode="decimal" wire:model.live.debounce.400ms="payments.{{ $i }}.tendered" placeholder="{{ $payment['amount'] }}"></label>
                             <div class="pos-quick">
-                                <button type="button" wire:click="setTendered({{ $i }}, '{{ $payment['amount'] }}')">Uang pas</button>
-                                @foreach ([20000, 50000, 100000] as $note)
-                                    @if (is_numeric($payment['amount']) && $note >= (float) $payment['amount'])
-                                        <button type="button" wire:click="setTendered({{ $i }}, '{{ $note }}')">{{ $money((string) $note) }}</button>
+                                {{-- Hanya indeks & kata kunci tetap di ekspresi wire:click (nilai dari browser tidak disisipkan) --}}
+                                <button type="button" wire:click="setTendered({{ (int) $i }}, 'exact')">Uang pas</button>
+                                @foreach (\App\Livewire\Cashier\PointOfSale::QUICK_CASH as $note)
+                                    @if (is_numeric($payment['amount']) && (float) $note >= (float) $payment['amount'])
+                                        <button type="button" wire:click="setTendered({{ (int) $i }}, '{{ $note }}')">{{ $money($note) }}</button>
                                     @endif
                                 @endforeach
                             </div>

@@ -38,6 +38,12 @@ final class BackupManager extends Page
 
     protected static ?int $navigationSort = 2;
 
+    /** Zip backup berisi hash kata sandi & PIN: wajib terenkripsi di production. */
+    public function isEncrypted(): bool
+    {
+        return filled(config('backup.backup.password'));
+    }
+
     /** @return list<array{path: string, name: string, size: int, created: int}> */
     public function backups(): array
     {

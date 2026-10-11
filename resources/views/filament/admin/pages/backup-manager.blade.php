@@ -1,5 +1,11 @@
 {{-- Sistem → Backup --}}
 <x-filament-panels::page>
+    @unless ($this->isEncrypted())
+        <div class="gs-banner gs-banner-warning" role="alert">
+            <x-filament::icon icon="heroicon-o-exclamation-triangle" class="gs-banner-icon" />
+            <div><strong>Backup tidak terenkripsi.</strong> Isi <code>BACKUP_ARCHIVE_PASSWORD</code> di .env production: file backup berisi seluruh data pelanggan.</div>
+        </div>
+    @endunless
     <x-filament::section icon="heroicon-o-circle-stack" heading="File backup"
         description="Database + gambar produk, disimpan privat di server (storage/app/backups). Unduh berkala ke tempat lain: backup di server yang sama tidak melindungi dari kerusakan server.">
         @php($backups = $this->backups())

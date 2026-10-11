@@ -35,6 +35,15 @@ final class RegisterWebDevice
         $device = Device::forTenant($outlet->tenant_id)->where('device_uid', $uid)->first();
 
         if ($device === null) {
+            // Cookie browser bisa dihapus untuk membuat device baru: batasi jumlah device web aktif per outlet
+            $max = (int) config('pos.web_cashier.max_devices_per_outlet');
+            $active = Device::forTenant($outlet->tenant_id)->where('outlet_id', $outlet->id)
+                ->where('platform', AppPlatform::Web)->whereNull('revoked_at')->count();
+
+            if ($active >= $max) {
+                throw BusinessException::of(ErrorCode::Forbidden, "Batas {$max} perangkat kasir web di outlet ini tercapai. Minta owner mencabut perangkat lama di menu Perangkat.");
+            }
+
             try {
                 $device = DB::transaction(fn (): Device => Device::query()->create([
                     'outlet_id' => $outlet->id,

@@ -85,6 +85,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Kasir web (Q54): error bisnis kembali ke halaman sebelumnya sebagai pesan, bukan 500
         $exceptions->render(fn (BusinessException $e, Request $request) => $request->routeIs('cashier.*')
-            ? back()->withInput($request->except(['password', 'pin', 'approver_pin']))->withErrors(['cashier' => $e->getMessage()])
+            // URL sebelumnya dari sesi, bukan header Referer (anti open redirect)
+            ? redirect()->to($request->session()->previousUrl() ?? route('cashier.home'))->withInput($request->except(['password', 'pin', 'approver_pin']))->withErrors(['cashier' => $e->getMessage()])
             : null);
     })->create();

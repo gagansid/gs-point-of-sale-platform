@@ -74,6 +74,11 @@ return [
     ],
 
     // Rate limit per menit
+    // Kasir web (Q54): maks. browser aktif per outlet (cookie bisa dihapus untuk membuat device baru)
+    'web_cashier' => [
+        'max_devices_per_outlet' => (int) env('POS_WEB_CASHIER_MAX_DEVICES', 10),
+    ],
+
     'rate_limits' => [
         'auth' => 5,
         'api' => 120,

@@ -110,14 +110,14 @@ it('approval tidak boleh oleh diri sendiri', function () {
     expect(Order::query()->count())->toBe(0);
 });
 
-it('penghitung PIN approval memakai device browser, bukan "approval:none"', function () {
+it('penghitung PIN approval kasir web per pelaku, bukan "approval:none"', function () {
     $page = Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)
         ->set('discountType', 'percent')->set('discountValue', '20');
     payCash($page);
     $page->set('approverId', $this->pos->supervisor->id)->set('approverPin', '000000')->call('pay');
 
     $key = fn (string $source): string => (new ReflectionMethod(VerifyPin::class, 'key'))->invoke(null, $this->pos->supervisor, $source);
-    expect(RateLimiter::attempts($key('approval:'.$this->pos->webDevice->id)))->toBe(1)
+    expect(RateLimiter::attempts($key('approval:web-user:'.$this->pos->cashier->id)))->toBe(1)
         ->and(RateLimiter::attempts($key('approval:none')))->toBe(0);
 });
 

@@ -52,9 +52,12 @@ final class VerifyApproval
 
         // Penghitung terpisah dari login PIN, per perangkat pelaku (GSPOS-SEC-002). Kasir web memakai
         // device browser (Q54); tanpa ini semua sesi web berbagi satu penghitung "approval:none".
+        // Browser bisa membuat device baru (hapus cookie), jadi penghitung web per pelaku, bukan per device.
         $token = $actor->currentAccessToken();
-        $deviceId = $token instanceof PersonalAccessToken ? $token->device_id : WebCashier::deviceOrNull()?->id;
-        $this->verifyPin->handle($approver, $approval->pin, 'approval:'.($deviceId ?? 'none'), $deviceId);
+        $webDevice = $token instanceof PersonalAccessToken ? null : WebCashier::deviceOrNull();
+        $deviceId = $token instanceof PersonalAccessToken ? $token->device_id : $webDevice?->id;
+        $source = $webDevice !== null ? 'approval:web-user:'.$actor->id : 'approval:'.($deviceId ?? 'none');
+        $this->verifyPin->handle($approver, $approval->pin, $source, $deviceId);
 
         $authorizes ??= fn (User $user): bool => $user->can($permission);
 

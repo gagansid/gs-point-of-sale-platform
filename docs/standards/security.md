@@ -94,6 +94,17 @@ Lapisan 5  Operasional    Patch dependency, backup, log & Sentry, 2FA, edukasi u
 12. Form publik (hubungi sales): honeypot `website` (bot mendapat respons sukses tanpa disimpan), throttle
     `contact` 3/menit & 10/jam per IP, CSRF, batas panjang tiap field, IP disimpan sebagai HMAC (bukan mentah).
 
+15. Kasir web `/cashier` (SPEC Q54): guard `cashier` terpisah dari `/dashboard`; login per akun+IP 5/menit dan
+    per IP 20 gagal/menit; pesan khusus hanya setelah kata sandi benar. Setiap request (termasuk `/livewire/update`
+    lewat middleware persisten) memeriksa ulang akses, kata sandi (sidik HMAC di sesi), bisnis, device, dan outlet.
+    State Livewire dianggap input tidak tepercaya: ID order/bill `#[Locked]`, keranjang divalidasi dengan aturan
+    FormRequest API sebelum disimpan, harga selalu dari server, PIN approver tidak disimpan di snapshot. Penghitung
+    PIN approval web per pelaku (cookie browser bisa dihapus); maks. device web aktif per outlet
+    (`POS_WEB_CASHIER_MAX_DEVICES`). Error bisnis di route kasir kembali ke URL sebelumnya dari sesi (bukan Referer).
+16. Panel admin: aksi sensitif (tambah/hapus admin, reset 2FA, maintenance, kosongkan log, hapus backup) minta kata
+    sandi admin yang login. Log Viewer & Backup memilih file dari daftar (anti path traversal); isi log di-escape.
+    Backup berisi hash kata sandi/PIN: `BACKUP_ARCHIVE_PASSWORD` wajib di production. Sentry tanpa PII.
+
 ## 3. Header keamanan (sudah aktif)
 
 | Header | Nilai | Berlaku |
