@@ -101,7 +101,7 @@ input group tanpa garis pemisah; tanpa `style=""`/hex di Blade (pakai kelas + to
 | L3 | Font PDF Plus Jakarta Sans | Kini DejaVu Sans | Tambahkan TTF (lisensi OFL) ke `resources/fonts/` — butuh persetujuan pemilik untuk mengunduh — ✅ Selesai 2026-10-11: TTF Regular/Bold + OFL.txt dari github.com/tokotype/PlusJakartaSans, subsetting aktif, cache `storage/fonts` |
 | L4 | Uji batas export di hosting | dompdf & Excel sinkron memakai memori/waktu PHP shared hosting | Bila perlu turunkan `ReportExporter::MAX_PDF_ROWS` / `MAX_EXCEL_ROWS` |
 | L5 | Total di footer tabel produk/kategori/opsi | Tabel array Filament tidak mendukung summarizer; total kini di deskripsi tabel | Opsional: `contentFooter()` khusus — ✅ Selesai (`2990a64`): baris total `<tfoot>` via `ReportTableWidget::totalRow()` |
-| L6 | Seragamkan ukuran tersisa (opsional) | Paginasi 28px, ikon aksi baris 26px, tab garis bawah Penjualan/Shift 39px | Sengaja tidak diubah (standar tabel/navigasi) — tanyakan pemilik |
+| L6 | Seragamkan ukuran tersisa (opsional) | Paginasi 28px, ikon aksi baris 26px, tab garis bawah Penjualan/Shift 39px | Sengaja tidak diubah (standar tabel/navigasi) — tanyakan pemilik — ✅ Selesai: paginasi, aksi baris, tab kartu = 32px (`--control-h`); tinggi baris tabel tetap 37px |
 | L7 | Perbarui dokumentasi OpenAPI (Scramble) & `docs/api/README.md` (jumlah endpoint) | 9 endpoint laporan baru | — — ✅ Selesai (`a2a33bd`): 58 endpoint, Scramble tanpa masalah (`scramble:analyze`) |
 
 ### Rekomendasi tambahan
