@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\LogsChanges;
 use App\Models\Concerns\RecordsAuthor;
 use App\Notifications\ResetUserPassword;
 use Carbon\CarbonImmutable;
@@ -47,7 +48,20 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use BelongsToTenant, HasApiTokens, HasFactory, HasUuids, Notifiable, RecordsAuthor, SoftDeletes;
+    use BelongsToTenant, HasApiTokens, HasFactory, HasUuids, LogsChanges, Notifiable, RecordsAuthor, SoftDeletes;
+
+    /** Kolom yang dicatat di audit log (Q58). */
+    public static function auditAttributes(): array
+    {
+        return [
+            'name',
+            'email',
+            'username',
+            'role',
+            'is_active',
+            'web_cashier_access',
+        ];
+    }
 
     /** tenant_id sengaja tidak fillable: selalu dari tenant context (BelongsToTenant). */
     protected $fillable = [
@@ -77,6 +91,17 @@ class User extends Authenticatable implements FilamentUser
         static::creating(function (User $user): void {
             if (! array_key_exists('daily_summary_email', $user->getAttributes())) {
                 $user->daily_summary_email = $user->role === UserRole::Owner;
+            }
+        });
+
+        // Audit log (Q58): kata sandi/PIN diganti dicatat TANPA nilainya
+        static::updated(function (User $user): void {
+            $secrets = array_values(array_filter(['password', 'pin'], fn (string $column): bool => $user->wasChanged($column)));
+
+            if ($secrets !== []) {
+                activity('User')->performedOn($user)->event('updated')
+                    ->withProperties(['secrets' => $secrets])
+                    ->log('credentials');
             }
         });
     }

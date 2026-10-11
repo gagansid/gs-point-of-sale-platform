@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\LogsChanges;
 use Database\Factories\OptionFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,7 +25,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class Option extends Model
 {
     /** @use HasFactory<OptionFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasUuids, LogsChanges, SoftDeletes;
+
+    /** Kolom yang dicatat di audit log (Q58). */
+    public static function auditAttributes(): array
+    {
+        return [
+            'name',
+            'price_delta',
+        ];
+    }
 
     protected $fillable = ['option_group_id', 'name', 'price_delta', 'sort_order'];
 

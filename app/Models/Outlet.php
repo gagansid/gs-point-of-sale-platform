@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\LogsChanges;
 use App\Models\Concerns\RecordsAuthor;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -39,7 +40,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class Outlet extends Model
 {
     /** @use HasFactory<OutletFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, RecordsAuthor, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasUuids, LogsChanges, RecordsAuthor, SoftDeletes;
+
+    /** Kolom yang dicatat di audit log (Q58). */
+    public static function auditAttributes(): array
+    {
+        return [
+            'name',
+            'address',
+            'timezone',
+            'tax_rate',
+            'service_charge_rate',
+            'tax_inclusive',
+            'rounding',
+            'receipt_header',
+            'receipt_footer',
+            'receipt_show_rounding',
+            'discount_limits',
+            'daily_sales_target',
+            'monthly_sales_target',
+            'is_active',
+        ];
+    }
 
     protected $fillable = [
         'code',

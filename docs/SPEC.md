@@ -62,7 +62,7 @@ Intinya Laravel + MySQL + Filament; package lain ditambahkan hanya jika menghema
 | `maatwebsite/excel` | Export laporan ke Excel | MVP |
 | `barryvdh/laravel-dompdf` ^3.1 | Export laporan ke PDF (PHP murni, tanpa Chrome/biner — ADR 0012) | MVP |
 | `opcodesio/log-viewer` | Membaca log Laravel dari panel admin | MVP |
-| `spatie/laravel-activitylog` | Audit log (void, ubah harga, diskon manual) | Fase 2 |
+| `spatie/laravel-activitylog` | Audit log perubahan data (Q58); void & diskon tetap di panel Audit | Terpasang |
 | `pestphp/pest` | Testing | Dev |
 | `laravel/pint` | Format kode otomatis (PSR-12) | Dev |
 | `larastan/larastan` | Static analysis | Dev |
@@ -150,6 +150,7 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `outlet.settings` | Pajak, service, pembulatan, struk | ✅ | ❌ | ❌ | ❌ |
 | `outlet.manage` | Tambah & nonaktifkan outlet (Q36) | ✅ | ❌ | ❌ | ❌ |
 | `outlet.access_all` | Otomatis memegang semua outlet (Q37) | ✅ | ❌ | ❌ | ❌ |
+| `audit.view` | Riwayat perubahan data (Q58); jenis data mengikuti izin pengelolanya | ✅ | ✅ | ❌ | ❌ |
 
 ```php
 enum UserRole: string
@@ -631,5 +632,6 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q55 | Menu Kasir di dashboard | Sidebar dashboard **Transaksi → Kasir** (tampil bila `canUseWebCashier()`, Q54) membuka `/cashier/confirm` di tab baru. Identitas = user sesi `/dashboard`; wajib masuk ulang dengan **kata sandi** atau **PIN** (tab PIN hanya bila user punya PIN). PIN hanya untuk jalur ini, bukan login `/cashier` langsung. PIN memakai penghitung & kunci `VerifyPin` (sumber per IP); kata sandi maks. 5 salah/menit per user + IP. Tanpa sesi dashboard → login kasir biasa; **Keluar** dari kasir kembali ke dashboard bila sesinya masih aktif. Tab cara masuk (username/email, kata sandi/PIN) dipilih di form, tidak tampil di URL. Pilih outlet: lebih dari 3 outlet → dropdown dengan pencarian (urut nama). Halaman masuk kasir menampilkan versi aplikasi. Halaman kasir tidak punya link lupa kata sandi/PIN: akun terkunci dibuka owner di dashboard (Karyawan → Buka kunci PIN). | Diterima | — |
 | Q56 | Target omzet per outlet | `outlets.daily_sales_target` & `monthly_sales_target` (DECIMAL(15,2), null/0 = tanpa target), diatur owner di **Profil outlet** atau `PUT /v1/outlet` (`outlet.settings`). Beranda menampilkan widget **Target omzet**: progres hari ini & bulan berjalan per outlet menurut zona waktu outlet (omzet = `grand_total` order selesai, void tidak dihitung), tidak mengikuti filter periode. Bulanan diberi status "sesuai/di bawah jalur" dibanding persen hari bulan yang sudah lewat. Belum ada target: ajakan mengatur untuk yang berizin, selain itu widget disembunyikan. | Diterima | `docs/api/settings.md` |
 | Q57 | Ringkasan harian email | Command `pos:daily-summary` (jadwal tiap jam lewat cron `schedule:run`) mengirim rekap **kemarin** sekali per tanggal lokal, setelah jam `POS_DAILY_SUMMARY_HOUR` (bawaan 07.00) di zona waktu outlet pertama user. Isi per outlet aktif yang boleh diakses: omzet, transaksi, rata-rata, void, selisih kas shift yang ditutup, capaian target harian (Q56), plus daftar "Perlu dicek". Penerima: user aktif, `users.daily_summary_email` = true (bawaan owner; toggle di Profil, hanya bila punya `report.view`), email terverifikasi, tenant aktif. Tanpa aktivitas kemarin = tidak dikirim. Klaim atomik `last_daily_summary_on` mencegah email ganda. Email lewat antrean database. | Diterima | — |
+| Q58 | Riwayat perubahan (audit log) | `spatie/laravel-activitylog` dengan model `ActivityLog` (morph UUID, `tenant_id` dari data yang diubah, dibaca lewat TenantScope). Dicatat (dibuat/diubah/dihapus, hanya kolom yang berubah, nilai lama → baru, pelaku = user login): produk (nama, SKU, barcode, harga, harga modal, kategori, stok, aktif, favorit), kategori, grup opsi, opsi (tambahan harga), metode bayar, setelan outlet (termasuk pajak, batas diskon, target), karyawan (nama, email, username, role, aktif, akses kasir web). Kata sandi/PIN hanya dicatat "diganti" tanpa nilai. Menu **Pengaturan → Riwayat perubahan** (`audit.view`: owner & manager; jenis data mengikuti izin pengelolanya, outlet dibatasi ke yang boleh diakses), tautan dari panel Audit Beranda. Disimpan 365 hari (`activitylog:clean` harian). Void & diskon ber-approval tetap di panel Audit (data order). | Diterima | — |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

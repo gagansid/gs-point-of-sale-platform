@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\LogsChanges;
 use App\Models\Concerns\RecordsAuthor;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,7 +40,23 @@ use Illuminate\Support\Facades\Storage;
 final class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, RecordsAuthor, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasUuids, LogsChanges, RecordsAuthor, SoftDeletes;
+
+    /** Kolom yang dicatat di audit log (Q58). */
+    public static function auditAttributes(): array
+    {
+        return [
+            'name',
+            'sku',
+            'barcode',
+            'price',
+            'cost_price',
+            'category_id',
+            'track_stock',
+            'is_active',
+            'is_favorite',
+        ];
+    }
 
     /** Stok, stok minimum, dan ketersediaan disimpan per outlet di ProductStock (ADR 0010). */
     protected $fillable = [

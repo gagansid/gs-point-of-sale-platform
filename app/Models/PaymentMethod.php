@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\PaymentCategory;
 use App\Models\Concerns\BelongsToTenant;
+use App\Models\Concerns\LogsChanges;
 use App\Models\Concerns\RecordsAuthor;
 use Database\Factories\PaymentMethodFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,7 +28,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 final class PaymentMethod extends Model
 {
     /** @use HasFactory<PaymentMethodFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, RecordsAuthor, SoftDeletes;
+    use BelongsToTenant, HasFactory, HasUuids, LogsChanges, RecordsAuthor, SoftDeletes;
+
+    /** Kolom yang dicatat di audit log (Q58). */
+    public static function auditAttributes(): array
+    {
+        return [
+            'name',
+            'category',
+            'requires_reference',
+            'is_active',
+        ];
+    }
 
     protected $fillable = ['name', 'category', 'requires_reference', 'is_active', 'sort_order'];
 

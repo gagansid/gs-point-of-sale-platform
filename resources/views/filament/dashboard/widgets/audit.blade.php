@@ -11,6 +11,14 @@
         icon="heroicon-o-shield-check"
         :icon-color="$issues > 0 ? 'warning' : 'success'"
     >
+        {{-- Riwayat perubahan data (Q58): harga, produk, setelan, karyawan --}}
+        @if (\App\Filament\Dashboard\Resources\ActivityLogs\ActivityLogResource::canViewAny())
+            <x-slot name="afterHeader">
+                <x-filament::link :href="\App\Filament\Dashboard\Resources\ActivityLogs\ActivityLogResource::getUrl()" size="sm" icon="heroicon-m-clipboard-document-list">
+                    Riwayat perubahan
+                </x-filament::link>
+            </x-slot>
+        @endif
         <div class="grid gap-4 lg:grid-cols-3">
             {{-- Void --}}
             <div class="pos-dash-audit">

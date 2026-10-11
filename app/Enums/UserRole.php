@@ -47,6 +47,8 @@ enum UserRole: string implements HasColor, HasLabel
         'outlet.settings',
         'outlet.manage',
         'outlet.access_all',
+        // Riwayat perubahan / audit log (Q58)
+        'audit.view',
     ];
 
     /**
@@ -62,6 +64,7 @@ enum UserRole: string implements HasColor, HasLabel
         'report.view_own',
         'report.export',
         'outlet.access_all',
+        'audit.view',
     ];
 
     public static function isReadPermission(string $permission): bool
@@ -78,7 +81,7 @@ enum UserRole: string implements HasColor, HasLabel
     {
         return match ($this) {
             self::Owner => ['*'],
-            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*'],
+            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view'],
             // Tanpa order.discount_over_limit: diskon supervisor dibatasi discount_limits.supervisor (Q18, GSPOS-SEC-014)
             self::Supervisor => [
                 'order.create', 'order.view_own', 'order.view_all', 'order.reprint',
