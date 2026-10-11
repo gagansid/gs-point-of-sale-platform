@@ -23,6 +23,8 @@ final readonly class EmployeeData
         public ?string $pin,
         /** @var list<string>|null */
         public ?array $outletIds = null,
+        /** null = tidak diubah (saat menambah: bawaan role, lihat UserRole::defaultWebCashierAccess) */
+        public ?bool $webCashierAccess = null,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -40,6 +42,9 @@ final readonly class EmployeeData
             pin: filled($data['pin'] ?? null) ? (string) $data['pin'] : null,
             outletIds: is_array($data['outlet_ids'] ?? null)
                 ? array_values(array_unique(array_map(strval(...), $data['outlet_ids'])))
+                : null,
+            webCashierAccess: array_key_exists('web_cashier_access', $data) && $data['web_cashier_access'] !== null
+                ? (bool) $data['web_cashier_access']
                 : null,
         );
     }

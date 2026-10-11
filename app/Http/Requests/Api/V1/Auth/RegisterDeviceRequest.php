@@ -22,7 +22,7 @@ final class RegisterDeviceRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:100'],
             'device_uid' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._:-]+$/'],
-            'platform' => ['nullable', Rule::enum(AppPlatform::class)],
+            'platform' => ['nullable', Rule::enum(AppPlatform::class)->except(AppPlatform::Web)],
             'app_version' => ['nullable', 'string', 'max:20', 'regex:/^\d+\.\d+\.\d+$/'],
             // Outlet wajib milik tenant sendiri (kosong = outlet pertama, MVP 1 outlet)
             'outlet_id' => [

@@ -181,3 +181,37 @@ it('username sama boleh di bisnis lain', function () {
 
     $this->withToken($this->token)->postJson('/api/v1/users', employeeBody(), apiHeaders())->assertCreated();
 });
+
+describe('akses kasir web (Q54)', function () {
+    it('bawaan per role saat menambah; bisa diubah; tanpa field tidak berubah', function () {
+        $id = $this->withToken($this->token)->postJson('/api/v1/users', employeeBody(), apiHeaders())
+            ->assertCreated()->assertJsonPath('data.web_cashier_access', true)->json('data.id');
+
+        $this->withToken($this->token)->putJson("/api/v1/users/{$id}", ['web_cashier_access' => false], apiHeaders())
+            ->assertOk()->assertJsonPath('data.web_cashier_access', false);
+        $this->withToken($this->token)->putJson("/api/v1/users/{$id}", ['name' => 'Budi S'], apiHeaders())
+            ->assertOk()->assertJsonPath('data.web_cashier_access', false);
+
+        $this->withToken($this->token)->putJson("/api/v1/users/{$id}", ['web_cashier_access' => 'ya'], apiHeaders())
+            ->assertUnprocessable();
+    });
+
+    it('owner selalu true; manager tanpa izin user.manage tidak bisa mengubah', function () {
+        $this->withToken($this->token)->getJson("/api/v1/users/{$this->owner->id}", apiHeaders())
+            ->assertOk()->assertJsonPath('data.web_cashier_access', true);
+
+        $budi = User::factory()->cashier()->create(['tenant_id' => $this->tenantId]);
+        $manager = User::factory()->manager()->create(['tenant_id' => $this->tenantId]);
+        freshAuth();
+        $this->withToken(userToken($manager))->putJson("/api/v1/users/{$budi->id}", ['web_cashier_access' => true], apiHeaders())
+            ->assertForbidden();
+    });
+
+    it('tenant lain tidak bisa mengubah akses', function () {
+        $other = User::factory()->cashier()->create(['tenant_id' => Tenant::factory()->create()->id]);
+
+        $this->withToken($this->token)->putJson("/api/v1/users/{$other->id}", ['web_cashier_access' => true], apiHeaders())
+            ->assertNotFound();
+        expect(User::allTenants()->find($other->id)?->web_cashier_access)->toBeFalse();
+    });
+});

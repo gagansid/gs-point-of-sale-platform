@@ -56,7 +56,11 @@ class User extends Authenticatable implements FilamentUser
         'pin',
         'role',
         'is_active',
+        'web_cashier_access',
     ];
+
+    /** @var array<string, mixed> Bawaan kolom (Q54) agar tersedia sebelum model dimuat ulang */
+    protected $attributes = ['web_cashier_access' => false];
 
     protected $hidden = [
         'password',
@@ -71,6 +75,7 @@ class User extends Authenticatable implements FilamentUser
             'pin' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',
+            'web_cashier_access' => 'boolean',
             'pin_failed_attempts' => 'integer',
             'pin_locked_until' => 'immutable_datetime',
             'last_login_at' => 'immutable_datetime',
@@ -119,6 +124,17 @@ class User extends Authenticatable implements FilamentUser
     public function needsVerifiedEmailForDashboard(): bool
     {
         return ! $this->role->hasFullDashboard() && ! $this->hasVerifiedEmail();
+    }
+
+    /**
+     * Boleh memakai kasir web (Q54): akun aktif yang bisa bertransaksi, dan diberi akses di menu
+     * Karyawan. Pengelola karyawan (user.manage, owner) selalu boleh agar tidak bisa terkunci sendiri.
+     */
+    public function canUseWebCashier(): bool
+    {
+        return $this->is_active
+            && $this->hasPermission('order.create')
+            && ($this->hasPermission('user.manage') || $this->web_cashier_access);
     }
 
     public function isPinLocked(): bool

@@ -88,3 +88,30 @@ it('role manager menampilkan email & kata sandi; PIN opsional', function () {
         // Email baru menunggu verifikasi pemiliknya (SPEC Q46)
         ->and($sari->hasVerifiedEmail())->toBeFalse();
 });
+
+it('akses kasir web: bawaan aktif untuk kasir, nonaktif untuk manager, bisa diubah owner (Q54)', function () {
+    $page = Livewire::test(ManageEmployees::class);
+    $page->callAction(TestAction::make('create')->table(), [
+        'name' => 'Budi', 'role' => UserRole::Cashier->value, 'email' => 'budi@kopi.test', 'pin' => '481920', 'username' => 'budi', 'password' => 'rahasia123',
+    ])->assertHasNoFormErrors();
+    $page->callAction(TestAction::make('create')->table(), [
+        'name' => 'Sari', 'role' => UserRole::Manager->value, 'email' => 'sari@kopi.test', 'password' => 'rahasia123', 'web_cashier_access' => false,
+    ])->assertHasNoFormErrors();
+
+    $budi = User::query()->where('name', 'Budi')->sole();
+    $sari = User::query()->where('name', 'Sari')->sole();
+    expect($budi->canUseWebCashier())->toBeTrue()->and($sari->canUseWebCashier())->toBeFalse();
+
+    Livewire::test(ManageEmployees::class)
+        ->callAction(TestAction::make('edit')->table($budi), ['web_cashier_access' => false])
+        ->assertHasNoFormErrors();
+    expect($budi->fresh()?->canUseWebCashier())->toBeFalse();
+});
+
+it('owner selalu punya akses kasir web walau kolomnya nonaktif (Q54)', function () {
+    expect($this->owner->web_cashier_access)->toBeFalse()
+        ->and($this->owner->canUseWebCashier())->toBeTrue();
+
+    $this->owner->is_active = false;
+    expect($this->owner->canUseWebCashier())->toBeFalse();
+});

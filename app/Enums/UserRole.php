@@ -128,6 +128,12 @@ enum UserRole: string implements HasColor, HasLabel
         };
     }
 
+    /** Akses kasir web bawaan saat karyawan ditambah (Q54): aktif untuk role yang login dengan username. */
+    public function defaultWebCashierAccess(): bool
+    {
+        return ! $this->canUsePasswordLogin();
+    }
+
     /**
      * Boleh membuka panel /dashboard: pemegang report.view (owner, manager — semua menu sesuai permission)
      * atau report.view_shift (supervisor — hanya menu Laporan, Q50). Kasir tidak (rekap shift lewat API).

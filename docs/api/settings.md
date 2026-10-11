@@ -94,6 +94,7 @@ Test: `tests/Feature/Api/V1/Settings/OutletTest.php`, `tests/Feature/Filament/Da
 | `password` | string | Wajib saat menambah (semua role); `Password::defaults()` (min. 8, huruf & angka). PUT: kosong = tidak diganti |
 | `pin` | string | 6 digit, **bukan** angka sama (`111111`) atau berurutan (`123456`, `654321`). Wajib untuk supervisor/kasir (login tablet), opsional untuk owner/manager (approval). PUT: kosong = tidak diganti |
 | `is_active` | bool | Hanya PUT. `false` = tidak bisa login & semua sesi diputus |
+| `web_cashier_access` | bool | Akses kasir web (Q54). Tanpa field: bawaan role saat menambah (kasir/supervisor `true`), tidak diubah saat PUT. Respons = akses efektif (owner selalu `true`) |
 | `outlet_ids` | uuid[] | Outlet yang dipegang (ADR 0010). Diabaikan untuk owner (otomatis semua). Role lain minimal satu outlet aktif milik bisnis yang juga dipegang pemberi tugas, selain itu `422`. POST tanpa field = outlet perangkat; PUT tanpa field = tidak berubah. Memindahkan outlet langsung berlaku: token di perangkat outlet lama ditolak `403` |
 
 Respons (`EmployeeResource`) **tidak pernah** berisi PIN/kata sandi: `has_pin`, `pin_locked_until`,

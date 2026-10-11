@@ -43,6 +43,7 @@ it('validasi gagal untuk data device tidak valid', function (array $override, st
 })->with([
     'nama kosong' => [['name' => ''], 'name'],
     'platform tidak dikenal' => [['platform' => 'windows'], 'platform'],
+    'platform web hanya untuk kasir web (Q54)' => [['platform' => 'web'], 'platform'],
     'versi rusak' => [['app_version' => 'v1'], 'app_version'],
 ]);
 

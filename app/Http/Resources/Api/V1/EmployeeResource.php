@@ -31,6 +31,8 @@ final class EmployeeResource extends JsonResource
             'all_outlets' => $this->role->allows('outlet.access_all'),
             'outlet_ids' => $this->outletIds(),
             'is_active' => $this->is_active,
+            // Efektif (owner selalu true), bukan hanya nilai kolom
+            'web_cashier_access' => $this->canUseWebCashier(),
             'has_pin' => $this->pin !== null,
             'pin_locked_until' => Iso::dateTime($this->pin_locked_until),
             'last_login_at' => Iso::dateTime($this->last_login_at),

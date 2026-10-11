@@ -68,6 +68,11 @@ final class SaveEmployee
                 $user->is_active = true;
             }
 
+            // Akses kasir web (Q54): dari form/API, bawaan per role saat menambah
+            if ($data->webCashierAccess !== null || $isNew) {
+                $user->web_cashier_access = $data->webCashierAccess ?? $data->role->defaultWebCashierAccess();
+            }
+
             // Email baru atau diganti → wajib diverifikasi ulang oleh pemilik email (SPEC Q46)
             if ($user->isDirty('email')) {
                 $user->forceFill(['email_verified_at' => null]);

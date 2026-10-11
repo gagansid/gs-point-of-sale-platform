@@ -29,9 +29,11 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -79,6 +81,12 @@ final class EmployeeResource extends Resource
                 ->helperText('Tampil di layar pilih kasir & struk'),
             Select::make('role')->label('Role')->options(UserRole::class)->required()->native(false)->live()
                 ->default(UserRole::Cashier->value)
+                // Menambah: akses kasir web mengikuti bawaan role (Q54); mengubah: pilihan owner tetap
+                ->afterStateUpdated(function (Get $get, Set $set, string $operation): void {
+                    if ($operation === 'create' && ($role = self::role($get)) !== null) {
+                        $set('web_cashier_access', $role->defaultWebCashierAccess());
+                    }
+                })
                 ->helperText(fn (Get $get): string => match (self::role($get)) {
                     UserRole::Owner => 'Semua akses, termasuk karyawan & setelan',
                     UserRole::Manager => 'Kelola produk, stok, laporan; login dashboard',
@@ -139,6 +147,15 @@ final class EmployeeResource extends Resource
                 ->helperText('Karyawan hanya bisa login & bertransaksi di perangkat outlet yang dipilih')
                 ->visible(fn (Get $get): bool => count(self::assignableOutlets()) > 1
                     && ! (self::role($get)?->allows('outlet.access_all') ?? false)),
+            // Kasir web (Q54): cadangan bila kasir/tablet tidak ada. Owner selalu boleh → disembunyikan
+            Toggle::make('web_cashier_access')->label('Akses kasir web')
+                ->default(UserRole::Cashier->defaultWebCashierAccess())
+                ->helperText(fn (Get $get): string => self::role($get)?->canUsePasswordLogin() ?? false
+                    ? 'Boleh bertransaksi di kasir web dengan email & kata sandi'
+                    : 'Boleh bertransaksi di kasir web dengan kode bisnis, username & kata sandi')
+                ->visible(fn (Get $get): bool => ! (self::role($get)?->allows('user.manage') ?? false)
+                    && (self::role($get)?->allows('order.create') ?? false))
+                ->columnSpanFull(),
             // Tanggal dibuat & diubah (audit)
             AuditInfo::make(),
         ]);
@@ -168,6 +185,8 @@ final class EmployeeResource extends Resource
                     ->formatStateUsing(fn (string $state): string => '@'.$state)
                     ->toggleable(),
                 TextColumn::make('role')->label('Role')->badge()->sortable(),
+                IconColumn::make('web_cashier')->label('Kasir web')->boolean()->alignCenter()
+                    ->state(fn (User $record): bool => $record->canUseWebCashier())->toggleable(),
                 TextColumn::make('outlets.name')->label('Outlet')->badge()->color('gray')
                     ->placeholder('Semua outlet')
                     ->visible(fn (): bool => Outlet::query()->count() > 1),
