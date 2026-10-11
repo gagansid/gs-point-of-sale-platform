@@ -57,18 +57,17 @@ final class DashboardLoginController extends Controller
         // Hash tetap dicek walau user tidak ada agar waktu respons sama (anti enumerasi akun)
         $passwordValid = Hash::check($request->string('password')->toString(), $user->password ?? $dummyHash);
 
-        if ($user === null || ! $passwordValid) {
+        // Akun tanpa akses dashboard (kasir/supervisor/nonaktif) diperlakukan sama dengan kata sandi salah:
+        // pesan sama dan tetap terhitung throttle, agar form ini tidak jadi alat menebak kata sandi
+        // kasir web (GSPOS-SEC-005)
+        if ($user === null || ! $passwordValid || ! $user->canAccessPanel(Filament::getPanel('dashboard'))) {
             RateLimiter::hit($throttleKey, 60);
 
-            // Pesan umum: tidak membedakan email tidak terdaftar dan kata sandi salah
+            // Pesan umum: tidak membedakan email tidak terdaftar, kata sandi salah, dan akun tanpa akses
             throw ValidationException::withMessages(['email' => 'Email atau kata sandi salah.']);
         }
 
         RateLimiter::clear($throttleKey);
-
-        if (! $user->canAccessPanel(Filament::getPanel('dashboard'))) {
-            throw ValidationException::withMessages(['email' => 'Akun ini tidak memiliki akses ke dashboard.']);
-        }
 
         if (! $user->tenant->isActive()) {
             throw ValidationException::withMessages(['email' => 'Langganan bisnis Anda tidak aktif. Hubungi tim gs.POS.']);

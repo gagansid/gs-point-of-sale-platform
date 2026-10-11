@@ -118,9 +118,10 @@ it('kata sandi salah: pesan umum dan dibatasi 5 percobaan', function () {
 });
 
 it('kasir, akun nonaktif, dan tenant ditangguhkan tidak bisa masuk dashboard', function () {
+    // Pesan sama dengan kata sandi salah: kebenaran kata sandi kasir tidak bocor (GSPOS-SEC-005)
     $cashier = User::factory()->cashier()->create(['email' => 'kasir@kopi.test', 'password' => 'rahasia-123']);
     $this->post('http://gspos.localhost/login', ['email' => 'kasir@kopi.test', 'password' => 'rahasia-123'])
-        ->assertSessionHasErrors(['email' => 'Akun ini tidak memiliki akses ke dashboard.']);
+        ->assertSessionHasErrors(['email' => 'Email atau kata sandi salah.']);
 
     $this->owner->tenant->update(['status' => TenantStatus::Suspended]);
     $this->post('http://gspos.localhost/login', ['email' => 'owner@kopi.test', 'password' => 'rahasia-123'])
