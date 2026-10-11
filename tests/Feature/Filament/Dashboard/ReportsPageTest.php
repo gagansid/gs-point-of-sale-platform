@@ -10,16 +10,20 @@ use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Pages\Reports;
 use App\Filament\Dashboard\Widgets\Reports\CategoriesTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\EmployeesTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\PeakHoursTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ProductsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ReportStatsWidget;
 use App\Filament\Dashboard\Widgets\Reports\ReportTrendChartWidget;
 use App\Filament\Dashboard\Widgets\Reports\ShiftsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\StockTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\TrendTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\VoidsTableWidget;
 use App\Models\Order;
 use App\Models\ReportPreset;
 use App\Models\User;
+use App\Services\Report\ReportService;
 use App\Support\CurrentOutlet;
+use App\Support\Money;
 use App\Support\TenantContext;
 use Filament\Facades\Filament;
 use Illuminate\Support\Carbon;
@@ -212,5 +216,35 @@ describe('preset filter (R8)', function () {
 
         expect($page->get('filters.from'))->toBeGreaterThanOrEqual('2026-09-09')
             ->and($page->get('tab'))->not->toBe('stock');
+    });
+});
+
+describe('tabel pendamping grafik (R9, chart.md › Aksesibilitas)', function () {
+    it('tren: baris per hari dengan angka yang sama dengan grafik + total', function () {
+        $range = ['preset' => 'custom', 'from' => '2026-10-08', 'to' => '2026-10-08', 'compare' => 'none'];
+        $series = app(ReportService::class)->trend(
+            Carbon::parse('2026-10-08 00:00', 'Asia/Jakarta')->utc()->toImmutable(), Carbon::parse('2026-10-08 23:59:59', 'Asia/Jakarta')->utc()->toImmutable(), 'Asia/Jakarta', 'hour');
+        $revenue = collect($series)->sum(fn ($r) => (float) $r['revenue']);
+
+        Livewire::test(TrendTableWidget::class, ['pageFilters' => $range])
+            ->assertSee('Data tren omzet')
+            ->assertSee(Money::format(number_format($revenue, 2, '.', '')))
+            ->assertSeeHtml('<tfoot>');
+    });
+
+    it('jam ramai: hanya jam bertransaksi, jam lokal outlet', function () {
+        // pageSale 2026-10-08 03:00 UTC = 10.00 WIB
+        Livewire::test(PeakHoursTableWidget::class, ['pageFilters' => ['preset' => 'custom', 'from' => '2026-10-08', 'to' => '2026-10-08']])
+            ->assertSee('10.00–10.59')
+            ->assertDontSee('03.00–03.59');
+    });
+
+    it('tab Ringkasan & Waktu memuat tabel pendamping', function () {
+        $widgets = fn (ReportTab $tab): array => (new ReflectionMethod(Reports::class, 'widgetsFor'))->invoke(new Reports, $tab);
+
+        // Tabel tepat di bawah grafiknya
+        expect($widgets(ReportTab::Summary))->toContain(TrendTableWidget::class)
+            ->and(array_search(TrendTableWidget::class, $widgets(ReportTab::Summary), true))->toBe(array_search(ReportTrendChartWidget::class, $widgets(ReportTab::Summary), true) + 1)
+            ->and($widgets(ReportTab::Time))->toContain(PeakHoursTableWidget::class);
     });
 });

@@ -20,6 +20,7 @@ use App\Filament\Dashboard\Widgets\Reports\FinancialBreakdownWidget;
 use App\Filament\Dashboard\Widgets\Reports\HeatmapWidget;
 use App\Filament\Dashboard\Widgets\Reports\OptionsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\PaymentMethodsTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\PeakHoursTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ProductsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ProfitStatsWidget;
 use App\Filament\Dashboard\Widgets\Reports\ProfitTableWidget;
@@ -29,6 +30,7 @@ use App\Filament\Dashboard\Widgets\Reports\ShiftDifferencesTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ShiftsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\SlowProductsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\StockTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\TrendTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\VoidsTableWidget;
 use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
@@ -203,7 +205,7 @@ final class Reports extends Page
     private function widgetsFor(ReportTab $tab): array
     {
         return match ($tab) {
-            ReportTab::Summary => [ReportStatsWidget::class, ReportTrendChartWidget::class, FinancialBreakdownWidget::class],
+            ReportTab::Summary => [ReportStatsWidget::class, ReportTrendChartWidget::class, TrendTableWidget::class, FinancialBreakdownWidget::class],
             ReportTab::Products => [ProductsTableWidget::class, SlowProductsTableWidget::class],
             ReportTab::Categories => [CategoriesChartWidget::class, CategoriesTableWidget::class],
             ReportTab::Profit => [ProfitStatsWidget::class, ProfitTableWidget::class],
@@ -211,7 +213,7 @@ final class Reports extends Page
             ReportTab::PaymentMethods => [PaymentMethodsChartWidget::class, PaymentMethodsTableWidget::class],
             ReportTab::Employees => [EmployeesTableWidget::class],
             ReportTab::Shifts => [ShiftsTableWidget::class],
-            ReportTab::Time => [PeakHoursChartWidget::class, HeatmapWidget::class],
+            ReportTab::Time => [PeakHoursChartWidget::class, PeakHoursTableWidget::class, HeatmapWidget::class],
             ReportTab::OrderTypes => [OrderTypesWidget::class],
             ReportTab::Outlets => [OutletComparisonWidget::class],
             ReportTab::Discounts => [VoidsTableWidget::class, DiscountsTableWidget::class, ShiftDifferencesTableWidget::class],

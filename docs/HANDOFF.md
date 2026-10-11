@@ -115,7 +115,7 @@ input group tanpa garis pemisah; tanpa `style=""`/hex di Blade (pakai kelas + to
 | R6 | Target omzet harian/bulanan per outlet + progres di Beranda | Manager punya patokan, bukan hanya pembanding periode lalu |
 | R7 | Audit log (`spatie/laravel-activitylog`, Fase 2) terhubung ke panel Audit | Jejak perubahan harga, diskon, void lebih lengkap |
 | R8 | Simpan preset filter per user ("Laporan mingguan outlet A") | Mempercepat rekap rutin — ✅ Selesai: grup aksi Preset di Laporan (tabel `report_presets`, maks. 10 per user) |
-| R9 | Tabel data pendamping grafik (aksesibilitas `chart.md`) & uji E2E browser untuk alur laporan | Mutu & aksesibilitas |
+| R9 | Tabel data pendamping grafik (aksesibilitas `chart.md`) & uji E2E browser untuk alur laporan | Mutu & aksesibilitas — ✅ Tabel pendamping grafik (tren & jam ramai; kategori & metode bayar sudah ada). Uji E2E browser: menunggu keputusan alat (Pest browser butuh PHP 8.3; Dusk butuh ChromeDriver) |
 
 Utang teknis tersisa (lihat PROGRESS): T1 cache widget beranda, T2 gambar lama tidak terhapus,
 T3 cetak struk dari web, T4 Node lokal, T5 rencana PHP 8.3 + Laravel 13, T6 `POS_ADMIN_2FA_REQUIRED=true` di production.
