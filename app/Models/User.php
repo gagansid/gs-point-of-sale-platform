@@ -41,6 +41,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $username
  * @property bool $is_active
  * @property CarbonImmutable|null $last_login_at
+ * @property bool $daily_summary_email ringkasan harian lewat email (Q57)
+ * @property CarbonImmutable|null $last_daily_summary_on tanggal lokal ringkasan terakhir yang dikirim
  */
 class User extends Authenticatable implements FilamentUser
 {
@@ -57,6 +59,7 @@ class User extends Authenticatable implements FilamentUser
         'role',
         'is_active',
         'web_cashier_access',
+        'daily_summary_email',
     ];
 
     /** @var array<string, mixed> Bawaan kolom (Q54) agar tersedia sebelum model dimuat ulang */
@@ -68,6 +71,16 @@ class User extends Authenticatable implements FilamentUser
         'remember_token',
     ];
 
+    protected static function booted(): void
+    {
+        // Bawaan ringkasan harian (Q57): owner aktif, role lain tidak — kecuali diisi eksplisit
+        static::creating(function (User $user): void {
+            if (! array_key_exists('daily_summary_email', $user->getAttributes())) {
+                $user->daily_summary_email = $user->role === UserRole::Owner;
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -76,6 +89,8 @@ class User extends Authenticatable implements FilamentUser
             'role' => UserRole::class,
             'is_active' => 'boolean',
             'web_cashier_access' => 'boolean',
+            'daily_summary_email' => 'boolean',
+            'last_daily_summary_on' => 'immutable_date',
             'pin_failed_attempts' => 'integer',
             'pin_locked_until' => 'immutable_datetime',
             'last_login_at' => 'immutable_datetime',

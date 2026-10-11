@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Rules\SecurePin;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -31,7 +32,16 @@ class EditProfile extends BaseEditProfile
             $this->getPasswordConfirmationFormComponent(),
             $this->getPinFormComponent(),
             $this->getCurrentPasswordFormComponent(),
+            $this->getDailySummaryFormComponent(),
         ]);
+    }
+
+    /** Ringkasan harian lewat email (Q57): hanya untuk yang boleh melihat laporan. */
+    protected function getDailySummaryFormComponent(): Component
+    {
+        return Toggle::make('daily_summary_email')->label('Ringkasan harian')
+            ->helperText('Email setiap pagi berisi omzet, void, selisih kas, dan target kemarin. Email harus sudah terverifikasi')
+            ->visible(fn (): bool => $this->getUser() instanceof User && $this->getUser()->hasPermission('report.view'));
     }
 
     protected function getPinFormComponent(): Component
@@ -69,6 +79,7 @@ class EditProfile extends BaseEditProfile
             (string) $data['email'],
             isset($data['password']) ? (string) $data['password'] : null,
             isset($data['pin']) ? (string) $data['pin'] : null,
+            array_key_exists('daily_summary_email', $data) ? (bool) $data['daily_summary_email'] : null,
         );
     }
 }

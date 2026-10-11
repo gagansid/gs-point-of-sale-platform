@@ -25,11 +25,16 @@ final class UpdateOwnProfile
     /**
      * @param  string|null  $password  kata sandi baru (boleh sudah di-hash oleh form; cast "hashed" tidak meng-hash ulang)
      * @param  string|null  $pin  PIN baru 6 digit (sudah divalidasi SecurePin); null = tidak diganti
+     * @param  bool|null  $dailySummaryEmail  ringkasan harian email (Q57); null = tidak diubah
      */
-    public function handle(User $user, string $name, string $email, #[SensitiveParameter] ?string $password = null, #[SensitiveParameter] ?string $pin = null): User
+    public function handle(User $user, string $name, string $email, #[SensitiveParameter] ?string $password = null, #[SensitiveParameter] ?string $pin = null, ?bool $dailySummaryEmail = null): User
     {
-        $user = DB::transaction(function () use ($user, $name, $email, $password, $pin): User {
+        $user = DB::transaction(function () use ($user, $name, $email, $password, $pin, $dailySummaryEmail): User {
             $user->fill(['name' => $name, 'email' => Str::lower(trim($email))]);
+
+            if ($dailySummaryEmail !== null) {
+                $user->daily_summary_email = $dailySummaryEmail && $user->hasPermission('report.view');
+            }
 
             if ($user->isDirty('email')) {
                 $user->forceFill(['email_verified_at' => null]);

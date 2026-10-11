@@ -84,6 +84,11 @@ return [
         'cache_seconds' => (int) env('POS_REPORT_CACHE_SECONDS', 60),
     ],
 
+    // Ringkasan harian email (Q57): dikirim setelah jam ini (waktu outlet), berisi rekap kemarin
+    'daily_summary' => [
+        'hour' => (int) env('POS_DAILY_SUMMARY_HOUR', 7),
+    ],
+
     'rate_limits' => [
         'auth' => 5,
         'api' => 120,
