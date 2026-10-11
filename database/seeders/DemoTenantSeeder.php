@@ -138,14 +138,16 @@ final class DemoTenantSeeder extends Seeder
             ['Caffe Latte', $coffee->id, 26000, [$size->id, $sugar->id], false, 0],
             ['Matcha Latte', $nonCoffee->id, 28000, [$size->id, $sugar->id], false, 0],
             ['Teh Tarik', $nonCoffee->id, 18000, [$sugar->id], false, 0],
-            ['Croissant', $food->id, 24000, [], true, 12],
-            ['Banana Bread', $food->id, 21000, [], true, 0],
+            // Stok cukup untuk transaksi demo 7 hari (±20 terjual) agar tidak minus; min. stok 10
+            ['Croissant', $food->id, 24000, [], true, 80],
+            ['Banana Bread', $food->id, 21000, [], true, 60],
         ];
 
         foreach ($products as [$name, $categoryId, $price, $groups, $track, $stock]) {
             $saveProduct->handle(null, ProductData::fromArray([
                 'name' => $name, 'category_id' => $categoryId, 'price' => $price,
                 'cost_price' => (int) ($price * 0.4), 'track_stock' => $track, 'stock_qty' => $stock,
+                'min_stock' => $track ? 10 : null,
                 'option_group_ids' => $groups,
             ]), $outlet);
         }
