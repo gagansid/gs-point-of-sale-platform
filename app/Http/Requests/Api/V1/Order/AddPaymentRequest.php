@@ -26,6 +26,9 @@ final class AddPaymentRequest extends FormRequest
             'payments.*.amount' => ['required', ...$money],
             'payments.*.tendered' => ['nullable', ...$money],
             'payments.*.reference' => ['nullable', 'string', 'max:50'],
+            // Bukti pemilik saat membayar dengan poin (ADR 0013)
+            'member_code' => ['nullable', 'string', 'digits:6'],
+            'member_pin' => ['nullable', 'string', 'digits:4'],
         ];
     }
 }

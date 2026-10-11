@@ -31,6 +31,9 @@ final readonly class CheckoutData
         public ?ApprovalData $approval,
         // Member yang dipasang (ADR 0013); null = tanpa member
         public ?string $memberId = null,
+        // Bukti pemilik saat membayar dengan poin (ADR 0013): kode QR halaman member atau PIN member
+        public ?string $memberCode = null,
+        public ?string $memberPin = null,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -49,6 +52,8 @@ final readonly class CheckoutData
             payments: self::parsePayments($data['payments'] ?? []),
             approval: self::parseApproval($data),
             memberId: filled($data['member_id'] ?? null) ? (string) $data['member_id'] : null,
+            memberCode: filled($data['member_code'] ?? null) ? (string) $data['member_code'] : null,
+            memberPin: filled($data['member_pin'] ?? null) ? (string) $data['member_pin'] : null,
         );
     }
 

@@ -97,6 +97,8 @@ final class PaymentMethodResource extends Resource
     public static function table(Table $table): Table
     {
         $table = $table
+            // Metode sistem (Poin) diatur fiturnya sendiri: Pengaturan → Program member (ADR 0013)
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('category', '!=', PaymentCategory::Points))
             ->reorderable('sort_order')
             ->reorderRecordsTriggerAction(fn (Action $action, bool $isReordering): Action => $action
                 ->tooltip($isReordering ? 'Selesai mengatur urutan' : 'Atur urutan tampil di kasir'))

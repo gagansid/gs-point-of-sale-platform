@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Member\RedeemPoints;
+use App\Actions\Member\ResolveMemberPricing;
 use App\Actions\Member\ResolveOrderMember;
 use App\Actions\Order\Data\CheckoutData;
 use App\Actions\Tenant\EnsureOwnerEmailVerified;
@@ -62,9 +64,12 @@ final class CheckoutOrder
 
         $member = app(ResolveOrderMember::class)->handle($data->memberId);
         $lines = $this->resolveLines->handle($data->items, $outlet);
-        $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval);
+        $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval,
+            app(ResolveMemberPricing::class)->handle($member, $outlet));
         $totals = $priced['totals'];
         $payments = $this->allocatePayments->handle($data->payments, $totals->grandTotal, $outlet->id);
+        // Bayar dengan poin: bukti pemilik diverifikasi di luar transaksi (percobaan PIN salah tetap tercatat)
+        app(RedeemPoints::class)->check($payments, $member?->id, $outlet->id, $data->memberCode, $data->memberPin);
 
         $paid = Money::add(...array_column($payments, 'amount'));
         if (Money::compare($paid, $totals->grandTotal) < 0) {
@@ -102,6 +107,7 @@ final class CheckoutOrder
 
                 $this->writer->replaceItems($order, $lines, $totals);
                 $this->writer->addPayments($order, $payments, $actor);
+                app(RedeemPoints::class)->handle($order, $payments);
                 $this->writer->complete($order, $shift, $actor);
 
                 return $order;

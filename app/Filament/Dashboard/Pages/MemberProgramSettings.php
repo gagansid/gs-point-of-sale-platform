@@ -64,7 +64,7 @@ final class MemberProgramSettings extends Page
         $setting = MemberSetting::current();
 
         $this->settingsForm()->fill([
-            ...$setting->only(['earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months']),
+            ...$setting->only(['earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months', 'member_discount_percent']),
             'enabled' => $setting->enabled,
             'outlet_ids' => Outlet::query()->whereNotIn('id', $excluded)->pluck('id')->all(),
         ]);
@@ -104,6 +104,14 @@ final class MemberProgramSettings extends Page
                         TextInput::make('min_redeem_points')->label('Minimal tukar')->numeric()->required()->rules($rules['min_redeem_points'])->suffix('poin'),
                         TextInput::make('max_redeem_percent')->label('Maksimal per transaksi')->numeric()->required()->rules($rules['max_redeem_percent'])
                             ->suffix('% tagihan'),
+                    ]),
+
+                Section::make('Diskon member')
+                    ->description('Otomatis untuk setiap transaksi ber-member di outlet yang ikut program, setelah diskon kasir; tidak dihitung ke batas diskon kasir')
+                    ->visible(fn (Get $get): bool => (bool) $get('enabled'))
+                    ->schema([
+                        TextInput::make('member_discount_percent')->label('Diskon')->numeric()->required()->rules($rules['member_discount_percent'])
+                            ->suffix('%')->helperText('0 = tanpa diskon member'),
                     ]),
             ]);
     }

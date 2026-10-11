@@ -14,7 +14,7 @@ use App\Support\Money;
  * Urutan (docs/SPEC.md → Aturan bisnis → Urutan perhitungan total):
  *   1. Harga item   = (harga produk + total opsi) × qty − diskon item
  *   2. Subtotal     = Σ harga item
- *   3. Dasar        = subtotal − diskon order
+ *   3. Dasar        = subtotal − gratis stempel − diskon order − voucher − diskon member/tier (ADR 0013, Q63)
  *   4. Service      = dasar × tarif service
  *   5. Pajak        = (dasar + service) × tarif pajak   (inclusive: diekstrak dari dasar + service)
  *   6. Pembulatan   = ke kelipatan Rp {rounding} terdekat (half-up)
@@ -35,7 +35,9 @@ final class OrderCalculator
         string $taxRate,
         bool $taxInclusive,
         int $rounding,
+        ?MemberPricing $member = null,
     ): CalculationResult {
+        $member ??= MemberPricing::none();
         $resultLines = [];
         $gross = '0.00';
         $itemDiscounts = '0.00';
@@ -53,14 +55,22 @@ final class OrderCalculator
             $subtotal = Money::add($subtotal, $lineTotal);
         }
 
-        $orderDiscount = match ($discountType) {
-            null => '0.00',
-            DiscountType::Fixed => Money::of($discountValue),
-            DiscountType::Percent => Money::percentOf($subtotal, Money::min(Money::of($discountValue), '100.00')),
-        };
-        $orderDiscount = Money::min(Money::max($orderDiscount, '0.00'), $subtotal);
+        // Gratis stempel: nominal item gratis (server), sebelum diskon manual
+        $stampDiscount = Money::min(Money::max($member->stampFree, '0.00'), $subtotal);
+        $afterStamp = Money::sub($subtotal, $stampDiscount);
 
-        $base = Money::sub($subtotal, $orderDiscount);
+        $orderDiscount = self::discount($discountType, $discountValue, $afterStamp);
+        $afterManual = Money::sub($afterStamp, $orderDiscount);
+
+        $voucherDiscount = self::discount($member->voucherType, $member->voucherValue, $afterManual);
+        if ($member->voucherMax !== null && $member->voucherType === DiscountType::Percent) {
+            $voucherDiscount = Money::min($voucherDiscount, Money::max($member->voucherMax, '0.00'));
+        }
+        $afterVoucher = Money::sub($afterManual, $voucherDiscount);
+
+        $memberDiscount = self::discount(Money::isPositive($member->memberPercent) ? DiscountType::Percent : null, $member->memberPercent, $afterVoucher);
+
+        $base = Money::sub($afterVoucher, $memberDiscount);
         $service = Money::percentOf($base, $serviceRate);
         $beforeTax = Money::add($base, $service);
 
@@ -79,11 +89,27 @@ final class OrderCalculator
             grossTotal: $gross,
             subtotal: $subtotal,
             orderDiscount: $orderDiscount,
-            discountTotal: Money::add($itemDiscounts, $orderDiscount),
+            discountTotal: Money::add($itemDiscounts, $stampDiscount, $orderDiscount, $voucherDiscount, $memberDiscount),
             serviceTotal: $service,
             taxTotal: $tax,
             rounding: Money::sub($grandTotal, $beforeRounding),
             grandTotal: $grandTotal,
+            manualDiscount: Money::add($itemDiscounts, $orderDiscount),
+            stampDiscount: $stampDiscount,
+            voucherDiscount: $voucherDiscount,
+            memberDiscount: $memberDiscount,
         );
+    }
+
+    /** Potongan nominal/persen dari $amount, tidak minus dan tidak melebihi $amount. */
+    private static function discount(?DiscountType $type, string $value, string $amount): string
+    {
+        $discount = match ($type) {
+            null => '0.00',
+            DiscountType::Fixed => Money::of($value),
+            DiscountType::Percent => Money::percentOf($amount, Money::min(Money::of($value), '100.00')),
+        };
+
+        return Money::min(Money::max($discount, '0.00'), $amount);
     }
 }

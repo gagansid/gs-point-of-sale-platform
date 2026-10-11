@@ -13,6 +13,8 @@ enum PaymentCategory: string implements HasLabel
     case Transfer = 'transfer';
     case Debit = 'debit';
     case Credit = 'credit';
+    // Kategori sistem (tidak dibuat untuk setiap bisnis): poin member (ADR 0013)
+    case Points = 'points';
 
     public function getLabel(): string
     {
@@ -22,7 +24,24 @@ enum PaymentCategory: string implements HasLabel
             self::Transfer => 'Transfer',
             self::Debit => 'Debit',
             self::Credit => 'Kredit',
+            self::Points => 'Poin',
         };
+    }
+
+    /**
+     * Metode bawaan setiap bisnis baru (SPEC: 5 metode). Kategori sistem dibuat oleh fiturnya sendiri.
+     *
+     * @return list<self>
+     */
+    public static function defaults(): array
+    {
+        return [self::Cash, self::Qris, self::Transfer, self::Debit, self::Credit];
+    }
+
+    /** Dibuat & diatur oleh fitur (mis. program member), bukan metode bayar biasa. */
+    public function isSystem(): bool
+    {
+        return $this === self::Points;
     }
 
     /** Debit & kredit wajib approval code EDC (SPEC Pembayaran). */

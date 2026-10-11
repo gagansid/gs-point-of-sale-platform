@@ -29,6 +29,9 @@ enum ErrorCode: string
     case ValidationError = 'VALIDATION_ERROR';
     case MemberNotFound = 'MEMBER_NOT_FOUND';
     case MemberProgramDisabled = 'MEMBER_PROGRAM_DISABLED';
+    case InsufficientPoints = 'INSUFFICIENT_POINTS';
+    case InvalidMemberProof = 'INVALID_MEMBER_PROOF';
+    case MemberPinLocked = 'MEMBER_PIN_LOCKED';
     case PaymentExceedsBalance = 'PAYMENT_EXCEEDS_BALANCE';
     case DiscountOverLimit = 'DISCOUNT_OVER_LIMIT';
     case PinLocked = 'PIN_LOCKED';
@@ -47,8 +50,9 @@ enum ErrorCode: string
             self::ApprovalRequired, self::SelfApprovalNotAllowed => 403,
             self::NotFound, self::MemberNotFound => 404,
             self::ShiftNotOpen, self::OrderAlreadyClosed, self::LastOwnerRequired, self::OutletLimitReached => 409,
-            self::ValidationError, self::PaymentExceedsBalance, self::DiscountOverLimit, self::MemberProgramDisabled => 422,
-            self::PinLocked => 423,
+            self::ValidationError, self::PaymentExceedsBalance, self::DiscountOverLimit, self::MemberProgramDisabled,
+            self::InsufficientPoints, self::InvalidMemberProof => 422,
+            self::PinLocked, self::MemberPinLocked => 423,
             self::AppUpdateRequired => 426,
             self::TooManyRequests => 429,
             self::ServerError => 500,
@@ -72,6 +76,9 @@ enum ErrorCode: string
             self::NotFound => 'Data tidak ditemukan',
             self::MemberNotFound => 'Member tidak ditemukan atau tidak aktif',
             self::MemberProgramDisabled => 'Program member tidak aktif di outlet ini',
+            self::InsufficientPoints => 'Poin member tidak cukup',
+            self::InvalidMemberProof => 'PIN atau kode QR member salah atau kedaluwarsa',
+            self::MemberPinLocked => 'PIN member terkunci sementara karena terlalu banyak percobaan',
             self::ShiftNotOpen => 'Shift belum dibuka',
             self::OrderAlreadyClosed => 'Transaksi sudah selesai atau dibatalkan',
             self::LastOwnerRequired => 'Bisnis wajib memiliki minimal satu owner aktif',

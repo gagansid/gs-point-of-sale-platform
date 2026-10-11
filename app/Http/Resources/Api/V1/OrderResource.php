@@ -33,6 +33,8 @@ final class OrderResource extends JsonResource
             'subtotal' => $this->subtotal,
             'order_discount' => $this->order_discount,
             'discount_total' => $this->discount_total,
+            'member_discount' => $this->member_discount,
+            'points_redeemed' => $this->points_redeemed,
             'service_total' => $this->service_total,
             'tax_total' => $this->tax_total,
             'rounding' => $this->rounding,

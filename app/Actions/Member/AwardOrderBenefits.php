@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Actions\Member;
 
+use App\Enums\PaymentCategory;
+use App\Enums\PaymentStatus;
 use App\Enums\PointEntryType;
 use App\Models\MemberSetting;
 use App\Models\Order;
@@ -56,10 +58,17 @@ final class AwardOrderBenefits
         $order->forceFill(['points_earned' => $points])->save();
     }
 
-    /** Dasar poin: subtotal (setelah diskon item) − diskon order; tanpa service, pajak, pembulatan. */
+    /**
+     * Dasar poin: subtotal (setelah diskon item) − semua diskon order (manual, member, voucher, stempel), tanpa
+     * service, pajak, pembulatan; bagian yang dibayar dengan poin tidak menghasilkan poin.
+     */
     public static function earnBase(Order $order): string
     {
-        return Money::max(Money::sub($order->subtotal, $order->order_discount), '0.00');
+        $itemDiscounts = $order->items()->sum('discount');
+        $orderLevel = Money::sub($order->discount_total, Money::fromDb($itemDiscounts));
+        $paidWithPoints = Money::fromDb($order->payments()->where('category', PaymentCategory::Points)->where('status', PaymentStatus::Paid)->sum('amount'));
+
+        return Money::max(Money::sub(Money::sub($order->subtotal, $orderLevel), $paidWithPoints), '0.00');
     }
 
     public static function pointsFor(string $base, MemberSetting $settings): int

@@ -31,6 +31,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $birth_month
  * @property string|null $notes
  * @property int $points_balance
+ * @property int $pin_failed_attempts
+ * @property CarbonImmutable|null $pin_locked_until
  * @property string $total_spent
  * @property int $visit_count
  * @property CarbonImmutable|null $last_visit_at

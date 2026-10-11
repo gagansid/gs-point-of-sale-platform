@@ -58,8 +58,11 @@
 
     <div class="gs-nota-section gs-nota-totals">
         <div class="gs-nota-row"><span>Subtotal</span><span>{{ $rp($order->subtotal) }}</span></div>
-        @if (Money::isPositive($order->discount_total))
-            <div class="gs-nota-row"><span>Diskon</span><span>-{{ $rp($order->discount_total) }}</span></div>
+        @if (Money::isPositive(Money::sub($order->discount_total, $order->member_discount)))
+            <div class="gs-nota-row"><span>Diskon</span><span>-{{ $rp(Money::sub($order->discount_total, $order->member_discount)) }}</span></div>
+        @endif
+        @if (Money::isPositive($order->member_discount))
+            <div class="gs-nota-row"><span>Diskon member</span><span>-{{ $rp($order->member_discount) }}</span></div>
         @endif
         @if (Money::isPositive($order->service_total))
             <div class="gs-nota-row"><span>Service {{ $rate($order->service_rate) }}%</span><span>{{ $rp($order->service_total) }}</span></div>

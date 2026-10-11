@@ -22,15 +22,21 @@ final readonly class CalculationResult
         public string $taxTotal,
         public string $rounding,
         public string $grandTotal,
+        // Diskon manual (item + order) — dasar batas diskon role (Q18)
+        public string $manualDiscount = '0.00',
+        // Potongan program member (ADR 0013): tidak dihitung ke batas diskon role
+        public string $stampDiscount = '0.00',
+        public string $voucherDiscount = '0.00',
+        public string $memberDiscount = '0.00',
     ) {}
 
-    /** Persen total diskon terhadap harga kotor (untuk batas diskon per role). */
+    /** Persen diskon MANUAL (item + order) terhadap harga kotor, untuk batas diskon per role. */
     public function discountPercent(): string
     {
         if (bccomp($this->grossTotal, '0', 2) <= 0) {
             return '0.00';
         }
 
-        return bcdiv(bcmul($this->discountTotal, '100', 6), $this->grossTotal, 2);
+        return bcdiv(bcmul($this->manualDiscount, '100', 6), $this->grossTotal, 2);
     }
 }

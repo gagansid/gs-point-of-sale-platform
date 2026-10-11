@@ -198,8 +198,11 @@
         @if ($totals)
             <dl class="pos-totals">
                 <dt>Subtotal</dt><dd>{{ $money($totals->grossTotal) }}</dd>
-                @if (\App\Support\Money::isPositive($totals->discountTotal))
-                    <dt>Diskon</dt><dd>−{{ $money($totals->discountTotal) }}</dd>
+                @if (\App\Support\Money::isPositive($totals->manualDiscount))
+                    <dt>Diskon</dt><dd>−{{ $money($totals->manualDiscount) }}</dd>
+                @endif
+                @if (\App\Support\Money::isPositive($totals->memberDiscount))
+                    <dt>Diskon member</dt><dd>−{{ $money($totals->memberDiscount) }}</dd>
                 @endif
                 @if (\App\Support\Money::isPositive($totals->serviceTotal))
                     <dt>Service</dt><dd>{{ $money($totals->serviceTotal) }}</dd>
@@ -299,7 +302,7 @@
                     @php($isCash = $this->isCash($payment['payment_method_id']))
                     <div class="pos-pay-row" wire:key="pay-{{ $payment['id'] }}">
                         <div class="pos-methods" role="radiogroup" aria-label="Metode bayar">
-                            @foreach ($catalog['payment_methods'] as $method)
+                            @foreach ($this->paymentMethods as $method)
                                 @php($active = $payment['payment_method_id'] === $method->id)
                                 <button type="button" role="radio" aria-checked="{{ $active ? 'true' : 'false' }}" @class(['pos-method', 'is-active' => $active])
                                     wire:click="setMethod({{ (int) $i }}, '{{ $method->id }}')">
@@ -341,6 +344,14 @@
                     {{ \App\Support\Money::isPositive($remaining) ? 'Sisa '.$money($remaining) : 'Lunas' }}
                 </p>
 
+                {{-- Bayar dengan poin (ADR 0013): bukti pemilik dari halaman member atau PIN member --}}
+                @if ($this->usesPoints())
+                    <div class="pos-member-proof">
+                        <p>Saldo {{ number_format((int) $this->memberPoints, 0, ',', '.') }} poin. Minta pelanggan menunjukkan kode QR halaman member atau memasukkan PIN member.</p>
+                        <label>Kode QR (6 digit) <input type="text" inputmode="numeric" maxlength="6" wire:model="memberCode" autocomplete="off"></label>
+                        <label>atau PIN member <input type="password" inputmode="numeric" maxlength="4" wire:model="memberPin" autocomplete="off"></label>
+                    </div>
+                @endif
                 @if ($payError)
                     <p class="site-error" role="alert">{{ $payError }}</p>
                 @endif

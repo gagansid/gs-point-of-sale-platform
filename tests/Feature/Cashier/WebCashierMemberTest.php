@@ -2,11 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Actions\Member\AdjustMemberPoints;
+use App\Actions\Member\SetMemberPin;
 use App\Actions\Member\UpdateMemberProgram;
+use App\Enums\PaymentCategory;
 use App\Livewire\Cashier\PointOfSale;
 use App\Models\Member;
 use App\Models\Order;
+use App\Models\PaymentMethod;
 use App\Models\Shift;
+use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
 use App\Support\WebCashier;
@@ -122,4 +127,28 @@ it('nama kembar: hasil dibedakan kode & 4 digit HP; Enter meminta memilih', func
         ->assertSet('memberId', null)
         ->assertSet('memberError', 'Pilih member dari daftar')
         ->assertSee($twin->code)->assertSee($this->member->code);
+});
+
+it('metode Poin hanya muncul bila member terpasang; bayar poin dengan PIN member', function () {
+    $owner = User::factory()->owner()->create();
+    app(AdjustMemberPoints::class)->handle($this->member, 300, 'Saldo awal', $owner);
+    app(SetMemberPin::class)->handle($this->member, '4821');
+    $points = PaymentMethod::query()->where('category', PaymentCategory::Points)->sole();
+
+    $page = Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id);
+    expect($page->instance()->paymentMethods->pluck('id'))->not->toContain($points->id);
+
+    $page->call('selectMember', $this->member->id);
+    expect($page->instance()->paymentMethods->pluck('id'))->toContain($points->id);
+
+    $page->call('openPayment')
+        ->call('setMethod', 0, $points->id)->set('payments.0.amount', '10000')
+        ->call('addPaymentRow')->set('payments.1.tendered', '20000')
+        ->assertSee('Kode QR (6 digit)')
+        ->set('memberPin', '4821')
+        ->call('pay')
+        ->assertSet('memberPin', '');
+
+    expect(Order::query()->sole()->points_redeemed)->toBe(100)
+        ->and($this->member->refresh()->points_balance)->toBe(300 - 100 + Order::query()->sole()->points_earned);
 });

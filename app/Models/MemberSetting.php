@@ -23,23 +23,24 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $min_redeem_points
  * @property int $max_redeem_percent
  * @property int $expiry_months 0 = tidak kedaluwarsa
+ * @property string $member_discount_percent diskon member % (Q63)
  */
 final class MemberSetting extends Model
 {
     use BelongsToTenant, HasUuids, LogsChanges, RecordsAuthor;
 
-    protected $fillable = ['enabled', 'earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months'];
+    protected $fillable = ['enabled', 'earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months', 'member_discount_percent'];
 
     /** Bawaan sama dengan kolom DB (model baru sebelum disimpan) */
     protected $attributes = [
         'enabled' => false, 'earn_amount' => '10000.00', 'earn_points' => 1, 'redeem_value' => '100.00',
-        'min_redeem_points' => 50, 'max_redeem_percent' => 50, 'expiry_months' => 12,
+        'min_redeem_points' => 50, 'max_redeem_percent' => 50, 'expiry_months' => 12, 'member_discount_percent' => '0.00',
     ];
 
     /** Kolom yang dicatat di audit log (Q58). */
     public static function auditAttributes(): array
     {
-        return ['enabled', 'earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months'];
+        return ['enabled', 'earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months', 'member_discount_percent'];
     }
 
     protected function casts(): array
@@ -52,6 +53,7 @@ final class MemberSetting extends Model
             'min_redeem_points' => 'integer',
             'max_redeem_percent' => 'integer',
             'expiry_months' => 'integer',
+            'member_discount_percent' => 'decimal:2',
         ];
     }
 

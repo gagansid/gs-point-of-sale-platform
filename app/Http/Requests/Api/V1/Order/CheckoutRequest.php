@@ -31,6 +31,9 @@ final class CheckoutRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:255'],
             // Member (ADR 0013); keberadaan & status dicek Action → MEMBER_NOT_FOUND
             'member_id' => ['nullable', 'uuid'],
+            // Bukti pemilik saat membayar dengan poin (kode QR halaman member / PIN member)
+            'member_code' => ['nullable', 'string', 'digits:6'],
+            'member_pin' => ['nullable', 'string', 'digits:4'],
 
             'discount' => ['nullable', 'array'],
             'discount.type' => ['required_with:discount', Rule::enum(DiscountType::class)],

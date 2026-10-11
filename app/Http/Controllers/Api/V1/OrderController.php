@@ -90,6 +90,8 @@ final class OrderController extends Controller
             ApiActor::userDevice($request),
             $order,
             CheckoutData::parsePayments($request->validated('payments')),
+            $request->validated('member_code'),
+            $request->validated('member_pin'),
         );
 
         return ApiResponse::success(

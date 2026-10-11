@@ -86,8 +86,12 @@
 
         <div class="rule"></div>
         <div class="row"><span>Subtotal</span><span>{{ $rp($t['subtotal']) }}</span></div>
-        @if (Money::isPositive($t['discount_total']))
-            <div class="row"><span>Diskon</span><span>-{{ $rp($t['discount_total']) }}</span></div>
+        @php($memberDiscount = $t['member_discount'] ?? '0.00')
+        @if (Money::isPositive(Money::sub($t['discount_total'], $memberDiscount)))
+            <div class="row"><span>Diskon</span><span>-{{ $rp(Money::sub($t['discount_total'], $memberDiscount)) }}</span></div>
+        @endif
+        @if (Money::isPositive($memberDiscount))
+            <div class="row"><span>Diskon member</span><span>-{{ $rp($memberDiscount) }}</span></div>
         @endif
         @if (Money::isPositive($t['service_total']))
             <div class="row"><span>Service {{ $rate($t['service_rate']) }}%</span><span>{{ $rp($t['service_total']) }}</span></div>

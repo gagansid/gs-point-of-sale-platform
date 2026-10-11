@@ -90,4 +90,19 @@ Saldo + 50 mutasi poin terbaru (`earn`, `redeem`, `void_reversal`, `adjust`, `ex
 - Void order selesai: poin ditarik (saldo boleh minus bila sudah terpakai).
 - Outlet dikecualikan: kunjungan tercatat, tanpa poin.
 
-Penukaran poin (metode bayar Poin), diskon member, tier, stempel, dan voucher menyusul (ADR 0013, M3–M7).
+## Tukar poin & diskon member (M3, SPEC Q62–Q63)
+
+- Program aktif membuat metode bayar sistem **Poin** (`category: points`) — ikut `/catalog`; tampilkan hanya
+  bila ada member terpasang. Program dimatikan → metode nonaktif.
+- Bayar dengan poin di `POST /checkout` / `POST /orders/{id}/payments`: pembayaran `payment_method_id` = Poin,
+  `amount` kelipatan nilai poin (bawaan Rp100 = 1 poin), plus bukti pemilik **`member_code`** (6 digit, kode QR
+  halaman member, berlaku ±2 menit, sekali pakai) **atau `member_pin`** (4 digit).
+- Ditolak: tanpa member → `422 VALIDATION_ERROR` (`member_id`); tanpa/salah bukti → `422 INVALID_MEMBER_PROOF`;
+  PIN salah 5× → `423 MEMBER_PIN_LOCKED` (15 menit); saldo kurang, di bawah minimal, di atas maksimal persen
+  tagihan, atau bukan kelipatan → `422 INSUFFICIENT_POINTS`.
+- Pajak dihitung dari harga penuh; pembayaran Poin tidak masuk kas laci, tanpa kembalian. Bagian yang dibayar poin
+  tidak menghasilkan poin. Void → poin dikembalikan. Order: `points_redeemed`.
+- **Diskon member** (% di Program member) otomatis untuk order ber-member di outlet yang ikut program, setelah diskon
+  kasir, **tidak** dihitung ke batas diskon kasir. Order/struk: `member_discount` (bagian dari `discount_total`).
+
+Tier, stempel, dan voucher menyusul (ADR 0013, M5–M7).

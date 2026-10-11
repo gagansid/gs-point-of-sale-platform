@@ -37,6 +37,7 @@ final class OrderWriter
     {
         $order->forceFill([
             'order_discount' => $totals->orderDiscount,
+            'member_discount' => $totals->memberDiscount,
             'subtotal' => $totals->subtotal,
             'discount_total' => $totals->discountTotal,
             'service_total' => $totals->serviceTotal,

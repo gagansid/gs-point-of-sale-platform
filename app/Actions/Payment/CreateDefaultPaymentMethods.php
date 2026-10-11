@@ -17,7 +17,7 @@ final class CreateDefaultPaymentMethods
     public function handle(): void
     {
         DB::transaction(function (): void {
-            foreach (PaymentCategory::cases() as $order => $category) {
+            foreach (PaymentCategory::defaults() as $order => $category) {
                 PaymentMethod::query()->firstOrCreate(['category' => $category], [
                     'name' => $category->getLabel(),
                     'requires_reference' => $category->requiresReferenceByDefault(),

@@ -9,6 +9,7 @@ use App\Enums\DiscountType;
 use App\Exceptions\BusinessException;
 use App\Models\Outlet;
 use App\Services\Order\CalculationResult;
+use App\Services\Order\MemberPricing;
 
 /**
  * Pratinjau total keranjang kasir web (Q54) tanpa menyimpan apa pun: harga dari katalog outlet dan
@@ -26,10 +27,10 @@ final class QuoteOrder
      *
      * @throws BusinessException produk/opsi tidak valid atau total melebihi batas
      */
-    public function handle(Outlet $outlet, array $items, ?DiscountType $discountType, string $discountValue): CalculationResult
+    public function handle(Outlet $outlet, array $items, ?DiscountType $discountType, string $discountValue, ?MemberPricing $member = null): CalculationResult
     {
         $lines = $this->resolveLines->handle(CheckoutData::parseItems($items), $outlet);
 
-        return $this->priceOrder->totals($outlet, $lines, $discountType, $discountValue);
+        return $this->priceOrder->totals($outlet, $lines, $discountType, $discountValue, $member);
     }
 }

@@ -6,6 +6,7 @@ namespace App\Actions\Member;
 
 use App\Enums\PointEntryType;
 use App\Models\MemberPointEntry;
+use App\Models\MemberSetting;
 use App\Models\Order;
 use App\Services\Member\PointLedger;
 use App\Support\Money;
@@ -32,7 +33,7 @@ final class ReverseOrderBenefits
         ])->save();
 
         $earned = MemberPointEntry::query()->where('order_id', $order->id)->where('type', PointEntryType::Earn)->first();
-        $reversed = MemberPointEntry::query()->where('order_id', $order->id)->where('type', PointEntryType::VoidReversal)->exists();
+        $reversed = MemberPointEntry::query()->where('order_id', $order->id)->where('type', PointEntryType::VoidReversal)->where('points', '<', 0)->exists();
 
         if ($earned !== null && ! $reversed) {
             $this->ledger->debit($member, $earned->points, PointEntryType::VoidReversal, [
@@ -40,6 +41,19 @@ final class ReverseOrderBenefits
                 'order_id' => $order->id,
                 'reason' => 'Order di-void',
             ], $earned->id);
+        }
+
+        // Poin yang ditukar di order ini dikembalikan (kredit baru, ikut masa berlaku)
+        $redeemed = (int) -MemberPointEntry::query()->where('order_id', $order->id)->where('type', PointEntryType::Redeem)->sum('points');
+        $refunded = MemberPointEntry::query()->where('order_id', $order->id)->where('type', PointEntryType::VoidReversal)->where('points', '>', 0)->exists();
+
+        if ($redeemed > 0 && ! $refunded) {
+            $months = MemberSetting::current()->expiry_months;
+            $this->ledger->credit($member, $redeemed, PointEntryType::VoidReversal, [
+                'outlet_id' => $order->outlet_id,
+                'order_id' => $order->id,
+                'reason' => 'Poin dikembalikan (void)',
+            ], $months > 0 ? now()->toImmutable()->addMonths($months) : null);
         }
     }
 }

@@ -9,6 +9,7 @@ use App\Actions\Member\AnonymizeMember;
 use App\Actions\Member\Data\MemberData;
 use App\Actions\Member\SaveMember;
 use App\Actions\Member\SetMemberActive;
+use App\Actions\Member\SetMemberPin;
 use App\Filament\Dashboard\Resources\Members\Pages\ManageMembers;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
@@ -169,6 +170,19 @@ final class MemberResource extends Resource
                             abort_unless($user instanceof User, 403);
                             self::orNotify(fn () => app(AdjustMemberPoints::class)->handle($record, (int) $data['points'], (string) $data['reason'], $user), $action);
                             Notification::make()->success()->title('Poin disesuaikan')->send();
+                        }),
+                    Action::make('setPin')->label('Atur PIN member')->icon(Heroicon::OutlinedKey)
+                        ->visible(fn (Member $record): bool => self::canEdit($record))
+                        ->modalHeading(fn (Member $record): string => 'PIN member · '.$record->name)
+                        ->modalDescription('Dipakai saat menukar poin bila pelanggan tidak bisa menunjukkan kode QR halaman member. Minta pelanggan sendiri yang mengetik PIN')
+                        ->schema([
+                            TextInput::make('pin')->label('PIN baru')->password()->revealable()->required()->length(4)
+                                ->extraInputAttributes(['inputmode' => 'numeric', 'autocomplete' => 'off']),
+                        ])
+                        ->action(function (Member $record, array $data, Action $action): void {
+                            abort_unless(self::canEdit($record), 403);
+                            self::orNotify(fn () => app(SetMemberPin::class)->handle($record, (string) $data['pin']), $action);
+                            Notification::make()->success()->title('PIN member disimpan')->send();
                         }),
                     ...ActiveStatusActions::make(Member::class, function (Member $member, bool $active): void {
                         app(SetMemberActive::class)->handle($member, $active);

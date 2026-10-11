@@ -6,6 +6,7 @@ namespace App\Livewire\Cashier;
 
 use App\Actions\Catalog\GetCatalog;
 use App\Actions\Member\Data\MemberData;
+use App\Actions\Member\ResolveMemberPricing;
 use App\Actions\Member\SaveMember;
 use App\Actions\Order\AddPayment;
 use App\Actions\Order\CheckoutOrder;
@@ -28,6 +29,7 @@ use App\Models\MemberSetting;
 use App\Models\OptionGroup;
 use App\Models\Order;
 use App\Models\Outlet;
+use App\Models\OutletMemberProgram;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\User;
@@ -52,6 +54,7 @@ use Livewire\Component;
  * Keranjang di state Livewire hanya berisi ID & teks tampilan; harga & total selalu dihitung ulang
  * server (QuoteOrder untuk pratinjau, CheckoutOrder saat bayar) — nilai dari browser diabaikan.
  *
+ * @property-read Collection<int, PaymentMethod> $paymentMethods
  * @property-read array{categories: Collection<int, Category>, products: Collection<int, Product>, option_groups: Collection<int, OptionGroup>, payment_methods: Collection<int, PaymentMethod>} $catalog
  * @property-read Collection<int, Product> $visibleProducts
  * @property-read array{totals: CalculationResult|null, error: string|null} $quote
@@ -150,6 +153,11 @@ final class PointOfSale extends Component
 
     public ?string $memberError = null;
 
+    // Bukti pemilik saat membayar dengan poin (ADR 0013); tidak disimpan setelah request
+    public string $memberCode = '';
+
+    public string $memberPin = '';
+
     #[Locked]
     public ?string $completedOrderId = null;
 
@@ -196,7 +204,11 @@ final class PointOfSale extends Component
         }
 
         try {
-            return ['totals' => app(QuoteOrder::class)->handle($this->outlet(), $this->checkoutItems(), $this->orderDiscountType(), $this->orderDiscountValue()), 'error' => null];
+            // Diskon member ikut pratinjau; ID dari browser dicari ulang dalam tenant aktif
+            $member = $this->memberId !== null ? Member::query()->find($this->memberId) : null;
+
+            return ['totals' => app(QuoteOrder::class)->handle($this->outlet(), $this->checkoutItems(), $this->orderDiscountType(), $this->orderDiscountValue(),
+                app(ResolveMemberPricing::class)->handle($member, $this->outlet())), 'error' => null];
         } catch (BusinessException $e) {
             return ['totals' => null, 'error' => self::describe($e)];
         }
@@ -457,7 +469,7 @@ final class PointOfSale extends Component
     public function addPaymentRow(): void
     {
         $remaining = $this->remaining();
-        $method = $this->catalog['payment_methods']->first();
+        $method = $this->paymentMethods->first(fn (PaymentMethod $m): bool => $m->category !== PaymentCategory::Points);
 
         if ($method !== null && count($this->payments) < 10) {
             $this->payments[] = self::paymentRow($method->id, Money::isPositive($remaining) ? $remaining : '0.00');
@@ -473,7 +485,7 @@ final class PointOfSale extends Component
     /** Pilih metode bayar lewat kartu; hanya metode aktif di outlet ini. */
     public function setMethod(int $index, string $methodId): void
     {
-        if (isset($this->payments[$index]) && $this->catalog['payment_methods']->contains('id', $methodId)) {
+        if (isset($this->payments[$index]) && $this->paymentMethods->contains('id', $methodId)) {
             $this->payments[$index]['payment_method_id'] = $methodId;
         }
     }
@@ -514,7 +526,8 @@ final class PointOfSale extends Component
             ], $this->payments),
         ];
 
-        $data = [...$data, ...$this->approvalInput()];
+        $data = [...$data, ...$this->approvalInput(), ...$this->memberProofInput()];
+        $this->memberPin = '';
         // PIN hanya dipakai di request ini; tidak boleh tertinggal di snapshot Livewire (terlihat di DOM)
         $this->approverPin = '';
 
@@ -558,6 +571,30 @@ final class PointOfSale extends Component
     public function memberProgramEnabled(): bool
     {
         return $this->user()->can('member.view') && MemberSetting::current()->enabled;
+    }
+
+    /**
+     * Metode bayar yang bisa dipilih: "Poin" hanya bila member terpasang & program aktif di outlet ini.
+     *
+     * @return Collection<int, PaymentMethod>
+     */
+    #[Computed]
+    public function paymentMethods(): Collection
+    {
+        $points = $this->memberId !== null && OutletMemberProgram::activeAt($this->outlet()->id);
+
+        return $this->catalog['payment_methods']->filter(fn (PaymentMethod $m): bool => $m->category !== PaymentCategory::Points || $points)->values();
+    }
+
+    public function usesPoints(): bool
+    {
+        foreach ($this->payments as $payment) {
+            if ($this->paymentMethods->firstWhere('id', $payment['payment_method_id'])?->category === PaymentCategory::Points) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Saldo poin member terpasang (dibaca ulang tiap render: bisa berubah dari kasir lain). */
@@ -913,7 +950,7 @@ final class PointOfSale extends Component
     private function resetOrder(): void
     {
         $this->reset('cart', 'orderType', 'tableLabel', 'notes', 'discountType', 'discountValue', 'paying', 'payments', 'payError',
-            'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'holdLabel',
+            'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'holdLabel', 'memberCode', 'memberPin',
             'memberId', 'memberName', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
         $this->orderId = (string) Str::uuid7();
         // Total yang sudah dihitung di request ini (mis. saat menahan) jangan ikut ter-render
@@ -933,6 +970,19 @@ final class PointOfSale extends Component
             'items' => $this->checkoutItems(),
             ...$this->approvalInput(),
         ];
+    }
+
+    /** @return array{member_code?: string, member_pin?: string} */
+    private function memberProofInput(): array
+    {
+        if (! $this->usesPoints()) {
+            return [];
+        }
+
+        return array_filter([
+            'member_code' => preg_match('/^\d{6}$/', trim($this->memberCode)) === 1 ? trim($this->memberCode) : null,
+            'member_pin' => preg_match('/^\d{4}$/', trim($this->memberPin)) === 1 ? trim($this->memberPin) : null,
+        ]);
     }
 
     /** @return array{approver_user_id?: string, approver_pin?: string} */
@@ -955,7 +1005,8 @@ final class PointOfSale extends Component
         $device = WebCashier::device();
         $order = app(SaveOpenBill::class)->handle($this->user(), $device, $this->orderId, OpenBillData::fromArray($this->billInput()))['order'];
 
-        return app(AddPayment::class)->handle($this->user(), $device, $order, CheckoutData::parsePayments($data['payments']))['order'];
+        return app(AddPayment::class)->handle($this->user(), $device, $order, CheckoutData::parsePayments($data['payments']),
+            $data['member_code'] ?? null, $data['member_pin'] ?? null)['order'];
     }
 
     /** Pesan error; minta PIN approver bila server mensyaratkan approval. PIN tidak disimpan di state. */

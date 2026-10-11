@@ -64,6 +64,8 @@ final class ReceiptResource extends JsonResource
             'totals' => [
                 'subtotal' => $this->subtotal,
                 'discount_total' => $this->discount_total,
+                // Bagian discount_total dari diskon member (ADR 0013)
+                'member_discount' => $this->member_discount,
                 'service_rate' => $this->service_rate,
                 'service_total' => $this->service_total,
                 'tax_rate' => $this->tax_rate,

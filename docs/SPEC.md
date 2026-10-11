@@ -243,14 +243,14 @@ tabel master memakai soft delete.
 | Produk | `product_option_groups` | product_id, option_group_id, sort_order |
 | Transaksi | `shifts` | tenant_id, outlet_id, device_id, opened_by, closed_by, opening_cash, expected_cash, actual_cash, difference, status, close_note, open_device_key (unik: 1 shift terbuka per device), opened_at, closed_at |
 | Transaksi | `order_sequences` | outlet_id, date, last_number (penomoran order harian) |
-| Transaksi | `orders` | tenant_id, outlet_id, shift_id, device_id, user_id, member_id, member_name (snapshot, ADR 0013), order_number, order_type, table_label, status, notes, discount_type, discount_value, order_discount, subtotal, discount_total (item + order), service_total, tax_total, rounding, grand_total, paid_total, change_total, service_rate, tax_rate, tax_inclusive (setelan saat transaksi), void_reason, voided_by, void_approved_by, voided_at, approved_by (approver diskon), completed_at |
+| Transaksi | `orders` | tenant_id, outlet_id, shift_id, device_id, user_id, member_id, member_name (snapshot, ADR 0013), points_earned, points_redeemed, member_discount, order_number, order_type, table_label, status, notes, discount_type, discount_value, order_discount, subtotal, discount_total (item + order), service_total, tax_total, rounding, grand_total, paid_total, change_total, service_rate, tax_rate, tax_inclusive (setelan saat transaksi), void_reason, voided_by, void_approved_by, voided_at, approved_by (approver diskon), completed_at |
 | Transaksi | `order_items` | order_id, product_id, product_name, category_name, unit_price, unit_cost, options_total, qty, discount, line_total, notes |
 | Transaksi | `order_item_options` | order_item_id, option_id, option_name, price_delta |
-| Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |
+| Pembayaran | `payment_methods` | tenant_id, name, category (cash/qris/transfer/debit/credit; sistem: points — ADR 0013), requires_reference, is_active, sort_order — 5 metode bawaan dibuat untuk setiap tenant baru |
 | Pembayaran | `outlet_payment_method` | tenant_id, outlet_id, payment_method_id (unik per outlet), is_active — metode bayar per outlet (Q44) |
 | Produk | `stock_movements` | tenant_id, outlet_id, product_id, user_id, type (adjustment/sale/void_return), qty_change, qty_after, reason, reference_id — riwayat stok (Q14) |
 | Member | `members` | tenant_id, code (6 karakter acak, unik per tenant), name, phone (+62…, unik per tenant), email, birth_day, birth_month, notes, password & pin (M3–M4), tier_id, points_balance, spend_12m, total_spent, visit_count, last_visit_at, joined_outlet_id, consent_at, is_active, anonymized_at (ADR 0013) |
-| Member | `member_settings` | tenant_id (unik), enabled, earn_amount, earn_points, redeem_value, min_redeem_points, max_redeem_percent, expiry_months (Q62) |
+| Member | `member_settings` | tenant_id (unik), enabled, earn_amount, earn_points, redeem_value, min_redeem_points, max_redeem_percent, expiry_months, member_discount_percent (Q62–Q63) |
 | Member | `member_point_ledger` | tenant_id, member_id, outlet_id, order_id, payment_id, type (earn/redeem/void_reversal/adjust/expire), points (+/−), remaining (FIFO), balance_after, expires_at, reason, user_id — append-only (Q62) |
 | Member | `outlet_member_program` | tenant_id, outlet_id (unik), is_enabled — tanpa baris = outlet ikut program |
 | Pembayaran | `payments` | tenant_id, order_id, payment_method_id, user_id, category, amount (dipakai membayar), tendered (uang diterima), change, reference (approval code), status |
@@ -442,9 +442,12 @@ berdasarkan `error.code`, bukan teks `message`. Detail & contoh:
 | 409 | `OUTLET_LIMIT_REACHED` | Menambah/mengaktifkan outlet melebihi `tenants.max_outlets` (Q36) |
 | 422 | `VALIDATION_ERROR` | Input tidak valid (detail per field di `error.details`) |
 | 422 | `MEMBER_PROGRAM_DISABLED` | Program member nonaktif di bisnis atau outlet dikecualikan (ADR 0013) |
+| 422 | `INSUFFICIENT_POINTS` | Poin ditukar melebihi saldo, di bawah minimal, atau di atas maksimal persen tagihan (ADR 0013) |
+| 422 | `INVALID_MEMBER_PROOF` | Penukaran poin tanpa/dengan PIN member atau kode QR yang salah/kedaluwarsa |
 | 422 | `PAYMENT_EXCEEDS_BALANCE` | Non-tunai melebihi sisa tagihan |
 | 422 | `DISCOUNT_OVER_LIMIT` | Diskon melebihi batas role tanpa approval |
 | 423 | `PIN_LOCKED` | PIN dikunci 15 menit: 5 kali salah dari satu sumber (login / approval, per perangkat) atau 15 kali salah dari semua perangkat (`error.details.retry_after` detik) |
+| 423 | `MEMBER_PIN_LOCKED` | PIN member dikunci 15 menit setelah 5 kali salah (`error.details.retry_after` detik) |
 | 426 | `APP_UPDATE_REQUIRED` | Versi app di bawah `min_version` |
 | 429 | `TOO_MANY_REQUESTS` | Rate limit terlampaui |
 | 500 | `SERVER_ERROR` | Error tak terduga (detail hanya di log) |

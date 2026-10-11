@@ -14,6 +14,7 @@ use App\Models\Outlet;
 use App\Models\User;
 use App\Services\Order\CalculationResult;
 use App\Services\Order\CalculatorLine;
+use App\Services\Order\MemberPricing;
 use App\Services\Order\OrderCalculator;
 use App\Support\Money;
 
@@ -32,9 +33,9 @@ final class PriceOrder
      * @param  list<ResolvedLine>  $lines
      * @return array{totals: CalculationResult, approved_by: string|null}
      */
-    public function handle(User $actor, Outlet $outlet, array $lines, ?DiscountType $discountType, string $discountValue, ?ApprovalData $approval): array
+    public function handle(User $actor, Outlet $outlet, array $lines, ?DiscountType $discountType, string $discountValue, ?ApprovalData $approval, ?MemberPricing $member = null): array
     {
-        $totals = $this->totals($outlet, $lines, $discountType, $discountValue);
+        $totals = $this->totals($outlet, $lines, $discountType, $discountValue, $member);
 
         return ['totals' => $totals, 'approved_by' => $this->checkDiscountLimit($actor, $outlet, $totals, $approval)];
     }
@@ -46,7 +47,7 @@ final class PriceOrder
      *
      * @throws BusinessException
      */
-    public function totals(Outlet $outlet, array $lines, ?DiscountType $discountType, string $discountValue): CalculationResult
+    public function totals(Outlet $outlet, array $lines, ?DiscountType $discountType, string $discountValue, ?MemberPricing $member = null): CalculationResult
     {
         $totals = $this->calculator->calculate(
             array_map(fn (ResolvedLine $l): CalculatorLine => new CalculatorLine($l->product->price, $l->optionsTotal, $l->qty, $l->discount), $lines),
@@ -56,6 +57,7 @@ final class PriceOrder
             $outlet->tax_rate,
             $outlet->tax_inclusive,
             $outlet->rounding,
+            $member,
         );
 
         self::ensureFitsStorage($totals);
@@ -72,7 +74,7 @@ final class PriceOrder
      */
     private function checkDiscountLimit(User $actor, Outlet $outlet, CalculationResult $totals, ?ApprovalData $approval): ?string
     {
-        if (! Money::isPositive($totals->discountTotal)) {
+        if (! Money::isPositive($totals->manualDiscount)) {
             return null;
         }
 

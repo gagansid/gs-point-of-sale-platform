@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Member\ResolveMemberPricing;
 use App\Actions\Member\ResolveOrderMember;
 use App\Actions\Order\Data\OpenBillData;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
 use App\Exceptions\BusinessException;
 use App\Models\Device;
+use App\Models\Member;
 use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\User;
@@ -51,8 +53,11 @@ final class SaveOpenBill
         $outlet = Outlet::query()->findOrFail($existing->outlet_id ?? $shift->outlet_id);
 
         $member = $data->memberProvided ? app(ResolveOrderMember::class)->handle($data->memberId) : null;
+        // Member yang berlaku untuk harga: baru (dikirim) atau yang sudah terpasang di open bill
+        $pricingMember = $data->memberProvided ? $member : ($existing?->member_id !== null ? Member::query()->find($existing->member_id) : null);
         $lines = $this->resolveLines->handle($data->items, $outlet);
-        $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval);
+        $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval,
+            app(ResolveMemberPricing::class)->handle($pricingMember, $outlet));
         $totals = $priced['totals'];
 
         try {

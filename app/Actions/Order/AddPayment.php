@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Member\RedeemPoints;
 use App\Actions\Tenant\EnsureOwnerEmailVerified;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentCategory;
 use App\Exceptions\BusinessException;
 use App\Models\Device;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\User;
 use App\Support\Money;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +36,7 @@ final class AddPayment
      *
      * @throws BusinessException
      */
-    public function handle(User $actor, Device $device, Order $order, array $payments): array
+    public function handle(User $actor, Device $device, Order $order, array $payments, ?string $memberCode = null, ?string $memberPin = null): array
     {
         // Route binding hanya membatasi ke outlet yang dipegang user; pembayaran wajib di outlet perangkat
         CheckoutOrder::ensureAtOutlet($order, $device->outlet_id);
@@ -60,6 +63,13 @@ final class AddPayment
 
         $shift = CheckoutOrder::openShiftOf($device);
 
+        // Bayar dengan poin (ADR 0013): bukti pemilik diverifikasi di luar transaksi
+        $categories = PaymentMethod::query()->whereIn('id', array_column($payments, 'payment_method_id'))->pluck('category', 'id');
+        app(RedeemPoints::class)->check(
+            array_map(fn (array $p): array => ['category' => $categories[$p['payment_method_id']] ?? PaymentCategory::Cash, 'amount' => $p['amount']], $payments),
+            $order->member_id, $order->outlet_id, $memberCode, $memberPin,
+        );
+
         $order = DB::transaction(function () use ($actor, $shift, $order, $payments): Order {
             // Kunci order: dua pembayaran bersamaan tidak bisa melebihi sisa tagihan
             $locked = Order::query()->lockForUpdate()->findOrFail($order->id);
@@ -80,6 +90,7 @@ final class AddPayment
             $allocated = $this->allocatePayments->handle($payments, $remaining, $locked->outlet_id);
 
             $this->writer->addPayments($locked, $allocated, $actor);
+            app(RedeemPoints::class)->handle($locked, $allocated);
 
             if (Money::compare($locked->paid_total, $locked->grand_total) >= 0) {
                 $this->writer->complete($locked, $shift, $actor);
