@@ -42,7 +42,8 @@ final class SaveOpenBill
      */
     public function handle(User $actor, Device $device, string $orderId, OpenBillData $data): array
     {
-        $existing = Idempotency::existing(Order::class, $orderId);
+        // Open bill outlet lain (mis. owner/manager multi-outlet di perangkat outlet B) → 404 (GSPOS-SEC-011)
+        $existing = Idempotency::existing(Order::class, $orderId, fn (Order $order): bool => $order->outlet_id === $device->outlet_id);
         self::ensureOpen($existing);
 
         $shift = CheckoutOrder::openShiftOf($device);

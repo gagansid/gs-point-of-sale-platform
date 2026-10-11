@@ -35,6 +35,9 @@ final class AddPayment
      */
     public function handle(User $actor, Device $device, Order $order, array $payments): array
     {
+        // Route binding hanya membatasi ke outlet yang dipegang user; pembayaran wajib di outlet perangkat
+        CheckoutOrder::ensureAtOutlet($order, $device->outlet_id);
+
         $ids = array_column($payments, 'id');
         $existingOnOrder = Payment::query()->where('order_id', $order->id)->whereIn('id', $ids)->count();
 

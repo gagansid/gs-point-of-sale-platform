@@ -81,3 +81,13 @@ it('regresi: replay order sendiri tetap 200 idempotent_replay', function () {
         ->assertJsonPath('data.id', $id)
         ->assertJsonPath('meta.idempotent_replay', true);
 });
+
+it('regresi: antrean offline dikirim ulang dari perangkat yang sama oleh kasir lain tetap 200', function () {
+    $id = uuid();
+    sec001Checkout($this, $this->pos->token, $id)->assertCreated();
+
+    // Kasir A2 login di perangkat kasir-1 (shift dibuka kasir A), lalu antrean lama terkirim ulang
+    sec001Checkout($this, userToken($this->cashierA2, $this->pos->device), $id)
+        ->assertOk()
+        ->assertJsonPath('meta.idempotent_replay', true);
+});

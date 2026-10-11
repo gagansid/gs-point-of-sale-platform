@@ -59,3 +59,44 @@ it('owner di perangkat outlet B tidak bisa mengubah open bill outlet A', functio
     assertApiError($response, 'NOT_FOUND', 404);
     expect(Order::allTenants()->findOrFail($this->billId)->items()->sole()->qty)->toBe(1);
 });
+
+it('owner di perangkat outlet B tidak bisa void order outlet A', function () {
+    freshAuth();
+    $orderA = $this->withToken($this->pos->token)->postJson('/api/v1/checkout', [
+        'id' => uuid(), 'order_type' => 'takeaway',
+        'items' => [['product_id' => $this->pos->croissant->id, 'qty' => 1]],
+        'payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['cash']->id, 'amount' => 100000]],
+    ], apiHeaders())->assertCreated()->json('data.id');
+
+    freshAuth();
+    assertApiError(
+        $this->withToken(userToken($this->owner, $this->deviceB))->postJson("/api/v1/orders/{$orderA}/void", ['reason' => 'x'], apiHeaders()),
+        'NOT_FOUND',
+        404,
+    );
+    expect(Order::allTenants()->findOrFail($orderA)->status->value)->toBe('completed');
+});
+
+it('regresi: owner di perangkat outlet A tetap bisa melunasi open bill outlet A', function () {
+    freshAuth();
+    $this->withToken(userToken($this->owner, $this->pos->device))
+        ->postJson("/api/v1/orders/{$this->billId}/payments", [
+            'payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['cash']->id, 'amount' => 100000]],
+        ], apiHeaders())
+        ->assertCreated()
+        ->assertJsonPath('data.status', 'completed');
+});
+
+it('regresi: owner tanpa perangkat (aplikasi owner) tetap bisa void order outlet mana pun yang dipegang', function () {
+    freshAuth();
+    $orderA = $this->withToken($this->pos->token)->postJson('/api/v1/checkout', [
+        'id' => uuid(), 'order_type' => 'takeaway',
+        'items' => [['product_id' => $this->pos->croissant->id, 'qty' => 1]],
+        'payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['cash']->id, 'amount' => 100000]],
+    ], apiHeaders())->assertCreated()->json('data.id');
+
+    freshAuth();
+    $this->withToken(userToken($this->owner))->postJson("/api/v1/orders/{$orderA}/void", ['reason' => 'x'], apiHeaders())
+        ->assertOk()
+        ->assertJsonPath('data.status', 'voided');
+});

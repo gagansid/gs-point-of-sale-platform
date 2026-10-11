@@ -17,8 +17,10 @@ use App\Models\User;
 use App\Services\Order\OrderNumberGenerator;
 use App\Support\Idempotency;
 use App\Support\Money;
+use Closure;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Buat order + bayar sekaligus (POST /checkout, alur takeaway/retail).
@@ -45,7 +47,7 @@ final class CheckoutOrder
      */
     public function handle(User $actor, Device $device, CheckoutData $data): array
     {
-        if (($existing = Idempotency::existing(Order::class, $data->id)) !== null) {
+        if (($existing = Idempotency::existing(Order::class, $data->id, self::replayableBy($actor, $device))) !== null) {
             return ['order' => self::load($existing), 'replayed' => true];
         }
 
@@ -101,10 +103,41 @@ final class CheckoutOrder
             });
         } catch (UniqueConstraintViolationException) {
             // Request kembar lolos pengecekan awal bersamaan; primary key menjadi penjaga terakhir
-            return ['order' => self::load(Order::query()->findOrFail($data->id)), 'replayed' => true];
+            $existing = Idempotency::existing(Order::class, $data->id, self::replayableBy($actor, $device))
+                ?? throw BusinessException::of(ErrorCode::NotFound);
+
+            return ['order' => self::load($existing), 'replayed' => true];
         }
 
         return ['order' => self::load($order), 'replayed' => false];
+    }
+
+    /**
+     * Kiriman ulang checkout hanya mengembalikan order di outlet perangkat yang dibuat pelaku, dibuat
+     * dari perangkat yang sama (antrean offline dikirim ulang setelah ganti kasir), atau memang boleh
+     * dilihat pelaku. Selain itu 404 tanpa data (GSPOS-SEC-001).
+     *
+     * @return Closure(Order): bool
+     */
+    private static function replayableBy(User $actor, Device $device): Closure
+    {
+        return fn (Order $order): bool => $order->outlet_id === $device->outlet_id
+            && ($order->user_id === $actor->id
+                || $order->device_id === $device->id
+                || Gate::forUser($actor)->allows('view', $order));
+    }
+
+    /**
+     * Order hanya boleh diubah/dibayar dari perangkat di outlet order tersebut. User yang memegang
+     * beberapa outlet tetap terikat outlet perangkat yang sedang dipakai (ADR 0010, GSPOS-SEC-011).
+     *
+     * @throws BusinessException
+     */
+    public static function ensureAtOutlet(Order $order, string $outletId): void
+    {
+        if ($order->outlet_id !== $outletId) {
+            throw BusinessException::of(ErrorCode::NotFound);
+        }
     }
 
     /** @throws BusinessException */

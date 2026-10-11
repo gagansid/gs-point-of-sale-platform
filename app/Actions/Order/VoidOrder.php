@@ -14,6 +14,7 @@ use App\Exceptions\BusinessException;
 use App\Models\Order;
 use App\Models\Shift;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -38,6 +39,12 @@ final class VoidOrder
      */
     public function handle(User $actor, Order $order, string $reason, ?ApprovalData $approval): array
     {
+        // Token terikat perangkat: hanya order outlet perangkat (GSPOS-SEC-011). Tanpa perangkat (aplikasi
+        // owner) / dashboard: sudah dibatasi OutletScope + pilihan outlet.
+        if (($outletId = CurrentOutlet::selectedId()) !== null) {
+            CheckoutOrder::ensureAtOutlet($order, $outletId);
+        }
+
         if ($order->status === OrderStatus::Voided) {
             return ['order' => CheckoutOrder::load($order), 'replayed' => true];
         }
