@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\Cashier\ConfirmController as CashierConfirmController;
 use App\Http\Controllers\Web\Cashier\HomeController as CashierHomeController;
 use App\Http\Controllers\Web\Cashier\LoginController as CashierLoginController;
 use App\Http\Controllers\Web\Cashier\OrderController as CashierOrderController;
@@ -98,6 +99,9 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
     Route::get('login', [CashierLoginController::class, 'create'])->name('login');
     Route::post('login', [CashierLoginController::class, 'store'])->name('login.store');
     Route::post('logout', [CashierLoginController::class, 'destroy'])->name('logout');
+    // Menu Kasir di dashboard (Q55): masuk ulang dengan kata sandi atau PIN
+    Route::get('confirm', [CashierConfirmController::class, 'create'])->name('confirm');
+    Route::post('confirm', [CashierConfirmController::class, 'store'])->name('confirm.store');
 
     Route::middleware(SetCashierContext::class.':outlet')->group(function (): void {
         Route::get('outlet', [CashierOutletController::class, 'index'])->name('outlet');

@@ -34,7 +34,21 @@ final class LoginWebCashier
             throw ValidationException::withMessages(['login' => self::INVALID]);
         }
 
-        // Pesan khusus hanya setelah kata sandi benar: tidak membuka informasi akun
+        $this->ensureCanEnter($user);
+
+        $user->forceFill(['last_login_at' => now()])->saveQuietly();
+
+        return $user;
+    }
+
+    /**
+     * Syarat masuk kasir web setelah identitas terbukti. Pesan khusus hanya setelah kata sandi/PIN benar:
+     * tidak membuka informasi akun.
+     *
+     * @throws ValidationException
+     */
+    public function ensureCanEnter(User $user): void
+    {
         if (! $user->canUseWebCashier()) {
             throw ValidationException::withMessages(['login' => 'Akun Anda belum diberi akses kasir web. Hubungi owner.']);
         }
@@ -46,10 +60,6 @@ final class LoginWebCashier
         if ($user->accessibleOutlets()->where('is_active', true)->doesntExist()) {
             throw ValidationException::withMessages(['login' => 'Anda belum ditugaskan di outlet aktif. Hubungi owner.']);
         }
-
-        $user->forceFill(['last_login_at' => now()])->saveQuietly();
-
-        return $user;
     }
 
     private function find(?string $business, string $login): ?User

@@ -22,9 +22,11 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Enums\Width;
+use Filament\Support\Icons\Heroicon;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -64,6 +66,19 @@ final class DashboardPanelProvider extends PanelProvider
                 NavigationGroup::make('Katalog')->collapsible(false),
                 NavigationGroup::make('Laporan')->collapsible(false),
                 NavigationGroup::make('Pengaturan')->collapsible(false),
+            ])
+            // Menu Kasir (Q55): tab baru ke kasir web, masuk ulang dengan kata sandi atau PIN
+            ->navigationItems([
+                NavigationItem::make('Kasir')
+                    ->icon(Heroicon::OutlinedComputerDesktop)
+                    ->group('Transaksi')
+                    ->sort(0)
+                    ->url(fn (): string => route('cashier.confirm'), shouldOpenInNewTab: true)
+                    ->visible(function (): bool {
+                        $user = Filament::auth()->user();
+
+                        return $user instanceof User && $user->canUseWebCashier();
+                    }),
             ])
             ->discoverResources(in: app_path('Filament/Dashboard/Resources'), for: 'App\Filament\Dashboard\Resources')
             ->discoverPages(in: app_path('Filament/Dashboard/Pages'), for: 'App\Filament\Dashboard\Pages')
