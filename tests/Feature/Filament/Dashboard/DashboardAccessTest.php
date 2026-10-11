@@ -49,3 +49,19 @@ it('tenant ditangguhkan: dikeluarkan dan diarahkan ke login', function () {
     $this->actingAs($owner)->get('/dashboard/products')->assertRedirect('/dashboard/login');
     $this->assertGuest();
 });
+
+it('supervisor dengan email belum terverifikasi tidak bisa membuka dashboard (R4)', function () {
+    $supervisor = User::factory()->supervisor()->unverified()->create();
+
+    $this->actingAs($supervisor)->get('/dashboard/reports')->assertForbidden();
+
+    $supervisor->forceFill(['email_verified_at' => now()])->save();
+    $this->actingAs($supervisor->fresh())->get('/dashboard/reports')->assertOk();
+});
+
+it('owner & manager belum terverifikasi tetap bisa membuka dashboard (Q31)', function (string $role) {
+    $outlet = Outlet::factory()->create(['tenant_id' => Tenant::factory()->create()->id]);
+    $user = User::factory()->{$role}()->unverified()->forOutlet($outlet)->create();
+
+    $this->actingAs($user)->get('/dashboard')->assertOk();
+})->with(['owner', 'manager']);

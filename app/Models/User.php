@@ -103,7 +103,22 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
+        return $this->canAccessPanelIgnoringVerification($panel) && ! $this->needsVerifiedEmailForDashboard();
+    }
+
+    /** Syarat akses panel selain verifikasi email (untuk membedakan pesan login). */
+    public function canAccessPanelIgnoringVerification(Panel $panel): bool
+    {
         return $panel->getId() === 'dashboard' && $this->is_active && $this->role->canAccessDashboard();
+    }
+
+    /**
+     * Pengguna dashboard terbatas (tanpa report.view, mis. supervisor) wajib email terverifikasi (Q46).
+     * Owner/manager tidak diblokir: owner baru daftar mandiri harus tetap bisa masuk (Q31).
+     */
+    public function needsVerifiedEmailForDashboard(): bool
+    {
+        return ! $this->role->hasFullDashboard() && ! $this->hasVerifiedEmail();
     }
 
     public function isPinLocked(): bool

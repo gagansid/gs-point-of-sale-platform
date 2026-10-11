@@ -163,3 +163,18 @@ it('tiket ditolak bila akun dinonaktifkan atau tenant ditangguhkan sebelum dituk
         ->assertRedirect('http://gspos.localhost/login?expired=1');
     $this->assertGuest('web');
 })->with(['akun nonaktif', 'tenant ditangguhkan']);
+
+it('supervisor dengan email belum terverifikasi ditolak dengan pesan verifikasi (R4)', function () {
+    User::factory()->supervisor()->unverified()->create(['email' => 'spv@kopi.test', 'password' => 'rahasia-123']);
+
+    $this->post('http://gspos.localhost/login', ['email' => 'spv@kopi.test', 'password' => 'rahasia-123'])
+        ->assertSessionHasErrors(['email' => 'Email Anda belum diverifikasi. Buka link verifikasi di email, atau minta owner mengirim ulang.']);
+    $this->assertGuest('web');
+});
+
+it('supervisor belum terverifikasi + kata sandi salah tetap mendapat pesan umum', function () {
+    User::factory()->supervisor()->unverified()->create(['email' => 'spv@kopi.test', 'password' => 'rahasia-123']);
+
+    $this->post('http://gspos.localhost/login', ['email' => 'spv@kopi.test', 'password' => 'salah-123'])
+        ->assertSessionHasErrors(['email' => 'Email atau kata sandi salah.']);
+});

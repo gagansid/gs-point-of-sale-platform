@@ -60,7 +60,7 @@ final class DashboardLoginController extends Controller
         // Akun tanpa akses dashboard (kasir/supervisor/nonaktif) diperlakukan sama dengan kata sandi salah:
         // pesan sama dan tetap terhitung throttle, agar form ini tidak jadi alat menebak kata sandi
         // kasir web (GSPOS-SEC-005)
-        if ($user === null || ! $passwordValid || ! $user->canAccessPanel(Filament::getPanel('dashboard'))) {
+        if ($user === null || ! $passwordValid || ! $user->canAccessPanelIgnoringVerification(Filament::getPanel('dashboard'))) {
             RateLimiter::hit($throttleKey, 60);
 
             // Pesan umum: tidak membedakan email tidak terdaftar, kata sandi salah, dan akun tanpa akses
@@ -68,6 +68,11 @@ final class DashboardLoginController extends Controller
         }
 
         RateLimiter::clear($throttleKey);
+
+        // Pesan khusus hanya setelah kata sandi benar, jadi tidak membuka informasi akun
+        if ($user->needsVerifiedEmailForDashboard()) {
+            throw ValidationException::withMessages(['email' => 'Email Anda belum diverifikasi. Buka link verifikasi di email, atau minta owner mengirim ulang.']);
+        }
 
         if (! $user->tenant->isActive()) {
             throw ValidationException::withMessages(['email' => 'Langganan bisnis Anda tidak aktif. Hubungi tim gs.POS.']);
