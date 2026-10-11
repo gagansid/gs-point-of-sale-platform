@@ -77,6 +77,8 @@ return [
     'rate_limits' => [
         'auth' => 5,
         'api' => 120,
+        // Export laporan (Excel/PDF) per user per menit (R3)
+        'export' => 10,
     ],
 
 ];

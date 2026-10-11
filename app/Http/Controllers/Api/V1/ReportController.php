@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Report\ReportRequest;
 use App\Models\Shift;
@@ -13,6 +14,7 @@ use App\Services\Report\ShiftRecap;
 use App\Support\ApiActor;
 use App\Support\ApiResponse;
 use App\Support\CurrentOutlet;
+use App\Support\ExportThrottle;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -247,6 +249,10 @@ final class ReportController extends Controller
 
         if (! ShiftRecap::canView($user, $shift)) {
             throw new AuthorizationException;
+        }
+
+        if (($wait = ExportThrottle::attempt($user)) !== null) {
+            throw new BusinessException('TOO_MANY_REQUESTS', ExportThrottle::message($wait), 429);
         }
 
         return $exporter->shiftPdf($user, $shift, $recap);

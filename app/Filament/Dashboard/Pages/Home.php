@@ -21,7 +21,9 @@ use App\Models\Outlet;
 use App\Models\User;
 use App\Services\Report\ReportService;
 use App\Support\CurrentOutlet;
+use App\Support\ExportThrottle;
 use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Schemas\Components\Component;
@@ -177,7 +179,16 @@ final class Home extends Dashboard
                 ->label('Export Excel')
                 ->icon(Heroicon::OutlinedArrowDownTray)
                 ->visible(fn (): bool => self::canViewReports() && (self::user()?->can('report.export') ?? false))
-                ->action(function (): BinaryFileResponse {
+                ->action(function (): ?BinaryFileResponse {
+                    $user = self::user();
+                    abort_unless($user?->can('report.export') ?? false, 403);
+
+                    if (($wait = ExportThrottle::attempt($user)) !== null) {
+                        Notification::make()->danger()->title(ExportThrottle::message($wait))->send();
+
+                        return null;
+                    }
+
                     $context = $this->reportContext();
                     [$start, $end] = $context->range();
                     $period = $context->period;

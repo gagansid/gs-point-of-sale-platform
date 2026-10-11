@@ -113,4 +113,5 @@ Menu **Laporan → Export** (permission `report.export`: owner, manager, supervi
 - Beranda tetap punya **Export Excel** ringkas (Ringkasan, Harian, Per Produk, Per Metode Bayar).
 
 API: `GET /reports/shifts/{id}/pdf` — PDF rekap shift (X/Z-report), izin sama dengan `shifts/{id}`
-(pemilik shift termasuk kasir). Respons `application/pdf`.
+(pemilik shift termasuk kasir). Respons `application/pdf`. Maks. 10 export/menit per user
+(bersama export dashboard) → 429 `TOO_MANY_REQUESTS`.

@@ -33,6 +33,7 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Services\Report\ReportExporter;
 use App\Support\CurrentOutlet;
+use App\Support\ExportThrottle;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -240,6 +241,12 @@ final class Reports extends Page
             ->action(function () use ($format, $lengkap): ?Response {
                 $user = self::user();
                 abort_unless($user?->can('report.export') ?? false, 403);
+
+                if (($wait = ExportThrottle::attempt($user)) !== null) {
+                    Notification::make()->danger()->title(ExportThrottle::message($wait))->send();
+
+                    return null;
+                }
 
                 try {
                     $exporter = app(ReportExporter::class);

@@ -14,9 +14,11 @@ use App\Models\User;
 use App\Services\Report\ReportContext;
 use App\Services\Report\ReportExporter;
 use App\Support\CurrentOutlet;
+use App\Support\ExportThrottle;
 use App\Support\TenantContext;
 use Filament\Facades\Filament;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\Response;
@@ -150,4 +152,34 @@ it('API: PDF rekap shift untuk kasir pemilik shift; orang lain 403', function ()
     $response->assertOk();
     expect($response->headers->get('content-type'))->toBe('application/pdf')
         ->and(substr($response->streamedContent(), 0, 4))->toBe('%PDF');
+});
+
+it('export dibatasi 10 kali per menit per user (R3)', function () {
+    Excel::fake();
+    config(['pos.rate_limits.export' => 2]);
+
+    $page = Livewire::test(Reports::class);
+    $page->callAction('excel_full');
+    $page->callAction('excel_tab');
+    $page->callAction('excel_full')->assertNotified();
+
+    // Hanya dua file yang benar-benar dibuat
+    Excel::assertDownloaded('laporan-lengkap-2026-10-01-2026-10-10.xlsx');
+    expect(RateLimiter::attempts('export:'.$this->owner->id))->toBe(2);
+
+    // User lain punya kuota sendiri
+    $other = User::factory()->owner()->create(['tenant_id' => $this->pos->tenantId]);
+    expect(ExportThrottle::attempt($other))->toBeNull();
+
+    Carbon::setTestNow(now()->addSeconds(61));
+    expect(ExportThrottle::attempt($this->owner))->toBeNull();
+});
+
+it('API PDF shift ikut batas export: 429 TOO_MANY_REQUESTS (R3)', function () {
+    config(['pos.rate_limits.export' => 1]);
+    $url = "/api/v1/reports/shifts/{$this->pos->shift->id}/pdf";
+    $token = userToken($this->pos->cashier);
+
+    $this->withToken($token)->get($url, apiHeaders())->assertOk();
+    $this->withToken($token)->getJson($url, apiHeaders())->assertStatus(429)->assertJsonPath('error.code', 'TOO_MANY_REQUESTS');
 });
