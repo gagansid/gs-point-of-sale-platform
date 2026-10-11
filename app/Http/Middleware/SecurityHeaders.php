@@ -36,7 +36,7 @@ final class SecurityHeaders
             $headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
-        if (self::isApi($request)) {
+        if (Domains::isApiRequest($request)) {
             // API hanya mengembalikan JSON: larang semua pemuatan sumber daya
             $headers->set('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'");
 
@@ -48,13 +48,5 @@ final class SecurityHeaders
         }
 
         return $response;
-    }
-
-    /** /api/* (satu domain) atau seluruh api.gspos.id (ADR 0008). */
-    private static function isApi(Request $request): bool
-    {
-        $apiDomain = Domains::api();
-
-        return $request->is('api/*') || ($apiDomain !== null && $request->getHost() === $apiDomain);
     }
 }

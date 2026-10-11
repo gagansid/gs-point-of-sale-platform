@@ -6,6 +6,7 @@ namespace App\Exceptions;
 
 use App\Enums\ErrorCode;
 use App\Support\ApiResponse;
+use App\Support\Domains;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -32,7 +33,8 @@ final class ApiExceptionRenderer
 {
     public function __invoke(Throwable $e, Request $request): ?JsonResponse
     {
-        if (! $request->is('api/*')) {
+        // Termasuk api.gspos.id/v1 (mode subdomain): path tidak berawalan "api/" (GSPOS-SEC-009)
+        if (! Domains::isApiRequest($request)) {
             return null;
         }
 

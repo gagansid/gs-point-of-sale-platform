@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use Illuminate\Http\Request;
+
 /**
  * Subdomain per bagian aplikasi (ADR 0008):
  *
@@ -49,6 +51,17 @@ final class Domains
     public static function api(): ?string
     {
         return self::enabled() ? (string) config('pos.domains.api') : null;
+    }
+
+    /**
+     * Request ke REST API: /api/* (satu domain) atau seluruh api.gspos.id (subdomain).
+     * Satu-satunya sumber kebenaran untuk renderer error & header keamanan API.
+     */
+    public static function isApiRequest(Request $request): bool
+    {
+        $apiDomain = self::api();
+
+        return $request->is('api/*') || ($apiDomain !== null && $request->getHost() === $apiDomain);
     }
 
     /**
