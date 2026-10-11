@@ -26,6 +26,7 @@ use Filament\Pages\Dashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\EmbeddedSchema;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
@@ -91,8 +92,8 @@ final class Home extends Dashboard
     /** @return array<class-string> */
     public function getWidgets(): array
     {
+        // SetupChecklistWidget dirender terpisah di atas filter (content())
         return [
-            SetupChecklistWidget::class,
             SalesStatsWidget::class,
             RevenueChartWidget::class,
             TopProductsWidget::class,
@@ -109,6 +110,19 @@ final class Home extends Dashboard
     public function getColumns(): array
     {
         return ['default' => 1, 'lg' => 2];
+    }
+
+    /** Checklist "Mulai berjualan" paling atas (di atas filter), lalu filter, lalu widget laporan. */
+    public function content(Schema $schema): Schema
+    {
+        return $schema->components([
+            Grid::make(1)
+                ->columnSpanFull()
+                ->visible(fn (): bool => SetupChecklistWidget::canView())
+                ->schema(fn (): array => $this->getWidgetsSchemaComponents([SetupChecklistWidget::class])),
+            $this->getFiltersFormContentComponent(),
+            $this->getWidgetsContentComponent(),
+        ]);
     }
 
     /** Filter & grid widget selebar halaman (grid konten halaman ikut getColumns()). */

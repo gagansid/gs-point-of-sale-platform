@@ -1566,11 +1566,32 @@
     background-color: var(--bg-surface-secondary);
 }
 
-/* Pemisah prefix/suffix ("Rp") senada dengan garis field */
+/* Input group tanpa garis pemisah: ikon/label ("Rp") menyatu dengan field, warna muted */
 .fi-input-wrp .fi-input-wrp-prefix:not(.fi-inline),
 .fi-input-wrp .fi-input-wrp-suffix:not(.fi-inline) {
-    border-color: var(--border-color-light);
+    border-width: 0;
     color: var(--text-muted);
+}
+
+.fi-input-wrp .fi-input-wrp-prefix:not(.fi-inline) {
+    padding-inline-end: 0.25rem;
+}
+
+.fi-input-wrp .fi-input-wrp-suffix:not(.fi-inline) {
+    padding-inline-start: 0.25rem;
+}
+
+/* DatePicker setinggi kontrol lain (bawaan trigger lebih tinggi 4px); tombol ikon di suffix tidak menambah tinggi */
+.fi-fo-date-time-picker-trigger {
+    height: calc(var(--control-h) - 2px);
+    padding-block: 0;
+    font-size: var(--control-font);
+    line-height: 18px;
+}
+
+.fi-input-wrp .fi-input-wrp-actions .fi-icon-btn.fi-size-sm {
+    height: 1.5rem;
+    width: 1.5rem;
 }
 
 .fi-input,

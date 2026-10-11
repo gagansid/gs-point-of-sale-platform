@@ -370,9 +370,11 @@ td.pos-dash-table__share span.tabular-nums {
 
 /* ---------- Tata letak rapat Beranda & Laporan (Pages\Concerns\InteractsWithReportFilters) ---------- */
 
+/* Jarak seragam 1rem: antarblok halaman, antarwidget (baris & kolom), antarkartu KPI */
 .pos-report-page .fi-page-content > .fi-sc,
-.pos-report-page .fi-page-content > .fi-sc > .fi-grid-col > .fi-sc {
-    row-gap: 1rem;
+.pos-report-page .fi-page-content .fi-sc:has(> .fi-grid-col > .fi-wi-widget),
+.pos-report-page .fi-page-content .fi-grid:has(> .fi-wi-widget) {
+    gap: 1rem;
 }
 
 /* Toolbar filter: label kecil, jarak antar field rapat */
@@ -421,26 +423,10 @@ td.pos-dash-table__share span.tabular-nums {
 
 .pos-report-page .fi-wi-stats-overview > .fi-section-content-ctn,
 .pos-report-page .fi-wi-stats-overview .fi-grid {
-    gap: 0.75rem;
+    gap: 1rem;
 }
 
 /* Bar tab laporan lebih tipis */
 .pos-report-page .pos-report-tabs {
     padding: 0.25rem;
-}
-
-/* Ikon kalender (suffix action DatePicker) tidak menambah tinggi field: sejajar dengan dropdown */
-.pos-report-filters .fi-input-wrp .fi-icon-btn.fi-size-sm {
-    height: 1.5rem;
-    width: 1.5rem;
-}
-
-.pos-report-filters .fi-input-wrp-actions,
-.pos-report-filters .fi-input-wrp-suffix {
-    padding-block: 0;
-}
-
-.pos-report-filters .fi-fo-date-time-picker-trigger {
-    height: 2rem;
-    padding-block: 0;
 }
