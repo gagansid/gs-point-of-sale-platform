@@ -86,15 +86,17 @@ final class Domains
 
     /**
      * URL absolut ke subdomain lain dengan skema & port request saat ini (port lokal :8000 ikut).
+     * Production selalu https (sejalan URL::forceScheme), agar tiket login tidak pernah lewat http
+     * walau proxy salah dikonfigurasi (GSPOS-SEC-015).
      */
     public static function url(string $domain, string $path = '', ?string $query = null): string
     {
         $request = request();
-        $port = $request->getPort();
-        $standardPort = $request->isSecure() ? 443 : 80;
+        $port = (int) $request->getPort();
+        $scheme = app()->isProduction() ? 'https' : $request->getScheme();
 
-        return $request->getScheme().'://'.$domain
-            .($port !== null && (int) $port !== $standardPort ? ':'.$port : '')
+        return $scheme.'://'.$domain
+            .(! in_array($port, [0, 80, 443], true) ? ':'.$port : '')
             .'/'.ltrim($path, '/')
             .(filled($query) ? '?'.$query : '');
     }

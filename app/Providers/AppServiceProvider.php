@@ -11,6 +11,7 @@ use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
+use App\Support\TrustedProxies;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
@@ -18,6 +19,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Http\Request;
 use Illuminate\Log\Context\Repository as ContextRepository;
 use Illuminate\Support\Facades\Auth;
@@ -121,6 +123,13 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
         }
+
+        // Proxy tepercaya (POS_TRUSTED_PROXIES, mis. Cloudflare): IP asli & skema https dibaca dari
+        // X-Forwarded-For/Proto. X-Forwarded-Host sengaja tidak dipercaya (host header poisoning) — GSPOS-SEC-015
+        if (($proxies = TrustedProxies::fromConfig()) !== []) {
+            TrustProxies::at($proxies);
+        }
+        TrustProxies::withHeaders(Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO);
 
         // Cegah migrate:fresh, db:wipe, dsb. tidak sengaja dijalankan di production
         DB::prohibitDestructiveCommands($this->app->isProduction());

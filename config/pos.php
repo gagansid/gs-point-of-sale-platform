@@ -37,6 +37,9 @@ return [
         'owner_ttl' => (int) env('POS_OWNER_TOKEN_TTL', 30 * 24 * 60),
     ],
 
+    // Proxy tepercaya (GSPOS-SEC-015): kosong = tanpa proxy, "cloudflare", atau IP/CIDR dipisah koma
+    'trusted_proxies' => env('POS_TRUSTED_PROXIES', ''),
+
     // Penguncian PIN: dikunci setelah N kali salah selama M menit
     'pin' => [
         'length' => 6,
