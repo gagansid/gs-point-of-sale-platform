@@ -28,6 +28,8 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | Multi-outlet | Outlet per bisnis (tambah/nonaktifkan, batas paket), penugasan karyawan, stok & ketersediaan per outlet, pemilih outlet topbar, filter laporan, `/outlets` (ADR 0010 M1–M6) | ✅ | — |
 | Beranda | Ringkasan bisnis berfilter live (KPI + tren + audit), URL ringkas, ikon kalender, KPI responsif | ✅ | `5cb6b1c`, `0d12fe4` |
 | **Modul laporan** | 12 tab laporan + filter (granularitas, kategori, produk, shift), akses supervisor 31 hari & kasir rekap shift (Q49–Q52), 9 endpoint API baru, export Excel & PDF (ADR 0012) | ✅ | `d7a1ad5` … `bf20537` |
+| UI rapi | Toolbar filter ringkas + panel filter lanjutan, KPI rapat, checklist di atas, kontrol 32px & input group tanpa pemisah di semua form, jarak 16px | ✅ | `42a40c9` … `8c0fedc` |
+| **Tindak lanjut laporan** | L1–L7 & rekomendasi R1–R9 (lihat `docs/HANDOFF.md`) | ⏳ | — |
 | **Berikutnya** | Import produk Excel & kasir web | ⏳ | — |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ⏳ | — |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
@@ -133,7 +135,7 @@ cegah formula injection juga saat **membaca** (`App\Exports\SafeCell`).
 
 | # | Hal | Kapan |
 |---|---|---|
-| T1 | Widget beranda belum di-cache (wajar untuk volume MVP) | Bila beranda melambat |
+| T1 | Widget beranda & laporan belum di-cache (wajar untuk volume MVP); `daily`/`hourly`/`heatmap` mengelompokkan di PHP | Bila beranda/laporan melambat (rekomendasi R2) |
 | T2 | Gambar produk lama tidak dihapus dari storage saat diganti | Bersama menu Setelan |
 | T3 | Cetak struk dari web: **sementara selesai** — tombol "Cetak ulang struk" di detail order membuka `/dashboard/orders/{id}/receipt` (80mm, data `ReceiptResource`). Desain struk final & printer thermal menyusul | Desain struk |
 | T4 | Node.js lokal 20.18 < syarat Vite 20.19 (build tetap berhasil) | Upgrade Node lokal |
