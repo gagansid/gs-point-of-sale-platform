@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\Cashier\HomeController as CashierHomeController;
+use App\Http\Controllers\Web\Cashier\LoginController as CashierLoginController;
+use App\Http\Controllers\Web\Cashier\OutletController as CashierOutletController;
 use App\Http\Controllers\Web\DashboardLoginController;
 use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\SignupController;
 use App\Http\Controllers\Web\SiteController;
+use App\Http\Middleware\Cashier\SetCashierContext;
 use App\Support\Domains;
 use App\Support\Edition;
 use Filament\Facades\Filament;
@@ -70,6 +74,7 @@ Route::domain(Domains::main())->group(function (): void {
     // tanpa token tetap dialihkan, bukan ditolak 419
     Route::withoutMiddleware(ValidateCsrfToken::class)->group(function () use ($move): void {
         Route::any('dashboard/{path?}', $move((string) Domains::app(), '', 301))->where('path', '.*');
+        Route::any('cashier/{path?}', $move((string) Domains::app(), 'cashier/', 301))->where('path', '.*');
         Route::any('admin/{path?}', $move((string) Domains::admin(), '', 301))->where('path', '.*');
         Route::any('api/v1/{path?}', $move((string) Domains::api(), 'v1/', 308))->where('path', '.*');
     });
@@ -82,3 +87,22 @@ if (Domains::enabled()) {
         ->middleware('throttle:auth')
         ->name('dashboard.login.ticket');
 }
+
+/*
+ * Kasir web (Q54): app.gspos.id/cashier, atau /cashier tanpa subdomain. Guard "cashier" terpisah
+ * dari /dashboard; browser = device web per outlet.
+ */
+Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(function (): void {
+    Route::get('login', [CashierLoginController::class, 'create'])->name('login');
+    Route::post('login', [CashierLoginController::class, 'store'])->name('login.store');
+    Route::post('logout', [CashierLoginController::class, 'destroy'])->name('logout');
+
+    Route::middleware(SetCashierContext::class.':outlet')->group(function (): void {
+        Route::get('outlet', [CashierOutletController::class, 'index'])->name('outlet');
+        Route::post('outlet', [CashierOutletController::class, 'store'])->name('outlet.store');
+    });
+
+    Route::middleware(SetCashierContext::class)->group(function (): void {
+        Route::get('/', CashierHomeController::class)->name('home');
+    });
+});

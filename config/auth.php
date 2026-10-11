@@ -47,6 +47,11 @@ return [
             'provider' => 'users',
         ],
 
+        // Kasir web /cashier (Q54): sesi terpisah dari /dashboard walau tabel users sama
+        'cashier' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
         // Super admin di panel /admin — tabel & sesi terpisah dari tenant
         'admin' => [
             'driver' => 'session',

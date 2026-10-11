@@ -1,0 +1,65 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Actions\Cashier;
+
+use App\Enums\AppPlatform;
+use App\Enums\ErrorCode;
+use App\Exceptions\BusinessException;
+use App\Models\Device;
+use App\Models\Outlet;
+use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Browser kasir web sebagai device (Q54): satu device per (browser, outlet), dibuat otomatis saat
+ * outlet dipilih. Shift & transaksi terikat device seperti tablet. Device yang dicabut owner
+ * tidak diaktifkan lagi dari sini (berbeda dengan daftar ulang tablet oleh owner).
+ */
+final class RegisterWebDevice
+{
+    /**
+     * @param  string  $browserId  UUID acak dari cookie browser
+     *
+     * @throws BusinessException
+     */
+    public function handle(User $user, Outlet $outlet, string $browserId): Device
+    {
+        if (! $outlet->is_active || ! $user->canAccessOutlet($outlet->id)) {
+            throw BusinessException::of(ErrorCode::Forbidden, 'Anda tidak ditugaskan di outlet ini');
+        }
+
+        $uid = self::uid($browserId, $outlet->id);
+        $device = Device::forTenant($outlet->tenant_id)->where('device_uid', $uid)->first();
+
+        if ($device === null) {
+            try {
+                $device = DB::transaction(fn (): Device => Device::query()->create([
+                    'outlet_id' => $outlet->id,
+                    'name' => 'Kasir web '.mb_substr($browserId, 0, 4),
+                    'device_uid' => $uid,
+                    'platform' => AppPlatform::Web,
+                ]));
+            } catch (UniqueConstraintViolationException) {
+                // Dua tab membuat bersamaan: pakai yang sudah ada
+                $device = Device::forTenant($outlet->tenant_id)->where('device_uid', $uid)->firstOrFail();
+            }
+        }
+
+        if ($device->isRevoked()) {
+            throw BusinessException::of(ErrorCode::DeviceNotRegistered, 'Browser ini sudah dicabut owner dari daftar perangkat');
+        }
+
+        $device->forceFill(['last_seen_at' => now()])->saveQuietly();
+
+        return $device;
+    }
+
+    /** device_uid "web:{browser}:{outlet}" (maks. 77 karakter, kolom 100). */
+    public static function uid(string $browserId, string $outletId): string
+    {
+        return "web:{$browserId}:{$outletId}";
+    }
+}
