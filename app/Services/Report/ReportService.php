@@ -6,18 +6,23 @@ namespace App\Services\Report;
 
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
+use App\Enums\PaymentCategory;
 use App\Enums\PaymentStatus;
 use App\Enums\ShiftStatus;
+use App\Enums\StockMovementType;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Outlet;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Shift;
+use App\Models\StockMovement;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -34,14 +39,18 @@ use Illuminate\Support\Facades\DB;
 final class ReportService
 {
     /**
-     * @return array{order_count: int, revenue: string, average: string, items_sold: int, discount_total: string,
-     *     service_total: string, tax_total: string, rounding_total: string, void_count: int, void_total: string}
+     * Rincian finansial: subtotal_total (bruto) − discount_total = penjualan; + service + pajak + pembulatan
+     * = revenue (omzet diterima). net_sales = revenue − pajak − service − pembulatan (tanpa pajak & service,
+     * berlaku untuk pajak inklusif maupun eksklusif).
+     *
+     * @return array{order_count: int, revenue: string, average: string, items_sold: int, subtotal_total: string, discount_total: string,
+     *     service_total: string, tax_total: string, rounding_total: string, net_sales: string, void_count: int, void_total: string}
      */
     public function summary(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
     {
         $totals = $this->completed($start, $end, $filters)
             ->toBase()
-            ->selectRaw('COUNT(*) as order_count, SUM(grand_total) as revenue, SUM(discount_total) as discount_total,
+            ->selectRaw('COUNT(*) as order_count, SUM(grand_total) as revenue, SUM(subtotal) as subtotal_total, SUM(discount_total) as discount_total,
                 SUM(service_total) as service_total, SUM(tax_total) as tax_total, SUM(rounding) as rounding_total')
             ->first();
 
@@ -52,16 +61,21 @@ final class ReportService
 
         $orderCount = (int) ($totals->order_count ?? 0);
         $revenue = Money::fromDb($totals->revenue ?? null);
+        $service = Money::fromDb($totals->service_total ?? null);
+        $tax = Money::fromDb($totals->tax_total ?? null);
+        $rounding = Money::fromDb($totals->rounding_total ?? null);
 
         return [
             'order_count' => $orderCount,
             'revenue' => $revenue,
             'average' => Money::div($revenue, $orderCount),
             'items_sold' => (int) OrderItem::query()->whereIn('order_id', $this->completed($start, $end, $filters)->select('id'))->sum('qty'),
+            'subtotal_total' => Money::fromDb($totals->subtotal_total ?? null),
             'discount_total' => Money::fromDb($totals->discount_total ?? null),
-            'service_total' => Money::fromDb($totals->service_total ?? null),
-            'tax_total' => Money::fromDb($totals->tax_total ?? null),
-            'rounding_total' => Money::fromDb($totals->rounding_total ?? null),
+            'service_total' => $service,
+            'tax_total' => $tax,
+            'rounding_total' => $rounding,
+            'net_sales' => Money::sub(Money::sub(Money::sub($revenue, $tax), $service), $rounding),
             'void_count' => (int) ($voids->void_count ?? 0),
             'void_total' => Money::fromDb($voids->void_total ?? null),
         ];
@@ -74,9 +88,7 @@ final class ReportService
      */
     public function products(CarbonImmutable $start, CarbonImmutable $end, ?int $limit = null, ?ReportFilters $filters = null): array
     {
-        return OrderItem::query()
-            ->whereIn('order_id', $this->completed($start, $end, $filters)->select('id'))
-            ->toBase()
+        return $this->items($start, $end, $filters)
             ->select('product_id', DB::raw('MAX(product_name) as product_name'), DB::raw('SUM(qty) as qty'), DB::raw('SUM(line_total) as revenue'))
             ->groupBy('product_id')
             ->orderByDesc('revenue')
@@ -106,6 +118,8 @@ final class ReportService
         return Product::query()
             ->active()
             ->when($outletId !== null, fn (Builder $q) => $q->listedAt((string) $outletId))
+            ->when($filters !== null && $filters->productIds !== [], fn (Builder $q) => $q->whereIn('id', $filters->productIds ?? []))
+            ->when($filters !== null && $filters->categoryIds !== [], fn (Builder $q) => $q->whereIn('category_id', $filters->categoryIds ?? []))
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn (Product $product): array => [
@@ -397,6 +411,298 @@ final class ReportService
     }
 
     /**
+     * Tren omzet per granularitas: hour (0–23, untuk 1 hari), day, week (Senin, ISO), month.
+     * Minggu & bulan dikelompokkan dari seri harian lokal outlet agar zona waktu konsisten
+     * di MySQL/MariaDB/SQLite. key = jam / tanggal awal bucket (Y-m-d).
+     *
+     * @return list<array{key: string, label: string, from: string, to: string, revenue: string, order_count: int}>
+     */
+    public function trend(CarbonImmutable $start, CarbonImmutable $end, string $timezone, string $granularity, ?ReportFilters $filters = null): array
+    {
+        if ($granularity === 'hour') {
+            $date = $start->setTimezone($timezone)->toDateString();
+
+            return array_map(fn (array $h): array => [
+                'key' => sprintf('%02d', $h['hour']),
+                'label' => sprintf('%02d.00', $h['hour']),
+                'from' => $date,
+                'to' => $date,
+                'revenue' => $h['revenue'],
+                'order_count' => $h['order_count'],
+            ], $this->hourly($start, $end, $timezone, $filters));
+        }
+
+        $buckets = [];
+        foreach ($this->daily($start, $end, $timezone, $filters) as $day) {
+            $date = CarbonImmutable::parse($day['date'])->locale('id');
+            [$key, $label, $bucketEnd] = match ($granularity) {
+                'week' => [
+                    $date->startOfWeek(CarbonInterface::MONDAY)->toDateString(),
+                    $date->startOfWeek(CarbonInterface::MONDAY)->translatedFormat('j M'),
+                    $date->endOfWeek(CarbonInterface::SUNDAY)->toDateString(),
+                ],
+                'month' => [$date->startOfMonth()->toDateString(), $date->translatedFormat('M Y'), $date->endOfMonth()->toDateString()],
+                default => [$day['date'], $date->translatedFormat('D j/n'), $day['date']],
+            };
+
+            $buckets[$key] ??= ['key' => $key, 'label' => $label, 'from' => $day['date'], 'to' => $bucketEnd, 'revenue' => '0.00', 'order_count' => 0];
+            $buckets[$key]['revenue'] = Money::add($buckets[$key]['revenue'], $day['revenue']);
+            $buckets[$key]['order_count'] += $day['order_count'];
+            // Bucket terpotong rentang laporan (minggu/bulan pertama & terakhir)
+            $buckets[$key]['to'] = min($bucketEnd, $end->setTimezone($timezone)->toDateString());
+        }
+
+        return array_values($buckets);
+    }
+
+    /**
+     * Penjualan per kategori dari snapshot order_items.category_name (Q51), urut omzet terbesar.
+     *
+     * @return list<array{category_name: string, product_count: int, qty: int, revenue: string}>
+     */
+    public function categories(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        return $this->items($start, $end, $filters)
+            ->select('category_name', DB::raw('COUNT(DISTINCT product_id) as product_count'), DB::raw('SUM(qty) as qty'), DB::raw('SUM(line_total) as revenue'))
+            ->groupBy('category_name')
+            ->orderByDesc('revenue')
+            ->get()
+            ->map(fn (object $row): array => [
+                'category_name' => (string) $row->category_name,
+                'product_count' => (int) $row->product_count,
+                'qty' => (int) $row->qty,
+                'revenue' => Money::fromDb($row->revenue),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Opsi / add-on terlaris: dipilih berapa kali (× qty item) dan tambahan omzet (price_delta × qty).
+     *
+     * @return list<array{option_id: string, option_name: string, qty: int, revenue: string}>
+     */
+    public function options(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        return DB::table('order_item_options')
+            ->join('order_items', 'order_items.id', '=', 'order_item_options.order_item_id')
+            ->whereIn('order_items.order_id', $this->completed($start, $end, $filters)->select('orders.id'))
+            ->when($filters !== null, fn ($q) => $filters?->applyToItems($q))
+            ->select('order_item_options.option_id', DB::raw('MAX(order_item_options.option_name) as option_name'),
+                DB::raw('SUM(order_items.qty) as qty'), DB::raw('SUM(order_item_options.price_delta * order_items.qty) as revenue'))
+            ->groupBy('order_item_options.option_id')
+            ->orderByDesc('qty')
+            ->get()
+            ->map(fn (object $row): array => [
+                'option_id' => (string) $row->option_id,
+                'option_name' => (string) $row->option_name,
+                'qty' => (int) $row->qty,
+                'revenue' => Money::fromDb($row->revenue),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Kinerja per kasir (pembuat order): transaksi, omzet, rata-rata, diskon diberikan, void.
+     *
+     * @return list<array{user_id: string, name: string, order_count: int, revenue: string, average: string, discount_total: string, void_count: int, void_total: string}>
+     */
+    public function employees(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        $sales = $this->completed($start, $end, $filters)->toBase()
+            ->select('user_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(grand_total) as revenue'), DB::raw('SUM(discount_total) as discount_total'))
+            ->groupBy('user_id')->get()->keyBy('user_id');
+        $voids = $this->voided($start, $end, $filters)->toBase()
+            ->select('user_id', DB::raw('COUNT(*) as void_count'), DB::raw('SUM(grand_total) as void_total'))
+            ->groupBy('user_id')->get()->keyBy('user_id');
+
+        $names = User::query()->whereIn('id', $sales->keys()->merge($voids->keys())->unique()->values())->pluck('name', 'id');
+
+        return $sales->keys()->merge($voids->keys())->unique()
+            ->map(function (string $id) use ($sales, $voids, $names): array {
+                $count = (int) ($sales[$id]->order_count ?? 0);
+                $revenue = Money::fromDb($sales[$id]->revenue ?? null);
+
+                return [
+                    'user_id' => $id,
+                    'name' => (string) ($names[$id] ?? '–'),
+                    'order_count' => $count,
+                    'revenue' => $revenue,
+                    'average' => Money::div($revenue, $count),
+                    'discount_total' => Money::fromDb($sales[$id]->discount_total ?? null),
+                    'void_count' => (int) ($voids[$id]->void_count ?? 0),
+                    'void_total' => Money::fromDb($voids[$id]->void_total ?? null),
+                ];
+            })
+            ->sortByDesc(fn (array $row): float => (float) $row['revenue'])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Rekap per shift yang DIBUKA pada rentang: kasir, waktu, kas awal, penjualan & tunai,
+     * kas seharusnya vs aktual, selisih. Shift berjalan: kas seharusnya dihitung saat ini.
+     *
+     * @return list<array{shift_id: string, outlet: string, cashier: string, status: string, opened_at: string, closed_at: string|null,
+     *     order_count: int, sales_total: string, opening_cash: string, cash_sales: string, expected_cash: string, actual_cash: string|null, difference: string|null}>
+     */
+    public function shifts(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null, ?string $openedBy = null): array
+    {
+        $shifts = $this->shiftQuery($start, $end, $filters, $openedBy)->orderByDesc('opened_at')
+            ->get(['id', 'outlet_id', 'opened_by', 'status', 'opened_at', 'closed_at', 'opening_cash', 'expected_cash', 'actual_cash', 'difference']);
+
+        $ids = $shifts->pluck('id');
+        $sales = Order::query()->whereIn('shift_id', $ids)->where('status', OrderStatus::Completed)->toBase()
+            ->select('shift_id', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(grand_total) as sales_total'))
+            ->groupBy('shift_id')->get()->keyBy('shift_id');
+        // Σ amount tunai sudah bersih dari kembalian (sama dengan ShiftSummary)
+        $cash = Payment::query()
+            ->join('orders', 'orders.id', '=', 'payments.order_id')
+            ->whereIn('orders.shift_id', $ids)
+            ->where('orders.status', OrderStatus::Completed)
+            ->where('payments.status', PaymentStatus::Paid)
+            ->where('payments.category', PaymentCategory::Cash)
+            ->toBase()
+            ->select('orders.shift_id', DB::raw('SUM(payments.amount) as cash_sales'))
+            ->groupBy('orders.shift_id')->get()->keyBy('shift_id');
+
+        $names = User::query()->whereIn('id', $shifts->pluck('opened_by')->unique()->values())->pluck('name', 'id');
+        $outlets = Outlet::query()->whereIn('id', CurrentOutlet::ids())->pluck('name', 'id');
+
+        return $shifts->map(function (Shift $shift) use ($sales, $cash, $names, $outlets): array {
+            $cashSales = Money::fromDb($cash[$shift->id]->cash_sales ?? null);
+            $opening = Money::fromDb($shift->opening_cash);
+
+            return [
+                'shift_id' => (string) $shift->id,
+                'outlet' => (string) ($outlets[$shift->outlet_id] ?? ''),
+                'cashier' => (string) ($names[$shift->opened_by] ?? '–'),
+                'status' => $shift->status->value,
+                'opened_at' => $shift->opened_at->toIso8601ZuluString(),
+                'closed_at' => $shift->closed_at?->toIso8601ZuluString(),
+                'order_count' => (int) ($sales[$shift->id]->order_count ?? 0),
+                'sales_total' => Money::fromDb($sales[$shift->id]->sales_total ?? null),
+                'opening_cash' => $opening,
+                'cash_sales' => $cashSales,
+                'expected_cash' => $shift->expected_cash !== null ? Money::fromDb($shift->expected_cash) : Money::add($opening, $cashSales),
+                'actual_cash' => $shift->actual_cash !== null ? Money::fromDb($shift->actual_cash) : null,
+                'difference' => $shift->difference !== null ? Money::fromDb($shift->difference) : null,
+            ];
+        })->values()->all();
+    }
+
+    /**
+     * Jumlah transaksi per hari-dalam-minggu (1 = Senin … 7 = Minggu, ISO) × jam lokal (0–23).
+     *
+     * @return array<int, array<int, int>>
+     */
+    public function heatmap(CarbonImmutable $start, CarbonImmutable $end, string $timezone, ?ReportFilters $filters = null): array
+    {
+        $grid = [];
+        foreach (range(1, 7) as $day) {
+            $grid[$day] = array_fill(0, 24, 0);
+        }
+
+        $this->completed($start, $end, $filters)->select(['completed_at'])->orderBy('completed_at')
+            ->each(function (Order $order) use (&$grid, $timezone): void {
+                $local = $order->completed_at?->setTimezone($timezone);
+
+                if ($local !== null) {
+                    $grid[$local->dayOfWeekIso][$local->hour]++;
+                }
+            });
+
+        return $grid;
+    }
+
+    /**
+     * Pergerakan stok per produk pada rentang (penjualan, pengembalian void, penyesuaian) +
+     * stok saat ini. Hanya produk yang dilacak stoknya / punya pergerakan.
+     *
+     * @return list<array{product_id: string, product_name: string, sold: int, void_return: int, adjustment: int, net_change: int, stock: int|null, min_stock: int|null, is_low: bool}>
+     */
+    public function stock(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        $movements = StockMovement::query()
+            ->whereIn('outlet_id', CurrentOutlet::ids())
+            ->whereBetween('created_at', [$start, $end])
+            ->when($filters !== null && $filters->productIds !== [], fn (Builder $q) => $q->whereIn('product_id', $filters->productIds ?? []))
+            ->toBase()
+            ->select('product_id', 'type', DB::raw('SUM(qty_change) as qty'))
+            ->groupBy('product_id', 'type')
+            ->get()
+            ->groupBy('product_id');
+
+        $stocks = ProductStock::query()->whereIn('outlet_id', CurrentOutlet::ids())->toBase()
+            ->select('product_id', DB::raw('SUM(stock_qty) as stock'), DB::raw('SUM(min_stock) as min_stock'))
+            ->groupBy('product_id')->get()->keyBy('product_id');
+
+        return Product::query()
+            ->withTrashed()
+            ->where(fn (Builder $q) => $q->where('track_stock', true)->orWhereIn('id', $movements->keys()))
+            ->when($filters !== null && $filters->productIds !== [], fn (Builder $q) => $q->whereIn('id', $filters->productIds ?? []))
+            ->when($filters !== null && $filters->categoryIds !== [], fn (Builder $q) => $q->whereIn('category_id', $filters->categoryIds ?? []))
+            ->orderBy('name')
+            ->get(['id', 'name', 'track_stock'])
+            ->map(function (Product $product) use ($movements, $stocks): array {
+                $byType = collect($movements[$product->id] ?? [])->mapWithKeys(fn (object $m): array => [(string) $m->type => (int) $m->qty]);
+                $stock = $product->track_stock && isset($stocks[$product->id]) ? (int) $stocks[$product->id]->stock : ($product->track_stock ? 0 : null);
+                $min = $product->track_stock && isset($stocks[$product->id]) ? (int) $stocks[$product->id]->min_stock : null;
+
+                return [
+                    'product_id' => (string) $product->id,
+                    'product_name' => $product->name,
+                    // Penjualan tercatat negatif di stock_movements; ditampilkan positif
+                    'sold' => abs((int) ($byType[StockMovementType::Sale->value] ?? 0)),
+                    'void_return' => (int) ($byType[StockMovementType::VoidReturn->value] ?? 0),
+                    'adjustment' => (int) ($byType[StockMovementType::Adjustment->value] ?? 0),
+                    'net_change' => (int) $byType->sum(),
+                    'stock' => $stock,
+                    'min_stock' => $min,
+                    // Sama dengan scopeOutOfStock / scopeLowStock: habis (≤ 0) atau ≤ stok minimum
+                    'is_low' => $stock !== null && ($stock <= 0 || ($min !== null && $stock <= $min)),
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Query order void (untuk tabel Diskon & void berpaginasi).
+     *
+     * @return Builder<Order>
+     */
+    public function voidQuery(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): Builder
+    {
+        return $this->voided($start, $end, $filters);
+    }
+
+    /**
+     * Query order selesai yang diskonnya disetujui PIN (approved_by terisi).
+     *
+     * @return Builder<Order>
+     */
+    public function approvedDiscountQuery(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): Builder
+    {
+        return $this->completed($start, $end, $filters)->whereNotNull('approved_by')->where('discount_total', '>', 0);
+    }
+
+    /**
+     * Shift yang dibuka pada rentang (outlet aktif); filter kasir & shift ikut diterapkan.
+     *
+     * @return Builder<Shift>
+     */
+    public function shiftQuery(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null, ?string $openedBy = null): Builder
+    {
+        return CurrentOutlet::scope(Shift::query())
+            ->whereBetween('opened_at', [$start, $end])
+            ->when($openedBy !== null, fn (Builder $q) => $q->where('opened_by', $openedBy))
+            ->when($filters !== null && $filters->userIds !== [], fn (Builder $q) => $q->whereIn('opened_by', $filters->userIds ?? []))
+            ->when($filters !== null && $filters->shiftIds !== [], fn (Builder $q) => $q->whereIn('id', $filters->shiftIds ?? []));
+    }
+
+    /**
      * Perubahan persen (1 desimal, string) dari $before ke $now; null bila pembanding 0.
      */
     public static function change(string $now, string $before): ?string
@@ -406,6 +712,16 @@ final class ReportService
         }
 
         return Money::round(bcdiv(bcmul(Money::sub($now, $before), '100', 6), $before, 6), 1);
+    }
+
+    /**
+     * Baris order_items dari order selesai (filter level order + item).
+     */
+    private function items(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): \Illuminate\Database\Query\Builder
+    {
+        $items = OrderItem::query()->whereIn('order_id', $this->completed($start, $end, $filters)->select('id'))->toBase();
+
+        return $filters !== null ? $filters->applyToItems($items) : $items;
     }
 
     /** @return Builder<Order> */

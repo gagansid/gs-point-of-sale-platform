@@ -112,4 +112,34 @@ final class Order extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Pelaku void.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function voidedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'voided_by');
+    }
+
+    /**
+     * Approver PIN void.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function voidApprovedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'void_approved_by');
+    }
+
+    /**
+     * Approver PIN diskon di atas batas.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 }

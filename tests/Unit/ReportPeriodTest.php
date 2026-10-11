@@ -43,3 +43,33 @@ it('label tanggal Indonesia', function () {
         ->and((new ReportPeriod('2026-09-11', '2026-10-10'))->label())->toBe('11 Sep – 10 Okt 2026')
         ->and((new ReportPeriod('2025-12-01', '2026-01-31'))->label())->toBe('1 Des 2025 – 31 Jan 2026');
 });
+
+it('preset minggu (Senin–Minggu) & tahun, termasuk tahun kabisat', function (string $today, string $preset, string $from, string $to) {
+    $period = ReportPeriod::preset($preset, $today);
+
+    expect([$period->from, $period->to])->toBe([$from, $to]);
+})->with([
+    ['2026-10-11', 'this_week', '2026-10-05', '2026-10-11'], // Minggu → Senin minggu yang sama
+    ['2026-10-12', 'this_week', '2026-10-12', '2026-10-12'], // Senin
+    ['2026-10-12', 'last_week', '2026-10-05', '2026-10-11'],
+    ['2028-03-01', 'this_year', '2028-01-01', '2028-03-01'],
+    ['2029-03-01', 'last_year', '2028-01-01', '2028-12-31'],
+    ['2028-03-31', 'last_month', '2028-02-01', '2028-02-29'],
+]);
+
+it('granularitas bawaan & yang diizinkan mengikuti panjang rentang', function () {
+    expect((new ReportPeriod('2026-10-10', '2026-10-10'))->defaultGranularity())->toBe('hour')
+        ->and((new ReportPeriod('2026-09-01', '2026-10-10'))->defaultGranularity())->toBe('day')
+        ->and((new ReportPeriod('2026-06-01', '2026-10-10'))->defaultGranularity())->toBe('week')
+        ->and((new ReportPeriod('2026-01-01', '2026-10-10'))->defaultGranularity())->toBe('month')
+        ->and((new ReportPeriod('2026-09-01', '2026-10-10'))->granularity('month'))->toBe('day')
+        ->and((new ReportPeriod('2026-06-01', '2026-10-10'))->granularity('month'))->toBe('month')
+        ->and((new ReportPeriod('2026-10-01', '2026-10-10'))->granularity('hour'))->toBe('day');
+});
+
+it('batas supervisor: 31 hari termasuk hari ini, rentang dipotong', function () {
+    expect(ReportPeriod::lookbackStart('2026-10-31'))->toBe('2026-10-01')
+        ->and(ReportPeriod::normalize('2026-01-01', '2026-10-31', '2026-10-31', '2026-10-01'))->toEqual(new ReportPeriod('2026-10-01', '2026-10-31'))
+        ->and(ReportPeriod::preset('last_month', '2026-10-31')->clampTo('2026-10-01'))->toEqual(new ReportPeriod('2026-10-01', '2026-10-01'))
+        ->and(ReportPeriod::preset('this_week', '2026-10-31')->clampTo('2026-10-01'))->toEqual(ReportPeriod::preset('this_week', '2026-10-31'));
+});

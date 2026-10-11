@@ -32,7 +32,7 @@ final class ResolveOrderLines
             ->atOutlet($outlet->id)
             // Grup opsi nonaktif diabaikan: opsinya ditolak dan aturan wajib-pilihnya tidak berlaku (Q27)
             ->with([
-                'category:id,is_active',
+                'category:id,name,is_active',
                 'optionGroups' => fn ($query) => $query->where('option_groups.is_active', true),
                 'optionGroups.options',
             ])

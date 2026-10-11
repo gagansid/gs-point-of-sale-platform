@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $order_id
  * @property string $product_id
  * @property string $product_name
+ * @property string $category_name
  * @property string $unit_price
  * @property string $options_total
  * @property int $qty
@@ -29,7 +30,10 @@ final class OrderItem extends Model
 {
     use BelongsToTenant, HasUuids;
 
-    protected $fillable = ['order_id', 'product_id', 'product_name', 'unit_price', 'options_total', 'qty', 'discount', 'line_total', 'notes', 'sort_order'];
+    /** Snapshot kategori untuk produk tanpa kategori (Q51) */
+    public const UNCATEGORIZED = 'Tanpa kategori';
+
+    protected $fillable = ['order_id', 'product_id', 'product_name', 'category_name', 'unit_price', 'options_total', 'qty', 'discount', 'line_total', 'notes', 'sort_order'];
 
     protected function casts(): array
     {

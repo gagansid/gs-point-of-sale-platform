@@ -60,6 +60,8 @@ final class OrderWriter
                 'order_id' => $order->id,
                 'product_id' => $line->product->id,
                 'product_name' => $line->product->name,
+                // Snapshot kategori untuk laporan Kategori (Q51)
+                'category_name' => $line->product->category->name ?? OrderItem::UNCATEGORIZED,
                 'unit_price' => $line->product->price,
                 'options_total' => $line->optionsTotal,
                 'qty' => $line->qty,
