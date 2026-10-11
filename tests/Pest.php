@@ -17,9 +17,11 @@ use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
 use App\Support\WebCashier;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Tests\DuskTestCase;
 use Tests\TestCase;
 
 /*
@@ -30,6 +32,11 @@ pest()->extend(TestCase::class)
     ->in('Feature');
 
 pest()->extend(TestCase::class)->in('Unit');
+
+// Uji E2E browser (R9): Dusk + database/dusk.sqlite, dijalankan terpisah: ./vendor/bin/pest tests/Browser
+pest()->extend(DuskTestCase::class)
+    ->use(DatabaseMigrations::class)
+    ->in('Browser');
 
 /**
  * Header wajib setiap request API dari aplikasi Flutter.

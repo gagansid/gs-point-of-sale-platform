@@ -83,3 +83,18 @@ php artisan test --filter=Checkout        # satu fitur
 php artisan test --group=mysql            # test yang butuh MySQL
 php artisan test --coverage --min=80      # cakupan (target Actions & Services ≥ 80%)
 ```
+
+## 8. Uji E2E browser (Laravel Dusk, R9)
+
+`tests/Browser` menguji alur nyata di Chrome headless: kasir web (login → buka shift → bayar → struk), menu Kasir
+dari dashboard, dan dashboard (login → Beranda → Laporan). Tidak ikut `php artisan test` (butuh Chrome).
+
+```bash
+php artisan dusk:chrome-driver --detect   # sekali, setelah Chrome diperbarui
+./vendor/bin/pest tests/Browser
+```
+
+- `tests/DuskTestCase.php` menjalankan server `php -S` di port 8010 dan memakai **`database/dusk.sqlite`**
+  (mode satu domain). Database lokal `database.sqlite` tidak pernah disentuh; ada pengaman bila path DB lain.
+- **Jangan** memakai `php artisan dusk`: perintah itu menukar file `.env`.
+- Gagal → screenshot di `tests/Browser/screenshots`, log konsol di `tests/Browser/console` (tidak di-commit).

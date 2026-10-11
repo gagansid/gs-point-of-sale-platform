@@ -27,3 +27,6 @@ Thumbs.db
 /public/css/filament
 /public/js/filament
 /public/fonts/filament
+
+# Uji E2E Dusk (R9): database & artefak lokal
+/database/dusk.sqlite
