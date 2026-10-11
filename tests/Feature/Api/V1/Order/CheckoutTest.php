@@ -305,8 +305,49 @@ describe('diskon & PIN approval', function () {
         assertApiError(checkout($this, $body), 'FORBIDDEN', 403);
     });
 
-    it('supervisor sendiri boleh diskon di atas batas tanpa approval', function () {
-        checkout($this, cart($this->pos, ['discount' => ['type' => 'percent', 'value' => 50]]), userToken($this->pos->supervisor, $this->pos->device))
+    // Batas berjenjang (Q18, GSPOS-SEC-014): kasir 10%, supervisor 25%, owner/manager tanpa batas
+    it('supervisor dalam batasnya (25%) boleh tanpa approval', function () {
+        checkout($this, cart($this->pos, ['discount' => ['type' => 'percent', 'value' => 25]]), userToken($this->pos->supervisor, $this->pos->device))
+            ->assertCreated()
+            ->assertJsonPath('data.approved_by', null);
+    });
+
+    it('supervisor di atas batasnya tanpa approval → DISCOUNT_OVER_LIMIT', function () {
+        $response = checkout($this, cart($this->pos, ['discount' => ['type' => 'percent', 'value' => 50]]), userToken($this->pos->supervisor, $this->pos->device));
+
+        assertApiError($response, 'DISCOUNT_OVER_LIMIT', 422);
+        $response->assertJsonPath('error.details.limit_percent', '25');
+    });
+
+    it('diskon di atas batas supervisor: PIN supervisor ditolak, PIN manager disetujui', function () {
+        $manager = User::factory()->manager()->forOutlet($this->pos->outlet)->create();
+        $body = fn (User $approver): array => cart($this->pos, [
+            'discount' => ['type' => 'percent', 'value' => 50],
+            'approver_user_id' => $approver->id,
+            'approver_pin' => '123456',
+        ]);
+
+        assertApiError(checkout($this, $body($this->pos->supervisor)), 'FORBIDDEN', 403);
+
+        checkout($this, $body($manager))->assertCreated()->assertJsonPath('data.approved_by', $manager->id);
+    });
+
+    it('supervisor di atas batasnya dengan PIN owner → disetujui', function () {
+        $owner = User::factory()->owner()->create(['tenant_id' => $this->pos->tenantId]);
+
+        checkout($this, cart($this->pos, [
+            'discount' => ['type' => 'percent', 'value' => 50],
+            'approver_user_id' => $owner->id,
+            'approver_pin' => '123456',
+        ]), userToken($this->pos->supervisor, $this->pos->device))
+            ->assertCreated()
+            ->assertJsonPath('data.approved_by', $owner->id);
+    });
+
+    it('owner/manager tanpa batas diskon', function () {
+        $manager = User::factory()->manager()->forOutlet($this->pos->outlet)->create();
+
+        checkout($this, cart($this->pos, ['discount' => ['type' => 'percent', 'value' => 80]]), userToken($manager, $this->pos->device))
             ->assertCreated()
             ->assertJsonPath('data.approved_by', null);
     });

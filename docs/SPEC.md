@@ -131,7 +131,7 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `order.view_all` | Semua transaksi (supervisor: hari ini) | ✅ | ✅ | ✅ | ❌ |
 | `order.reprint` | Cetak ulang struk | ✅ | ✅ | ✅ | ✅ |
 | `order.discount` | Diskon manual sampai batas role | ✅ | ✅ | ✅ | ✅ |
-| `order.discount_over_limit` | Diskon di atas batas | ✅ | ✅ | ✅ | 🔑 |
+| `order.discount_over_limit` | Diskon tanpa batas | ✅ | ✅ | 🔑 | 🔑 |
 | `order.void` | Batalkan transaksi | ✅ | ✅ | ✅ | 🔑 |
 | `shift.operate` | Buka/tutup shift sendiri | ✅ | ✅ | ✅ | ✅ |
 | `shift.view_all` | Semua shift & selisih kas | ✅ | ✅ | ✅ | ❌ |
@@ -162,7 +162,10 @@ enum UserRole: string
         return match ($this) {
             self::Owner => ['*'],
             self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*'],
-            self::Supervisor => ['order.*', 'shift.*', 'product.toggle_available'],
+            self::Supervisor => [
+                'order.create', 'order.view_own', 'order.view_all', 'order.reprint',
+                'order.discount', 'order.void', 'shift.*', 'product.toggle_available',
+            ],
             self::Cashier => [
                 'order.create', 'order.view_own', 'order.reprint',
                 'order.discount', 'shift.operate',
@@ -197,7 +200,8 @@ punya permission tersebut, dan menolak jika approver = kasir yang sama. Order me
 dan `approved_by`.
 
 Batas diskon disimpan per outlet di `discount_limits`, contoh `{"cashier": 10, "supervisor": 25}`
-(persen). Setiap tenant wajib punya minimal 1 owner aktif.
+(persen). Batas berjenjang (Q18): kasir & supervisor dibatasi batas role-nya; di atasnya wajib PIN approver
+yang batasnya mencukupi (supervisor sampai batas supervisor, manager/owner tanpa batas). Setiap tenant wajib punya minimal 1 owner aktif.
 
 ## Struktur folder
 
@@ -582,7 +586,7 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q15 | Hapus kategori | Produknya tidak ikut dihapus; menjadi tanpa kategori (`category_id` null). | Diterima | `docs/api/product.md` |
 | Q16 | Shift per device | `POST /shifts` saat device sudah punya shift terbuka mengembalikan shift itu (idempotent). Tutup biasa hanya oleh pembuka; selain itu tutup paksa. | Diterima | `docs/api/shift.md` |
 | Q17 | Login email di device kasir | Token terikat device bila `device_uid` = device terdaftar, sehingga owner/manager bisa buka shift & checkout. | Diterima | `docs/api/auth.md` |
-| Q18 | Batas diskon | Persen total diskon (item + order) terhadap harga kotor; role dengan `order.discount_over_limit` tidak dibatasi. | Diterima | `docs/api/order.md` |
+| Q18 | Batas diskon | Persen total diskon (item + order) terhadap harga kotor. Hanya role dengan `order.discount_over_limit` (owner, manager) yang tidak dibatasi; kasir & supervisor sampai `discount_limits[role]`. Di atas batas → PIN approver yang batasnya ≥ persen diskon (mis. kasir 20% → supervisor; 50% → manager/owner). Revisi 2026-10-11 (GSPOS-SEC-014): sebelumnya supervisor tanpa batas sehingga `discount_limits.supervisor` tidak berlaku. | Diterima | `docs/api/order.md` |
 | Q19 | Alokasi pembayaran | Non-tunai dialokasikan lebih dulu, tunai menutup sisa + kembalian; checkout wajib lunas. | Diterima | `docs/api/order.md` |
 | Q20 | Open bill lintas shift | Open bill boleh tetap terbuka saat shift ditutup (ditampilkan di ringkasan); saat lunas, order pindah ke shift yang menerima uang. | Diterima | `docs/api/order.md` |
 | Q21 | Visibilitas order | Kasir: order di shift sendiri + semua open bill. Supervisor (view_all tanpa report.view): hari ini. Owner/manager: semua. | Diterima | `docs/api/order.md` |

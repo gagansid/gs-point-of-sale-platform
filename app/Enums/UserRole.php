@@ -75,7 +75,11 @@ enum UserRole: string implements HasColor, HasLabel
         return match ($this) {
             self::Owner => ['*'],
             self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*'],
-            self::Supervisor => ['order.*', 'shift.*', 'product.toggle_available'],
+            // Tanpa order.discount_over_limit: diskon supervisor dibatasi discount_limits.supervisor (Q18, GSPOS-SEC-014)
+            self::Supervisor => [
+                'order.create', 'order.view_own', 'order.view_all', 'order.reprint',
+                'order.discount', 'order.void', 'shift.*', 'product.toggle_available',
+            ],
             self::Cashier => [
                 'order.create', 'order.view_own', 'order.reprint',
                 'order.discount', 'shift.operate',

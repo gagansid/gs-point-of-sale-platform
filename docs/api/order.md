@@ -60,9 +60,11 @@ yang dikirim aplikasi diabaikan.
 3. **Pembayaran:** non-tunai dialokasikan dulu dan tidak boleh melebihi sisa (`PAYMENT_EXCEEDS_BALANCE`,
    `error.details.remaining`); tunai menutup sisa, kelebihannya `change`. Total kurang → `422`
    (`error.details.remaining`).
-4. **Diskon:** persen total diskon terhadap harga kotor dibandingkan `outlet.discount_limits[role]`.
-   Di atas batas tanpa `order.discount_over_limit` → `422 DISCOUNT_OVER_LIMIT`
-   (`details.limit_percent`, `details.discount_percent`), kecuali disertai PIN approver yang berwenang
+4. **Diskon:** persen total diskon terhadap harga kotor dibandingkan `outlet.discount_limits[role]`
+   (kasir & supervisor; owner/manager dengan `order.discount_over_limit` tanpa batas).
+   Di atas batas → `422 DISCOUNT_OVER_LIMIT` (`details.limit_percent` = batas pelaku,
+   `details.discount_percent`), kecuali disertai PIN approver yang batasnya mencukupi: supervisor sampai
+   batas supervisor, manager/owner tanpa batas; approver yang batasnya kurang → `403 FORBIDDEN`
    (`approved_by` tercatat; approver = pelaku → `SELF_APPROVAL_NOT_ALLOWED`; PIN salah → `INVALID_PIN`,
    ikut penguncian PIN).
 5. **Nomor order:** `{kode outlet}-{YYMMDD lokal outlet}-{0001}` dengan penguncian baris.

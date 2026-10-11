@@ -48,6 +48,10 @@ final class PriceOrder
 
     /**
      * Persen total diskon terhadap harga kotor dibandingkan outlets.discount_limits[role] (Q18).
+     *
+     * Wewenang diskon (pelaku maupun approver): `order.discount_over_limit` = tanpa batas (owner, manager);
+     * selain itu sampai batas role-nya. Di atas batas pelaku → PIN approver yang batasnya mencukupi,
+     * mis. kasir 20% boleh di-approve supervisor (25%), kasir 50% wajib manager/owner (GSPOS-SEC-014).
      */
     private function checkDiscountLimit(User $actor, Outlet $outlet, CalculationResult $totals, ?ApprovalData $approval): ?string
     {
@@ -55,11 +59,14 @@ final class PriceOrder
             return null;
         }
 
+        /** @var array<string, int|float|string> $limits */
         $limits = $outlet->discount_limits ?? config('pos.outlet_defaults.discount_limits');
-        $limit = (string) ($limits[$actor->role->value] ?? 0);
         $percent = $totals->discountPercent();
+        $limitOf = fn (User $user): string => (string) ($limits[$user->role->value] ?? 0);
+        $authorized = fn (User $user): bool => $user->can('order.discount_over_limit')
+            || ($user->can('order.discount') && bccomp($percent, $limitOf($user), 2) <= 0);
 
-        if (bccomp($percent, $limit, 2) <= 0) {
+        if ($authorized($actor)) {
             return null;
         }
 
@@ -69,7 +76,8 @@ final class PriceOrder
             'order.discount_over_limit',
             $approval,
             ErrorCode::DiscountOverLimit,
-            ['limit_percent' => $limit, 'discount_percent' => $percent],
+            ['limit_percent' => $limitOf($actor), 'discount_percent' => $percent],
+            $authorized,
         );
     }
 }

@@ -9,6 +9,7 @@ use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
+use Closure;
 
 /**
  * Jalur PIN approval (docs/standards/api/auth-and-permission.md §4).
@@ -23,10 +24,11 @@ final class VerifyApproval
      * @param  string  $outletId  outlet tempat aksi dilakukan; approver wajib ditugaskan di sana (ADR 0010)
      * @param  ErrorCode  $missingCode  kode bila approval tidak dikirim (APPROVAL_REQUIRED / DISCOUNT_OVER_LIMIT)
      * @param  array<string, mixed>|null  $details
+     * @param  (Closure(User): bool)|null  $authorizes  wewenang approver; default $approver->can($permission)
      *
      * @throws BusinessException
      */
-    public function handle(User $actor, string $outletId, string $permission, ?ApprovalData $approval, ErrorCode $missingCode = ErrorCode::ApprovalRequired, ?array $details = null): ?string
+    public function handle(User $actor, string $outletId, string $permission, ?ApprovalData $approval, ErrorCode $missingCode = ErrorCode::ApprovalRequired, ?array $details = null, ?Closure $authorizes = null): ?string
     {
         if ($actor->can($permission)) {
             return null;
@@ -52,7 +54,9 @@ final class VerifyApproval
         $deviceId = $token instanceof PersonalAccessToken ? $token->device_id : null;
         $this->verifyPin->handle($approver, $approval->pin, 'approval:'.($deviceId ?? 'none'), $deviceId);
 
-        if (! $approver->can($permission)) {
+        $authorizes ??= fn (User $user): bool => $user->can($permission);
+
+        if (! $authorizes($approver)) {
             throw BusinessException::of(ErrorCode::Forbidden, 'Approver tidak memiliki wewenang untuk aksi ini');
         }
 

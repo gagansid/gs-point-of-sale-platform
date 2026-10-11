@@ -51,7 +51,9 @@ Route::prefix('v1')->middleware(['api', AssignRequestId::class, CheckAppVersion:
 
 ## 4. PIN approval (🔑)
 
-Untuk `order.void` dan `order.discount_over_limit` saat pelaku tidak punya permission.
+Untuk `order.void` dan `order.discount_over_limit` saat pelaku tidak punya permission. Untuk diskon,
+approver harus punya `order.discount_over_limit` **atau** batas role-nya ≥ persen diskon (supervisor
+boleh meng-approve diskon kasir sampai batas supervisor) — `PriceOrder`, GSPOS-SEC-014.
 
 Request membawa:
 
