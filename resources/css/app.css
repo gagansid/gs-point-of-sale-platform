@@ -2627,3 +2627,9 @@
     min-height: 0;
     margin: 2px 0 0;
 }
+
+.pos-member-chip-points {
+    color: var(--site-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+}

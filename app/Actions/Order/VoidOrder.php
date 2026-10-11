@@ -6,6 +6,7 @@ namespace App\Actions\Order;
 
 use App\Actions\Auth\Data\ApprovalData;
 use App\Actions\Auth\VerifyApproval;
+use App\Actions\Member\ReverseOrderBenefits;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -65,6 +66,8 @@ final class VoidOrder
 
             if ($locked->status === OrderStatus::Completed) {
                 $this->writer->moveStock($locked, $actor, StockMovementType::VoidReturn);
+                // Poin & statistik member ditarik (ADR 0013)
+                app(ReverseOrderBenefits::class)->handle($locked);
             }
 
             $locked->payments()->update(['status' => PaymentStatus::Voided]);

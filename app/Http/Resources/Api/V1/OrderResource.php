@@ -24,6 +24,7 @@ final class OrderResource extends JsonResource
             'notes' => $this->notes,
             // Snapshot nama saat transaksi (ADR 0013)
             'member' => $this->member_id !== null ? ['id' => $this->member_id, 'name' => $this->member_name] : null,
+            'points_earned' => $this->points_earned,
             'shift_id' => $this->shift_id,
             'user_id' => $this->user_id,
             'discount' => $this->discount_type !== null

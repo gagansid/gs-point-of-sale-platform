@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Member\MemberRequest;
 use App\Http\Resources\Api\V1\MemberResource;
 use App\Models\Member;
+use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
 use App\Support\ApiResponse;
 use App\Support\CurrentOutlet;
@@ -85,6 +86,36 @@ final class MemberController extends Controller
             ?? throw BusinessException::of(ErrorCode::MemberNotFound);
 
         return ApiResponse::success(MemberResource::make($member)->resolve($request), 'Detail member');
+    }
+
+    /**
+     * Riwayat poin member.
+     *
+     * Permission member.view. 50 mutasi terbaru: `type` (earn, redeem, void_reversal, adjust, expire), `points`
+     * (+/−), `balance_after`, `expires_at` untuk poin didapat.
+     */
+    public function points(Request $request, string $memberId): JsonResponse
+    {
+        abort_unless($request->user()?->can('member.view') ?? false, 403);
+        self::ensureProgramEnabled();
+
+        $member = Member::query()->whereNull('anonymized_at')->find($memberId)
+            ?? throw BusinessException::of(ErrorCode::MemberNotFound);
+
+        $entries = MemberPointEntry::query()->where('member_id', $member->id)->latest()->limit(50)->get()
+            ->map(fn (MemberPointEntry $e): array => [
+                'id' => $e->id,
+                'type' => $e->type->value,
+                'type_label' => $e->type->getLabel(),
+                'points' => $e->points,
+                'balance_after' => $e->balance_after,
+                'order_id' => $e->order_id,
+                'expires_at' => $e->expires_at?->toIso8601ZuluString(),
+                'reason' => $e->reason,
+                'created_at' => $e->created_at->toIso8601ZuluString(),
+            ]);
+
+        return ApiResponse::success(['balance' => $member->points_balance, 'entries' => $entries], 'Riwayat poin');
     }
 
     /** @throws BusinessException */

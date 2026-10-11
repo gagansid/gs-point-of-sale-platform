@@ -154,6 +154,7 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `member.view` | Cari member & pasang ke transaksi (ADR 0013) | ✅ | ✅ | ✅ | ✅ |
 | `member.create` | Daftar member baru (daftar cepat di kasir) | ✅ | ✅ | ✅ | ✅ |
 | `member.manage` | Ubah, nonaktifkan, hapus (anonimkan) member | ✅ | ✅ | ❌ | ❌ |
+| `member.points_adjust` | Tambah/kurangi poin manual dengan alasan | ✅ | ✅ | ❌ | ❌ |
 | `member.settings` | Program member: aktif/nonaktif, outlet ikut | ✅ | ❌ | ❌ | ❌ |
 
 ```php
@@ -249,7 +250,8 @@ tabel master memakai soft delete.
 | Pembayaran | `outlet_payment_method` | tenant_id, outlet_id, payment_method_id (unik per outlet), is_active — metode bayar per outlet (Q44) |
 | Produk | `stock_movements` | tenant_id, outlet_id, product_id, user_id, type (adjustment/sale/void_return), qty_change, qty_after, reason, reference_id — riwayat stok (Q14) |
 | Member | `members` | tenant_id, code (6 karakter acak, unik per tenant), name, phone (+62…, unik per tenant), email, birth_day, birth_month, notes, password & pin (M3–M4), tier_id, points_balance, spend_12m, total_spent, visit_count, last_visit_at, joined_outlet_id, consent_at, is_active, anonymized_at (ADR 0013) |
-| Member | `member_settings` | tenant_id (unik), enabled — aturan poin/tier/voucher menyusul (M2–M7) |
+| Member | `member_settings` | tenant_id (unik), enabled, earn_amount, earn_points, redeem_value, min_redeem_points, max_redeem_percent, expiry_months (Q62) |
+| Member | `member_point_ledger` | tenant_id, member_id, outlet_id, order_id, payment_id, type (earn/redeem/void_reversal/adjust/expire), points (+/−), remaining (FIFO), balance_after, expires_at, reason, user_id — append-only (Q62) |
 | Member | `outlet_member_program` | tenant_id, outlet_id (unik), is_enabled — tanpa baris = outlet ikut program |
 | Pembayaran | `payments` | tenant_id, order_id, payment_method_id, user_id, category, amount (dipakai membayar), tendered (uang diterima), change, reference (approval code), status |
 | Sistem Laravel | `personal_access_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs` | Bawaan Laravel / Sanctum |
@@ -394,6 +396,7 @@ Contoh `POST /checkout`:
 | GET | `/members?search=` | Semua | Cari member (HP/kode/nama), HP disamarkan, 30/menit |
 | POST | `/members` | Semua | Daftar cepat (persetujuan wajib, HP unik per bisnis) |
 | GET | `/members/{id}` | Semua | Detail member |
+| GET | `/members/{id}/points` | Semua | Saldo & riwayat poin |
 
 `/checkout` & `PUT /orders/{id}` menerima `member_id` (lihat `docs/api/member.md`).
 

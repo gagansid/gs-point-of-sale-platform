@@ -13,6 +13,7 @@ use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -60,14 +61,19 @@ final class MemberProgramSettings extends Page
     {
         $excluded = OutletMemberProgram::query()->where('is_enabled', false)->pluck('outlet_id')->all();
 
+        $setting = MemberSetting::current();
+
         $this->settingsForm()->fill([
-            'enabled' => MemberSetting::current()->enabled,
+            ...$setting->only(['earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months']),
+            'enabled' => $setting->enabled,
             'outlet_ids' => Outlet::query()->whereNotIn('id', $excluded)->pluck('id')->all(),
         ]);
     }
 
     public function form(Schema $schema): Schema
     {
+        $rules = array_map(fn (array $r): array => array_values(array_diff($r, ['sometimes'])), UpdateMemberProgram::ruleValidation());
+
         return $schema
             ->statePath('data')
             ->disabled(! self::canEdit())
@@ -82,6 +88,22 @@ final class MemberProgramSettings extends Page
                             ->helperText('Outlet yang tidak dicentang tetap bisa memasang member (tercatat kunjungan) tanpa benefit')
                             ->visible(fn (Get $get): bool => (bool) $get('enabled') && Outlet::query()->count() > 1)
                             ->columns(2),
+                    ]),
+
+                Section::make('Poin')
+                    ->description('Poin dihitung dari subtotal setelah diskon, sebelum pajak & service; masuk saat transaksi selesai')
+                    ->visible(fn (Get $get): bool => (bool) $get('enabled'))
+                    ->columns(3)
+                    ->schema([
+                        TextInput::make('earn_amount')->label('Setiap belanja')->prefix('Rp')->numeric()->required()->rules($rules['earn_amount']),
+                        TextInput::make('earn_points')->label('Dapat poin')->numeric()->required()->rules($rules['earn_points'])->suffix('poin'),
+                        TextInput::make('expiry_months')->label('Masa berlaku')->numeric()->required()->rules($rules['expiry_months'])
+                            ->suffix('bulan')->helperText('0 = tidak kedaluwarsa'),
+                        TextInput::make('redeem_value')->label('Nilai 1 poin')->prefix('Rp')->numeric()->required()->rules($rules['redeem_value'])
+                            ->helperText('Saat poin dipakai membayar'),
+                        TextInput::make('min_redeem_points')->label('Minimal tukar')->numeric()->required()->rules($rules['min_redeem_points'])->suffix('poin'),
+                        TextInput::make('max_redeem_percent')->label('Maksimal per transaksi')->numeric()->required()->rules($rules['max_redeem_percent'])
+                            ->suffix('% tagihan'),
                     ]),
             ]);
     }
@@ -111,7 +133,8 @@ final class MemberProgramSettings extends Page
             // Disembunyikan (satu outlet / program mati): pertahankan pilihan yang ada
             : Outlet::query()->whereNotIn('id', OutletMemberProgram::query()->where('is_enabled', false)->pluck('outlet_id'))->pluck('id')->all();
 
-        app(UpdateMemberProgram::class)->handle((bool) $data['enabled'], $outletIds);
+        $rules = array_intersect_key($data, UpdateMemberProgram::ruleValidation());
+        app(UpdateMemberProgram::class)->handle((bool) $data['enabled'], $outletIds, array_map(fn (mixed $v): string => (string) $v, $rules));
 
         Notification::make()->success()->title('Program member disimpan')->send();
     }

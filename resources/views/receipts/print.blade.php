@@ -112,6 +112,12 @@
             <div>Alasan batal: {{ $receipt['void_reason'] }}</div>
         @endif
 
+        @if (($receipt['member_points'] ?? null) !== null && ! $receipt['is_void'])
+            <div class="rule"></div>
+            <div class="row"><span>Poin didapat</span><span>+{{ number_format($receipt['member_points']['earned'], 0, ',', '.') }}</span></div>
+            <div class="row"><span>Saldo poin</span><span>{{ number_format((int) $receipt['member_points']['balance'], 0, ',', '.') }}</span></div>
+        @endif
+
         <div class="rule"></div>
         <div class="center">{{ $receipt['outlet']['footer'] ?: 'Terima kasih' }}</div>
         <div class="center muted">Cetak ulang</div>

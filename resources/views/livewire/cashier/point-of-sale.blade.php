@@ -102,7 +102,11 @@
             @if ($this->memberProgramEnabled)
                 @if ($memberId)
                     <div class="pos-member-chip">
-                        <span class="pos-member-chip-name"><span aria-hidden="true">★</span> {{ $memberName }}</span>
+                        <span class="pos-member-chip-name"><span aria-hidden="true">★</span> {{ $memberName }}
+                            @if ($this->memberPoints !== null)
+                                <span class="pos-member-chip-points">{{ number_format($this->memberPoints, 0, ',', '.') }} poin</span>
+                            @endif
+                        </span>
                         <button type="button" wire:click="clearMember" aria-label="Lepas member">&times;</button>
                     </div>
                 @else

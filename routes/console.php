@@ -23,6 +23,9 @@ Schedule::command('auth:clear-resets')->daily();
 // Ringkasan harian email (Q57): tiap jam, tiap user dikirim sekali setelah jam 07.00 waktu outletnya
 Schedule::command('pos:daily-summary')->hourlyAt(5)->withoutOverlapping(30);
 
+// Poin member kedaluwarsa (ADR 0013): dini hari WIB
+Schedule::command('pos:expire-member-points')->dailyAt('01:30')->timezone('Asia/Jakarta')->withoutOverlapping(30);
+
 // Audit log (Q58): hapus catatan lebih dari 365 hari (config activitylog.delete_records_older_than_days)
 Schedule::command('activitylog:clean --force')->dailyAt('03:30')->timezone('Asia/Jakarta');
 

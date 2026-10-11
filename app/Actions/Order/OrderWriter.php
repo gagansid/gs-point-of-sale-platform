@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Member\AwardOrderBenefits;
 use App\Actions\Order\Data\ResolvedLine;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentCategory;
@@ -29,6 +30,8 @@ use App\Support\Money;
  */
 final class OrderWriter
 {
+    public function __construct(private readonly AwardOrderBenefits $memberBenefits) {}
+
     /** Menyalin hasil OrderCalculator & setelan outlet ke order (nominal hanya lewat sini). */
     public function applyTotals(Order $order, CalculationResult $totals, Outlet $outlet): void
     {
@@ -124,6 +127,8 @@ final class OrderWriter
         ])->save();
 
         $this->moveStock($order, $actor, StockMovementType::Sale);
+        // Poin & statistik member (ADR 0013)
+        $this->memberBenefits->handle($order);
     }
 
     /**

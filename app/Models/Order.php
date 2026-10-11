@@ -59,6 +59,7 @@ final class Order extends Model
 
     /** Default sama dengan database agar order baru di memori sudah punya nilai pembayaran. */
     protected $attributes = [
+        'points_earned' => 0,
         'paid_total' => '0.00',
         'change_total' => '0.00',
         'order_discount' => '0.00',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Resources\Members;
 
+use App\Actions\Member\AdjustMemberPoints;
 use App\Actions\Member\AnonymizeMember;
 use App\Actions\Member\Data\MemberData;
 use App\Actions\Member\SaveMember;
@@ -15,6 +16,7 @@ use App\Filament\Shared\Layout;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Http\Requests\Api\V1\Member\MemberRequest;
 use App\Models\Member;
+use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
 use App\Models\User;
 use App\Support\Phone;
@@ -120,6 +122,8 @@ final class MemberResource extends Resource
                     ->searchable(query: fn (Builder $query, string $search): Builder => Member::applySearch($query, $search)),
                 TextColumn::make('phone')->label('Nomor HP')->formatStateUsing(fn (?string $state): string => Phone::display($state))
                     ->placeholder('—'),
+                TextColumn::make('points_balance')->label('Poin')->numeric()->sortable()->alignEnd()
+                    ->color(fn (int $state): ?string => $state < 0 ? 'danger' : null),
                 TextColumn::make('visit_count')->label('Kunjungan')->numeric()->sortable()->alignEnd(),
                 TextColumn::make('last_visit_at')->label('Terakhir datang')->since()->dateTimeTooltip('j M Y, H.i')
                     ->placeholder('Belum pernah')->sortable(),
@@ -144,6 +148,28 @@ final class MemberResource extends Resource
                         $action,
                     )),
                 ActionGroup::make([
+                    Action::make('points')->label('Riwayat poin')->icon(Heroicon::OutlinedClock)
+                        ->modalHeading(fn (Member $record): string => 'Riwayat poin · '.$record->name)
+                        ->modalContent(fn (Member $record) => view('filament.dashboard.members.points', [
+                            'member' => $record,
+                            'entries' => MemberPointEntry::query()->with('user:id,name')->where('member_id', $record->id)->latest()->limit(100)->get(),
+                        ]))
+                        ->modalSubmitAction(false)->modalCancelActionLabel('Tutup'),
+                    Action::make('adjustPoints')->label('Sesuaikan poin')->icon(Heroicon::OutlinedAdjustmentsHorizontal)
+                        ->visible(fn (Member $record): bool => ! $record->isAnonymized() && (auth()->user()?->can('member.points_adjust') ?? false))
+                        ->modalHeading(fn (Member $record): string => 'Sesuaikan poin · '.$record->name)
+                        ->modalDescription(fn (Member $record): string => 'Saldo saat ini '.number_format($record->points_balance, 0, ',', '.').' poin')
+                        ->schema([
+                            TextInput::make('points')->label('Jumlah poin')->integer()->required()->helperText('Positif = tambah, negatif = kurangi'),
+                            TextInput::make('reason')->label('Alasan')->required()->maxLength(255)->placeholder('mis. kompensasi pesanan salah'),
+                        ])
+                        ->action(function (Member $record, array $data, Action $action): void {
+                            abort_unless(auth()->user()?->can('member.points_adjust') ?? false, 403);
+                            $user = auth()->user();
+                            abort_unless($user instanceof User, 403);
+                            self::orNotify(fn () => app(AdjustMemberPoints::class)->handle($record, (int) $data['points'], (string) $data['reason'], $user), $action);
+                            Notification::make()->success()->title('Poin disesuaikan')->send();
+                        }),
                     ...ActiveStatusActions::make(Member::class, function (Member $member, bool $active): void {
                         app(SetMemberActive::class)->handle($member, $active);
                     }, 'member', 'Member tidak bisa dipasang ke transaksi baru sampai diaktifkan lagi. Riwayat tetap ada.', 'member.manage'),

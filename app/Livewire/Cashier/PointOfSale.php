@@ -560,6 +560,13 @@ final class PointOfSale extends Component
         return $this->user()->can('member.view') && MemberSetting::current()->enabled;
     }
 
+    /** Saldo poin member terpasang (dibaca ulang tiap render: bisa berubah dari kasir lain). */
+    #[Computed]
+    public function memberPoints(): ?int
+    {
+        return $this->memberId !== null ? Member::query()->whereKey($this->memberId)->value('points_balance') : null;
+    }
+
     public function updatedMemberSearch(): void
     {
         $this->memberResults = [];

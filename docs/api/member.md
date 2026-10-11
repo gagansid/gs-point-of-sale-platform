@@ -9,6 +9,7 @@ Keputusan: [ADR 0013](../adr/0013-member-loyalty-program.md), SPEC Q60–Q61 (ta
 | GET | `/v1/members?search=` | `member.view` | baca | — |
 | POST | `/v1/members` | `member.create` | `id` opsional | `SaveMember` |
 | GET | `/v1/members/{id}` | `member.view` | baca | — |
+| GET | `/v1/members/{id}/points` | `member.view` | baca | — |
 | POST | `/v1/checkout`, PUT `/v1/orders/{id}` (+ `member_id`) | `order.create` | ya | `ResolveOrderMember` |
 
 Error umum: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `403 SUBSCRIPTION_EXPIRED`, `404 MEMBER_NOT_FOUND`,
@@ -70,4 +71,23 @@ Detail member. Member tenant lain, dihapus (dianonimkan) → `404 MEMBER_NOT_FOU
 - Open bill: **field tidak dikirim = member lama tetap** (aplikasi lama aman); `null` = member dilepas.
 - Respons order: `member: { id, name }` (snapshot nama saat transaksi) atau `null`; struk: `member_name`.
 
-Poin, diskon member, tier, stempel, dan voucher menyusul (ADR 0013, M2–M7).
+## `GET /v1/members/{id}/points`
+
+Saldo + 50 mutasi poin terbaru (`earn`, `redeem`, `void_reversal`, `adjust`, `expire`):
+
+```json
+{ "data": { "balance": 120, "entries": [
+  { "id": "…", "type": "earn", "type_label": "Didapat", "points": 7, "balance_after": 120,
+    "order_id": "…", "expires_at": "2027-10-11T10:00:00Z", "reason": null, "created_at": "2026-10-11T10:00:00Z" }
+] } }
+```
+
+## Poin (M2, SPEC Q62)
+
+- Didapat saat order **selesai**: `floor(dasar / earn_amount) × earn_points`; dasar = subtotal setelah diskon item &
+  order, **tanpa** service, pajak, pembulatan. Bawaan Rp10.000 = 1 poin, berlaku 12 bulan (diatur owner).
+- Order: `points_earned`; struk: `member_points: { earned, balance }`.
+- Void order selesai: poin ditarik (saldo boleh minus bila sudah terpakai).
+- Outlet dikecualikan: kunjungan tercatat, tanpa poin.
+
+Penukaran poin (metode bayar Poin), diskon member, tier, stempel, dan voucher menyusul (ADR 0013, M3–M7).

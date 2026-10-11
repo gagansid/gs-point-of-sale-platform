@@ -98,6 +98,7 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('/', 'index')->name('index');
             Route::post('/', 'store')->name('store');
             Route::get('{memberId}', 'show')->whereUuid('memberId')->name('show');
+            Route::get('{memberId}/points', 'points')->whereUuid('memberId')->name('points');
         });
 
         // ---------- Laporan ----------
