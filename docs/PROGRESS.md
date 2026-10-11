@@ -32,10 +32,12 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | Tindak lanjut laporan | L3, L5–L7, R1–R9 selesai; sisa L1 (Flutter), L2 & L4 (hosting) | 🟡 | `ae629f7` … `000d2f0` |
 | Kasir web | Q54–Q55: login, shift, transaksi, open bill, tahan, PIN approval, void, menu Kasir di dashboard, toast | ✅ | `a178508` … `6a58a6d` |
 | Import produk | Excel/CSV + template, validasi per baris, upsert SKU (Q59) | ✅ | `489e114` |
+| **Program member** | ADR 0013: M1 data & menu, M2 poin, M3 tukar poin & diskon member, M4 halaman member ✅; M5 tier, M6 stempel, M7 voucher & laporan ⏳ | 🟡 | `0dd6186` … |
+| Self-order meja | ADR 0014 (S1–S4), setelah M5–M7 | ⏳ | — |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ✅ 2026-10-11 (sisa: OWASP ZAP & uji manual di staging) | `38a67cd`..`fe6d252` |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
-Endpoint selesai: **58** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q59, ADR 0001–0012.
+Endpoint selesai: **58** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q74, ADR 0001–0014.
 
 ---
 

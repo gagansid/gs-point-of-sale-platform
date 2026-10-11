@@ -13,6 +13,7 @@ use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -24,6 +25,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\HtmlString;
 use LogicException;
 use UnitEnum;
 
@@ -81,6 +83,9 @@ final class MemberProgramSettings extends Page
                 Section::make('Program member')
                     ->description('Member berlaku di semua outlet bisnis ini. Data pelanggan disimpan dengan persetujuan mereka')
                     ->schema([
+                        Placeholder::make('portal')->label('Halaman member')
+                            ->content(fn (): HtmlString => new HtmlString('<a href="'.e(self::portalUrl()).'" target="_blank" rel="noopener" class="text-primary-600 underline">'.e(self::portalUrl()).'</a><br><span class="text-sm text-gray-500">Bagikan ke pelanggan (mis. QR di meja/kasir): daftar sendiri, lihat poin, dan kode QR untuk kasir</span>'))
+                            ->visible(fn (Get $get): bool => (bool) $get('enabled')),
                         Toggle::make('enabled')->label('Aktifkan program member')->live()
                             ->helperText('Nonaktif: member tidak bisa dicari, didaftarkan, atau dipasang ke transaksi baru. Data member tetap ada'),
                         CheckboxList::make('outlet_ids')->label('Outlet yang ikut')
@@ -145,6 +150,13 @@ final class MemberProgramSettings extends Page
         app(UpdateMemberProgram::class)->handle((bool) $data['enabled'], $outletIds, array_map(fn (mixed $v): string => (string) $v, $rules));
 
         Notification::make()->success()->title('Program member disimpan')->send();
+    }
+
+    private static function portalUrl(): string
+    {
+        $user = auth()->user();
+
+        return route('member.login', ['business' => $user instanceof User ? $user->tenant->slug : '']);
     }
 
     private static function canEdit(): bool

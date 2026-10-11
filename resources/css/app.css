@@ -2650,3 +2650,334 @@
     margin: 0;
     color: var(--site-text);
 }
+
+/* Halaman member gspos.id/m/{bisnis} (ADR 0013): mobile-first, navigasi bawah */
+.member-body {
+    min-height: 100dvh;
+    padding-bottom: 88px;
+    background: var(--site-bg);
+}
+
+.member-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 28px;
+    background: linear-gradient(155deg, #1f3166 0%, var(--site-navy) 60%, #131d3d 100%);
+    color: #ffffff;
+}
+
+.member-header-label {
+    margin: 0;
+    color: var(--site-mist);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.member-header-business {
+    margin: 2px 0 0;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.member-header-logout {
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid rgb(255 255 255 / 0.25);
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.08);
+    color: #ffffff;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.member-main {
+    display: grid;
+    gap: 12px;
+    max-width: 480px;
+    margin: -14px auto 0;
+    padding: 0 16px;
+}
+
+.member-card {
+    padding: 20px;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 6px 20px rgb(27 42 85 / 0.08);
+}
+
+.member-title {
+    margin: 0 0 4px;
+    color: var(--site-navy);
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.member-subtitle {
+    margin: 0 0 10px;
+    color: var(--site-navy);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.member-muted {
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 13px;
+}
+
+.member-alert {
+    padding: 10px 14px;
+    border: 1px solid rgb(47 179 68 / 0.3);
+    border-radius: 10px;
+    background: rgb(47 179 68 / 0.08);
+    color: #1d7a2e;
+    font-size: 13.5px;
+}
+
+.member-form {
+    display: grid;
+    gap: 14px;
+    margin-top: 16px;
+}
+
+.member-field {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+
+.member-field > span {
+    color: var(--site-text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.member-field small {
+    color: var(--site-muted);
+    font-size: 12px;
+}
+
+.member-field input,
+.member-field select {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid #dcdee3;
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--site-text);
+    font: inherit;
+    font-size: 16px;
+}
+
+.member-field input:focus-visible,
+.member-field select:focus-visible {
+    border-color: var(--site-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.14);
+}
+
+.member-row {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 10px;
+}
+
+.member-check {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    color: var(--site-text);
+    font-size: 13.5px;
+}
+
+.member-check input {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+}
+
+.member-error {
+    margin: 0;
+    color: #d63939;
+    font-size: 12.5px;
+    font-style: normal;
+}
+
+.member-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 44px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--site-primary);
+    color: #ffffff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.member-btn-outline {
+    border: 1px solid var(--site-border);
+    background: #ffffff;
+    color: var(--site-navy);
+}
+
+.member-btn-danger {
+    background: #d63939;
+}
+
+.member-foot {
+    margin: 16px 0 0;
+    color: var(--site-text);
+    font-size: 13.5px;
+    text-align: center;
+}
+
+.member-foot a {
+    color: var(--site-primary);
+    font-weight: 700;
+}
+
+.member-balance {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 14px 0 6px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--site-primary-lt);
+}
+
+.member-balance-value {
+    color: var(--site-navy);
+    font-size: 30px;
+    font-weight: 800;
+}
+
+.member-balance-label {
+    margin-left: 4px;
+    color: var(--site-muted);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.member-qr {
+    text-align: center;
+}
+
+.member-qr h2 {
+    margin: 0 0 12px;
+    color: var(--site-navy);
+    font-size: 15px;
+}
+
+.member-qr-image {
+    width: min(240px, 70vw);
+    margin: 0 auto;
+}
+
+.member-qr-image svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.member-qr-code {
+    margin: 10px 0 6px;
+    color: var(--site-navy);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.member-list {
+    display: grid;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.member-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--site-border);
+    font-size: 14px;
+}
+
+.member-list li:last-child {
+    border-bottom: 0;
+}
+
+.member-list li div {
+    display: grid;
+    gap: 2px;
+}
+
+.member-points {
+    color: #1d7a2e;
+    font-weight: 700;
+}
+
+.member-points.is-minus {
+    color: #d63939;
+}
+
+.member-danger .member-subtitle {
+    color: #b42318;
+}
+
+.member-nav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--site-border);
+    background: #ffffff;
+}
+
+.member-nav a {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    padding: 6px 0;
+    border-radius: 10px;
+    color: var(--site-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.member-nav a svg {
+    width: 24px;
+    height: 24px;
+}
+
+.member-nav a.is-active {
+    color: var(--site-navy);
+    background: var(--site-primary-lt);
+}
+
+.member-powered {
+    margin: 20px 0 0;
+    color: var(--site-gray);
+    font-size: 12px;
+    text-align: center;
+}

@@ -10,10 +10,13 @@ use App\Http\Controllers\Web\Cashier\OutletController as CashierOutletController
 use App\Http\Controllers\Web\Cashier\ShiftController as CashierShiftController;
 use App\Http\Controllers\Web\DashboardLoginController;
 use App\Http\Controllers\Web\EmailVerificationController;
+use App\Http\Controllers\Web\Member\AuthController as MemberAuthController;
+use App\Http\Controllers\Web\Member\PortalController as MemberPortalController;
 use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\SignupController;
 use App\Http\Controllers\Web\SiteController;
 use App\Http\Middleware\Cashier\SetCashierContext;
+use App\Http\Middleware\Member\SetMemberPortal;
 use App\Support\Domains;
 use App\Support\Edition;
 use Filament\Facades\Filament;
@@ -90,6 +93,33 @@ if (Domains::enabled()) {
         ->middleware('throttle:auth')
         ->name('dashboard.login.ticket');
 }
+
+/*
+ * Halaman member (ADR 0013, Q67): gspos.id/m/{kode-bisnis}, atau /m/{kode-bisnis} tanpa subdomain. Guard "member",
+ * tenant dari kode bisnis (SetMemberPortal).
+ */
+Route::domain(Domains::main())->prefix('m/{business}')->name('member.')
+    ->where(['business' => '[a-z0-9-]+'])
+    ->group(function (): void {
+        Route::middleware(SetMemberPortal::class)->group(function (): void {
+            Route::get('login', [MemberAuthController::class, 'create'])->name('login');
+            Route::post('login', [MemberAuthController::class, 'store'])->name('login.store');
+            Route::get('register', [MemberAuthController::class, 'registerForm'])->name('register');
+            Route::post('register', [MemberAuthController::class, 'register'])->name('register.store');
+        });
+
+        Route::middleware(SetMemberPortal::class.':auth')->group(function (): void {
+            Route::get('/', [MemberPortalController::class, 'home'])->name('home');
+            Route::get('code', [MemberPortalController::class, 'code'])->name('code');
+            Route::get('history', [MemberPortalController::class, 'history'])->name('history');
+            Route::get('profile', [MemberPortalController::class, 'profile'])->name('profile');
+            Route::post('profile', [MemberPortalController::class, 'updateProfile'])->name('profile.update');
+            Route::get('password', [MemberPortalController::class, 'editPassword'])->name('password.edit');
+            Route::post('password', [MemberPortalController::class, 'updatePassword'])->name('password.update');
+            Route::post('delete', [MemberPortalController::class, 'destroy'])->name('destroy');
+            Route::post('logout', [MemberAuthController::class, 'destroy'])->name('logout');
+        });
+    });
 
 /*
  * Kasir web (Q54): app.gspos.id/cashier, atau /cashier tanpa subdomain. Guard "cashier" terpisah

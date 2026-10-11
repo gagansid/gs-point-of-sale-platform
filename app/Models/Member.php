@@ -10,6 +10,8 @@ use App\Models\Concerns\RecordsAuthor;
 use App\Support\Phone;
 use Carbon\CarbonImmutable;
 use Database\Factories\MemberFactory;
+use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -41,10 +43,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $is_active
  * @property CarbonImmutable|null $anonymized_at
  */
-final class Member extends Model
+final class Member extends Model implements AuthenticatableContract
 {
     /** @use HasFactory<MemberFactory> */
-    use BelongsToTenant, HasFactory, HasUuids, LogsChanges, RecordsAuthor;
+    use Authenticatable, BelongsToTenant, HasFactory, HasUuids, LogsChanges, RecordsAuthor;
 
     protected $fillable = ['name', 'phone', 'email', 'birth_day', 'birth_month', 'notes', 'joined_outlet_id', 'is_active'];
 
@@ -97,6 +99,14 @@ final class Member extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    /** Tanpa kolom remember_token: halaman member memakai sesi biasa (tanpa "ingat saya"). */
+    public function getRememberToken(): ?string
+    {
+        return null;
+    }
+
+    public function setRememberToken($value): void {}
 
     public function isAnonymized(): bool
     {

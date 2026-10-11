@@ -661,6 +661,12 @@ final class PointOfSale extends Component
             return;
         }
 
+        // QR halaman member "KODEMEMBER-123456": pasang member + simpan kode bukti untuk menukar poin
+        if (preg_match('/^([A-Za-z0-9]{6})-(\d{6})$/', $term, $match) === 1) {
+            $term = $match[1];
+            $this->memberCode = $match[2];
+        }
+
         $phone = Phone::normalize($term);
         $exact = Member::query()->whereNull('anonymized_at')->where('is_active', true)
             ->where(fn ($q) => $q->where('code', mb_strtoupper($term))->when($phone !== null, fn ($w) => $w->orWhere('phone', $phone)))
@@ -979,8 +985,11 @@ final class PointOfSale extends Component
             return [];
         }
 
+        // Kode dari scanner bisa berisi "KODEMEMBER-123456": ambil 6 digit terakhir
+        $code = preg_match('/(\d{6})$/', trim($this->memberCode), $match) === 1 ? $match[1] : null;
+
         return array_filter([
-            'member_code' => preg_match('/^\d{6}$/', trim($this->memberCode)) === 1 ? trim($this->memberCode) : null,
+            'member_code' => $code,
             'member_pin' => preg_match('/^\d{4}$/', trim($this->memberPin)) === 1 ? trim($this->memberPin) : null,
         ]);
     }

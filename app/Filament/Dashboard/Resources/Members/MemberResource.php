@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\Members;
 
 use App\Actions\Member\AdjustMemberPoints;
 use App\Actions\Member\AnonymizeMember;
+use App\Actions\Member\ChangeMemberPassword;
 use App\Actions\Member\Data\MemberData;
 use App\Actions\Member\SaveMember;
 use App\Actions\Member\SetMemberActive;
@@ -170,6 +171,23 @@ final class MemberResource extends Resource
                             abort_unless($user instanceof User, 403);
                             self::orNotify(fn () => app(AdjustMemberPoints::class)->handle($record, (int) $data['points'], (string) $data['reason'], $user), $action);
                             Notification::make()->success()->title('Poin disesuaikan')->send();
+                        }),
+                    Action::make('temporaryPassword')->label('Kata sandi sementara')->icon(Heroicon::OutlinedLockOpen)
+                        ->visible(fn (Member $record): bool => self::canEdit($record))
+                        ->requiresConfirmation()
+                        ->modalHeading('Buat kata sandi sementara')
+                        ->modalDescription(fn (Member $record): HtmlString => Layout::confirmText(
+                            'Buat kata sandi sementara untuk <strong>'.e($record->name).'</strong>?',
+                            'Untuk pelanggan yang lupa kata sandi halaman member. Kata sandi lama tidak berlaku; pelanggan wajib membuat kata sandi baru saat masuk.',
+                        ))
+                        ->modalSubmitActionLabel('Buat')
+                        ->action(function (Member $record): void {
+                            abort_unless(self::canEdit($record), 403);
+                            $password = app(ChangeMemberPassword::class)->temporary($record);
+                            Notification::make()->success()->persistent()
+                                ->title('Kata sandi sementara: '.$password)
+                                ->body('Berikan ke pelanggan sekarang; tidak ditampilkan lagi. Masuk di '.route('member.login', ['business' => $record->tenant->slug]))
+                                ->send();
                         }),
                     Action::make('setPin')->label('Atur PIN member')->icon(Heroicon::OutlinedKey)
                         ->visible(fn (Member $record): bool => self::canEdit($record))

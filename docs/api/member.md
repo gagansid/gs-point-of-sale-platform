@@ -105,4 +105,16 @@ Saldo + 50 mutasi poin terbaru (`earn`, `redeem`, `void_reversal`, `adjust`, `ex
 - **Diskon member** (% di Program member) otomatis untuk order ber-member di outlet yang ikut program, setelah diskon
   kasir, **tidak** dihitung ke batas diskon kasir. Order/struk: `member_discount` (bagian dari `discount_total`).
 
+## Halaman member (M4, SPEC Q67) — web, bukan API
+
+`gspos.id/m/{kode-bisnis}` (tanpa subdomain: `/m/{kode-bisnis}`), hanya bila program member aktif (selain itu 404):
+masuk (nomor HP + kata sandi, pesan umum, 5/menit per HP+IP, 20/menit per IP, kunci 15 menit setelah 10 salah),
+daftar mandiri (persetujuan wajib), beranda dengan **QR dinamis** `KODEMEMBER-123456` (kode bukti berganti tiap 30
+detik, berlaku ±2 menit, sekali pakai), riwayat poin & transaksi, profil (HP tidak bisa diganti sendiri), ganti kata
+sandi (sesi lain keluar), hapus akun (dianonimkan).
+
+**Aplikasi kasir (Flutter):** scan QR → string `KODEMEMBER-123456`: cari member dengan bagian kode (`search`), kirim
+6 digit terakhir sebagai `member_code` saat membayar dengan poin. Lupa kata sandi: owner/manager membuat kata sandi
+sementara di dashboard (Member → Kata sandi sementara); member wajib menggantinya saat masuk.
+
 Tier, stempel, dan voucher menyusul (ADR 0013, M5–M7).

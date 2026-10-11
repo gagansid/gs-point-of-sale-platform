@@ -1,7 +1,7 @@
 # Catatan Lanjut Pengerjaan
 
 > Diperbarui: 2026-10-11 · Branch: `feature/pos`
-> Status: **Kasir web + panel admin + R5–R9 + import produk selesai** (`000d2f0`). Deploy ditunda atas keputusan pemilik.
+> Status: **Program member M1–M4 selesai** (ADR 0013); M5–M7 & self-order (ADR 0014) berikutnya. Deploy ditunda atas keputusan pemilik.
 > Kualitas: 1087 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
@@ -103,6 +103,26 @@ Aturan untuk tim Flutter (repo `gs-point-of-sale-app`, tidak ada di mesin ini):
   ditambah ke baris yang ada; beda opsi/catatan/diskon → baris baru (SPEC Q54).
 - **F2** — `GET/PUT /v1/outlet` kini memuat `daily_sales_target` & `monthly_sales_target` (nullable, Q56); opsional
   ditampilkan di setelan outlet aplikasi.
+
+### Program member (ADR 0013, SPEC Q60–Q67) — M1–M4 selesai 2026-10-11
+| Commit | Isi |
+|---|---|
+| `0dd6186`, `6376280` | **M1** data member (HP +62 unik per bisnis, persetujuan, kode acak, hapus = anonimkan), Pengaturan → Program member (aktif, outlet ikut), Pelanggan → Member, API `/v1/members`, `member_id` di checkout/open bill, kolom cari member di kasir web (Enter/scanner) |
+| `55d0f7a` | **M2** ledger poin append-only (FIFO, saldo cache + lock), poin saat order selesai (subtotal setelah diskon, tanpa pajak/service), void menarik poin, `pos:expire-member-points` harian, penyesuaian manual (`member.points_adjust`), API riwayat poin, struk |
+| `5eb90f7` | **M3** metode bayar sistem **Poin** + bukti QR dinamis / PIN member (kunci 5×), `RedeemPoints` (kelipatan, minimal, maks. % tagihan, saldo), void mengembalikan poin, **diskon member %** di `OrderCalculator` (`MemberPricing`: urutan stempel → manual → voucher → member, tidak dihitung ke batas diskon kasir) |
+| (M4) | **Halaman member** `gspos.id/m/{kode-bisnis}`: masuk HP + kata sandi, daftar mandiri, QR `KODEMEMBER-123456`, riwayat, profil, ganti kata sandi, hapus akun; kata sandi sementara dari dashboard; scan QR di kasir web memasang member + mengisi bukti |
+
+**Berikutnya (lanjut dari sini):** M5 tier (spend 12 bulan bergulir, pengali poin, diskon tier lewat
+`ResolveMemberPricing`), M6 kartu stempel (`MemberPricing::stampFree`), M7 voucher ulang tahun & kode promo
+(`MemberPricing` voucher) + laporan member + ringkasan harian + import/export. Lalu self-order S1–S4 (ADR 0014).
+
+Catatan untuk tim Flutter (repo aplikasi): **F3** cari/daftar member (`/v1/members`), pasang `member_id`; **F4** metode
+bayar `category: points` hanya bila member terpasang, kirim `member_code` (6 digit terakhir hasil scan QR) atau
+`member_pin`; tampilkan `member_discount`, `points_earned`, `member_points` di struk. Error baru: `MEMBER_NOT_FOUND`,
+`MEMBER_PROGRAM_DISABLED`, `INSUFFICIENT_POINTS`, `INVALID_MEMBER_PROOF`, `MEMBER_PIN_LOCKED`.
+
+Data lokal demo: program member **aktif** di "Kopi Senja (Demo)", member "Rina Kusuma" (0812-3456-7890) dan
+"Member Demo" (0812-7777-1234, kata sandi `demomember1`, dibuat lewat halaman member saat uji).
 
 ## 2. Belum dikerjakan
 

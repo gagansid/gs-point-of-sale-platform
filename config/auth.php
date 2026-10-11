@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Admin;
+use App\Models\Member;
 use App\Models\User;
 
 return [
@@ -52,6 +53,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        // Halaman member gspos.id/m/{bisnis} (ADR 0013): tabel members, sesi terpisah
+        'member' => [
+            'driver' => 'session',
+            'provider' => 'members',
+        ],
         // Super admin di panel /admin — tabel & sesi terpisah dari tenant
         'admin' => [
             'driver' => 'session',
@@ -86,6 +92,12 @@ return [
         'admins' => [
             'driver' => 'eloquent',
             'model' => Admin::class,
+        ],
+
+        // Member dicari dalam tenant aktif (TenantContext diisi middleware SetMemberPortal dari kode bisnis)
+        'members' => [
+            'driver' => 'eloquent',
+            'model' => Member::class,
         ],
     ],
 
