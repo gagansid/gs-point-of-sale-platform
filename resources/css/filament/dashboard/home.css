@@ -367,3 +367,80 @@ td.pos-dash-table__share span.tabular-nums {
     min-width: 1rem;
     height: 1rem;
 }
+
+/* ---------- Tata letak rapat Beranda & Laporan (Pages\Concerns\InteractsWithReportFilters) ---------- */
+
+.pos-report-page .fi-page-content > .fi-sc,
+.pos-report-page .fi-page-content > .fi-sc > .fi-grid-col > .fi-sc {
+    row-gap: 1rem;
+}
+
+/* Toolbar filter: label kecil, jarak antar field rapat */
+.pos-report-filters .fi-section-content {
+    padding: 0.875rem 1rem;
+}
+
+.pos-report-filters .fi-sc {
+    gap: 0.625rem 0.875rem;
+}
+
+.pos-report-filters .fi-fo-field-label-content {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.pos-report-filters .fi-fo-field {
+    row-gap: 0.25rem;
+}
+
+.pos-report-filters__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding-top: 0.125rem;
+}
+
+/* KPI rapat: padding & nominal lebih kecil, kartu 2 kolom (HP) → 4 kolom */
+.pos-report-page .fi-wi-stats-overview-stat {
+    padding: 0.875rem 1rem;
+}
+
+.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-content {
+    row-gap: 0.25rem;
+}
+
+.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value {
+    font-size: clamp(1rem, 12cqi, 1.5rem);
+}
+
+.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-label,
+.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description {
+    font-size: 0.75rem;
+}
+
+.pos-report-page .fi-wi-stats-overview > .fi-section-content-ctn,
+.pos-report-page .fi-wi-stats-overview .fi-grid {
+    gap: 0.75rem;
+}
+
+/* Bar tab laporan lebih tipis */
+.pos-report-page .pos-report-tabs {
+    padding: 0.25rem;
+}
+
+/* Ikon kalender (suffix action DatePicker) tidak menambah tinggi field: sejajar dengan dropdown */
+.pos-report-filters .fi-input-wrp .fi-icon-btn.fi-size-sm {
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+.pos-report-filters .fi-input-wrp-actions,
+.pos-report-filters .fi-input-wrp-suffix {
+    padding-block: 0;
+}
+
+.pos-report-filters .fi-fo-date-time-picker-trigger {
+    height: 2rem;
+    padding-block: 0;
+}

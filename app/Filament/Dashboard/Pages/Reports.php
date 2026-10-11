@@ -32,7 +32,6 @@ use App\Models\Outlet;
 use App\Models\Shift;
 use App\Models\User;
 use App\Services\Report\ReportExporter;
-use App\Services\Report\ReportFilterLabels;
 use App\Support\CurrentOutlet;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -40,6 +39,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -159,44 +159,35 @@ final class Reports extends Page
     public function filtersForm(Schema $schema): Schema
     {
         return $schema->components([
+            // Toolbar ringkas: periode di satu baris, filter lanjutan di panel samping
             Section::make()
+                ->compact()
                 ->columnSpanFull()
-                ->columns(['default' => 1, 'sm' => 2, 'xl' => 4])
+                ->extraAttributes(['class' => 'pos-report-filters'])
+                ->columns(['default' => 2, 'md' => 3, 'xl' => 6])
                 ->schema([
                     $this->outletField(),
                     $this->presetField(),
-                    $this->dateField('from', 'Dari tanggal'),
-                    $this->dateField('to', 'Sampai tanggal'),
+                    $this->dateField('from', 'Dari'),
+                    $this->dateField('to', 'Sampai'),
                     $this->compareField(),
                     $this->granularityField(),
+                    View::make('filament.dashboard.pages.reports.active-filters')->columnSpanFull(),
                 ]),
-            Section::make('Filter lanjutan')
-                ->columnSpanFull()
-                ->icon(Heroicon::OutlinedFunnel)
-                ->collapsible()
-                ->collapsed(fn (): bool => $this->activeFilterPills() === [])
-                ->compact()
-                ->columns(['default' => 1, 'sm' => 2, 'xl' => 3])
-                ->schema([
-                    $this->orderTypeField(),
-                    $this->paymentMethodField(),
-                    $this->cashierField(),
-                    $this->categoryField(),
-                    $this->productField(),
-                    $this->shiftField(fn (): bool => $this->activeTab() === ReportTab::Shifts),
-                ]),
-            View::make('filament.dashboard.pages.reports.active-filters')->columnSpanFull(),
         ]);
     }
 
-    /**
-     * Ringkasan filter lanjutan yang aktif (badge di bawah form).
-     *
-     * @return list<string>
-     */
-    public function activeFilterPills(): array
+    /** @return list<Component> */
+    protected function advancedFilterFields(): array
     {
-        return ReportFilterLabels::describe($this->reportContext()->filters);
+        return [
+            $this->orderTypeField(),
+            $this->paymentMethodField(),
+            $this->cashierField(),
+            $this->categoryField(),
+            $this->productField(),
+            $this->shiftField(fn (): bool => $this->activeTab() === ReportTab::Shifts),
+        ];
     }
 
     /** @return list<class-string> */

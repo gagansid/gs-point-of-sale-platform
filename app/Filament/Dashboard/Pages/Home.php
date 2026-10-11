@@ -27,6 +27,7 @@ use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Maatwebsite\Excel\Facades\Excel;
@@ -129,21 +130,28 @@ final class Home extends Dashboard
     public function filtersForm(Schema $schema): Schema
     {
         return $schema->components([
+            // Toolbar ringkas: periode di satu baris, filter lanjutan di panel samping
             Section::make()
+                ->compact()
                 ->columnSpanFull()
                 ->visible(self::canViewReports())
-                ->columns(['default' => 1, 'sm' => 2, 'xl' => 4])
+                ->extraAttributes(['class' => 'pos-report-filters'])
+                ->columns(['default' => 2, 'md' => 3, 'xl' => 5])
                 ->schema([
                     $this->outletField(),
                     $this->presetField(),
-                    $this->dateField('from', 'Dari tanggal'),
-                    $this->dateField('to', 'Sampai tanggal'),
+                    $this->dateField('from', 'Dari'),
+                    $this->dateField('to', 'Sampai'),
                     $this->compareField(),
-                    $this->orderTypeField(),
-                    $this->paymentMethodField(),
-                    $this->cashierField(),
+                    View::make('filament.dashboard.pages.reports.active-filters')->columnSpanFull(),
                 ]),
         ]);
+    }
+
+    /** @return list<Component> */
+    protected function advancedFilterFields(): array
+    {
+        return [$this->orderTypeField(), $this->paymentMethodField(), $this->cashierField()];
     }
 
     protected function getHeaderActions(): array

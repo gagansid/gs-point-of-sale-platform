@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Shift;
 use App\Models\User;
 use App\Services\Report\ReportContext;
+use App\Services\Report\ReportFilterLabels;
 use App\Services\Report\ReportPeriod;
 use App\Support\CurrentOutlet;
 use Closure;
@@ -55,8 +56,7 @@ trait InteractsWithReportFilters
     protected function mountReportFilters(): void
     {
         $input = $this->filters ?? [];
-        $this->filters = $this->normalizedReportFilters($this->hasReportQuery() ? $this->filtersWithUrl($input) : $input);
-        $this->getFiltersForm()->fill($this->filters);
+        $this->fillReportFilters($this->normalizedReportFilters($this->hasReportQuery() ? $this->filtersWithUrl($input) : $input));
         session()->put($this->getFiltersSessionKey(), $this->filters);
         $this->syncUrlFromFilters($this->filters);
         $this->touchRefreshedAt();
@@ -75,9 +75,20 @@ trait InteractsWithReportFilters
 
     protected function resetReportFilters(): void
     {
-        $this->filters = $this->normalizedReportFilters([]);
-        $this->getFiltersForm()->fill($this->filters);
+        $this->fillReportFilters($this->normalizedReportFilters([]));
         $this->reportFiltersUpdated();
+    }
+
+    /**
+     * Mengisi form toolbar lalu mengembalikan state lengkap: fill() hanya menyimpan field yang ada
+     * di form, padahal filter lanjutan (panel samping) juga disimpan di $filters.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    protected function fillReportFilters(array $filters): void
+    {
+        $this->getFiltersForm()->fill($filters);
+        $this->filters = [...$filters, ...($this->filters ?? [])];
     }
 
     /**
@@ -176,6 +187,68 @@ trait InteractsWithReportFilters
             ->icon(Heroicon::OutlinedXMark)
             ->color('gray')
             ->action(fn () => $this->resetReportFilters());
+    }
+
+    /** Class halaman untuk tata letak laporan yang lebih rapat (home.css). */
+    public function getPageClasses(): array
+    {
+        return [...parent::getPageClasses(), 'pos-report-page'];
+    }
+
+    /**
+     * Field filter lanjutan halaman (tipe order, metode bayar, kasir, …) — tampil di panel samping.
+     *
+     * @return list<Component>
+     */
+    abstract protected function advancedFilterFields(): array;
+
+    /**
+     * Ringkasan filter lanjutan yang aktif (badge di bawah toolbar).
+     *
+     * @return list<string>
+     */
+    public function activeFilterPills(): array
+    {
+        return ReportFilterLabels::describe($this->reportContext()->filters);
+    }
+
+    /** Jumlah kelompok filter lanjutan yang aktif (badge tombol). */
+    public function activeAdvancedFilterCount(): int
+    {
+        return count($this->reportContext()->filters->toArray());
+    }
+
+    /**
+     * Tombol "Filter lanjutan" → panel samping. Nilai diterapkan ke $filters (session + URL) saat
+     * "Terapkan"; "Hapus filter" mengosongkan filter lanjutan saja (periode tetap).
+     */
+    public function advancedFiltersAction(): Action
+    {
+        $keys = ['order_type', 'payment_method_ids', 'user_ids', 'category_ids', 'product_ids', 'shift_ids'];
+
+        return Action::make('advancedFilters')
+            ->label('Filter lanjutan')
+            ->icon(Heroicon::OutlinedFunnel)
+            ->color('gray')
+            ->size('sm')
+            ->badge(fn (): ?int => $this->activeAdvancedFilterCount() ?: null)
+            ->slideOver()
+            ->modalWidth('md')
+            ->modalHeading('Filter lanjutan')
+            ->modalDescription('Persempit laporan berdasarkan tipe order, pembayaran, kasir, atau produk.')
+            ->modalSubmitActionLabel('Terapkan')
+            ->fillForm(fn (): array => array_intersect_key($this->filters ?? [], array_flip($keys)))
+            ->schema(fn (): array => $this->advancedFilterFields())
+            ->extraModalFooterActions(fn (Action $action): array => [
+                $action->makeModalSubmitAction('clearAdvancedFilters', arguments: ['clear' => true])
+                    ->label('Hapus filter')
+                    ->color('gray'),
+            ])
+            ->action(function (array $data, array $arguments) use ($keys): void {
+                $values = ($arguments['clear'] ?? false) ? array_fill_keys($keys, null) : array_intersect_key($data, array_flip($keys));
+                $this->filters = [...($this->filters ?? []), ...$values];
+                $this->updatedFilters();
+            });
     }
 
     // ---------- Field filter ----------

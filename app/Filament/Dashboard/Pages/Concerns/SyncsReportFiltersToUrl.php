@@ -54,14 +54,18 @@ trait SyncsReportFiltersToUrl
      */
     protected function filtersWithUrl(array $filters): array
     {
+        $query = request()->query();
+        // Parameter yang tidak ada di URL memakai nilai session (atau bawaan halaman), bukan bawaan atribut
+        $has = fn (string $key): bool => array_key_exists($key, $query);
+
         return [
             ...$filters,
-            'preset' => $this->urlPeriod,
-            'from' => $this->urlFrom !== '' ? $this->urlFrom : null,
-            'to' => $this->urlTo !== '' ? $this->urlTo : null,
-            'compare' => $this->urlCompare,
-            'order_type' => $this->urlType !== '' ? $this->urlType : null,
-            'granularity' => $this->urlGroup !== '' ? $this->urlGroup : ($filters['granularity'] ?? null),
+            'preset' => $has('period') ? $this->urlPeriod : ($filters['preset'] ?? null),
+            'from' => $has('from') && $this->urlFrom !== '' ? $this->urlFrom : ($filters['from'] ?? null),
+            'to' => $has('to') && $this->urlTo !== '' ? $this->urlTo : ($filters['to'] ?? null),
+            'compare' => $has('compare') ? $this->urlCompare : ($filters['compare'] ?? null),
+            'order_type' => $has('type') ? ($this->urlType !== '' ? $this->urlType : null) : ($filters['order_type'] ?? null),
+            'granularity' => $has('group') && $this->urlGroup !== '' ? $this->urlGroup : ($filters['granularity'] ?? null),
         ];
     }
 

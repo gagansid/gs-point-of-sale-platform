@@ -33,10 +33,10 @@ final class SalesStatsWidget extends StatsOverviewWidget
     // Shared hosting: tanpa polling otomatis (stat-widget.md)
     protected ?string $pollingInterval = null;
 
-    /** @return array<string, int> 1 kolom (mobile) → 2 (md) → 4 (xl), stat-widget.md */
+    /** @return array<string, int> 2 kolom (HP) → 4 (md); nominal mengecil mengikuti lebar kartu */
     protected function getColumns(): array
     {
-        return ['default' => 1, 'md' => 2, 'xl' => 4];
+        return ['default' => 2, 'md' => 4];
     }
 
     protected function getStats(): array

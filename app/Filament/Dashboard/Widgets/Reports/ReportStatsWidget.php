@@ -33,7 +33,7 @@ final class ReportStatsWidget extends StatsOverviewWidget
     /** @return array<string, int> */
     protected function getColumns(): array
     {
-        return ['default' => 1, 'md' => 2, 'xl' => 4];
+        return ['default' => 2, 'md' => 4];
     }
 
     protected function getStats(): array

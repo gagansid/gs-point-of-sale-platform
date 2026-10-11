@@ -141,3 +141,22 @@ it('isolasi tenant: tabel laporan tidak memuat produk tenant lain', function () 
     Livewire::test(ProductsTableWidget::class, ['pageFilters' => ['preset' => 'this_month']])
         ->assertSee('Croissant')->assertDontSee('Roti Tenant Lain');
 });
+
+it('filter lanjutan di panel samping: terapkan, badge, hapus', function () {
+    Livewire::test(Reports::class)
+        ->callAction('advancedFilters', data: ['order_type' => 'dine_in'])
+        ->assertHasNoActionErrors()
+        ->assertSet('filters.order_type', 'dine_in')
+        ->assertSet('urlType', 'dine_in')
+        ->assertSee('Tipe: Makan di tempat')
+        ->callAction('advancedFilters', arguments: ['clear' => true])
+        ->assertSet('filters.order_type', null)
+        ->assertDontSee('Tipe: Makan di tempat');
+});
+
+it('link dengan sebagian parameter: sisanya dari bawaan halaman (bulan ini)', function () {
+    Livewire::withQueryParams(['type' => 'dine_in'])
+        ->test(Reports::class)
+        ->assertSet('filters.preset', 'this_month')
+        ->assertSet('filters.order_type', 'dine_in');
+});

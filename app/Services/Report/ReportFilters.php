@@ -49,7 +49,8 @@ final readonly class ReportFilters
         $type = $input['order_type'] ?? null;
 
         return new self(
-            is_string($type) ? OrderType::tryFrom($type) : null,
+            // Form Filament mengirim enum, query string/API mengirim string
+            $type instanceof OrderType ? $type : (is_string($type) ? OrderType::tryFrom($type) : null),
             self::uuids($input['payment_method_ids'] ?? []),
             self::uuids($input['user_ids'] ?? []),
             self::uuids($input['category_ids'] ?? []),
