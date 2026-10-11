@@ -97,6 +97,7 @@ final class ManageDiningTables extends ManageRecords
             ->modalHeading('Setelan self-order')
             ->modalDescription('Pelanggan memindai QR meja, memesan dari HP, lalu kasir menerima pesanan sebelum pelanggan membayar')
             ->modalWidth('lg')
+            ->modalSubmitActionLabel('Simpan')
             ->fillForm(fn (): array => $values(CurrentOutlet::getOrFail()->id))
             ->schema([
                 Select::make('outlet_id')->label('Outlet')->required()->native(false)->live()

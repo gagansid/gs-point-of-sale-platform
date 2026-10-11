@@ -122,6 +122,10 @@ final class PointOfSale extends Component
     #[Locked]
     public ?string $billId = null;
 
+    // Pesanan meja yang sudah diterima (ADR 0014): item terkunci, hanya bisa dibayar
+    #[Locked]
+    public bool $billLocked = false;
+
     /** Sudah dibayar sebelumnya pada open bill (tampilan; server menghitung ulang) */
     #[Locked]
     public string $billPaid = '0.00';
@@ -187,6 +191,21 @@ final class PointOfSale extends Component
     public function mount(): void
     {
         $this->orderId = (string) Str::uuid7();
+
+        // Dari menu Pesanan meja → Bayar (ADR 0014)
+        if (is_string($bill = request()->query('bill')) && Str::isUuid($bill)) {
+            $this->loadBill($bill);
+        }
+    }
+
+    /** Pesanan meja menunggu bayar: item tidak bisa diubah dari kasir (tagihan sudah dihitung saat diterima). */
+    private function guardLocked(): bool
+    {
+        if ($this->billLocked) {
+            $this->toast('Pesanan meja tidak bisa diubah. Tolak/batalkan lalu buat pesanan baru bila perlu.', 'warning');
+        }
+
+        return $this->billLocked;
     }
 
     /** @return array{categories: Collection<int, Category>, products: Collection<int, Product>, option_groups: Collection<int, OptionGroup>, payment_methods: Collection<int, PaymentMethod>} */
@@ -265,6 +284,10 @@ final class PointOfSale extends Component
 
     public function addProduct(string $productId): void
     {
+        if ($this->guardLocked()) {
+            return;
+        }
+
         $product = $this->product($productId);
 
         if ($product === null || ! $product->is_available) {
@@ -326,6 +349,10 @@ final class PointOfSale extends Component
     /** Enter di kolom cari: barcode/SKU persis (scanner USB) langsung masuk keranjang. */
     public function scan(): void
     {
+        if ($this->guardLocked()) {
+            return;
+        }
+
         $code = trim($this->search);
         $match = $this->catalog['products']->first(fn (Product $p): bool => $code !== ''
             && ((string) $p->barcode === $code || mb_strtolower((string) $p->sku) === mb_strtolower($code)));
@@ -339,6 +366,10 @@ final class PointOfSale extends Component
 
     public function increment(int $index): void
     {
+        if ($this->guardLocked()) {
+            return;
+        }
+
         if (isset($this->cart[$index])) {
             $this->cart[$index]['qty'] = min(999, $this->cart[$index]['qty'] + 1);
         }
@@ -346,6 +377,10 @@ final class PointOfSale extends Component
 
     public function decrement(int $index): void
     {
+        if ($this->guardLocked()) {
+            return;
+        }
+
         if (! isset($this->cart[$index])) {
             return;
         }
@@ -355,6 +390,10 @@ final class PointOfSale extends Component
 
     public function remove(int $index): void
     {
+        if ($this->guardLocked()) {
+            return;
+        }
+
         unset($this->cart[$index]);
         $this->cart = array_values($this->cart);
     }
@@ -379,6 +418,10 @@ final class PointOfSale extends Component
 
     public function editLine(int $index): void
     {
+        if ($this->guardLocked()) {
+            return;
+        }
+
         $line = $this->cart[$index] ?? null;
         $product = $line !== null ? $this->product($line['product_id']) : null;
 
@@ -982,6 +1025,10 @@ final class PointOfSale extends Component
     {
         abort_unless($this->user()->can('order.create'), 403);
 
+        if ($this->guardLocked()) {
+            return;
+        }
+
         if ($this->cart === []) {
             return;
         }
@@ -1017,7 +1064,7 @@ final class PointOfSale extends Component
     /** Buka open bill ke keranjang untuk ditambah item atau dilunasi. */
     public function loadBill(string $orderId): void
     {
-        $order = VisibleOrders::query($this->user())->where('status', OrderStatus::Open)
+        $order = VisibleOrders::query($this->user())->whereIn('status', [OrderStatus::Open, OrderStatus::AwaitingPayment])
             ->with('items.options')->find($orderId);
 
         if ($order === null) {
@@ -1030,6 +1077,7 @@ final class PointOfSale extends Component
         $this->billId = $order->id;
         $this->orderId = $order->id;
         $this->billPaid = $order->paid_total;
+        $this->billLocked = $order->status === OrderStatus::AwaitingPayment;
         $this->orderType = $order->order_type->value;
         $this->tableLabel = (string) $order->table_label;
         $this->notes = (string) $order->notes;
@@ -1104,7 +1152,7 @@ final class PointOfSale extends Component
     private function resetOrder(): void
     {
         $this->reset('cart', 'orderType', 'tableLabel', 'notes', 'discountType', 'discountValue', 'paying', 'payments', 'payError',
-            'billId', 'billPaid', 'needsApproval', 'approverId', 'approverPin', 'holdLabel', 'memberCode', 'memberPin',
+            'billId', 'billPaid', 'billLocked', 'needsApproval', 'approverId', 'approverPin', 'holdLabel', 'memberCode', 'memberPin',
             'memberId', 'memberName', 'stampProgramIds', 'voucherInput', 'appliedVoucherCode', 'voucherId', 'voucherError', 'showMembers', 'memberSearch', 'memberResults', 'newMemberName', 'newMemberPhone', 'newMemberConsent', 'memberError');
         $this->orderId = (string) Str::uuid7();
         // Total yang sudah dihitung di request ini (mis. saat menahan) jangan ikut ter-render
@@ -1165,7 +1213,10 @@ final class PointOfSale extends Component
     private function payBill(array $data): Order
     {
         $device = WebCashier::device();
-        $order = app(SaveOpenBill::class)->handle($this->user(), $device, $this->orderId, OpenBillData::fromArray($this->billInput()))['order'];
+        // Pesanan meja: tagihan tetap dari saat diterima, tidak disimpan ulang sebagai open bill
+        $order = $this->billLocked
+            ? VisibleOrders::query($this->user())->findOrFail($this->orderId)
+            : app(SaveOpenBill::class)->handle($this->user(), $device, $this->orderId, OpenBillData::fromArray($this->billInput()))['order'];
 
         return app(AddPayment::class)->handle($this->user(), $device, $order, CheckoutData::parsePayments($data['payments']),
             $data['member_code'] ?? null, $data['member_pin'] ?? null)['order'];

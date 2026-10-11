@@ -8,6 +8,11 @@
         'orders' => ['Riwayat', route('cashier.orders')],
         'shift' => ['Shift', route('cashier.shift')],
     ];
+    // Pesanan meja (ADR 0014): hanya bila self-order aktif di outlet ini
+    $selfOrder = $outlet !== null && ($user?->can('self_order.handle') ?? false) && \App\Models\SelfOrderSetting::forOutlet($outlet->id)->enabled;
+    if ($selfOrder) {
+        $links = ['pos' => $links['pos'], 'self-orders' => ['Pesanan meja', route('cashier.self-orders')], ...$links];
+    }
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -29,7 +34,7 @@
         </div>
         <nav class="cashier-nav" aria-label="Menu kasir">
             @foreach ($links as $key => [$label, $url])
-                <a href="{{ $url }}" @class(['is-active' => $active === $key]) @if ($active === $key) aria-current="page" @endif>{{ $label }}</a>
+                <a href="{{ $url }}" @class(['is-active' => $active === $key]) @if ($active === $key) aria-current="page" @endif>{{ $label }}@if ($key === 'self-orders')<livewire:cashier.self-order-badge />@endif</a>
             @endforeach
         </nav>
         <form method="POST" action="{{ route('cashier.logout') }}" class="cashier-logout">

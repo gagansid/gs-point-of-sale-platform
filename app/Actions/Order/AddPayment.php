@@ -19,7 +19,7 @@ use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Tambah pembayaran ke open bill (POST /orders/{id}/payments). Boleh bayar sebagian (split bill);
+ * Tambah pembayaran ke open bill atau pesanan meja yang sudah diterima (POST /orders/{id}/payments). Boleh bayar sebagian (split bill);
  * order selesai saat lunas: stok dipotong dan order pindah ke shift penerima uang (Q20).
  * ID pembayaran = idempotency key: kiriman ulang tidak mencatat pembayaran dua kali.
  */
@@ -57,9 +57,7 @@ final class AddPayment
 
         PaymentIds::ensureUnused($payments);
 
-        if ($order->status !== OrderStatus::Open) {
-            throw BusinessException::of(ErrorCode::OrderAlreadyClosed);
-        }
+        self::ensurePayable($order);
 
         $shift = CheckoutOrder::openShiftOf($device);
 
@@ -74,9 +72,7 @@ final class AddPayment
             // Kunci order: dua pembayaran bersamaan tidak bisa melebihi sisa tagihan
             $locked = Order::query()->lockForUpdate()->findOrFail($order->id);
 
-            if ($locked->status !== OrderStatus::Open) {
-                throw BusinessException::of(ErrorCode::OrderAlreadyClosed);
-            }
+            self::ensurePayable($locked);
 
             $remaining = Money::sub($locked->grand_total, $locked->paid_total);
 
@@ -102,5 +98,21 @@ final class AddPayment
         });
 
         return ['order' => CheckoutOrder::load($order), 'replayed' => false];
+    }
+
+    /**
+     * Bisa dibayar: open bill atau pesanan meja yang sudah diterima (ADR 0014). Pesanan meja kedaluwarsa → ORDER_EXPIRED.
+     *
+     * @throws BusinessException
+     */
+    private static function ensurePayable(Order $order): void
+    {
+        if ($order->status === OrderStatus::Expired) {
+            throw BusinessException::of(ErrorCode::OrderExpired, 'Pesanan meja sudah kedaluwarsa karena tidak dibayar');
+        }
+
+        if (! $order->status->isPayable()) {
+            throw BusinessException::of(ErrorCode::OrderAlreadyClosed);
+        }
     }
 }

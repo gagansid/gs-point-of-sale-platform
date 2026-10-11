@@ -7,6 +7,7 @@ use App\Http\Controllers\Web\Cashier\HomeController as CashierHomeController;
 use App\Http\Controllers\Web\Cashier\LoginController as CashierLoginController;
 use App\Http\Controllers\Web\Cashier\OrderController as CashierOrderController;
 use App\Http\Controllers\Web\Cashier\OutletController as CashierOutletController;
+use App\Http\Controllers\Web\Cashier\SelfOrderController as CashierSelfOrderController;
 use App\Http\Controllers\Web\Cashier\ShiftController as CashierShiftController;
 use App\Http\Controllers\Web\DashboardLoginController;
 use App\Http\Controllers\Web\EmailVerificationController;
@@ -104,6 +105,7 @@ Route::domain(Domains::main())->prefix('order')->name('self-order.')
     ->middleware(SetSelfOrderTable::class)
     ->group(function (): void {
         Route::get('t/{token}', [SelfOrderTableController::class, 'show'])->where('token', '[A-Za-z0-9]{32}')->name('table');
+        Route::get('t/{token}/member', [SelfOrderTableController::class, 'member'])->where('token', '[A-Za-z0-9]{32}')->name('member');
     });
 
 /*
@@ -152,6 +154,7 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
 
     Route::middleware(SetCashierContext::class)->group(function (): void {
         Route::get('/', CashierHomeController::class)->name('home');
+        Route::get('self-orders', CashierSelfOrderController::class)->name('self-orders');
         Route::get('orders', [CashierOrderController::class, 'index'])->name('orders');
         Route::get('orders/{order}', [CashierOrderController::class, 'show'])->whereUuid('order')->name('orders.show');
         Route::post('orders/{order}/void', [CashierOrderController::class, 'void'])->whereUuid('order')->name('orders.void');

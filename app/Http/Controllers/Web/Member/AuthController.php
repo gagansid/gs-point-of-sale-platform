@@ -81,7 +81,7 @@ final class AuthController extends Controller
         RateLimiter::clear($lockKey);
         MemberPortal::login($request, $member);
 
-        return redirect()->route('member.home', ['business' => $tenant->slug]);
+        return self::afterLogin($request) ?? redirect()->route('member.home', ['business' => $tenant->slug]);
     }
 
     public function registerForm(): View
@@ -113,7 +113,7 @@ final class AuthController extends Controller
 
         MemberPortal::login($request, $member);
 
-        return redirect()->route('member.home', ['business' => MemberPortal::tenant()->slug])->with('status', 'Selamat bergabung!');
+        return self::afterLogin($request) ?? redirect()->route('member.home', ['business' => MemberPortal::tenant()->slug])->with('status', 'Selamat bergabung!');
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -121,5 +121,13 @@ final class AuthController extends Controller
         MemberPortal::logout($request);
 
         return redirect()->route('member.login', ['business' => MemberPortal::tenant()->slug]);
+    }
+
+    /** Kembali ke halaman pesan meja (ADR 0014) bila login dimulai dari sana; hanya URL /order/t/ milik kita. */
+    private static function afterLogin(Request $request): ?RedirectResponse
+    {
+        $target = $request->session()->pull('member.return_to');
+
+        return is_string($target) && str_starts_with($target, url('/order/t/')) ? redirect()->to($target) : null;
     }
 }

@@ -57,6 +57,7 @@ enum UserRole: string implements HasColor, HasLabel
         'member.settings',
         // Self-order QR meja (ADR 0014)
         'table.manage',
+        'self_order.handle',
     ];
 
     /**
@@ -90,21 +91,21 @@ enum UserRole: string implements HasColor, HasLabel
     {
         return match ($this) {
             self::Owner => ['*'],
-            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view', 'member.view', 'member.create', 'member.manage', 'member.points_adjust', 'table.manage'],
+            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view', 'member.view', 'member.create', 'member.manage', 'member.points_adjust', 'table.manage', 'self_order.handle'],
             // Tanpa order.discount_over_limit: diskon supervisor dibatasi discount_limits.supervisor (Q18, GSPOS-SEC-014)
             self::Supervisor => [
                 'order.create', 'order.view_own', 'order.view_all', 'order.reprint',
                 'order.discount', 'order.void', 'shift.*', 'product.toggle_available',
                 // Laporan operasional maks. 31 hari + rekap shift sendiri + export (Q49, Q52)
                 'report.view_shift', 'report.view_own', 'report.export',
-                'member.view', 'member.create',
+                'member.view', 'member.create', 'self_order.handle',
             ],
             self::Cashier => [
                 'order.create', 'order.view_own', 'order.reprint',
                 'order.discount', 'shift.operate',
                 // Rekap shift sendiri (X/Z-report), Q49
                 'report.view_own',
-                'member.view', 'member.create',
+                'member.view', 'member.create', 'self_order.handle',
             ],
         };
     }

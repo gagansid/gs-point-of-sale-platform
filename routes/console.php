@@ -29,6 +29,9 @@ Schedule::command('pos:expire-member-points')->dailyAt('01:30')->timezone('Asia/
 // Tier member (ADR 0013, Q64): belanja lewat 12 bulan keluar dari hitungan, tier bisa turun
 Schedule::command('pos:evaluate-member-tiers')->dailyAt('01:45')->timezone('Asia/Jakarta')->withoutOverlapping(30);
 
+// Self-order (ADR 0014): pesanan meja yang tidak ditangani / tidak dibayar dalam batas waktu
+Schedule::command('pos:expire-self-orders')->everyMinute()->withoutOverlapping(5);
+
 // Voucher ulang tahun (ADR 0013, Q66): harian, member yang berulang tahun bulan ini (sekali per bulan)
 Schedule::command('pos:issue-birthday-vouchers')->dailyAt('00:15')->timezone('Asia/Jakarta')->withoutOverlapping(30);
 

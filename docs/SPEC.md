@@ -157,6 +157,7 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `member.points_adjust` | Tambah/kurangi poin manual dengan alasan | ✅ | ✅ | ❌ | ❌ |
 | `member.settings` | Program member: aktif/nonaktif, outlet ikut, poin, diskon, tier (M5), kartu stempel (M6), voucher (M7) | ✅ | ❌ | ❌ | ❌ |
 | `table.manage` | Meja & QR self-order, setelan self-order per outlet (ADR 0014) | ✅ | ✅ | ❌ | ❌ |
+| `self_order.handle` | Lihat, terima, & tolak pesanan dari meja (ADR 0014) | ✅ | ✅ | ✅ | ✅ |
 
 ```php
 enum UserRole: string
@@ -261,6 +262,7 @@ tabel master memakai soft delete.
 | Member | `voucher_redemptions` | tenant_id, voucher_id, member_id, order_id (unik per voucher), outlet_id, amount, status (used/voided) (Q66) |
 | Self-order | `dining_tables` | tenant_id, outlet_id, name (unik per outlet), area, qr_token (acak 32, unik), is_active, sort_order — nama `dining_tables` karena `tables` kata kunci MySQL (ADR 0014, Q69) |
 | Self-order | `self_order_settings` | tenant_id, outlet_id (unik), enabled, payment_timeout_minutes (5–120, bawaan 15), opens_at, closes_at (lokal outlet), allow_pay_at_cashier, welcome_text |
+| Self-order | `self_orders` | tenant_id, outlet_id, dining_table_id, member_id, customer_name, items (json: product_id, qty, option_ids, notes), notes, voucher_code, estimated_total, status (pending/accepted/rejected/expired), reject_reason, order_id, handled_by, handled_at, ip_address — `id` dari HP = idempotency key (Q76) |
 | Pembayaran | `payments` | tenant_id, order_id, payment_method_id, user_id, category, amount (dipakai membayar), tendered (uang diterima), change, reference (approval code), status |
 | Sistem Laravel | `personal_access_tokens`, `sessions`, `cache`, `jobs`, `failed_jobs` | Bawaan Laravel / Sanctum |
 
@@ -444,15 +446,19 @@ berdasarkan `error.code`, bukan teks `message`. Detail & contoh:
 | 403 | `APPROVAL_REQUIRED` | Aksi butuh PIN approver |
 | 403 | `SELF_APPROVAL_NOT_ALLOWED` | Approver sama dengan pelaku |
 | 404 | `NOT_FOUND` | Data tidak ditemukan / milik tenant lain |
+| 404 | `TABLE_NOT_FOUND` | QR meja tidak valid, sudah diganti, atau meja nonaktif (ADR 0014) |
 | 404 | `MEMBER_NOT_FOUND` | Member tidak ada, nonaktif, dihapus, atau milik tenant lain (ADR 0013) |
 | 409 | `SHIFT_NOT_OPEN` | Transaksi tanpa shift terbuka |
 | 409 | `ORDER_ALREADY_CLOSED` | Mengubah order yang sudah selesai/void |
 | 409 | `LAST_OWNER_REQUIRED` | Menonaktifkan/menurunkan role owner aktif terakhir |
+| 409 | `ORDER_NOT_PENDING` | Pesanan meja sudah diterima/ditolak kasir lain (ADR 0014) |
+| 409 | `ORDER_EXPIRED` | Pesanan meja melewati batas waktu (belum diterima atau belum dibayar) (ADR 0014) |
 | 409 | `OUTLET_LIMIT_REACHED` | Menambah/mengaktifkan outlet melebihi `tenants.max_outlets` (Q36) |
 | 422 | `VALIDATION_ERROR` | Input tidak valid (detail per field di `error.details`) |
 | 422 | `MEMBER_PROGRAM_DISABLED` | Program member nonaktif di bisnis atau outlet dikecualikan (ADR 0013) |
 | 422 | `INSUFFICIENT_POINTS` | Poin ditukar melebihi saldo, di bawah minimal, atau di atas maksimal persen tagihan (ADR 0013) |
 | 422 | `INVALID_MEMBER_PROOF` | Penukaran poin tanpa/dengan PIN member atau kode QR yang salah/kedaluwarsa |
+| 422 | `SELF_ORDER_DISABLED` | Self-order nonaktif di outlet, di luar jam layanan, atau bisnis hanya-baca (ADR 0014) |
 | 422 | `VOUCHER_INVALID` | Voucher tidak bisa dipakai; `error.details.reason`: not_found, inactive, not_started, expired, quota_exhausted, member_quota_exhausted, min_spend, member_only, tier, outlet, not_owner (ADR 0013, Q66) |
 | 422 | `PAYMENT_EXCEEDS_BALANCE` | Non-tunai melebihi sisa tagihan |
 | 422 | `DISCOUNT_OVER_LIMIT` | Diskon melebihi batas role tanpa approval |
@@ -685,5 +691,6 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q73 | Metode bayar online & refund | Kategori pembayaran baru `online` (otomatis saat Midtrans aktif): tidak masuk kas laci, referensi = transaction_id Midtrans, dilaporkan terpisah. Tanpa refund otomatis: void order online lunas → tanda "perlu refund manual". | Diterima | ADR 0014 |
 | Q74 | Urutan pengerjaan member & self-order | Member M1–M7 (ADR 0013) lalu self-order S1–S4 (ADR 0014). Izin & kode error baru (ADR 0013/0014) masuk tabel resmi SPEC bersamaan dengan implementasinya. Pajak poin sebagai metode bayar perlu dikonfirmasi ke konsultan pajak klien. | Diterima | ADR 0013, ADR 0014 |
 | Q75 | Laporan, ringkasan & import/export member | Tab Laporan **Member** & `GET /reports/members` (`report.view`; tampil bila program member pernah diatur): member vs non-member, member aktif/berulang/baru (member baru per outlet daftar), poin didapat/ditukar/kedaluwarsa, utang poin saat ini (saldo aktif × nilai poin, seluruh bisnis), voucher, gratis stempel, 20 member teratas, sebaran tier; ikut export Excel/PDF. Ringkasan harian email (Q57) memuat transaksi & omzet member, member baru, poin ditukar bila program aktif. **Import** member Excel/CSV (`member.manage`, maks. 1.000 baris, semua baris valid atau tidak ada yang disimpan, nomor HP terdaftar = diperbarui tanpa mengubah kode/poin, pengimpor wajib menyatakan persetujuan pelanggan) & **export** Excel (tanpa member yang dihapus, dibatasi seperti export laporan). | Diterima | ADR 0013 |
+| Q76 | Implementasi self-order S1–S2 | Pesanan dari HP disimpan di `self_orders` (pending/rejected/expired) karena order wajib punya shift & kasir; **order dibuat saat kasir menerima** (status `awaiting_payment`, `channel = self_order`, shift & perangkat kasir penerima, nomor order, harga & member/voucher dihitung ulang), stok dipotong saat lunas. URL QR `gspos.id/order/t/{token}` (domain utama, tanpa subdomain baru — pola halaman member). Tabel meja `dining_tables`. Cetak QR = halaman cetak browser (bukan file PDF). Halaman HP Livewire: menu outlet, opsi, keranjang, nama, catatan, kode voucher, member dari sesi halaman member (link “Masuk sebagai member” kembali ke meja), status polling 5 detik; pesanan sesi disimpan di session per meja. Kasir web: menu **Pesanan meja** (badge polling 10 detik + bunyi; terima/tolak; Belum dibayar → Bayar di layar Transaksi dengan item terkunci). Batas waktu (`payment_timeout_minutes`) berlaku untuk pesanan menunggu kasir (sejak dikirim) dan order belum dibayar (sejak diterima, hanya bila belum ada pembayaran); `pos:expire-self-orders` tiap menit. Batal pesanan yang sudah diterima = void (PIN, Q18). | Diterima | ADR 0014 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

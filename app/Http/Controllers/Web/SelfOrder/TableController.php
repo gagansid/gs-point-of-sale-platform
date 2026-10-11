@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\SelfOrder;
 
 use App\Http\Controllers\Controller;
 use App\Support\SelfOrderContext;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 /** Halaman pesan dari meja (ADR 0014, Q70): menu, keranjang, dan status pesanan (komponen Livewire). */
@@ -17,19 +18,16 @@ final class TableController extends Controller
 
         return view('self-order.table', [
             'context' => $context,
-            'available' => self::availability($context),
+            'available' => $context->unavailableReason(),
         ]);
     }
 
-    /** null = bisa memesan; selain itu alasan untuk ditampilkan. */
-    public static function availability(SelfOrderContext $context): ?string
+    /** Masuk member lalu kembali ke meja ini (sesi halaman member, ADR 0013). */
+    public function member(): RedirectResponse
     {
-        return match (true) {
-            ! $context->setting->enabled => 'Pesan dari meja belum aktif di outlet ini. Silakan pesan di kasir.',
-            $context->tenant->isReadOnly() => 'Pesan dari meja sedang tidak tersedia. Silakan pesan di kasir.',
-            ! $context->setting->isOpenAt(now()->toImmutable(), $context->outlet->timezone) => 'Di luar jam layanan pesan dari meja ('
-                .substr((string) $context->setting->opens_at, 0, 5).'–'.substr((string) $context->setting->closes_at, 0, 5).'). Silakan pesan di kasir.',
-            default => null,
-        };
+        $context = SelfOrderContext::get();
+        session()->put('member.return_to', route('self-order.table', ['token' => $context->table->qr_token]));
+
+        return redirect()->route('member.login', ['business' => $context->tenant->slug]);
     }
 }

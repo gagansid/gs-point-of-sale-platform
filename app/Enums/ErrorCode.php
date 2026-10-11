@@ -33,6 +33,10 @@ enum ErrorCode: string
     case InvalidMemberProof = 'INVALID_MEMBER_PROOF';
     case MemberPinLocked = 'MEMBER_PIN_LOCKED';
     case VoucherInvalid = 'VOUCHER_INVALID';
+    case SelfOrderDisabled = 'SELF_ORDER_DISABLED';
+    case TableNotFound = 'TABLE_NOT_FOUND';
+    case OrderNotPending = 'ORDER_NOT_PENDING';
+    case OrderExpired = 'ORDER_EXPIRED';
     case PaymentExceedsBalance = 'PAYMENT_EXCEEDS_BALANCE';
     case DiscountOverLimit = 'DISCOUNT_OVER_LIMIT';
     case PinLocked = 'PIN_LOCKED';
@@ -49,10 +53,11 @@ enum ErrorCode: string
             self::Forbidden, self::DeviceNotRegistered, self::TenantSuspended,
             self::SubscriptionExpired, self::EmailNotVerified,
             self::ApprovalRequired, self::SelfApprovalNotAllowed => 403,
-            self::NotFound, self::MemberNotFound => 404,
-            self::ShiftNotOpen, self::OrderAlreadyClosed, self::LastOwnerRequired, self::OutletLimitReached => 409,
+            self::NotFound, self::MemberNotFound, self::TableNotFound => 404,
+            self::ShiftNotOpen, self::OrderAlreadyClosed, self::LastOwnerRequired, self::OutletLimitReached,
+            self::OrderNotPending, self::OrderExpired => 409,
             self::ValidationError, self::PaymentExceedsBalance, self::DiscountOverLimit, self::MemberProgramDisabled,
-            self::InsufficientPoints, self::InvalidMemberProof, self::VoucherInvalid => 422,
+            self::InsufficientPoints, self::InvalidMemberProof, self::VoucherInvalid, self::SelfOrderDisabled => 422,
             self::PinLocked, self::MemberPinLocked => 423,
             self::AppUpdateRequired => 426,
             self::TooManyRequests => 429,
@@ -81,6 +86,10 @@ enum ErrorCode: string
             self::InvalidMemberProof => 'PIN atau kode QR member salah atau kedaluwarsa',
             self::MemberPinLocked => 'PIN member terkunci sementara karena terlalu banyak percobaan',
             self::VoucherInvalid => 'Voucher tidak bisa dipakai',
+            self::SelfOrderDisabled => 'Pesan dari meja sedang tidak tersedia',
+            self::TableNotFound => 'Meja tidak ditemukan. Pindai ulang QR di meja',
+            self::OrderNotPending => 'Pesanan sudah ditangani kasir lain',
+            self::OrderExpired => 'Pesanan sudah kedaluwarsa',
             self::ShiftNotOpen => 'Shift belum dibuka',
             self::OrderAlreadyClosed => 'Transaksi sudah selesai atau dibatalkan',
             self::LastOwnerRequired => 'Bisnis wajib memiliki minimal satu owner aktif',

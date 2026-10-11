@@ -1050,6 +1050,92 @@
     font-size: 13.5px;
 }
 
+/* Pesanan meja di kasir web (ADR 0014) */
+.cashier-count {
+    display: inline-flex;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 8px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--site-primary-lt);
+    color: var(--site-navy);
+    font-size: 13px;
+    vertical-align: middle;
+}
+
+.cashier-self-order {
+    display: grid;
+    gap: 8px;
+    padding: 14px 0;
+    border-top: 1px solid var(--site-border);
+}
+
+.cashier-self-order header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+}
+
+.cashier-self-order header .cashier-muted {
+    margin: 0 0 0 auto;
+}
+
+.cashier-self-order ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 14px;
+}
+
+.cashier-self-order > .cashier-muted {
+    margin: 0;
+}
+
+.cashier-self-order footer,
+.cashier-inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.cashier-self-order footer > span {
+    margin-right: auto;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.cashier-self-order .site-btn {
+    min-height: 40px;
+}
+
+.cashier-inline-form input {
+    flex: 1 1 180px;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #dcdee3;
+    border-radius: 10px;
+    font: inherit;
+    font-size: 14px;
+}
+
+.cashier-nav-badge {
+    display: inline-flex;
+    min-width: 20px;
+    height: 20px;
+    margin-left: 6px;
+    padding: 0 6px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
 .cashier-negative {
     color: #b42318;
 }
@@ -2794,6 +2880,293 @@
     color: #ffffff;
     font-size: 14px;
     font-weight: 700;
+}
+
+.self-order {
+    display: grid;
+    gap: 12px;
+    padding-bottom: 72px;
+}
+
+.self-order-alert {
+    padding: 10px 14px;
+    border: 1px solid rgb(220 38 38 / 0.3);
+    border-radius: 10px;
+    background: rgb(220 38 38 / 0.06);
+    color: #b42318;
+    font-size: 14px;
+}
+
+.self-order-tabs,
+.self-order-categories {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+}
+
+.self-order-tabs {
+    padding: 4px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 20px rgb(27 42 85 / 0.08);
+}
+
+.self-order-tabs button,
+.self-order-categories button {
+    flex: 1 0 auto;
+    min-height: 40px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--site-muted);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.self-order-categories button {
+    flex: 0 0 auto;
+    border: 1px solid #dcdee3;
+    background: #ffffff;
+}
+
+.self-order-tabs button.is-active,
+.self-order-categories button.is-active {
+    border-color: var(--site-navy);
+    background: var(--site-navy);
+    color: #ffffff;
+}
+
+.self-order-welcome {
+    padding: 0 4px;
+}
+
+.self-order-menu {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.self-order-menu button {
+    display: grid;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    border: 0;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 6px 20px rgb(27 42 85 / 0.08);
+    color: var(--site-text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.self-order-menu button.is-unavailable {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.self-order-menu img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.self-order-menu-name {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.self-order-menu-price {
+    color: var(--site-primary);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.self-order-floating {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    max-width: 448px;
+    min-height: 48px;
+    margin: 0 auto;
+    box-shadow: 0 10px 24px rgb(27 42 85 / 0.25);
+}
+
+.self-order-lines {
+    display: grid;
+    gap: 10px;
+    margin: 8px 0 12px;
+    padding: 0;
+    list-style: none;
+}
+
+.self-order-lines li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.self-order-lines li > div:first-child {
+    display: grid;
+    min-width: 0;
+}
+
+.self-order-qty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.self-order-qty button {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #dcdee3;
+    border-radius: 10px;
+    background: #ffffff;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.self-order-totals {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4px 12px;
+    margin: 0 0 4px;
+    font-size: 14px;
+}
+
+.self-order-totals dt {
+    color: var(--site-muted);
+}
+
+.self-order-totals dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.self-order-totals .self-order-grand {
+    color: var(--site-navy);
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.self-order-status {
+    margin-bottom: 12px;
+}
+
+.self-order-status-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.self-order-status-head .member-subtitle {
+    margin: 0;
+}
+
+.self-order-badge {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #eef0f4;
+    color: var(--site-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.self-order-badge.is-warning {
+    background: rgb(234 179 8 / 0.15);
+    color: #8a6100;
+}
+
+.self-order-badge.is-info {
+    background: var(--site-primary-lt);
+    color: var(--site-navy);
+}
+
+.self-order-badge.is-success {
+    background: rgb(47 179 68 / 0.12);
+    color: #1d7a2e;
+}
+
+.self-order-badge.is-danger {
+    background: rgb(220 38 38 / 0.1);
+    color: #b42318;
+}
+
+.self-order-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+    background: rgb(15 23 42 / 0.45);
+}
+
+.self-order-sheet form {
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.self-order-options {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 12px;
+    padding: 0;
+    border: 0;
+}
+
+.self-order-options legend {
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
+.self-order-options label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid #dcdee3;
+    border-radius: 10px;
+}
+
+.self-order-options label.is-unavailable {
+    opacity: 0.5;
+}
+
+.self-order-options label .member-muted {
+    margin-left: auto;
+}
+
+.self-order-sheet-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.self-order-sheet-actions .site-btn {
+    flex: 1;
+    min-height: 44px;
 }
 
 /* Voucher pribadi di halaman member (M7) */

@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 /**
  * Order yang boleh dilihat user (riwayat, detail, struk) — Q21:
  * - order.view_all: semua order; tanpa report.view (supervisor) hanya hari ini (tanggal lokal outlet);
- * - order.view_own: order di shift yang ia buka + semua open bill (agar bisa melanjutkan meja).
+ * - order.view_own: order di shift yang ia buka + semua open bill & pesanan meja menunggu bayar.
  */
 final class VisibleOrders
 {
@@ -35,7 +35,8 @@ final class VisibleOrders
         }
 
         return $query->where(fn (Builder $q) => $q
-            ->where('status', OrderStatus::Open)
+            // Open bill & pesanan meja menunggu bayar bisa dilunasi kasir mana pun (ADR 0014)
+            ->whereIn('status', [OrderStatus::Open, OrderStatus::AwaitingPayment])
             ->orWhereIn('shift_id', Shift::query()->where('opened_by', $user->id)->select('id')));
     }
 

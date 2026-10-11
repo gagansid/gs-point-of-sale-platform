@@ -85,7 +85,7 @@
             @endif
             <div class="pos-bill-bar">
                 @if ($billId)
-                    <span class="pos-bill-tag">Open bill {{ $tableLabel ?: '' }}</span>
+                    <span class="pos-bill-tag">{{ $billLocked ? 'Pesanan meja' : 'Open bill' }} {{ $tableLabel ?: '' }}</span>
                 @endif
                 <button type="button" class="site-btn site-btn-outline" wire:click="$set('showBills', true)">
                     Open bill ({{ $this->openBills->count() }})
@@ -284,7 +284,9 @@
                 <button type="button" class="site-btn site-btn-outline" wire:click="hold" @disabled($cart === [])
                     title="Simpan sementara, layani pelanggan berikutnya">Tahan</button>
             @endunless
-            <button type="button" class="site-btn site-btn-outline" wire:click="saveBill" @disabled($cart === [] || $totals === null)>Simpan bill</button>
+            @unless ($billLocked)
+                <button type="button" class="site-btn site-btn-outline" wire:click="saveBill" @disabled($cart === [] || $totals === null)>Simpan bill</button>
+            @endunless
         </div>
         <button type="button" class="site-btn site-btn-primary pos-pay-btn" wire:click="openPayment" @disabled($totals === null)>
             Bayar {{ $totals ? $money(\App\Support\Money::sub($totals->grandTotal, $billPaid)) : '' }}
