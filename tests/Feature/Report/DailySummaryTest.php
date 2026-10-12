@@ -152,7 +152,7 @@ it('toggle di Profil: tampil & tersimpan untuk owner', function () {
     CurrentOutlet::set($this->owner);
 
     Livewire::test(EditProfile::class)
-        ->assertSee('Ringkasan harian')
+        ->assertSee('Kirim ringkasan harian lewat email')
         ->assertSet('data.daily_summary_email', true)
         ->fillForm(['daily_summary_email' => false])
         ->call('save')

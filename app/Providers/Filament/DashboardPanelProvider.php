@@ -57,12 +57,10 @@ final class DashboardPanelProvider extends PanelProvider
             ->profile(EditProfile::class, isSimple: false)
             // Menu akun: profil (bawaan), keamanan, perangkat, bantuan; tema dipindah ke samping nama (user-menu override)
             ->userMenuItems([
-                'security' => Action::make('security')->label('Kata sandi & PIN')->icon(Heroicon::OutlinedLockClosed)
-                    ->url(fn (): string => EditProfile::getUrl().'#keamanan')->sort(1),
-                'sessions' => Action::make('sessions')->label('Perangkat & sesi')->icon(Heroicon::OutlinedDevicePhoneMobile)
-                    ->url(fn (): string => EditProfile::getUrl().'#perangkat')->sort(2),
+                // Menu akun hanya Profil, Bantuan, Keluar (SPEC Q84)
+                'profile' => fn (Action $action): Action => $action->label('Profil')->icon(Heroicon::OutlinedUserCircle),
                 'help' => Action::make('help')->label('Bantuan')->icon(Heroicon::OutlinedQuestionMarkCircle)
-                    ->url(fn (): string => Support::helpUrl(), shouldOpenInNewTab: true)->sort(3),
+                    ->url(fn (): string => Support::helpUrl(), shouldOpenInNewTab: true)->sort(1),
             ])
             ->colors(Theme::colors())
             ->font('Plus Jakarta Sans')

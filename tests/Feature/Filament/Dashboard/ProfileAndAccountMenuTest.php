@@ -30,7 +30,7 @@ beforeEach(function () {
 
 it('profil: bagian lengkap, info akun, simpan nomor HP (dinormalisasi) tanpa kata sandi saat ini', function () {
     $this->get(EditProfile::getUrl())->assertOk()
-        ->assertSee('Foto &amp; data diri', false)->assertSee('Keamanan')->assertSee('Info akun')->assertSee('Perangkat &amp; sesi', false)
+        ->assertSee('Data diri')->assertSee('Keamanan')->assertSee('Info akun')->assertSee('Perangkat &amp; sesi', false)
         ->assertSee('id="keamanan"', false)->assertSee('id="perangkat"', false)->assertSee('Owner');
 
     Livewire::test(EditProfile::class)->fillForm(['phone' => '0812-3456-7890'])->call('save')->assertHasNoFormErrors();
@@ -71,12 +71,13 @@ it('keluar dari semua perangkat lain: sesi lain & token API dihapus, sesi ini te
         ->and(DB::table('sessions')->pluck('id')->all())->toBe(['sesi-ini']);
 });
 
-it('menu akun: kartu akun, kata sandi & PIN, perangkat, bantuan; tema di luar menu', function () {
+it('menu akun: hanya Profil, Bantuan, Keluar; tombol tema di kiri nama (di luar menu)', function () {
     $html = $this->get(EditProfile::getUrl())->assertOk()->getContent();
+    $menu = substr($html, (int) strpos($html, 'fi-user-menu'));
 
-    expect($html)->toContain('gs-account-card')->toContain('Kata sandi &amp; PIN')->toContain('Perangkat &amp; sesi')
-        ->toContain('Bantuan')->toContain('gs-theme-toggle')
-        ->not->toContain('fi-theme-switcher');
+    expect($menu)->toContain('Profil')->toContain('Bantuan')->toContain('Keluar')
+        ->not->toContain('Kata sandi &amp; PIN')->not->toContain('gs-account-card')->not->toContain('fi-theme-switcher')
+        ->and(strpos($html, 'gs-theme-toggle'))->toBeLessThan(strpos($html, 'fi-user-menu'));
 });
 
 it('QR meja: URL pendek dialihkan ke URL asli, ganti QR mengganti kode; kartu ringkas dengan nama panjang dipotong', function () {

@@ -1,6 +1,6 @@
 {{--
     Override gs.POS dari vendor/filament/filament/resources/views/components/user-menu.blade.php (Filament 5.10).
-    Perubahan: trigger posisi topbar, kartu akun di atas menu, tema dipindah ke tombol di samping menu (lihat komentar
+    Perubahan: trigger posisi topbar, menu hanya Profil/Bantuan/Keluar, tema dipindah ke tombol di kiri nama (lihat komentar
     "gs.POS"). Bandingkan ulang setiap upgrade Filament
     (docs/standards/ui/filament-theme.md §2).
 --}}
@@ -47,6 +47,23 @@
 @endphp
 
 {{ FilamentView::renderHook(PanelsRenderHook::USER_MENU_BEFORE) }}
+
+{{-- gs.POS: tombol tema satu klik (terang → gelap → ikut sistem) di kiri nama (sebelum menu akun) --}}
+@if (filament()->hasDarkMode() && (! filament()->hasDarkModeForced()) && filament()->hasThemeSwitcher())
+    <button
+        type="button"
+        class="gs-theme-toggle"
+        x-data="{ theme: localStorage.getItem('theme') || @js(filament()->getDefaultThemeMode()->value) }"
+        x-on:click="theme = ({ light: 'dark', dark: 'system', system: 'light' })[theme] ?? 'light'; $dispatch('theme-changed', theme)"
+        x-bind:aria-label="({ light: 'Tema terang', dark: 'Tema gelap', system: 'Tema ikut sistem' })[theme] + ' — klik untuk ganti'"
+        x-tooltip="{ content: () => ({ light: 'Tema terang', dark: 'Tema gelap', system: 'Ikut sistem' })[theme], theme: $store.theme }"
+    >
+        <span x-show="theme === 'light'">{{ \Filament\Support\generate_icon_html(Heroicon::OutlinedSun) }}</span>
+        <span x-show="theme === 'dark'" x-cloak>{{ \Filament\Support\generate_icon_html(Heroicon::OutlinedMoon) }}</span>
+        <span x-show="theme === 'system'" x-cloak>{{ \Filament\Support\generate_icon_html(Heroicon::OutlinedComputerDesktop) }}</span>
+    </button>
+@endif
+
 
 <x-filament::dropdown
     :placement="($position === UserMenuPosition::Topbar) ? 'bottom-end' : 'top-end'"
@@ -96,22 +113,6 @@
         @endif
     </x-slot>
 
-    {{-- gs.POS: kartu akun di atas menu (foto, nama, email, role · bisnis) --}}
-    @if ($position === UserMenuPosition::Topbar)
-        <div class="gs-account-card">
-            <x-filament-panels::avatar.user :user="$user" loading="lazy" />
-            <div class="gs-account-card-text">
-                <strong>{{ $userName }}</strong>
-                @if (filled($user?->email))
-                    <span>{{ $user->email }}</span>
-                @endif
-                @if ($user instanceof \App\Models\User)
-                    <span>{{ $user->role->getLabel() }} · {{ $user->tenant?->name }}</span>
-                @endif
-            </div>
-        </div>
-    @endif
-
     @if ($hasProfileHeader)
         @php
             $item = $itemsBeforeThemeSwitcher['profile'];
@@ -146,7 +147,7 @@
         </x-filament::dropdown.list>
     @endif
 
-    {{-- gs.POS: tema tidak di dalam menu; tombol tema ada di samping nama (setelah dropdown) --}}
+    {{-- gs.POS: tema tidak di dalam menu; tombol tema ada di kiri nama (sebelum dropdown) --}}
 
     @if ($multiGroupAfterTheme && $afterThemeItemGroups !== [])
         @foreach ($afterThemeItemGroups as $afterThemeGroup)
@@ -180,21 +181,5 @@
         </x-filament::dropdown.list>
     @endif
 </x-filament::dropdown>
-
-{{-- gs.POS: tombol tema satu klik (terang → gelap → ikut sistem) di kanan menu akun --}}
-@if (filament()->hasDarkMode() && (! filament()->hasDarkModeForced()) && filament()->hasThemeSwitcher())
-    <button
-        type="button"
-        class="gs-theme-toggle"
-        x-data="{ theme: localStorage.getItem('theme') || @js(filament()->getDefaultThemeMode()->value) }"
-        x-on:click="theme = ({ light: 'dark', dark: 'system', system: 'light' })[theme] ?? 'light'; $dispatch('theme-changed', theme)"
-        x-bind:aria-label="({ light: 'Tema terang', dark: 'Tema gelap', system: 'Tema ikut sistem' })[theme] + ' — klik untuk ganti'"
-        x-tooltip="{ content: () => ({ light: 'Tema terang', dark: 'Tema gelap', system: 'Ikut sistem' })[theme], theme: $store.theme }"
-    >
-        <span x-show="theme === 'light'">{{ \Filament\Support\generate_icon_html(Heroicon::OutlinedSun) }}</span>
-        <span x-show="theme === 'dark'" x-cloak>{{ \Filament\Support\generate_icon_html(Heroicon::OutlinedMoon) }}</span>
-        <span x-show="theme === 'system'" x-cloak>{{ \Filament\Support\generate_icon_html(Heroicon::OutlinedComputerDesktop) }}</span>
-    </button>
-@endif
 
 {{ FilamentView::renderHook(PanelsRenderHook::USER_MENU_AFTER) }}

@@ -140,7 +140,7 @@ kedaluwarsa tetap diselesaikan, setelah void/lunas = refund manual. Cron `schedu
 | I1 | Menu **Stok → Stok masuk** (draf → Posting → Batalkan, nomor `{outlet}-SM-{YYMMDD}-{urut}`, supervisor ikut punya menu ini) & **Stok → Supplier**; modal produk rata-rata tertimbang lintas outlet saat posting (`WeightedCost`), riwayat stok `purchase`/`purchase_void`; izin `stock.receive`, `supplier.manage` |
 
 ### Profil, menu akun & URL pendek QR (SPEC Q84–Q85) — selesai 2026-10-12
-- Menu akun: kartu akun, Kata sandi & PIN, Perangkat & sesi, Bantuan (`POS_SUPPORT_WHATSAPP`/`POS_SUPPORT_EMAIL`); tombol tema di samping menu.
+- Menu akun: Profil, Bantuan (`POS_SUPPORT_WHATSAPP`/`POS_SUPPORT_EMAIL`), Keluar; tombol tema di kiri nama.
 - Profil: foto (disk `public`, `avatars/{tenant_id}` — perlu `php artisan storage:link` di server), nomor HP, Info akun, Perangkat & sesi (keluar dari perangkat lain).
 - Ikon kolom isian 16px (CSS global `components.css`).
 - QR meja: `/t/{short_code}` → URL asli; kartu cetak 60 mm baru.

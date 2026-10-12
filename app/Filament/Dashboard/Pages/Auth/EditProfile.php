@@ -15,11 +15,9 @@ use App\Support\Phone;
 use Filament\Actions\Action;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -40,78 +38,92 @@ use SensitiveParameter;
  */
 class EditProfile extends BaseEditProfile
 {
+    public function defaultForm(Schema $schema): Schema
+    {
+        // Label di atas kolom (bukan inline bawaan Filament) agar dua kolom tetap rata
+        return parent::defaultForm($schema)->inlineLabel(false);
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Foto & data diri')
-                ->id('data-diri')
-                ->columns(['default' => 1, 'md' => 3])
-                ->schema([
-                    $this->getAvatarFormComponent(),
-                    Grid::make(1)->columnSpan(['md' => 2])->schema([
-                        $this->getNameFormComponent(),
-                        $this->getEmailFormComponent(),
-                        TextInput::make('phone')->label('Nomor HP')->tel()->maxLength(30)->placeholder('0812 3456 7890')
-                            ->formatStateUsing(fn (?string $state): ?string => $state !== null ? Phone::display($state) : null),
+            Grid::make(['default' => 1, 'lg' => 3])->schema([
+                // Kiri: kartu profil (foto, nama, role) + info akun baca saja
+                Section::make()
+                    ->id('data-diri')
+                    ->extraAttributes(['class' => 'gs-profile-card'])
+                    ->schema([
+                        $this->getAvatarFormComponent(),
+                        View::make('filament.dashboard.profile.account-info')
+                            ->viewData(fn (): array => self::accountInfo($this->profileUser())),
                     ]),
+
+                // Kanan: form
+                Grid::make(1)->columnSpan(['lg' => 2])->schema([
+                    Section::make('Data diri')
+                        ->columns(['default' => 1, 'md' => 2])
+                        ->schema([
+                            $this->getNameFormComponent(),
+                            $this->getEmailFormComponent(),
+                            TextInput::make('phone')->label('Nomor HP')->tel()->maxLength(30)->placeholder('0812 3456 7890')
+                                ->formatStateUsing(fn (?string $state): ?string => $state !== null ? Phone::display($state) : null),
+                        ]),
+
+                    Section::make('Keamanan')
+                        ->description('Mengganti kata sandi, PIN, atau email wajib kata sandi saat ini. Kata sandi baru mengeluarkan aplikasi kasir yang memakai akun ini')
+                        ->id('keamanan')
+                        ->columns(['default' => 1, 'md' => 2])
+                        ->schema([
+                            $this->getPasswordFormComponent(),
+                            $this->getPinFormComponent(),
+                            $this->getPasswordConfirmationFormComponent(),
+                            $this->getCurrentPasswordFormComponent(),
+                        ]),
+
+                    Section::make('Notifikasi')
+                        ->visible(fn (): bool => $this->getUser() instanceof User && $this->getUser()->hasPermission('report.view'))
+                        ->schema([$this->getDailySummaryFormComponent()]),
+
+                    Section::make('Perangkat & sesi')
+                        ->description('Tempat akun ini sedang masuk. Keluarkan semua bila ada perangkat yang tidak dikenal')
+                        ->id('perangkat')
+                        ->afterHeader([
+                            Action::make('logoutOthers')->label('Keluar dari perangkat lain')->color('danger')->outlined()->size('sm')
+                                ->icon(Heroicon::OutlinedArrowRightStartOnRectangle)
+                                ->requiresConfirmation()
+                                ->modalHeading('Keluar dari semua perangkat lain?')
+                                ->modalDescription('Sesi dashboard lain dan aplikasi kasir/owner yang memakai akun ini harus masuk ulang. Browser ini tetap masuk.')
+                                ->modalSubmitActionLabel('Keluarkan')
+                                ->action(function (): void {
+                                    $result = app(LogoutOtherSessions::class)->handle($this->profileUser(), session()->getId());
+                                    Notification::make()->success()->title('Perangkat lain dikeluarkan')
+                                        ->body($result['sessions'].' sesi dashboard & '.$result['tokens'].' perangkat aplikasi')->send();
+                                }),
+                        ])
+                        ->schema([
+                            View::make('filament.dashboard.profile.sessions')->viewData(fn (): array => self::sessions($this->profileUser())),
+                        ]),
                 ]),
-
-            Section::make('Keamanan')
-                ->description('Kata sandi baru mengeluarkan aplikasi kasir yang memakai akun ini. Mengganti kata sandi, PIN, atau email wajib kata sandi saat ini')
-                ->id('keamanan')
-                ->columns(['default' => 1, 'md' => 2])
-                ->schema([
-                    $this->getPasswordFormComponent(),
-                    $this->getPasswordConfirmationFormComponent(),
-                    $this->getPinFormComponent(),
-                    $this->getCurrentPasswordFormComponent(),
-                ]),
-
-            Section::make('Notifikasi')
-                ->visible(fn (): bool => $this->getUser() instanceof User && $this->getUser()->hasPermission('report.view'))
-                ->schema([$this->getDailySummaryFormComponent()]),
-
-            Section::make('Info akun')
-                ->columns(['default' => 1, 'md' => 3])
-                ->schema(self::accountInfo($this->profileUser())),
-
-            Section::make('Perangkat & sesi')
-                ->description('Tempat akun ini sedang masuk. Keluarkan semua bila ada perangkat yang tidak dikenal')
-                ->id('perangkat')
-                ->schema([
-                    View::make('filament.dashboard.profile.sessions')->viewData(fn (): array => self::sessions($this->profileUser())),
-                    Actions::make([
-                        Action::make('logoutOthers')->label('Keluar dari semua perangkat lain')->color('danger')
-                            ->icon(Heroicon::OutlinedArrowRightStartOnRectangle)
-                            ->requiresConfirmation()
-                            ->modalHeading('Keluar dari semua perangkat lain?')
-                            ->modalDescription('Sesi dashboard lain dan aplikasi kasir/owner yang memakai akun ini harus masuk ulang. Browser ini tetap masuk.')
-                            ->modalSubmitActionLabel('Keluarkan')
-                            ->action(function (): void {
-                                $result = app(LogoutOtherSessions::class)->handle($this->profileUser(), session()->getId());
-                                Notification::make()->success()->title('Perangkat lain dikeluarkan')
-                                    ->body($result['sessions'].' sesi dashboard & '.$result['tokens'].' perangkat aplikasi')->send();
-                            }),
-                    ]),
-                ]),
+            ]),
         ]);
     }
 
     /** Foto profil: gambar ≤ 2 MB, dipotong persegi, disimpan di folder tenant (UpdateOwnAvatar). */
     protected function getAvatarFormComponent(): Component
     {
-        return FileUpload::make('avatar_path')->label('Foto profil')
+        return FileUpload::make('avatar_path')->label('Foto profil')->hiddenLabel()
             ->avatar()->image()->imageEditor()->circleCropper()
             ->disk('public')->directory(fn (): string => UpdateOwnAvatar::directory($this->profileUser()))->visibility('public')
             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(2048)
             ->helperText('JPG/PNG/WebP, maks. 2 MB')
-            ->alignCenter();
+            ->alignCenter()
+            ->extraAttributes(['class' => 'gs-profile-avatar']);
     }
 
     /** Ringkasan harian lewat email (Q57): hanya untuk yang boleh melihat laporan. */
     protected function getDailySummaryFormComponent(): Component
     {
-        return Toggle::make('daily_summary_email')->label('Ringkasan harian')
+        return Toggle::make('daily_summary_email')->label('Kirim ringkasan harian lewat email')
             ->helperText('Email setiap pagi berisi omzet, void, selisih kas, dan target kemarin. Email harus sudah terverifikasi');
     }
 
@@ -173,7 +185,11 @@ class EditProfile extends BaseEditProfile
         return $user instanceof User ? $user : abort(403);
     }
 
-    /** @return list<Component> */
+    /**
+     * Data kartu profil & info akun (baca saja).
+     *
+     * @return array{name: string, email: string, role: string, tenant: string, rows: list<array{label: string, value: string}>}
+     */
     private static function accountInfo(User $user): array
     {
         // Dimuat ulang: user sesi bisa belum punya semua kolom (strict mode)
@@ -182,15 +198,17 @@ class EditProfile extends BaseEditProfile
         $outlets = $user->accessibleOutlets()->orderBy('name')->pluck('name')->implode(', ');
 
         return [
-            Placeholder::make('info_role')->label('Role')->content($user->role->getLabel()),
-            Placeholder::make('info_outlets')->label('Outlet')->content($outlets !== '' ? $outlets : '—'),
-            Placeholder::make('info_username')->label('Username kasir web')->content($user->username ?? '—'),
-            Placeholder::make('info_email')->label('Status email')
-                ->content($user->email_verified_at !== null ? 'Terverifikasi' : 'Belum diverifikasi'),
-            Placeholder::make('info_last_login')->label('Terakhir masuk')
-                ->content($user->last_login_at?->setTimezone($tz)->locale('id')->translatedFormat('j M Y, H.i') ?? '—'),
-            Placeholder::make('info_joined')->label('Bergabung')
-                ->content($user->created_at?->setTimezone($tz)->locale('id')->translatedFormat('j M Y') ?? '—'),
+            'name' => $user->name,
+            'email' => $user->email ?? '',
+            'role' => (string) $user->role->getLabel(),
+            'tenant' => $user->tenant->name ?? '',
+            'rows' => [
+                ['label' => 'Outlet', 'value' => $outlets !== '' ? $outlets : '—'],
+                ['label' => 'Username kasir web', 'value' => $user->username ?? '—'],
+                ['label' => 'Status email', 'value' => $user->email_verified_at !== null ? 'Terverifikasi' : 'Belum diverifikasi'],
+                ['label' => 'Terakhir masuk', 'value' => $user->last_login_at?->setTimezone($tz)->locale('id')->translatedFormat('j M Y, H.i') ?? '—'],
+                ['label' => 'Bergabung', 'value' => $user->created_at?->setTimezone($tz)->locale('id')->translatedFormat('j M Y') ?? '—'],
+            ],
         ];
     }
 

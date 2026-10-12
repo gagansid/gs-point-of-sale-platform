@@ -334,52 +334,14 @@
     height: 14px;
 }
 
-/* Kartu akun di atas menu akun */
-.gs-account-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.gs-account-card .fi-user-avatar {
-    width: 44px;
-    height: 44px;
-    flex: none;
-    font-size: 15px;
-}
-
-.gs-account-card-text {
-    display: grid;
-    min-width: 0;
-    gap: 1px;
-    font-size: 12.5px;
-    color: var(--text-muted);
-}
-
-.gs-account-card-text strong {
-    overflow: hidden;
-    color: var(--text);
-    font-size: 14px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.gs-account-card-text span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Tombol tema di kanan menu akun: satu ikon, klik berganti terang → gelap → sistem */
+/* Tombol tema di kiri nama (menu akun): satu ikon, klik berganti terang → gelap → sistem */
 .gs-theme-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: var(--control-h);
     height: var(--control-h);
-    margin-inline-start: 4px;
+    margin-inline-end: 4px;
     border-radius: 999px;
     color: var(--text-muted);
     transition: background-color 120ms, color 120ms;
@@ -2826,4 +2788,71 @@ select.fi-select-input {
 .fi-simple-layout {
     --control-h: 40px;
     --control-font: 14px;
+}
+
+/* Profil: kartu kiri (foto, identitas, info akun) */
+.gs-profile-card .gs-profile-avatar {
+    justify-items: center;
+}
+
+.gs-profile-card .gs-profile-avatar .filepond--root {
+    width: 112px;
+    height: 112px;
+    margin-inline: auto;
+}
+
+.gs-profile-summary {
+    display: grid;
+    gap: 16px;
+}
+
+.gs-profile-identity {
+    display: grid;
+    gap: 2px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.gs-profile-identity strong {
+    color: var(--text);
+    font-size: 16px;
+}
+
+.gs-profile-identity span {
+    overflow-wrap: anywhere;
+}
+
+.gs-profile-info-title {
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.gs-profile-info {
+    display: grid;
+    gap: 10px;
+    margin-top: -6px;
+    font-size: 13px;
+}
+
+.gs-profile-info div {
+    display: grid;
+    gap: 1px;
+}
+
+.gs-profile-info dt {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.gs-profile-info dd {
+    color: var(--text);
+}
+
+/* Teks bantuan foto di tengah, di bawah foto */
+.gs-profile-card .fi-fo-field-content-col > .fi-sc {
+    justify-content: center;
 }
