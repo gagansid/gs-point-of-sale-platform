@@ -15,6 +15,7 @@ enum StockMovementType: string implements HasColor, HasLabel
     // Dokumen stok (ADR 0015)
     case Purchase = 'purchase';
     case PurchaseVoid = 'purchase_void';
+    case Opname = 'opname';
 
     public function getLabel(): string
     {
@@ -24,6 +25,7 @@ enum StockMovementType: string implements HasColor, HasLabel
             self::VoidReturn => 'Pengembalian void',
             self::Purchase => 'Stok masuk',
             self::PurchaseVoid => 'Batal stok masuk',
+            self::Opname => 'Stok opname',
         };
     }
 
@@ -35,6 +37,7 @@ enum StockMovementType: string implements HasColor, HasLabel
             self::VoidReturn => 'warning',
             self::Purchase => 'success',
             self::PurchaseVoid => 'danger',
+            self::Opname => 'primary',
         };
     }
 }
