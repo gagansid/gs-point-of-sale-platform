@@ -3527,8 +3527,14 @@
     text-align: start;
 }
 
+/* Jarak logo → penanda langkah (sebelumnya menempel) */
+.install-card .site-auth-logo {
+    margin-bottom: 24px;
+}
+
 .install-steps {
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 6px 14px;
     margin: 0 0 20px;
