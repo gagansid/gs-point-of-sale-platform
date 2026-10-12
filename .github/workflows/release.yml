@@ -1,0 +1,63 @@
+# Paket rilis zip untuk installer web (ADR 0016, docs/install.md).
+# Tag v* → CI → dua paket (jual putus & SaaS) dilampirkan ke GitHub Release. Manual: tab Actions → Release.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  package:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: bcmath, ctype, curl, dom, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, tokenizer, xml, zip
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Versi
+        id: version
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT";
+          else echo "value=dev-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Build paket
+        run: |
+          scripts/release/build-package.sh "${{ steps.version.outputs.value }}" self_hosted dist
+          scripts/release/build-package.sh "${{ steps.version.outputs.value }}" saas dist
+          (cd dist && sha256sum *.zip > SHA256SUMS.txt)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gspos-${{ steps.version.outputs.value }}
+          path: dist/
+          retention-days: 30
+
+      - name: Lampirkan ke GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" > /dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" dist/* --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" dist/* --title "${GITHUB_REF_NAME}" --generate-notes
+          fi

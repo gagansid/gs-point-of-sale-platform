@@ -32,8 +32,8 @@ branch kerja ──PR──▶ review + approve ──merge──▶ master
 ### 1. Server (cPanel)
 
 1. Aktifkan **SSH Access** (cPanel → SSH Access), catat host, port, user.
-2. Instal aplikasi pertama kali (folder project di luar `public_html`, document root ke `public/`, `.env`, `migrate`,
-   cron) sesuai SPEC → *Deploy ke cPanel*. Workflow menolak deploy bila `.env` belum ada.
+2. Instal aplikasi pertama kali lewat form web ([`install.md`](install.md)) atau manual sesuai SPEC → *Deploy ke cPanel*.
+   Workflow menolak deploy bila `.env` belum ada.
 3. Cari path PHP 8.2+ CLI: `ls /opt/cpanel/ea-php8*/root/usr/bin/php` (isi ke variable `PHP_BIN`).
 4. Pastikan `mysqldump` tersedia (backup sebelum migrasi). Bila tidak, set variable `DEPLOY_BACKUP=false`
    (tidak disarankan) atau isi `dump.dump_binary_path` di `config/database.php`.
@@ -95,4 +95,5 @@ Dengan ini "PR di-approve" → bisa di-merge → otomatis ter-deploy.
   (`docs/standards/workflow.md` §8). Backfill data besar diuji dulu di salinan DB produksi (HANDOFF L2).
 - Rollback: revert PR → merge → deploy ulang. Migration tidak di-rollback otomatis; bila perlu pulihkan backup DB
   terakhir (`storage/app/backups`, dibuat tepat sebelum migrasi).
-- Instalasi pertama lewat form web (installer) akan menggantikan langkah manual di 1.2 — dibahas terpisah.
+- Instalasi pertama bisa lewat form web `/install` (paket zip, ADR 0016) — lihat [`install.md`](install.md); setelah itu
+  deploy otomatis ini dipakai untuk rilis berikutnya (`.env` & `storage/` di server tidak disentuh).
