@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Test Scenario QA · gs.POS</title>
+<link rel="icon" href="/images/brand/favicon.svg" type="image/svg+xml">
+<script>
+  // Tema bawaan terang; gelap hanya bila penguji memilihnya (disimpan di browser). Dipasang sebelum CSS agar tidak berkedip.
+  try { if (localStorage.getItem('gspos-qa-theme') === 'dark') document.documentElement.classList.add('dark'); } catch (e) {}
+  // Lebar sidebar terakhir yang dipilih penguji (dibatasi lagi oleh skrip utama: 240px – 35% layar)
+  try { const w = parseInt(localStorage.getItem('gspos-qa-sidebar'), 10); if (w) document.documentElement.style.setProperty('--sidebar-w', Math.min(w, innerWidth * .35) + 'px'); } catch (e) {}
+</script>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700|nunito:800" rel="stylesheet">
+<style>
+/* Token = docs/standards/ui/design-tokens.md (sama dengan dashboard & halaman depan gspos.id) */
+:root{
+  --navy:#1B2A55;--primary:#2D4282;--primary-lt:rgba(45,66,130,.08);--gray:#8A919E;--mist:#B8C0D4;
+  --success:#2FB344;--warning:#F59F00;--danger:#D63939;--info:#066FD1;
+  --success-lt:rgba(47,179,68,.08);--warning-lt:rgba(245,159,0,.10);--danger-lt:rgba(214,57,57,.07);--info-lt:rgba(6,111,209,.07);
+  --body-bg:#F5F7FB;--surface:#FFFFFF;--surface-2:#F9FAFB;--border:#E6E7EB;--border-lt:#EFF0F3;
+  --text:#1E2633;--text-2:#626D7D;--muted:#7E8896;
+  --sidebar-bg:#2D4282;--sidebar-text:#B8C0D4;--sidebar-hover:rgba(255,255,255,.06);--sidebar-active:rgba(184,192,212,.16);--sidebar-border:rgba(255,255,255,.08);
+  --topbar:rgba(255,255,255,.85);--shadow:0 1px 2px rgba(30,38,51,.04);
+  --font:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;--mono:'SF Mono',Monaco,Consolas,monospace;
+}
+html.dark{
+  --primary-lt:rgba(184,192,212,.16);--success-lt:rgba(47,179,68,.16);--warning-lt:rgba(245,159,0,.16);--danger-lt:rgba(214,57,57,.16);--info-lt:rgba(6,111,209,.16);
+  --body-bg:#0F1623;--surface:#1A2332;--surface-2:#141D2B;--border:rgba(255,255,255,.08);--border-lt:rgba(255,255,255,.05);
+  --text:#E6EBF2;--text-2:#B3BCCB;--muted:#8A93A3;--sidebar-bg:#141D2B;--topbar:rgba(20,29,43,.85);--shadow:none;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--body-bg);color:var(--text);font:14px/1.6 var(--font);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+code,.mono{font-family:var(--mono);font-size:12px}
+.hidden{display:none!important}
+
+/* ---------- Sidebar (daftar isi tree) ---------- */
+.sidebar{position:fixed;inset:0 auto 0 0;width:var(--sidebar-w,288px);background:var(--sidebar-bg);color:var(--sidebar-text);display:flex;flex-direction:column;z-index:30;transition:transform .2s}
+.resizer{position:absolute;top:0;right:-4px;width:8px;height:100%;cursor:col-resize;z-index:2;touch-action:none}
+.resizer::after{content:"";position:absolute;top:0;bottom:0;left:3px;width:2px;background:transparent;transition:background .15s}
+.resizer:hover::after,.resizer:focus-visible::after,body.resizing .resizer::after{background:var(--mist)}
+.resizer:focus{outline:none}
+body.resizing{cursor:col-resize;user-select:none}
+body.resizing .sidebar{transition:none}
+.brand{height:56px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--sidebar-border)}
+.logo{display:inline-flex;align-items:center;gap:8px}
+.logo svg{width:28px;height:28px}
+.logo .bm-frame{stroke:#fff}.logo .bm-accent{stroke:var(--mist)}.logo .bm-dot{fill:#fff}
+.logo-word{font:800 19px/1 'Nunito',var(--font);letter-spacing:-.4px;color:#fff}.logo-word b{color:var(--mist);font-weight:800}
+.brand-badge{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(184,192,212,.18);color:#fff}
+.tree-tools{display:flex;gap:6px;padding:12px 12px 4px}
+.tree-tools button{flex:1;border:1px solid var(--sidebar-border);background:transparent;color:var(--sidebar-text);font:500 11.5px var(--font);padding:5px 8px;border-radius:6px;cursor:pointer}
+.tree-tools button:hover{background:var(--sidebar-hover);color:#fff}
+.tree{flex:1;overflow:auto;padding:0 8px 24px;scrollbar-width:thin;scrollbar-color:rgba(184,192,212,.25) transparent}
+.tree-group{font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:rgba(184,192,212,.6);padding:16px 12px 4px}
+.node>.row{display:flex;align-items:center;gap:4px;border-radius:4px;min-height:32px}
+.node>.row:hover{background:var(--sidebar-hover)}
+.node>.row.active{background:var(--sidebar-active);box-shadow:inset 3px 0 0 var(--mist)}
+.node>.row.active a,.node>.row:hover a{color:#fff}
+.caret{width:24px;height:24px;flex:none;border:0;background:transparent;color:var(--sidebar-text);border-radius:4px;cursor:pointer;display:grid;place-items:center;opacity:.7}
+.caret:hover{opacity:1;color:#fff}
+.caret svg{width:14px;height:14px;transition:transform .15s}
+.node.open>.row .caret svg{transform:rotate(90deg)}
+.caret.spacer{visibility:hidden}
+.node>.row a{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px 6px 0;font-size:13px;color:var(--sidebar-text)}
+.node>.row a .num{font-size:11px;font-weight:600;padding:0 7px;border-radius:999px;background:rgba(184,192,212,.14);font-variant-numeric:tabular-nums}
+.children{display:none;margin:2px 0 6px 23px;padding-left:8px;border-left:1px solid var(--sidebar-border)}
+.node.open>.children{display:block}
+.leaf{display:flex;gap:8px;padding:4px 8px;border-radius:4px;font-size:12px;line-height:1.45;color:rgba(184,192,212,.85)}
+.leaf:hover{background:var(--sidebar-hover);color:#fff}
+.leaf.active{background:var(--sidebar-active);color:#fff;box-shadow:inset 2px 0 0 var(--mist)}
+.leaf .mono{font-size:10.5px;opacity:.75;flex:none;padding-top:1px}
+.sidebar-foot{flex:none;padding:12px 16px;border-top:1px solid var(--sidebar-border);font-size:11.5px;color:rgba(184,192,212,.7)}
+
+/* ---------- Topbar ---------- */
+.shell{margin-left:var(--sidebar-w,288px);min-height:100vh;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:20;height:56px;display:flex;align-items:center;gap:12px;padding:0 24px;background:var(--topbar);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.menu-btn{display:none;width:34px;height:34px;border:0;background:transparent;color:var(--text-2);border-radius:6px;cursor:pointer}
+.crumb{flex:1;min-width:0;font-size:13px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb b{color:var(--text);font-weight:600}
+.search{position:relative}
+.search input{width:300px;height:36px;padding:0 12px 0 34px;border:1px solid var(--border);border-radius:6px;background:var(--surface-2);color:var(--text);font:13px var(--font)}
+.search input:focus,.select:focus{outline:2px solid var(--primary-lt);border-color:var(--primary)}
+.search svg{position:absolute;left:10px;top:10px;width:16px;height:16px;color:var(--muted)}
+.theme-btn{width:36px;height:36px;flex:none;display:grid;place-items:center;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text-2);cursor:pointer}
+.theme-btn:hover{color:var(--text);background:var(--surface-2)}
+.theme-btn svg{width:18px;height:18px}
+.theme-btn .i-sun,html.dark .theme-btn .i-moon{display:none}
+html.dark .theme-btn .i-sun{display:block}
+.select{height:36px;padding:0 28px 0 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%237E8896'%3E%3Cpath d='M5.5 7.5 10 12l4.5-4.5'/%3E%3C/svg%3E") no-repeat right 8px center/14px;appearance:none;color:var(--text);font:500 13px var(--font);cursor:pointer}
+
+/* ---------- Konten ---------- */
+.content{flex:1;width:100%;max-width:1120px;margin:0 auto;padding:24px}
+.hero{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;box-shadow:var(--shadow);margin-bottom:24px}
+.eyebrow{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--primary)}
+html.dark .eyebrow{color:var(--mist)}
+.hero h1{margin:6px 0 4px;font-size:22px;font-weight:700;letter-spacing:-.2px}
+.hero p{margin:0;color:var(--text-2);max-width:760px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:20px}
+.stat{border:1px solid var(--border-lt);background:var(--surface-2);border-radius:8px;padding:12px 14px}
+.stat span{font-size:12px;font-weight:500;color:var(--text-2)}
+.stat b{display:block;font-size:28px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat.p1 b{color:var(--danger)}.stat.p2 b{color:var(--warning)}.stat.p3 b{color:var(--success)}
+.filter-note{margin-top:14px;font-size:12.5px;color:var(--muted)}
+
+.section{scroll-margin-top:72px;margin-bottom:32px}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px}
+.section-head h2{margin:2px 0 2px;font-size:18px;font-weight:600}
+.section-head p{margin:0;color:var(--text-2);font-size:13px;max-width:720px}
+.section-head .counts{display:flex;gap:6px;flex:none}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow)}
+.card+.card{margin-top:12px}
+.card-pad{padding:16px}
+.card h3{margin:0 0 10px;font-size:16px;font-weight:600}
+
+.sc{scroll-margin-top:72px;overflow:hidden}
+.sc{cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.sc:hover{border-color:var(--mist)}
+.sc.selected,.sc.flash{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-lt)}
+.sc-head{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-lt)}
+.sc-id{flex:none;font-family:var(--mono);font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;background:var(--primary-lt);color:var(--primary);margin-top:1px}
+html.dark .sc-id{color:var(--mist)}
+.sc-id:hover{text-decoration:underline}
+.sc-title{flex:1;min-width:0}
+.sc-title b{display:block;font-size:14.5px;font-weight:600;line-height:1.4}
+.sc-pre{margin-top:3px;font-size:12.5px;color:var(--text-2)}
+.sc-pre em{font-style:normal;font-weight:600;color:var(--muted);margin-right:4px}
+.sc-body{display:grid;grid-template-columns:1fr 1fr}
+.sc-col{padding:12px 16px}
+.sc-col+.sc-col{border-left:1px solid var(--border-lt)}
+.overline{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.steps,.expect{margin:0;padding:0;list-style:none;font-size:13px}
+.steps{counter-reset:s}
+.steps li,.expect li{position:relative;padding-left:26px;margin-bottom:6px}
+.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:1px;width:18px;height:18px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);font-size:10.5px;font-weight:600;color:var(--text-2);display:grid;place-items:center}
+.expect li::before{content:"";position:absolute;left:3px;top:4px;width:12px;height:12px;background:var(--success);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0z'/%3E%3C/svg%3E") center/contain no-repeat}
+.steps li:last-child,.expect li:last-child{margin-bottom:0}
+.sc-foot{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 16px;background:var(--surface-2);border-top:1px solid var(--border-lt)}
+.sc-foot .ref{margin-left:auto;font-size:11.5px;color:var(--muted);text-align:right}
+
+.badge{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--text-2);border:1px solid var(--border-lt)}
+.badge.P1{background:var(--danger-lt);color:var(--danger);border-color:transparent}
+.badge.P2{background:var(--warning-lt);color:#B76E00;border-color:transparent}
+.badge.P3{background:var(--success-lt);color:#23883A;border-color:transparent}
+html.dark .badge.P2{color:var(--warning)}html.dark .badge.P3{color:var(--success)}
+.badge.layer{background:var(--info-lt);color:var(--info);border-color:transparent;font-family:var(--mono);font-size:10.5px}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-size:13px;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
+td{padding:8px 12px;border-bottom:1px solid var(--border-lt);vertical-align:top;line-height:20px}
+tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even) td{background:var(--surface-2)}
+.ok{color:var(--success);font-weight:600}.miss{color:var(--danger);font-weight:600}
+.trace a{color:var(--primary);font-family:var(--mono);font-size:11.5px}
+html.dark .trace a{color:var(--mist)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+ul.rules{margin:0;padding-left:18px}ul.rules li{margin-bottom:6px}
+
+.empty{text-align:center;padding:48px 16px;color:var(--muted)}
+.footer{display:flex;justify-content:space-between;padding:16px 24px;border-top:1px solid var(--border-lt);font-size:12px;color:var(--muted)}
+.to-top{position:fixed;right:20px;bottom:20px;width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text-2);box-shadow:0 4px 12px rgba(30,38,51,.12);cursor:pointer;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .2s;z-index:10}
+.to-top.show{opacity:1;pointer-events:auto}
+.scrim{display:none}
+
+/* ---------- Responsif ---------- */
+@media (max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)}.sc-body{grid-template-columns:1fr}.sc-col+.sc-col{border-left:0;border-top:1px solid var(--border-lt)}.grid-2{grid-template-columns:1fr}}
+@media (max-width:960px){
+  .sidebar{transform:translateX(-100%);width:288px}.resizer{display:none}body.nav-open .sidebar{transform:none}
+  body.nav-open .scrim{display:block;position:fixed;inset:0;background:rgba(15,22,35,.45);z-index:25}
+  .shell{margin-left:0}.menu-btn{display:grid;place-items:center}
+  .topbar{padding:0 12px;flex-wrap:wrap;height:auto;min-height:56px;padding-block:10px}
+  .search{order:5;flex-basis:100%}.search input{width:100%}
+  .content{padding:16px}.stats{grid-template-columns:repeat(2,1fr)}
+  .section,.sc,.card{scroll-margin-top:124px}
+  .section-head{flex-direction:column;align-items:flex-start}
+}
+@media print{.sidebar,.topbar,.to-top{display:none}.shell{margin-left:0}.sc{break-inside:avoid}}
+</style>
+</head>
+<body>
+<aside class="sidebar" id="sidebar" aria-label="Daftar isi">
+  <div class="brand">
+    <span class="logo" aria-label="gs.POS">
+      <svg viewBox="9.75 9.75 44.5 44.75" aria-hidden="true"><rect class="bm-frame" x="14" y="14" width="36" height="27" rx="5" fill="none" stroke-width="4.5"/><path class="bm-accent" d="M22.5 27.5h9" stroke-width="4.5" stroke-linecap="round"/><circle class="bm-dot" cx="40.5" cy="27.5" r="3"/><path class="bm-accent" d="M22 50h20" stroke-width="5" stroke-linecap="round"/></svg>
+      <span class="logo-word"><b>gs</b>.POS</span>
+    </span>
+    <span class="brand-badge">QA</span>
+  </div>
+  <div class="tree-tools">
+    <button type="button" id="expand-all">Buka semua</button>
+    <button type="button" id="collapse-all">Tutup semua</button>
+  </div>
+  <nav class="tree" id="tree"></nav>
+  <div class="sidebar-foot" id="sidebar-foot"></div>
+  <div class="resizer" id="resizer" role="separator" aria-orientation="vertical" aria-label="Geser untuk mengubah lebar daftar isi" tabindex="0" title="Geser untuk mengubah lebar · klik dua kali untuk kembali ke lebar bawaan"></div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<div class="shell">
+  <header class="topbar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-label="Buka daftar isi">
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M3 5h14v1.6H3zM3 9.2h14v1.6H3zM3 13.4h14V15H3z"/></svg>
+    </button>
+    <div class="crumb" id="crumb">Test Scenario</div>
+    <label class="search">
+      <svg viewBox="0 0 20 20" fill="currentColor"><path d="M8.5 3a5.5 5.5 0 0 1 4.38 8.83l3.65 3.64-1.06 1.06-3.64-3.65A5.5 5.5 0 1 1 8.5 3Zm0 1.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/></svg>
+      <input id="q" type="search" placeholder="Cari ID, judul, endpoint, error code…" aria-label="Cari skenario">
+    </label>
+    <select class="select" id="fp" aria-label="Prioritas"><option value="">Prioritas</option><option>P1</option><option>P2</option><option>P3</option></select>
+    <select class="select" id="ft" aria-label="Tipe"><option value="">Tipe</option></select>
+    <select class="select" id="fl" aria-label="Layer"><option value="">Layer</option></select>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="Ganti tema" title="Ganti tema">
+      <svg class="i-moon" viewBox="0 0 20 20" fill="currentColor"><path d="M15.3 12.9A6.5 6.5 0 0 1 7.1 4.7a.75.75 0 0 0-1-.9 8 8 0 1 0 10.1 10.1.75.75 0 0 0-.9-1Z"/></svg>
+      <svg class="i-sun" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0-4.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 1.5Zm0 14a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15.5ZM18.5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm-14 0a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5a.75.75 0 0 1 .75.75Zm11.5-6a.75.75 0 0 1 0 1.06l-1.06 1.06a.75.75 0 1 1-1.06-1.06L14.94 4A.75.75 0 0 1 16 4ZM6.12 13.88a.75.75 0 0 1 0 1.06L5.06 16A.75.75 0 1 1 4 14.94l1.06-1.06a.75.75 0 0 1 1.06 0ZM16 16a.75.75 0 0 1-1.06 0l-1.06-1.06a.75.75 0 1 1 1.06-1.06L16 14.94A.75.75 0 0 1 16 16ZM6.12 6.12a.75.75 0 0 1-1.06 0L4 5.06A.75.75 0 0 1 5.06 4l1.06 1.06a.75.75 0 0 1 0 1.06Z"/></svg>
+    </button>
+  </header>
+
+  <main class="content">
+    <section class="hero" id="overview">
+      <span class="eyebrow">Quality Assurance · view only</span>
+      <h1>Test Scenario Menyeluruh</h1>
+      <p>Daftar skenario uji gs.POS dari instalasi sampai alur bisnis end-to-end. Disusun dari <code>docs/SPEC.md</code>, <code>docs/api/*</code>, ADR 0001–0016, daftar route, dan <code>app/Actions/*</code>. Dokumen yang sama dibaca automation lewat JSON di dalam halaman ini.</p>
+      <div class="stats" id="stats"></div>
+      <div class="filter-note" id="count"></div>
+    </section>
+
+    <section class="section" id="guide">
+      <div class="section-head"><div><span class="eyebrow">Pendahuluan</span><h2>Cara membaca & aturan eksekusi</h2></div></div>
+      <div class="card card-pad" id="guide-columns">
+        <h3>Kolom skenario</h3>
+        <table>
+          <tbody>
+            <tr><td style="width:130px"><b>ID</b></td><td><code>{KATEGORI}-{NNN}</code>, tetap dan tidak dinomori ulang. Dipakai automation sebagai nama test, mis. <code>it('[ORD-012] …')</code>. Skenario baru ditambah di akhir kategori.</td></tr>
+            <tr><td><b>Prioritas</b></td><td><span class="badge P1"><span class="dot"></span>P1</span> kritis: uang, isolasi tenant, auth, kehilangan data · <span class="badge P2"><span class="dot"></span>P2</span> fungsi utama · <span class="badge P3"><span class="dot"></span>P3</span> tampilan/kenyamanan</td></tr>
+            <tr><td><b>Tipe</b></td><td><code>POS</code> positif · <code>NEG</code> negatif/validasi · <code>PERM</code> permission · <code>ISO</code> isolasi tenant/outlet · <code>IDEM</code> idempotensi · <code>CONC</code> konkurensi · <code>SEC</code> keamanan · <code>EDGE</code> nilai batas · <code>CALC</code> perhitungan · <code>E2E</code> alur lintas modul</td></tr>
+            <tr><td><b>Layer</b></td><td><span class="badge layer">UNIT</span> Pest unit · <span class="badge layer">ACT</span> Action tanpa HTTP · <span class="badge layer">API</span> HTTP <code>/api/v1</code> · <span class="badge layer">WEB</span> HTTP/Livewire/Filament · <span class="badge layer">BRW</span> browser Dusk · <span class="badge layer">CMD</span> artisan/scheduler · <span class="badge layer">MYSQL</span> wajib grup <code>mysql</code></td></tr>
+            <tr><td><b>Ref</b></td><td>Endpoint, <code>error.code</code>, keputusan SPEC (Q…), atau ADR. Dipakai matriks keterlacakan di bagian akhir.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid-2" style="margin-top:12px">
+        <div class="card card-pad" id="guide-personas">
+          <h3>Persona & data uji</h3>
+          <table>
+            <tbody>
+              <tr><td><code>OWN-A</code></td><td>Owner tenant A, email terverifikasi, status <code>active</code>, semua outlet</td></tr>
+              <tr><td><code>MGR-A</code> <code>SPV-A</code> <code>KSR-A</code></td><td>Manager, supervisor, kasir tenant A di outlet <code>A1</code>; supervisor & kasir punya PIN 6 digit + username</td></tr>
+              <tr><td><code>KSR-A2</code></td><td>Kasir tenant A yang hanya ditugaskan ke outlet <code>A2</code></td></tr>
+              <tr><td><code>OWN-B</code> <code>KSR-B</code></td><td>Tenant B sebagai pembanding isolasi</td></tr>
+              <tr><td><code>DEV-A1</code> <code>DEV-A2</code></td><td>Perangkat terdaftar di outlet A1 / A2</td></tr>
+              <tr><td><code>ADM</code></td><td>Super admin (guard terpisah; 2FA dimatikan via env uji kecuali skenario 2FA)</td></tr>
+              <tr><td><code>MEM-A</code> <code>GUEST</code></td><td>Member tenant A · tamu self-order</td></tr>
+              <tr><td>Outlet A1</td><td>Pajak 11% exclusive, service 5%, pembulatan Rp100, batas diskon kasir 10% / supervisor 25%, <code>Asia/Jakarta</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card card-pad" id="guide-rules">
+          <h3>Aturan eksekusi</h3>
+          <ul class="rules">
+            <li>Data dibuat dengan factory / <code>posSetup()</code>, bukan seeder.</li>
+            <li>Jangan <code>migrate:fresh</code>/<code>db:wipe</code> atau menyentuh <code>database/database.sqlite</code>. Browser test memakai <code>database/dusk.sqlite</code> lewat <code>./vendor/bin/pest tests/Browser</code>, bukan <code>php artisan dusk</code>.</li>
+            <li>Midtrans, email, dan storage backup selalu di-fake. Tidak ada request ke internet.</li>
+            <li>Waktu dibekukan (<code>freezeTime</code>/<code>travelTo</code>) untuk skenario tanggal, trial, kedaluwarsa, nomor order.</li>
+            <li>Setiap respons API dicek envelope-nya: <code>success</code>, <code>message</code> berbahasa Indonesia, <code>data</code>/<code>error.code</code>, <code>meta.request_id</code>.</li>
+            <li>Uang dibandingkan sebagai string desimal (<code>"62000.00"</code>); tanggal ISO 8601 UTC.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div id="content"></div>
+    <div class="empty card hidden" id="empty">Tidak ada skenario yang cocok dengan filter.</div>
+
+    <section class="section" id="traceability">
+      <div class="section-head"><div><span class="eyebrow">Kelengkapan</span><h2>Matriks keterlacakan</h2><p>Dihitung otomatis dari kolom Ref. Merah berarti belum ada skenario yang merujuk.</p></div></div>
+      <div class="card" id="trace-errors-card"><div class="card-pad" style="padding-bottom:0"><h3>Error code resmi</h3></div><table class="trace" id="trace-errors"></table></div>
+      <div class="card" id="trace-routes-card"><div class="card-pad" style="padding-bottom:0"><h3>Endpoint & route</h3></div><table class="trace" id="trace-routes"></table></div>
+    </section>
+  </main>
+  <footer class="footer"><span>gs.POS © 2026 · Test Scenario QA</span><span id="version"></span></footer>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas"><svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path d="M10 5.5 15.5 11l-1.06 1.06L10 7.62l-4.44 4.44L4.5 11z"/></svg></button>
+
+<!--
+  DATA SKENARIO — sumber tunggal untuk tampilan ini DAN untuk automation.
+  Automation: ambil isi <script id="test-scenarios"> lalu JSON.parse / json_decode.
+  Bentuk: { version, categories: [ { code, name, description, scenarios: [ { id, title, pre, steps[], expected[], priority, type[], layer[], ref[] } ] } ],
+            official_error_codes[], routes[] }
+-->
+<script id="test-scenarios" type="application/json">
+{
+"version": "1.0.0",
+"generated_at": "2026-10-12",
+"official_error_codes": ["UNAUTHENTICATED","INVALID_PIN","DEVICE_NOT_REGISTERED","FORBIDDEN","TENANT_SUSPENDED","SUBSCRIPTION_EXPIRED","EMAIL_NOT_VERIFIED","APPROVAL_REQUIRED","SELF_APPROVAL_NOT_ALLOWED","NOT_FOUND","TABLE_NOT_FOUND","MEMBER_NOT_FOUND","SHIFT_NOT_OPEN","ORDER_ALREADY_CLOSED","LAST_OWNER_REQUIRED","ORDER_NOT_PENDING","ORDER_EXPIRED","OUTLET_LIMIT_REACHED","VALIDATION_ERROR","MEMBER_PROGRAM_DISABLED","INSUFFICIENT_POINTS","INVALID_MEMBER_PROOF","PAYMENT_GATEWAY_NOT_CONFIGURED","SELF_ORDER_DISABLED","VOUCHER_INVALID","PAYMENT_EXCEEDS_BALANCE","DISCOUNT_OVER_LIMIT","PIN_LOCKED","MEMBER_PIN_LOCKED","APP_UPDATE_REQUIRED","TOO_MANY_REQUESTS","SERVER_ERROR","PAYMENT_GATEWAY_ERROR","MAINTENANCE"],
+"routes": ["GET /v1/system/status","POST /v1/auth/login","POST /v1/auth/logout","GET /v1/auth/me","POST /v1/auth/pin-login","POST /v1/devices","GET /v1/devices/{uid}/cashiers","GET /v1/catalog","POST /v1/categories","PUT /v1/categories/{id}","DELETE /v1/categories/{id}","GET /v1/products","POST /v1/products","PUT /v1/products/{id}","DELETE /v1/products/{id}","GET /v1/products/barcode/{code}","PATCH /v1/products/{id}/availability","POST /v1/products/{id}/stock","POST /v1/option-groups","PUT /v1/option-groups/{id}","DELETE /v1/option-groups/{id}","GET /v1/shifts/current","POST /v1/shifts","POST /v1/shifts/{id}/close","POST /v1/shifts/{id}/force-close","GET /v1/shifts/{id}/summary","POST /v1/checkout","PUT /v1/orders/{id}","POST /v1/orders/{id}/payments","GET /v1/orders","GET /v1/orders/{id}","GET /v1/orders/{id}/receipt","POST /v1/orders/{id}/void","GET /v1/members","POST /v1/members","GET /v1/members/{id}","GET /v1/members/{id}/points","GET /v1/vouchers/check","GET /v1/self-orders","POST /v1/self-orders/{id}/accept","POST /v1/self-orders/{id}/reject","GET /v1/outlets","GET /v1/outlet","PUT /v1/outlet","GET /v1/users","POST /v1/users","GET /v1/users/{id}","PUT /v1/users/{id}","POST /v1/users/{id}/unlock-pin","GET /v1/payment-methods","PUT /v1/payment-methods/{id}","GET /v1/reports/summary","GET /v1/reports/products","GET /v1/reports/payment-methods","GET /v1/reports/dashboard","GET /v1/reports/hourly","GET /v1/reports/audit","GET /v1/reports/categories","GET /v1/reports/channels","GET /v1/reports/employees","GET /v1/reports/heatmap","GET /v1/reports/members","GET /v1/reports/options","GET /v1/reports/profit","GET /v1/reports/purchases","GET /v1/reports/shifts","GET /v1/reports/shifts/{id}","GET /v1/reports/shifts/{id}/pdf","GET /v1/reports/stock","GET /v1/reports/trend","POST /webhooks/midtrans/{tenant}","GET /install","POST /install/token","POST /install/requirements","POST /install/database","POST /install/application","POST /install/accounts","POST /install/run/{step}","GET /","POST /contact-sales","GET /register","POST /register","GET /login","POST /login","GET /auth/ticket","POST /forgot-password","POST /reset-password","GET /email/verify/{user}/{hash}","POST /email/verification-notification","GET /cashier/login","POST /cashier/login","POST /cashier/logout","GET /cashier/confirm","POST /cashier/confirm","POST /cashier/outlet","GET /cashier","POST /cashier/shift","POST /cashier/shift/close","GET /cashier/shifts/{id}","GET /cashier/shifts/{id}/pdf","GET /cashier/orders","GET /cashier/orders/{id}","GET /cashier/orders/{id}/receipt","POST /cashier/orders/{id}/void","GET /cashier/self-orders","GET /m/{business}/register","POST /m/{business}/register","POST /m/{business}/login","POST /m/{business}/logout","GET /m/{business}","GET /m/{business}/code","GET /m/{business}/history","POST /m/{business}/profile","POST /m/{business}/password","POST /m/{business}/delete","GET /order/t/{token}","GET /order/t/{token}/member","GET /t/{code}","GET /tables/print","POST /switch-outlet/{outlet}","GET /orders/{id}/receipt"],
+"categories": [
+
+{"code":"SYS","name":"Instalasi, edisi & mode domain","description":"Web installer /install (ADR 0016), pos:install, edisi saas/self_hosted (ADR 0009), mode subdomain vs satu domain (ADR 0008).","scenarios":[
+{"id":"SYS-001","title":"Aplikasi belum terinstal mengalihkan semua request ke installer","pre":"storage/app/installed.json tidak ada","steps":["Buka / , /dashboard, /admin","Panggil GET /api/v1/system/status"],"expected":["Semua halaman web redirect ke /install","API menjawab 503 MAINTENANCE dengan envelope standar"],"priority":"P1","type":["POS"],"layer":["WEB","API"],"ref":["ADR 0016","GET /install","MAINTENANCE"]},
+{"id":"SYS-002","title":"Kode instal wajib bila INSTALL_TOKEN diisi","pre":"INSTALL_TOKEN di env","steps":["Buka /install","Kirim kode salah ke POST /install/token","Kirim kode benar"],"expected":["Form meminta kode","Kode salah ditolak dengan pesan, tetap di langkah kode","Kode benar lanjut ke cek syarat"],"priority":"P1","type":["SEC","NEG"],"layer":["WEB"],"ref":["POST /install/token","ADR 0016"]},
+{"id":"SYS-003","title":"Installer tanpa kode menampilkan peringatan","pre":"INSTALL_TOKEN kosong","steps":["Buka /install"],"expected":["Langsung ke cek syarat","Peringatan 'selesaikan instalasi segera' tampil"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["GET /install","ADR 0016"]},
+{"id":"SYS-004","title":"Cek syarat server","pre":"Simulasikan ekstensi hilang / folder tidak bisa ditulis / mysqldump tidak ada","steps":["Buka langkah syarat","POST /install/requirements"],"expected":["PHP < 8.2, ekstensi wajib hilang, folder tidak writable → tidak bisa lanjut","mysqldump tidak ada → hanya peringatan, tetap bisa lanjut"],"priority":"P2","type":["NEG","EDGE"],"layer":["WEB"],"ref":["POST /install/requirements"]},
+{"id":"SYS-005","title":"Tes koneksi database","pre":"-","steps":["Kirim kredensial salah","Kirim kredensial benar ke DB yang sudah berisi tabel","Kirim kredensial benar ke DB kosong"],"expected":["Kredensial salah → pesan jelas tanpa membocorkan password","DB tidak kosong → ditolak (tidak bisa menimpa data)","DB kosong → lanjut"],"priority":"P1","type":["NEG","SEC"],"layer":["WEB"],"ref":["POST /install/database"]},
+{"id":"SYS-006","title":"Throttle tes koneksi & submit installer","pre":"-","steps":["Kirim POST /install/database 11× dalam 1 menit dari IP sama"],"expected":["Request ke-11 ditolak 429"],"priority":"P2","type":["SEC"],"layer":["WEB"],"ref":["POST /install/database","TOO_MANY_REQUESTS"]},
+{"id":"SYS-007","title":"Langkah aplikasi menulis .env dengan aman","pre":"-","steps":["Isi nama aplikasi berisi kutip dan #","Isi field berisi baris baru","Submit POST /install/application"],"expected":["Kutip & # di-escape di .env","Baris baru ditolak validasi","Edisi terpilih bawaan dari paket (POS_EDITION)"],"priority":"P1","type":["SEC","NEG"],"layer":["WEB"],"ref":["POST /install/application"]},
+{"id":"SYS-008","title":"Langkah akun sesuai edisi","pre":"-","steps":["Edisi self_hosted tanpa data bisnis","Edisi saas tanpa data bisnis","Password super admin lemah"],"expected":["self_hosted: bisnis + outlet + owner wajib","saas: bisnis opsional","Password mengikuti Password::defaults()"],"priority":"P2","type":["NEG"],"layer":["WEB"],"ref":["POST /install/accounts"]},
+{"id":"SYS-009","title":"Proses instal per langkah dan dapat dilanjutkan","pre":"Langkah 1–4 selesai","steps":["Jalankan POST /install/run/{step} berurutan: env, key, migrasi per file, data awal, akun, storage link, cache","Refresh halaman di tengah migrasi lalu lanjutkan"],"expected":["Progress per langkah tampil","Status disimpan di install-state.json; setelah refresh lanjut dari langkah terakhir, tidak mengulang yang sudah sukses"],"priority":"P1","type":["POS","EDGE"],"layer":["WEB"],"ref":["POST /install/run/{step}","GET /install"]},
+{"id":"SYS-010","title":"Langkah instal gagal bisa diulang","pre":"Simulasikan migrasi gagal","steps":["Jalankan langkah migrasi yang gagal","Klik ulangi"],"expected":["Pesan error jelas (tanpa stack trace / password)","Langkah sebelumnya tidak rusak; ulangi berhasil setelah penyebab diperbaiki"],"priority":"P2","type":["NEG"],"layer":["WEB"],"ref":["POST /install/run/{step}"]},
+{"id":"SYS-011","title":"Selesai instal mengunci installer","pre":"Instal sukses","steps":["Buka /install lagi","Cek .env"],"expected":["installed.json dibuat; /install 404 selamanya","Redirect ke halaman login","APP_ENV=production, APP_DEBUG=false, izin file .env 0640"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["GET /install","ADR 0016"]},
+{"id":"SYS-012","title":"Rahasia installer tidak bocor","pre":"Instal berjalan","steps":["Periksa laravel.log, respons HTML/JSON, install-state.json"],"expected":["Password DB & akun tidak pernah muncul di log, respons, atau ditampilkan ulang di form"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["ADR 0016"]},
+{"id":"SYS-013","title":"CSRF aktif di semua POST installer","pre":"-","steps":["Kirim POST /install/* tanpa token CSRF"],"expected":["419 / ditolak"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["POST /install/database"]},
+{"id":"SYS-014","title":"Instal lewat terminal pos:install","pre":"DB kosong","steps":["Jalankan php artisan pos:install dengan input valid","Jalankan ulang"],"expected":["Satu tenant + outlet + owner + metode bayar bawaan dibuat","Jalankan ulang tidak membuat tenant kedua"],"priority":"P2","type":["POS","IDEM"],"layer":["CMD"],"ref":["ADR 0009"]},
+{"id":"SYS-015","title":"Edisi self_hosted","pre":"POS_EDITION=self_hosted","steps":["Buka /, /register","Buka panel admin","Cek tenant"],"expected":["/ → halaman login, /register tidak tersedia","Menu Calon pelanggan tidak ada","subscription_ends_at null (tanpa trial)"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["ADR 0009","GET /register"]},
+{"id":"SYS-016","title":"Edisi saas","pre":"POS_EDITION=saas","steps":["Buka /, /register"],"expected":["Halaman depan & daftar mandiri aktif"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["ADR 0009","GET /"]},
+{"id":"SYS-017","title":"Mode subdomain vs satu domain","pre":"Dua konfigurasi POS_*_DOMAIN","steps":["Mode subdomain: akses app., admin., api. host","Mode satu domain: akses /dashboard, /admin, /api/v1"],"expected":["Routing benar di kedua mode","Cookie session terpisah per subdomain; session dashboard tidak berlaku di admin","URL /storage relatif ke host"],"priority":"P2","type":["POS","SEC"],"layer":["WEB"],"ref":["ADR 0008","Q28"]},
+{"id":"SYS-018","title":"Command admin","pre":"-","steps":["php artisan pos:create-admin","php artisan pos:admin-reset-2fa untuk admin tersebut"],"expected":["Admin dibuat di tabel admins","2FA admin direset; login berikutnya diminta setup 2FA"],"priority":"P3","type":["POS"],"layer":["CMD"],"ref":["ADR 0006"]}
+]},
+
+{"code":"SITE","name":"Halaman depan, pendaftaran & akun owner","description":"gspos.id: landing, hubungi sales, daftar mandiri, verifikasi email, login pusat + tiket, lupa/atur ulang kata sandi (Q29–Q34).","scenarios":[
+{"id":"SITE-001","title":"Halaman depan tampil","pre":"Edisi saas","steps":["GET /"],"expected":["200, berisi CTA daftar & login, tanpa error console"],"priority":"P3","type":["POS"],"layer":["WEB","BRW"],"ref":["GET /"]},
+{"id":"SITE-002","title":"Form hubungi sales sukses","pre":"-","steps":["POST /contact-sales dengan data valid"],"expected":["Lead tersimpan & tampil di admin Calon pelanggan","IP disimpan sebagai HMAC, bukan IP mentah"],"priority":"P2","type":["POS","SEC"],"layer":["WEB"],"ref":["POST /contact-sales","Q29"]},
+{"id":"SITE-003","title":"Honeypot hubungi sales","pre":"-","steps":["POST /contact-sales dengan field honeypot terisi"],"expected":["Tidak ada lead dibuat; respons tidak membocorkan alasan"],"priority":"P2","type":["SEC"],"layer":["WEB"],"ref":["POST /contact-sales"]},
+{"id":"SITE-004","title":"Rate limit hubungi sales","pre":"-","steps":["Kirim 4× dalam 1 menit","Kirim 11× dalam 1 jam (waktu dimajukan)"],"expected":["Ke-4 per menit ditolak 429","Ke-11 per jam ditolak 429"],"priority":"P2","type":["SEC","EDGE"],"layer":["WEB"],"ref":["POST /contact-sales","TOO_MANY_REQUESTS"]},
+{"id":"SITE-005","title":"Validasi form hubungi sales","pre":"-","steps":["Kirim tanpa nama / email tidak valid / HP tidak valid"],"expected":["Error per field berbahasa Indonesia, tidak ada lead"],"priority":"P3","type":["NEG"],"layer":["WEB"],"ref":["POST /contact-sales"]},
+{"id":"SITE-006","title":"Daftar mandiri membuat bisnis trial","pre":"Pendaftaran aktif, trial_days=14","steps":["POST /register data valid"],"expected":["Tenant status trial, subscription_ends_at = sekarang + 14 hari","Outlet pertama, owner, 5 metode bayar bawaan (+ points) dibuat","Masuk dashboard lewat tiket login; banner Verifikasi email tampil","Email verifikasi terkirim (Mail::fake)"],"priority":"P1","type":["POS"],"layer":["WEB","BRW"],"ref":["POST /register","Q30","Q32","ADR 0009"]},
+{"id":"SITE-007","title":"Validasi daftar mandiri","pre":"Email sudah dipakai user lain","steps":["Daftar dengan email yang sama","Password lemah","Field wajib kosong"],"expected":["Ditolak per field; tidak ada tenant setengah jadi (transaksi DB rollback)"],"priority":"P1","type":["NEG"],"layer":["WEB"],"ref":["POST /register"]},
+{"id":"SITE-008","title":"Pendaftaran dimatikan dari admin","pre":"ADM mematikan registrasi di Onboarding","steps":["GET /register","POST /register"],"expected":["Halaman memberi tahu pendaftaran ditutup; POST ditolak tanpa membuat tenant"],"priority":"P2","type":["NEG"],"layer":["WEB"],"ref":["GET /register","Q30"]},
+{"id":"SITE-009","title":"Verifikasi email owner","pre":"Owner baru belum verifikasi","steps":["Buka link verifikasi valid","Buka link dengan hash diubah","Buka link kedaluwarsa","Kirim ulang verifikasi"],"expected":["Valid → email_verified_at terisi, banner hilang","Hash diubah/kedaluwarsa → ditolak 403","Kirim ulang terkirim & dibatasi throttle"],"priority":"P1","type":["POS","SEC"],"layer":["WEB"],"ref":["GET /email/verify/{user}/{hash}","POST /email/verification-notification","Q31"]},
+{"id":"SITE-010","title":"Login pusat owner/manager dengan tiket sekali pakai","pre":"OWN-A, MGR-A","steps":["POST /login","Ikuti redirect GET /auth/ticket","Pakai ulang URL tiket yang sama"],"expected":["Masuk dashboard","Tiket kedua kali ditolak (sekali pakai, berumur pendek)"],"priority":"P1","type":["POS","SEC"],"layer":["WEB","BRW"],"ref":["GET /login","POST /login","GET /auth/ticket","Q29"]},
+{"id":"SITE-011","title":"Login pusat gagal","pre":"-","steps":["Password salah","Email tidak terdaftar","Akun nonaktif","Ulangi > batas throttle"],"expected":["Pesan umum yang sama untuk semua kasus","Throttle → 429"],"priority":"P1","type":["NEG","SEC"],"layer":["WEB"],"ref":["POST /login","TOO_MANY_REQUESTS"]},
+{"id":"SITE-012","title":"Login pusat role tanpa akses panel","pre":"KSR-A, SPV-A punya email + kata sandi","steps":["Login sebagai kasir","Login sebagai supervisor"],"expected":["Kasir tidak bisa masuk panel dashboard","Supervisor masuk dashboard hanya menu Laporan (+ Stok masuk)"],"priority":"P1","type":["PERM"],"layer":["WEB"],"ref":["Q50","POST /login"]},
+{"id":"SITE-013","title":"Lupa kata sandi","pre":"-","steps":["POST /forgot-password email terdaftar","POST /forgot-password email tidak terdaftar"],"expected":["Email link reset (60 menit) dikirim","Pesan sama untuk email tidak terdaftar (tidak ada enumerasi)"],"priority":"P1","type":["POS","SEC"],"layer":["WEB"],"ref":["POST /forgot-password","Q34"]},
+{"id":"SITE-014","title":"Atur ulang kata sandi","pre":"Token reset valid","steps":["POST /reset-password token valid","Pakai token yang sama lagi","Token > 60 menit"],"expected":["Kata sandi berubah, bisa login","Token dipakai ulang / kedaluwarsa ditolak"],"priority":"P1","type":["POS","SEC"],"layer":["WEB"],"ref":["POST /reset-password"]},
+{"id":"SITE-015","title":"Panduan setup & template menu","pre":"Owner baru","steps":["Buka beranda dashboard","Terapkan template Kafe","Terapkan template Warung pada tenant lain"],"expected":["Checklist setup (profil outlet → kategori → produk → PIN kasir → tablet) tampil & progres terupdate","Kategori & produk template dibuat di tenant sendiri saja"],"priority":"P2","type":["POS","ISO"],"layer":["WEB"],"ref":["ADR 0009"]},
+{"id":"SITE-016","title":"Undangan owner dari sales","pre":"ADM membuat tenant dari lead","steps":["Owner membuka link atur kata sandi","Buka link setelah 3 hari"],"expected":["Owner menetapkan kata sandi sendiri (tidak pernah dikirim sebagai teks)","Link > 3 hari ditolak"],"priority":"P1","type":["POS","SEC"],"layer":["WEB"],"ref":["Q34"]}
+]},
+
+{"code":"AUTH","name":"Autentikasi API & perangkat","description":"Login email, registrasi device, daftar kasir, login PIN, penguncian PIN, me, logout (ADR 0002, Q6, Q17).","scenarios":[
+{"id":"AUTH-001","title":"Status sistem publik","pre":"Ada pengumuman aktif & app version","steps":["GET /v1/system/status tanpa token"],"expected":["200: status maintenance, min_version, latest_version, pengumuman"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["GET /v1/system/status"]},
+{"id":"AUTH-002","title":"Login email owner/manager","pre":"OWN-A","steps":["POST /v1/auth/login email+password+device_name"],"expected":["200, token Sanctum + data user, tenant, outlet, role"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["POST /v1/auth/login"]},
+{"id":"AUTH-003","title":"Login email gagal dengan pesan seragam","pre":"-","steps":["Password salah","Email tidak ada","User nonaktif"],"expected":["401 UNAUTHENTICATED, pesan identik untuk semua kasus"],"priority":"P1","type":["NEG","SEC"],"layer":["API"],"ref":["POST /v1/auth/login","UNAUTHENTICATED"]},
+{"id":"AUTH-004","title":"Login email ditolak untuk kasir/supervisor","pre":"KSR-A","steps":["POST /v1/auth/login sebagai kasir"],"expected":["403 FORBIDDEN 'Gunakan login PIN di perangkat kasir'"],"priority":"P1","type":["PERM"],"layer":["API"],"ref":["POST /v1/auth/login","FORBIDDEN"]},
+{"id":"AUTH-005","title":"Login tenant ditangguhkan","pre":"Tenant A suspended","steps":["POST /v1/auth/login"],"expected":["403 TENANT_SUSPENDED"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["POST /v1/auth/login","TENANT_SUSPENDED"]},
+{"id":"AUTH-006","title":"Versi aplikasi usang","pre":"min_version 2.0.0","steps":["Request dengan X-App-Version 1.9.0","Tanpa header X-App-Version"],"expected":["426 APP_UPDATE_REQUIRED + details.min_version & latest_version","Perilaku tanpa header sesuai docs (ditolak/validasi)"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["APP_UPDATE_REQUIRED","POST /v1/auth/login"]},
+{"id":"AUTH-007","title":"Validasi login","pre":"-","steps":["Email kosong / format salah / password kosong"],"expected":["422 VALIDATION_ERROR dengan details per field"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["POST /v1/auth/login","VALIDATION_ERROR"]},
+{"id":"AUTH-008","title":"Rate limit login","pre":"-","steps":["6× login dalam 1 menit dari IP+device sama"],"expected":["429 TOO_MANY_REQUESTS + header Retry-After"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["POST /v1/auth/login","TOO_MANY_REQUESTS"]},
+{"id":"AUTH-009","title":"Registrasi device oleh owner","pre":"Token OWN-A","steps":["POST /v1/devices {device_uid, name, outlet_id}"],"expected":["201, device token (ability device) terikat outlet","Device tampil di dashboard Perangkat"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["POST /v1/devices"]},
+{"id":"AUTH-010","title":"Registrasi device ditolak","pre":"-","steps":["Tanpa token","Pakai device token","Token manager (tanpa device.manage)","outlet_id milik tenant B"],"expected":["401 UNAUTHENTICATED","401 UNAUTHENTICATED","403 FORBIDDEN","422 VALIDATION_ERROR (outlet_id)"],"priority":"P1","type":["PERM","ISO"],"layer":["API"],"ref":["POST /v1/devices","UNAUTHENTICATED","FORBIDDEN","VALIDATION_ERROR"]},
+{"id":"AUTH-011","title":"Registrasi device ganda","pre":"device_uid sudah terdaftar","steps":["POST /v1/devices dengan device_uid sama"],"expected":["Tidak membuat device duplikat (perilaku sesuai docs/api/auth.md)"],"priority":"P2","type":["IDEM"],"layer":["API"],"ref":["POST /v1/devices"]},
+{"id":"AUTH-012","title":"Daftar kasir untuk layar PIN","pre":"DEV-A1; KSR-A ditugaskan A1, KSR-A2 hanya A2","steps":["GET /v1/devices/{uid}/cashiers dengan device token"],"expected":["Hanya karyawan aktif yang ditugaskan ke outlet device (KSR-A ada, KSR-A2 tidak)","Tidak memuat hash PIN/email"],"priority":"P1","type":["POS","ISO"],"layer":["API"],"ref":["GET /v1/devices/{uid}/cashiers","Q37"]},
+{"id":"AUTH-013","title":"Daftar kasir ditolak","pre":"-","steps":["Pakai token user","uid bukan pemilik token","Device dicabut","Tenant suspended"],"expected":["403 DEVICE_NOT_REGISTERED (3 kasus pertama)","403 TENANT_SUSPENDED"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["GET /v1/devices/{uid}/cashiers","DEVICE_NOT_REGISTERED","TENANT_SUSPENDED"]},
+{"id":"AUTH-014","title":"Login PIN sukses","pre":"DEV-A1, KSR-A PIN benar","steps":["POST /v1/auth/pin-login {user_id, pin}"],"expected":["200 token user terikat device; percobaan gagal sebelumnya direset"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["POST /v1/auth/pin-login"]},
+{"id":"AUTH-015","title":"Login PIN salah / user tidak ditugaskan","pre":"-","steps":["PIN salah","KSR-A2 login di DEV-A1"],"expected":["401 INVALID_PIN, pesan sama untuk kedua kasus"],"priority":"P1","type":["NEG","ISO"],"layer":["API"],"ref":["POST /v1/auth/pin-login","INVALID_PIN"]},
+{"id":"AUTH-016","title":"Validasi login PIN","pre":"-","steps":["pin 5 digit / huruf","user_id bukan UUID"],"expected":["422 VALIDATION_ERROR"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["POST /v1/auth/pin-login","VALIDATION_ERROR"]},
+{"id":"AUTH-017","title":"Kunci PIN per perangkat","pre":"-","steps":["5× PIN salah untuk KSR-A di DEV-A1","Coba PIN benar","Majukan waktu 15 menit, coba PIN benar"],"expected":["Ke-5 → 423 PIN_LOCKED + details.retry_after","PIN benar selama terkunci tetap 423","Setelah 15 menit login berhasil"],"priority":"P1","type":["SEC","EDGE"],"layer":["API"],"ref":["POST /v1/auth/pin-login","PIN_LOCKED"]},
+{"id":"AUTH-018","title":"Kunci PIN global lintas perangkat","pre":"3 device di tenant A","steps":["Total 15× PIN salah untuk KSR-A tersebar di beberapa device dalam 15 menit"],"expected":["KSR-A terkunci di semua device (423 PIN_LOCKED)"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["PIN_LOCKED","GSPOS-SEC-002"]},
+{"id":"AUTH-019","title":"Batas PIN salah per perangkat (semua karyawan)","pre":"DEV-A1","steps":["21× PIN salah untuk berbagai karyawan dalam 15 menit di DEV-A1"],"expected":["429 TOO_MANY_REQUESTS"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["TOO_MANY_REQUESTS","POST /v1/auth/pin-login"]},
+{"id":"AUTH-020","title":"Login PIN ditolak untuk token non-device / device dicabut","pre":"-","steps":["Pakai token user","Device dicabut owner"],"expected":["403 DEVICE_NOT_REGISTERED"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["POST /v1/auth/pin-login","DEVICE_NOT_REGISTERED"]},
+{"id":"AUTH-021","title":"Login email di device kasir terikat device","pre":"OWN-A login dengan device_uid = DEV-A1","steps":["Login email + device_uid","Buka shift & checkout"],"expected":["Token terikat device; owner bisa buka shift & checkout di outlet device"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["Q17","POST /v1/auth/login"]},
+{"id":"AUTH-022","title":"GET /auth/me","pre":"Token kasir","steps":["GET /v1/auth/me"],"expected":["User, tenant, outlet device, role, permission/setelan outlet"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["GET /v1/auth/me"]},
+{"id":"AUTH-023","title":"GET /auth/me ditolak","pre":"-","steps":["Tanpa token","Device token","User dinonaktifkan setelah login","Device dicabut","Tenant suspended"],"expected":["401 UNAUTHENTICATED (3 kasus pertama)","403 DEVICE_NOT_REGISTERED","403 TENANT_SUSPENDED"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["GET /v1/auth/me","UNAUTHENTICATED","DEVICE_NOT_REGISTERED","TENANT_SUSPENDED"]},
+{"id":"AUTH-024","title":"Logout menghapus token","pre":"Token aktif","steps":["POST /v1/auth/logout","Pakai token yang sama"],"expected":["200; request berikutnya 401 UNAUTHENTICATED"],"priority":"P1","type":["POS","SEC"],"layer":["API"],"ref":["POST /v1/auth/logout"]},
+{"id":"AUTH-025","title":"Token kedaluwarsa","pre":"Token lewat masa berlaku","steps":["Panggil endpoint apa pun"],"expected":["401 UNAUTHENTICATED; sanctum:prune-expired menghapus token lama"],"priority":"P2","type":["SEC"],"layer":["API","CMD"],"ref":["UNAUTHENTICATED"]},
+{"id":"AUTH-026","title":"Owner membuka kunci PIN karyawan","pre":"KSR-A terkunci","steps":["POST /v1/users/{id}/unlock-pin oleh OWN-A","Oleh MGR-A"],"expected":["Owner: kunci dibuka, KSR-A bisa login PIN","Manager: 403 FORBIDDEN"],"priority":"P1","type":["POS","PERM"],"layer":["API"],"ref":["POST /v1/users/{id}/unlock-pin","FORBIDDEN"]}
+]},
+
+{"code":"TEN","name":"Tenancy & status langganan","description":"Isolasi tenant fail-closed (ADR 0005), trial, hanya-baca, ditangguhkan, verifikasi email (Q31–Q32).","scenarios":[
+{"id":"TEN-001","title":"Isolasi tenant di semua endpoint detail","pre":"Data lengkap di tenant A & B","steps":["Token OWN-A mengakses ID milik tenant B untuk: order, produk, kategori, grup opsi, shift, member, user, metode bayar, self-order, laporan shift"],"expected":["Semua → 404 NOT_FOUND, tidak ada data B di respons"],"priority":"P1","type":["ISO"],"layer":["API"],"ref":["NOT_FOUND","ADR 0005"]},
+{"id":"TEN-002","title":"Isolasi tenant di daftar & laporan","pre":"Data di tenant A & B","steps":["GET daftar: orders, products, members, users, catalog, reports/*"],"expected":["Hanya data tenant A; angka laporan tidak tercampur tenant B"],"priority":"P1","type":["ISO"],"layer":["API"],"ref":["GET /v1/orders","GET /v1/catalog","GET /v1/reports/summary"]},
+{"id":"TEN-003","title":"Isolasi tenant di dashboard","pre":"OWN-A login dashboard","steps":["Akses URL record tenant B: /orders/{id}, /products/{id}/edit, /shifts/{id}, /stock/receipts/{id}, struk /orders/{id}/receipt"],"expected":["404; tidak ada data B di tabel, filter, opsi select, ekspor"],"priority":"P1","type":["ISO"],"layer":["WEB"],"ref":["GET /orders/{id}/receipt","ADR 0007"]},
+{"id":"TEN-004","title":"Query tanpa TenantContext gagal tertutup","pre":"-","steps":["Jalankan query model bisnis tanpa TenantContext (di luar /admin)"],"expected":["Exception / hasil ditolak, bukan mengembalikan data semua tenant"],"priority":"P1","type":["ISO","SEC"],"layer":["UNIT","ACT"],"ref":["ADR 0005"]},
+{"id":"TEN-005","title":"Mass assignment tenant_id ditolak","pre":"-","steps":["Kirim tenant_id tenant B di body POST produk/kategori/member/order"],"expected":["tenant_id diabaikan; data tersimpan di tenant A"],"priority":"P1","type":["ISO","SEC"],"layer":["API"],"ref":["POST /v1/products","POST /v1/members"]},
+{"id":"TEN-006","title":"Referensi silang tenant di body ditolak","pre":"-","steps":["Checkout dengan product_id / option_id / payment_method_id / member_id tenant B"],"expected":["422 VALIDATION_ERROR per field atau 404 MEMBER_NOT_FOUND; tidak ada order"],"priority":"P1","type":["ISO"],"layer":["API"],"ref":["POST /v1/checkout","VALIDATION_ERROR","MEMBER_NOT_FOUND"]},
+{"id":"TEN-007","title":"Trial habis → hanya-baca","pre":"subscription_ends_at lewat, status trial","steps":["Login, buka laporan","Checkout, buat produk, ubah setelan, buka shift"],"expected":["Login & baca data boleh","Semua perubahan & transaksi → 403 SUBSCRIPTION_EXPIRED; banner 'hubungi sales' di dashboard"],"priority":"P1","type":["NEG"],"layer":["API","WEB"],"ref":["SUBSCRIPTION_EXPIRED","Q32"]},
+{"id":"TEN-008","title":"Tenant ditangguhkan diblokir total","pre":"status suspended","steps":["Login email/PIN, panggil API, buka dashboard, halaman member & self-order"],"expected":["403 TENANT_SUSPENDED di API; dashboard menolak login; halaman publik tenant tidak bisa dipakai"],"priority":"P1","type":["NEG"],"layer":["API","WEB"],"ref":["TENANT_SUSPENDED"]},
+{"id":"TEN-009","title":"Email owner belum diverifikasi","pre":"Owner daftar mandiri, belum verifikasi","steps":["Setup produk","Checkout","Tambah pembayaran open bill"],"expected":["Setup produk boleh","Checkout & pembayaran → 403 EMAIL_NOT_VERIFIED"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["EMAIL_NOT_VERIFIED","Q31","POST /v1/checkout","POST /v1/orders/{id}/payments"]},
+{"id":"TEN-010","title":"Pengaktifan kembali tenant","pre":"Tenant suspended","steps":["ADM ubah status ke active + perpanjang subscription_ends_at"],"expected":["Akses penuh kembali tanpa kehilangan data"],"priority":"P2","type":["POS"],"layer":["WEB","API"],"ref":["ADR 0009"]},
+{"id":"TEN-011","title":"Batas tepat waktu trial","pre":"subscription_ends_at = sekarang","steps":["Request 1 detik sebelum & sesudah batas (travelTo)"],"expected":["Sebelum: akses penuh; sesudah: SUBSCRIPTION_EXPIRED"],"priority":"P2","type":["EDGE"],"layer":["API"],"ref":["SUBSCRIPTION_EXPIRED"]},
+{"id":"TEN-012","title":"Self-order & member saat tenant hanya-baca","pre":"Trial habis","steps":["Pelanggan kirim pesanan dari QR meja","Member daftar di halaman member"],"expected":["Self-order → SELF_ORDER_DISABLED; tidak ada data baru dibuat"],"priority":"P2","type":["NEG"],"layer":["WEB"],"ref":["SELF_ORDER_DISABLED","GET /order/t/{token}"]}
+]},
+
+{"code":"RBAC","name":"Role & permission","description":"Matriks permission UserRole::permissions() (SPEC Role & permission). Uji per permission × role; tidak ada pengecekan role langsung.","scenarios":[
+{"id":"RBAC-001","title":"Matriks permission lengkap","pre":"Dataset semua permission resmi × 4 role","steps":["Untuk tiap pasangan, panggil $user->can(permission)"],"expected":["Hasil sama persis dengan tabel SPEC (✅ true, ❌/🔑 false tanpa approval)"],"priority":"P1","type":["PERM"],"layer":["UNIT"],"ref":["SPEC Role & permission"]},
+{"id":"RBAC-002","title":"Role rusak/kosong ditolak","pre":"User dengan role null / tidak dikenal","steps":["Panggil Gate untuk permission apa pun"],"expected":["false, bukan exception"],"priority":"P1","type":["SEC","EDGE"],"layer":["UNIT"],"ref":["ADR 0005"]},
+{"id":"RBAC-003","title":"Endpoint O,M ditolak untuk S,K","pre":"Token SPV-A, KSR-A","steps":["POST/PUT/DELETE kategori, produk, grup opsi, stok produk; GET reports/summary"],"expected":["403 FORBIDDEN"],"priority":"P1","type":["PERM"],"layer":["API"],"ref":["FORBIDDEN","POST /v1/products","POST /v1/categories","POST /v1/option-groups","POST /v1/products/{id}/stock"]},
+{"id":"RBAC-004","title":"Endpoint khusus owner","pre":"Token MGR-A","steps":["GET/PUT /v1/outlet, /v1/users, /v1/payment-methods, POST /v1/devices"],"expected":["403 FORBIDDEN; owner 200"],"priority":"P1","type":["PERM"],"layer":["API"],"ref":["PUT /v1/outlet","GET /v1/users","PUT /v1/payment-methods/{id}","POST /v1/devices"]},
+{"id":"RBAC-005","title":"Tandai produk habis","pre":"-","steps":["PATCH availability oleh OWN, MGR, SPV, KSR"],"expected":["O, M, S → 200; K → 403 FORBIDDEN"],"priority":"P2","type":["PERM"],"layer":["API"],"ref":["PATCH /v1/products/{id}/availability"]},
+{"id":"RBAC-006","title":"Menu dashboard per role","pre":"Login dashboard tiap role","steps":["Periksa sidebar & akses URL langsung tiap menu"],"expected":["Owner: semua","Manager: tanpa Karyawan, Perangkat, Metode bayar, Profil outlet, Program member, Pembayaran online, Outlet","Supervisor: hanya Laporan + Stok masuk","URL menu tersembunyi → 403"],"priority":"P1","type":["PERM"],"layer":["WEB","BRW"],"ref":["Q50","SPEC Panel dashboard"]},
+{"id":"RBAC-007","title":"Akun tenant tidak bisa ke panel admin","pre":"OWN-A","steps":["Akses /admin dengan session dashboard","Login /admin dengan kredensial owner"],"expected":["Ditolak; guard admin terpisah"],"priority":"P1","type":["SEC","PERM"],"layer":["WEB"],"ref":["SPEC Panel maintenance"]},
+{"id":"RBAC-008","title":"Super admin tidak bisa memakai API tenant","pre":"ADM","steps":["Login /v1/auth/login dengan kredensial admin"],"expected":["401 UNAUTHENTICATED"],"priority":"P2","type":["SEC"],"layer":["API"],"ref":["UNAUTHENTICATED"]},
+{"id":"RBAC-009","title":"Perubahan role berlaku langsung","pre":"MGR-A login","steps":["Owner menurunkan MGR-A menjadi kasir","MGR-A memanggil endpoint manager"],"expected":["403 FORBIDDEN tanpa perlu login ulang"],"priority":"P2","type":["PERM"],"layer":["API"],"ref":["PUT /v1/users/{id}"]},
+{"id":"RBAC-010","title":"Statik: tidak ada cek role langsung","pre":"-","steps":["Grep kode app/ untuk ->role === / role == di luar UserRole"],"expected":["Tidak ditemukan (arch test Pest)"],"priority":"P2","type":["SEC"],"layer":["UNIT"],"ref":["CLAUDE.md Role & permission"]}
+]},
+
+{"code":"OUT","name":"Outlet & multi-outlet","description":"Tambah/nonaktif outlet, batas max_outlets, penugasan, pemilih outlet, katalog & metode bayar per outlet (ADR 0010–0011, Q36–Q45).","scenarios":[
+{"id":"OUT-001","title":"Tambah outlet baru","pre":"OWN-A, max_outlets 3","steps":["Dashboard Pengaturan → Outlet → tambah (kode unik, nama, zona)"],"expected":["Outlet dibuat; kode tidak bisa diubah setelahnya"],"priority":"P1","type":["POS"],"layer":["WEB"],"ref":["Q36"]},
+{"id":"OUT-002","title":"Salin menu & metode bayar dari outlet lain","pre":"A1 dengan beberapa produk tidak dijual & metode nonaktif","steps":["Tambah outlet dengan opsi salin dari A1","Tambah outlet tanpa salin"],"expected":["Salin: is_listed & metode aktif sama dengan A1","Tanpa salin: semua produk dijual, semua metode aktif"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["Q45"]},
+{"id":"OUT-003","title":"Batas jumlah outlet","pre":"Outlet aktif = max_outlets","steps":["Tambah outlet","Aktifkan kembali outlet nonaktif"],"expected":["409 OUTLET_LIMIT_REACHED / pesan form"],"priority":"P1","type":["NEG","EDGE"],"layer":["WEB","ACT"],"ref":["OUTLET_LIMIT_REACHED","Q36"]},
+{"id":"OUT-004","title":"Validasi outlet","pre":"-","steps":["Kode duplikat dalam tenant","Kode sama dengan outlet tenant B"],"expected":["Duplikat dalam tenant ditolak; kode sama di tenant lain diizinkan"],"priority":"P2","type":["NEG","ISO"],"layer":["WEB"],"ref":["ADR 0010"]},
+{"id":"OUT-005","title":"Nonaktifkan outlet","pre":"A2 aktif","steps":["Nonaktifkan A2","Device A2 memanggil API","Lihat laporan lama"],"expected":["Outlet tidak dihapus; transaksi baru di A2 ditolak; data historis tetap ada di laporan"],"priority":"P2","type":["POS"],"layer":["WEB","API"],"ref":["Q36"]},
+{"id":"OUT-006","title":"Akses data outlet yang tidak ditugaskan","pre":"MGR-A hanya A1","steps":["Akses order, shift, laporan, perangkat, stok, dokumen stok milik A2 (API & dashboard)"],"expected":["404 NOT_FOUND (fail-closed); tidak ada di daftar"],"priority":"P1","type":["ISO"],"layer":["API","WEB"],"ref":["NOT_FOUND","Q38"]},
+{"id":"OUT-007","title":"GET /v1/outlets","pre":"OWN-A, MGR-A","steps":["GET /v1/outlets"],"expected":["Owner: semua outlet; manager: hanya yang ditugaskan"],"priority":"P2","type":["POS","ISO"],"layer":["API"],"ref":["GET /v1/outlets","Q37"]},
+{"id":"OUT-008","title":"Pemilih outlet di sidebar","pre":"OWN-A, 2 outlet","steps":["POST /switch-outlet/{A2}","POST /switch-outlet/all","POST /switch-outlet/{outlet tenant B}"],"expected":["Beranda, penjualan, shift, laporan mengikuti pilihan & disimpan di session","'Semua outlet' = gabungan","Outlet tenant B → 404"],"priority":"P1","type":["POS","ISO"],"layer":["WEB","BRW"],"ref":["POST /switch-outlet/{outlet}","Q41"]},
+{"id":"OUT-009","title":"Produk tidak dijual di outlet","pre":"Produk X is_listed=false di A2","steps":["GET /v1/catalog dari DEV-A2","Checkout produk X dari DEV-A2"],"expected":["X tidak ada di katalog A2","422 VALIDATION_ERROR items.N.product_id"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["Q42","GET /v1/catalog","POST /v1/checkout"]},
+{"id":"OUT-010","title":"Kategori tampil hanya bila ada produk dijual","pre":"Semua produk kategori K tidak dijual di A2","steps":["GET /v1/catalog dari DEV-A2"],"expected":["Kategori K tidak dikirim"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["Q42"]},
+{"id":"OUT-011","title":"Opsi habis per outlet","pre":"Opsi 'Large' habis di A1","steps":["GET /v1/catalog A1","Checkout dengan opsi itu di A1 dan A2"],"expected":["Opsi dikirim is_available=false di A1","A1: 422 items.N.option_ids; A2: sukses"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["Q43"]},
+{"id":"OUT-012","title":"Metode bayar nonaktif per outlet","pre":"QRIS nonaktif di A2","steps":["Checkout QRIS di A2","Checkout QRIS di A1"],"expected":["A2: 422 VALIDATION_ERROR per pembayaran; A1 sukses"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["Q44"]},
+{"id":"OUT-013","title":"Stok per outlet","pre":"Produk lacak stok, stok A1=10, A2=5","steps":["Checkout 2 di A1"],"expected":["Hanya stok A1 berkurang menjadi 8; A2 tetap 5"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["Q40"]},
+{"id":"OUT-014","title":"Penugasan karyawan multi-outlet","pre":"-","steps":["Owner tugaskan KSR-A ke A1 & A2","Lepas KSR-A dari A1"],"expected":["KSR-A tampil di daftar PIN kedua device","Setelah dilepas, tidak tampil di DEV-A1 & login PIN di A1 ditolak INVALID_PIN"],"priority":"P1","type":["POS","ISO"],"layer":["WEB","API"],"ref":["Q37","INVALID_PIN"]},
+{"id":"OUT-015","title":"Target omzet outlet","pre":"OWN-A","steps":["Isi daily & monthly target di Profil outlet / PUT /v1/outlet","Kosongkan / 0"],"expected":["Widget Target omzet di beranda menampilkan progres","0/null → widget tanpa target"],"priority":"P3","type":["POS"],"layer":["WEB","API"],"ref":["Q56","PUT /v1/outlet"]}
+]},
+
+{"code":"SET","name":"Setelan outlet, metode bayar, karyawan, perangkat, profil","description":"Profil outlet (pajak, service, pembulatan, struk), metode bayar, Karyawan, Perangkat, Profil akun, Riwayat perubahan (Q46–Q48, Q54–Q58, Q84).","scenarios":[
+{"id":"SET-001","title":"Ubah setelan outlet via API","pre":"OWN-A","steps":["PUT /v1/outlet: pajak, tax_inclusive, service, pembulatan, header/footer struk, receipt_show_rounding, discount_limits"],"expected":["200; GET /v1/outlet & /auth/me mencerminkan nilai baru; perhitungan order berikutnya memakai nilai baru"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["GET /v1/outlet","PUT /v1/outlet"]},
+{"id":"SET-002","title":"Validasi setelan outlet","pre":"-","steps":["Pajak negatif / > 100","Pembulatan tidak dikenal","discount_limits > 100"],"expected":["422 VALIDATION_ERROR per field"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["PUT /v1/outlet","VALIDATION_ERROR"]},
+{"id":"SET-003","title":"Profil outlet di dashboard + logo","pre":"OWN-A","steps":["Ubah setelan di /settings/outlet?outlet={id}","Unggah logo gambar","Unggah file .php / > batas"],"expected":["Tersimpan; logo tampil di struk","File non-gambar / terlalu besar ditolak"],"priority":"P2","type":["POS","SEC"],"layer":["WEB"],"ref":["SPEC Panel dashboard"]},
+{"id":"SET-004","title":"Order lama tidak berubah saat tarif berubah","pre":"Order selesai dengan pajak 11%","steps":["Ubah pajak menjadi 10%","Buka struk order lama"],"expected":["Struk lama tetap memakai tarif saat transaksi"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["GET /v1/orders/{id}/receipt"]},
+{"id":"SET-005","title":"Metode pembayaran","pre":"OWN-A","steps":["GET /v1/payment-methods","PUT: nonaktifkan Debit, wajib reference","Checkout dengan Debit"],"expected":["Daftar 5 metode bawaan + points (+ online jika Midtrans aktif)","Metode nonaktif ditolak checkout (422)"],"priority":"P1","type":["POS"],"layer":["API","WEB"],"ref":["GET /v1/payment-methods","PUT /v1/payment-methods/{id}"]},
+{"id":"SET-006","title":"Tambah karyawan","pre":"OWN-A","steps":["Tambah kasir: nama, email, username, PIN 6 digit, outlet","Tambah manager"],"expected":["User dibuat, email verifikasi terkirim (link 3 hari)","PIN tersimpan sebagai hash"],"priority":"P1","type":["POS","SEC"],"layer":["WEB","API"],"ref":["POST /v1/users","Q46"]},
+{"id":"SET-007","title":"Validasi karyawan","pre":"-","steps":["Email dipakai user tenant B","Username duplikat dalam tenant / huruf besar / karakter ilegal","PIN bukan 6 digit / PIN lemah (jika ada aturan)"],"expected":["Email unik global → ditolak","Username unik per tenant, hanya huruf kecil/angka/._-","422 per field"],"priority":"P1","type":["NEG"],"layer":["API","WEB"],"ref":["POST /v1/users","Q35","Q46"]},
+{"id":"SET-008","title":"Owner aktif terakhir","pre":"Hanya satu owner aktif","steps":["Nonaktifkan owner tersebut","Turunkan role-nya menjadi manager"],"expected":["409 LAST_OWNER_REQUIRED"],"priority":"P1","type":["NEG"],"layer":["API","WEB"],"ref":["LAST_OWNER_REQUIRED","PUT /v1/users/{id}"]},
+{"id":"SET-009","title":"Nonaktifkan karyawan","pre":"KSR-A login di device","steps":["Owner nonaktifkan KSR-A","KSR-A memanggil API"],"expected":["Token tidak berlaku (401); tidak tampil di daftar PIN"],"priority":"P1","type":["SEC"],"layer":["API","WEB"],"ref":["UNAUTHENTICATED"]},
+{"id":"SET-010","title":"Kirim ulang verifikasi karyawan","pre":"-","steps":["Kirim ulang 4× dalam 10 menit"],"expected":["Ke-4 ditolak (maks 3×/10 menit)"],"priority":"P3","type":["EDGE"],"layer":["WEB"],"ref":["Q46"]},
+{"id":"SET-011","title":"Akses kasir web per karyawan","pre":"-","steps":["Aktifkan web_cashier_access untuk KSR-A","Matikan"],"expected":["Aktif: bisa login /cashier; mati: ditolak"],"priority":"P1","type":["PERM"],"layer":["WEB"],"ref":["Q54"]},
+{"id":"SET-012","title":"GET /v1/users & detail","pre":"OWN-A","steps":["GET /v1/users","GET /v1/users/{id} milik tenant B"],"expected":["Daftar tenant A tanpa hash PIN/password","Tenant B → 404"],"priority":"P2","type":["POS","ISO"],"layer":["API"],"ref":["GET /v1/users","GET /v1/users/{id}"]},
+{"id":"SET-013","title":"Perangkat: ubah nama & cabut","pre":"DEV-A1 aktif","steps":["Ubah nama device","Cabut device","Device memakai token lama","Aktifkan kembali"],"expected":["Cabut → 403 DEVICE_NOT_REGISTERED untuk semua request device & kasirnya","Aktif kembali → bisa dipakai lagi"],"priority":"P1","type":["SEC"],"layer":["WEB","API"],"ref":["DEVICE_NOT_REGISTERED"]},
+{"id":"SET-014","title":"Profil akun dashboard","pre":"OWN-A","steps":["Ubah nama, email, kata sandi (konfirmasi kata sandi lama)","Unggah & potong avatar persegi","Keluar dari sesi lain"],"expected":["Tersimpan; ganti email → perlu verifikasi","Avatar tampil di menu akun","Sesi di browser lain berakhir"],"priority":"P2","type":["POS","SEC"],"layer":["WEB","BRW"],"ref":["Q84"]},
+{"id":"SET-015","title":"Menu akun & tema","pre":"-","steps":["Buka menu akun","Klik pengalih tema 3×"],"expected":["Hanya Profil, Bantuan (WA/email support), Keluar","Tema terang → gelap → sistem tersimpan"],"priority":"P3","type":["POS"],"layer":["BRW"],"ref":["Q84"]},
+{"id":"SET-016","title":"Riwayat perubahan (audit log)","pre":"Produk diubah oleh MGR-A","steps":["Buka /settings/activity sebagai OWN-A dan MGR-A","Coba sebagai SPV"],"expected":["Tampil kolom berubah lama→baru, pelaku, waktu; hanya data tenant sendiri","Jenis data mengikuti izin pengelolanya; supervisor ditolak"],"priority":"P2","type":["POS","PERM","ISO"],"layer":["WEB"],"ref":["Q58"]},
+{"id":"SET-017","title":"Kolom pembuat & pengubah","pre":"-","steps":["Buat & ubah produk oleh dua user berbeda"],"expected":["created_by & updated_by terisi; detail menampilkan 'oleh {nama}'"],"priority":"P3","type":["POS"],"layer":["ACT","WEB"],"ref":["Q47"]}
+]},
+
+{"code":"CAT","name":"Katalog & produk","description":"Kategori, produk, grup opsi, ketersediaan, favorit, barcode, katalog ETag, import Excel (Q12–Q15, Q24–Q27, Q59).","scenarios":[
+{"id":"CAT-001","title":"Ambil katalog","pre":"Token kasir DEV-A1","steps":["GET /v1/catalog"],"expected":["Kategori aktif, produk dijual di A1, grup opsi aktif, metode bayar aktif (tanpa online), dalam satu respons"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["GET /v1/catalog"]},
+{"id":"CAT-002","title":"ETag katalog","pre":"-","steps":["GET /v1/catalog → simpan ETag","GET dengan If-None-Match","Ubah produk, ulangi"],"expected":["304 bila tidak berubah; 200 + ETag baru setelah perubahan"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["GET /v1/catalog"]},
+{"id":"CAT-003","title":"CRUD kategori","pre":"MGR-A","steps":["POST, PUT, DELETE /v1/categories","CRUD di dashboard /categories"],"expected":["Sukses; hapus kategori → produknya category_id null (tidak ikut terhapus)"],"priority":"P1","type":["POS"],"layer":["API","WEB"],"ref":["POST /v1/categories","PUT /v1/categories/{id}","DELETE /v1/categories/{id}","Q15"]},
+{"id":"CAT-004","title":"Kategori nonaktif","pre":"Kategori K nonaktif","steps":["GET /v1/catalog","Checkout produk di K"],"expected":["K & produknya tidak dikirim","Checkout ditolak 'Produk tidak tersedia'"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["Q27"]},
+{"id":"CAT-005","title":"CRUD produk","pre":"MGR-A","steps":["POST /v1/products (nama, harga, harga modal, sku, barcode, track_stock, min_stock, kategori, grup opsi, gambar)","PUT","DELETE","Ulang di dashboard /products"],"expected":["Tersimpan; harga string desimal; gambar valid saja","Hapus tidak merusak order lama (snapshot)"],"priority":"P1","type":["POS"],"layer":["API","WEB"],"ref":["POST /v1/products","PUT /v1/products/{id}","DELETE /v1/products/{id}"]},
+{"id":"CAT-006","title":"Validasi produk","pre":"-","steps":["Harga negatif / bukan angka / > DECIMAL(15,2)","SKU/barcode duplikat dalam tenant","category_id tenant B"],"expected":["422 VALIDATION_ERROR per field"],"priority":"P2","type":["NEG","ISO"],"layer":["API"],"ref":["POST /v1/products","VALIDATION_ERROR"]},
+{"id":"CAT-007","title":"Cari & urut produk","pre":"-","steps":["GET /v1/products?search=kopi&category_id=&sort=price","sort=-price","sort=kolom_tidak_diizinkan"],"expected":["Hasil terfilter & terurut","Kolom di luar allowlist ditolak 422 / diabaikan sesuai docs"],"priority":"P2","type":["POS","SEC"],"layer":["API"],"ref":["GET /v1/products"]},
+{"id":"CAT-008","title":"Cari via barcode","pre":"Produk dengan barcode 899...","steps":["GET /v1/products/barcode/{code}","Barcode tidak ada","Barcode milik tenant B"],"expected":["200 produk","404 NOT_FOUND (keduanya)"],"priority":"P2","type":["POS","ISO"],"layer":["API"],"ref":["GET /v1/products/barcode/{code}","NOT_FOUND"]},
+{"id":"CAT-009","title":"Tandai produk habis/tersedia","pre":"SPV-A","steps":["PATCH /v1/products/{id}/availability false","GET /v1/catalog","Checkout produk tersebut"],"expected":["is_available=false (beda dari is_active)","Checkout ditolak 422"],"priority":"P1","type":["POS","NEG"],"layer":["API"],"ref":["PATCH /v1/products/{id}/availability","Q12"]},
+{"id":"CAT-010","title":"Produk favorit","pre":"MGR-A","steps":["Tandai favorit di dashboard","GET /v1/catalog"],"expected":["is_favorite=true untuk seluruh tenant"],"priority":"P3","type":["POS"],"layer":["WEB","API"],"ref":["Q25"]},
+{"id":"CAT-011","title":"Dijual di outlet (is_listed)","pre":"-","steps":["Hapus centang 'Dijual di outlet A2' di form produk"],"expected":["outlet_product.is_listed=false hanya untuk A2"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["Q42"]},
+{"id":"CAT-012","title":"CRUD grup opsi","pre":"MGR-A","steps":["POST /v1/option-groups dengan opsi & harga, min_select, max_select","PUT ubah opsi","DELETE","Dashboard /option-groups create/edit"],"expected":["Sukses; opsi berharga ikut di katalog; hapus tidak merusak order lama"],"priority":"P1","type":["POS"],"layer":["API","WEB"],"ref":["POST /v1/option-groups","PUT /v1/option-groups/{id}","DELETE /v1/option-groups/{id}"]},
+{"id":"CAT-013","title":"Validasi grup opsi","pre":"-","steps":["min_select > max_select","Tanpa opsi","Harga opsi negatif"],"expected":["422 per field"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["POST /v1/option-groups","VALIDATION_ERROR"]},
+{"id":"CAT-014","title":"Grup opsi & opsi nonaktif","pre":"-","steps":["Nonaktifkan grup opsi","Nonaktifkan satu opsi / tandai habis"],"expected":["Grup nonaktif tidak dikirim di katalog; opsi habis is_available=false"],"priority":"P2","type":["POS"],"layer":["WEB","API"],"ref":["Q27","Q43"]},
+{"id":"CAT-015","title":"Penyesuaian stok via API","pre":"MGR-A, produk track_stock","steps":["POST /v1/products/{id}/stock {id, qty +5, reason}","Kirim ulang dengan id sama","Tanpa alasan","Oleh SPV"],"expected":["Stok +5, stock_movements tercatat","Replay → 1 movement saja","422","403 FORBIDDEN"],"priority":"P1","type":["POS","IDEM","PERM"],"layer":["API"],"ref":["POST /v1/products/{id}/stock","Q14"]},
+{"id":"CAT-016","title":"Stok menipis & habis","pre":"min_stock 5","steps":["Stok 3","Stok 0 / minus"],"expected":["is_low_stock=true, kuning di dashboard (tab Stok menipis)","Stok ≤ 0 ditandai habis"],"priority":"P2","type":["POS"],"layer":["API","WEB"],"ref":["Q24"]},
+{"id":"CAT-017","title":"Import produk Excel sukses","pre":"Template .xlsx","steps":["Unduh template","Isi 10 baris valid","Unggah"],"expected":["10 produk + kategori baru dibuat; stok_awal tercatat"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["Q59"]},
+{"id":"CAT-018","title":"Import produk gagal validasi","pre":"-","steps":["File dengan 1 baris salah di antara valid","File > 2 MB / > 1.000 baris","File bukan xlsx/csv","Sel berisi formula '=cmd'"],"expected":["Semua baris divalidasi; ada error → tidak ada yang diimpor, pesan per baris","Ditolak sebelum diproses","Formula tidak dieksekusi"],"priority":"P2","type":["NEG","SEC"],"layer":["WEB"],"ref":["Q59"]},
+{"id":"CAT-019","title":"Snapshot katalog di order","pre":"Order selesai","steps":["Ubah nama, harga, harga modal, kategori produk","Buka order & laporan lama"],"expected":["Nama, harga, category_name, unit_cost order lama tidak berubah"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["Q51","Q53","GET /v1/orders/{id}"]}
+]},
+
+{"code":"SHF","name":"Shift kasir","description":"Buka, tutup, ringkasan, tutup paksa, X/Z report (Q16, Q20, Q49).","scenarios":[
+{"id":"SHF-001","title":"Buka shift","pre":"KSR-A di DEV-A1, belum ada shift","steps":["POST /v1/shifts {opening_cash}"],"expected":["201 shift open, kas awal tercatat"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["POST /v1/shifts"]},
+{"id":"SHF-002","title":"Buka shift ganda idempotent","pre":"Device sudah punya shift open","steps":["POST /v1/shifts lagi (kasir sama / kasir lain)"],"expected":["Mengembalikan shift yang sama, tidak membuat baru"],"priority":"P1","type":["IDEM"],"layer":["API"],"ref":["POST /v1/shifts","Q16"]},
+{"id":"SHF-003","title":"Validasi buka shift","pre":"-","steps":["opening_cash negatif / bukan angka"],"expected":["422 VALIDATION_ERROR"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["POST /v1/shifts","VALIDATION_ERROR"]},
+{"id":"SHF-004","title":"Shift saat ini","pre":"-","steps":["GET /v1/shifts/current dengan & tanpa shift open"],"expected":["Data shift / null"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["GET /v1/shifts/current"]},
+{"id":"SHF-005","title":"Ringkasan shift (X-report)","pre":"Shift dengan order tunai, QRIS, split, void, open bill","steps":["GET /v1/shifts/{id}/summary"],"expected":["Per metode bayar benar; void tidak dihitung; open bill ditampilkan terpisah"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["GET /v1/shifts/{id}/summary","Q49"]},
+{"id":"SHF-006","title":"Tutup shift & selisih kas","pre":"Kas awal 100.000; tunai 62.000 dibayar 100.000 (kembali 38.000)","steps":["POST /v1/shifts/{id}/close {actual_cash: 160.000}"],"expected":["expected_cash = 162.000; difference = -2.000; Z-report dikembalikan"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["POST /v1/shifts/{id}/close"]},
+{"id":"SHF-007","title":"Tutup shift oleh bukan pembuka","pre":"Shift dibuka KSR-A","steps":["SPV-A memanggil close biasa"],"expected":["403 FORBIDDEN 'Gunakan tutup paksa'"],"priority":"P1","type":["PERM"],"layer":["API"],"ref":["POST /v1/shifts/{id}/close","FORBIDDEN"]},
+{"id":"SHF-008","title":"Tutup paksa","pre":"Shift KSR-A open","steps":["POST /v1/shifts/{id}/force-close oleh SPV-A","Oleh KSR-B (lain tenant)","Oleh kasir lain"],"expected":["Supervisor sukses, ditandai ditutup paksa (muncul di audit)","Tenant B → 404","Kasir → 403"],"priority":"P1","type":["POS","PERM","ISO"],"layer":["API"],"ref":["POST /v1/shifts/{id}/force-close","NOT_FOUND","FORBIDDEN"]},
+{"id":"SHF-009","title":"Tutup shift dua kali","pre":"Shift sudah closed","steps":["POST close lagi"],"expected":["Tidak mengubah angka; respons sesuai docs (replay / 409)"],"priority":"P2","type":["IDEM"],"layer":["API"],"ref":["POST /v1/shifts/{id}/close"]},
+{"id":"SHF-010","title":"Open bill lintas shift","pre":"Open bill dibuat di shift 1","steps":["Tutup shift 1","Buka shift 2, lunasi open bill"],"expected":["Ringkasan shift 1 menampilkan open bill","Order pindah ke shift 2 (kas masuk shift 2)"],"priority":"P1","type":["CALC","E2E"],"layer":["API"],"ref":["Q20","POST /v1/orders/{id}/payments"]},
+{"id":"SHF-011","title":"Riwayat shift di dashboard","pre":"OWN-A","steps":["Buka /shifts, filter, buka detail /shifts/{id}"],"expected":["Selisih kas per kasir, pembuka/penutup, status ditutup paksa"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["SPEC Panel dashboard"]},
+{"id":"SHF-012","title":"PDF rekap shift","pre":"Shift closed","steps":["GET /v1/reports/shifts/{id}/pdf oleh kasir pemilik","Oleh kasir lain","11× dalam 1 menit"],"expected":["PDF terunduh","403 FORBIDDEN","429 TOO_MANY_REQUESTS"],"priority":"P2","type":["POS","PERM","SEC"],"layer":["API"],"ref":["GET /v1/reports/shifts/{id}/pdf","FORBIDDEN","TOO_MANY_REQUESTS"]},
+{"id":"SHF-013","title":"Zona waktu shift","pre":"Outlet Asia/Jayapura","steps":["Buka shift 23.30 lokal, tutup 00.30"],"expected":["Waktu disimpan UTC; tampil lokal benar di ringkasan & PDF"],"priority":"P2","type":["EDGE"],"layer":["API"],"ref":["ADR 0001"]}
+]},
+
+{"code":"ORD","name":"Checkout & perhitungan order","description":"POST /v1/checkout, OrderCalculator, nomor order, snapshot, stok, idempotensi (SPEC Aturan bisnis, docs/api/order.md).","scenarios":[
+{"id":"ORD-001","title":"Checkout tunai sukses","pre":"KSR-A shift open","steps":["POST /v1/checkout 2 item + opsi, bayar tunai lebih"],"expected":["201 completed, order_number {KODE}-{YYMMDD}-0001, change benar, stok berkurang, stock_movements sale"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["POST /v1/checkout"]},
+{"id":"ORD-002","title":"Urutan perhitungan SPEC","pre":"Dataset Pest","steps":["Hitung: diskon item, diskon order fixed & persen, service, pajak exclusive, pajak inclusive, pembulatan 100/500/tanpa, kombinasi, nol, .5"],"expected":["Sesuai angka manual di komentar; half-up pada pembulatan"],"priority":"P1","type":["CALC"],"layer":["UNIT"],"ref":["OrderCalculator","SPEC Urutan perhitungan total"]},
+{"id":"ORD-003","title":"Nominal dari client diabaikan","pre":"-","steps":["Kirim harga/total/subtotal palsu di body checkout"],"expected":["Server menghitung ulang; nilai client tidak dipakai"],"priority":"P1","type":["SEC","CALC"],"layer":["API"],"ref":["POST /v1/checkout"]},
+{"id":"ORD-004","title":"Idempotensi checkout","pre":"-","steps":["Kirim checkout dengan id sama 2×"],"expected":["Pertama 201, kedua 200 + meta.idempotent_replay true; 1 order, stok berkurang sekali"],"priority":"P1","type":["IDEM"],"layer":["API"],"ref":["POST /v1/checkout"]},
+{"id":"ORD-005","title":"Checkout paralel id sama","pre":"MySQL","steps":["10 request bersamaan dengan id sama"],"expected":["1 order; 201 sekali, 200 replay 9×"],"priority":"P1","type":["CONC","IDEM"],"layer":["API","MYSQL"],"ref":["POST /v1/checkout"]},
+{"id":"ORD-006","title":"Nomor order berurutan tanpa celah","pre":"MySQL","steps":["30 checkout paralel di outlet sama"],"expected":["30 nomor unik berurutan; stok tepat berkurang 30"],"priority":"P1","type":["CONC"],"layer":["MYSQL"],"ref":["SPEC Nomor order"]},
+{"id":"ORD-007","title":"Nomor order memakai tanggal lokal outlet","pre":"freezeTime 17.30 UTC (00.30 WIB)","steps":["Checkout"],"expected":["YYMMDD = tanggal WIB; urutan reset per hari lokal & per outlet"],"priority":"P1","type":["EDGE"],"layer":["API"],"ref":["ADR 0001","Q2"]},
+{"id":"ORD-008","title":"Tanpa shift terbuka","pre":"Shift belum dibuka","steps":["POST /v1/checkout"],"expected":["409 SHIFT_NOT_OPEN"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["SHIFT_NOT_OPEN","POST /v1/checkout"]},
+{"id":"ORD-009","title":"Token tidak terikat device","pre":"Token owner tanpa device","steps":["POST /v1/checkout"],"expected":["403 DEVICE_NOT_REGISTERED"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["DEVICE_NOT_REGISTERED","POST /v1/checkout"]},
+{"id":"ORD-010","title":"Validasi item","pre":"-","steps":["Produk nonaktif/habis","Opsi bukan milik grup produk","Jumlah pilihan di luar min/max","qty 0 / negatif / pecahan","items kosong"],"expected":["422 VALIDATION_ERROR per field items.N.*"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["VALIDATION_ERROR","POST /v1/checkout"]},
+{"id":"ORD-011","title":"Batas kapasitas nominal","pre":"-","steps":["qty × harga > 9.999.999.999.999,99"],"expected":["422 'Total transaksi melebihi batas' (items)"],"priority":"P2","type":["EDGE"],"layer":["API"],"ref":["VALIDATION_ERROR"]},
+{"id":"ORD-012","title":"Pembayaran kurang","pre":"-","steps":["Total 62.000, bayar 50.000"],"expected":["422 + details.remaining 12000.00; tidak ada order"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["VALIDATION_ERROR"]},
+{"id":"ORD-013","title":"Non-tunai melebihi sisa","pre":"-","steps":["QRIS 70.000 untuk total 62.000"],"expected":["422 PAYMENT_EXCEEDS_BALANCE + details.remaining"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["PAYMENT_EXCEEDS_BALANCE"]},
+{"id":"ORD-014","title":"Split payment & alokasi","pre":"-","steps":["Debit 40.000 (reference A12) + tunai 50.000 untuk total 62.000"],"expected":["Non-tunai dialokasikan dulu; tunai menutup 22.000, kembali 28.000"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["Q19"]},
+{"id":"ORD-015","title":"Reference wajib debit/kredit","pre":"-","steps":["Bayar kredit tanpa reference"],"expected":["422 VALIDATION_ERROR payments.N.reference"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["VALIDATION_ERROR"]},
+{"id":"ORD-016","title":"payments[].id sudah dipakai","pre":"Payment id dipakai order lain","steps":["Checkout dengan payment id yang sama"],"expected":["422 VALIDATION_ERROR"],"priority":"P1","type":["IDEM","NEG"],"layer":["API"],"ref":["VALIDATION_ERROR"]},
+{"id":"ORD-017","title":"Metode online dikirim kasir","pre":"Midtrans aktif","steps":["Checkout dengan payment_method kategori online"],"expected":["Ditolak (hanya dari Midtrans)"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["docs/api/self-order.md"]},
+{"id":"ORD-018","title":"Snapshot item","pre":"-","steps":["Checkout, lalu cek order_items & order_item_options"],"expected":["Nama, harga, opsi, category_name, unit_cost tersimpan"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["Q51","Q53"]},
+{"id":"ORD-019","title":"Stok boleh minus","pre":"Stok 1, track_stock","steps":["Checkout qty 3"],"expected":["Sukses; stok -2; produk tanpa track_stock tidak berubah"],"priority":"P2","type":["EDGE"],"layer":["API"],"ref":["SPEC Stok"]},
+{"id":"ORD-020","title":"Daftar order & visibilitas","pre":"Order dari beberapa kasir & hari","steps":["GET /v1/orders sebagai OWN, SPV, KSR","Filter date, status, channel, shift_id, search, paginasi"],"expected":["Owner semua; supervisor hari ini; kasir shift sendiri + semua open bill","Filter berfungsi; date = tanggal lokal outlet"],"priority":"P1","type":["PERM","POS"],"layer":["API"],"ref":["GET /v1/orders","Q21"]},
+{"id":"ORD-021","title":"Detail & struk di luar visibilitas","pre":"Order shift kasir lain","steps":["KSR-A GET /v1/orders/{id} & /receipt","OWN-B GET order A"],"expected":["403 FORBIDDEN","404 NOT_FOUND"],"priority":"P1","type":["PERM","ISO"],"layer":["API"],"ref":["GET /v1/orders/{id}","GET /v1/orders/{id}/receipt","FORBIDDEN","NOT_FOUND"]},
+{"id":"ORD-022","title":"Data struk","pre":"Order selesai dengan member","steps":["GET /v1/orders/{id}/receipt dengan receipt_show_rounding false & true"],"expected":["Field outlet, nomor, tipe, meja, member, kasir, created_at_local, lines, totals (tarif saat transaksi), payments, is_void","false: tanpa baris pembulatan; true: baris Pembulatan bila ≠ 0"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["GET /v1/orders/{id}/receipt","Q48"]},
+{"id":"ORD-023","title":"Struk web dashboard","pre":"OWN-A","steps":["GET /orders/{id}/receipt"],"expected":["Sama dengan aturan struk API; nama produk berbahaya ter-escape"],"priority":"P2","type":["POS","SEC"],"layer":["WEB"],"ref":["GET /orders/{id}/receipt"]},
+{"id":"ORD-024","title":"Tipe order","pre":"-","steps":["Checkout takeaway, dine_in dengan table_label, catatan item & order"],"expected":["Tersimpan & tampil di struk dan laporan Tipe order"],"priority":"P3","type":["POS"],"layer":["API"],"ref":["POST /v1/checkout"]}
+]},
+
+{"code":"OBL","name":"Open bill & pelunasan","description":"PUT /v1/orders/{id}, POST /v1/orders/{id}/payments, split bill, diskon 100% (docs/api/order.md).","scenarios":[
+{"id":"OBL-001","title":"Buat open bill","pre":"Shift open","steps":["PUT /v1/orders/{id} tanpa payments"],"expected":["201, status open, nomor order diberikan, stok belum dipotong"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["PUT /v1/orders/{id}"]},
+{"id":"OBL-002","title":"Ubah open bill","pre":"Open bill ada","steps":["PUT dengan item baru (lengkap)"],"expected":["200, item lama diganti, total dihitung ulang, nomor tetap"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["PUT /v1/orders/{id}"]},
+{"id":"OBL-003","title":"Ubah order selesai/void","pre":"Order completed","steps":["PUT /v1/orders/{id}"],"expected":["409 ORDER_ALREADY_CLOSED"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["ORDER_ALREADY_CLOSED"]},
+{"id":"OBL-004","title":"Total baru di bawah yang sudah dibayar","pre":"Open bill dibayar sebagian 30.000","steps":["PUT dengan total 20.000"],"expected":["422 details.items"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["VALIDATION_ERROR"]},
+{"id":"OBL-005","title":"Bayar sebagian lalu lunas","pre":"Open bill 90.000","steps":["POST payments 30.000 QRIS","POST payments 60.000 tunai"],"expected":["Pertama: tetap open, paid_total 30.000","Kedua: completed, stok dipotong, pindah ke shift penerima"],"priority":"P1","type":["POS","CALC"],"layer":["API"],"ref":["POST /v1/orders/{id}/payments"]},
+{"id":"OBL-006","title":"Replay pembayaran","pre":"-","steps":["Kirim payments dengan id yang sama 2×"],"expected":["200 replay; satu pembayaran tercatat"],"priority":"P1","type":["IDEM"],"layer":["API"],"ref":["POST /v1/orders/{id}/payments"]},
+{"id":"OBL-007","title":"Pembayaran paralel tidak melebihi sisa","pre":"MySQL, sisa 50.000","steps":["6 pembayaran non-tunai 20.000 paralel"],"expected":["Hanya yang muat diterima; sisanya PAYMENT_EXCEEDS_BALANCE"],"priority":"P1","type":["CONC"],"layer":["MYSQL"],"ref":["PAYMENT_EXCEEDS_BALANCE"]},
+{"id":"OBL-008","title":"Diskon 100% dilunasi tanpa pembayaran","pre":"Open bill sisa 0","steps":["POST payments: []","Kirim ulang"],"expected":["completed; kiriman ulang 200 replay","Bila sisa > 0 → 422"],"priority":"P2","type":["EDGE"],"layer":["API"],"ref":["POST /v1/orders/{id}/payments"]},
+{"id":"OBL-009","title":"Idempotensi PUT open bill","pre":"-","steps":["PUT yang sama 2×"],"expected":["Satu order; respons kedua 200 data sama"],"priority":"P1","type":["IDEM"],"layer":["API"],"ref":["PUT /v1/orders/{id}"]},
+{"id":"OBL-010","title":"Open bill id milik tenant lain","pre":"-","steps":["PUT /v1/orders/{id tenant B}"],"expected":["404 NOT_FOUND, order B tidak berubah"],"priority":"P1","type":["ISO"],"layer":["API"],"ref":["NOT_FOUND","PUT /v1/orders/{id}"]},
+{"id":"OBL-011","title":"Open bill terlihat semua kasir","pre":"Open bill dibuat KSR-A","steps":["Kasir lain di outlet sama GET /v1/orders"],"expected":["Open bill tampil & bisa dilunasi"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["Q21"]}
+]},
+
+{"code":"DSC","name":"Diskon & approval PIN","description":"Batas diskon berjenjang per role, PIN approver, self-approval (Q18, docs/api/order.md aturan 4).","scenarios":[
+{"id":"DSC-001","title":"Diskon kasir dalam batas","pre":"Batas kasir 10%","steps":["Checkout diskon 10%"],"expected":["Sukses tanpa approval"],"priority":"P1","type":["POS","EDGE"],"layer":["API"],"ref":["Q18"]},
+{"id":"DSC-002","title":"Diskon kasir di atas batas tanpa approval","pre":"-","steps":["Diskon 11%"],"expected":["422 DISCOUNT_OVER_LIMIT + details.limit_percent 10, discount_percent 11"],"priority":"P1","type":["NEG","EDGE"],"layer":["API"],"ref":["DISCOUNT_OVER_LIMIT"]},
+{"id":"DSC-003","title":"Approval supervisor dalam batas supervisor","pre":"Batas supervisor 25%","steps":["Kasir diskon 20% + approver SPV-A PIN benar"],"expected":["Sukses; approved_by = SPV-A"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["Q18"]},
+{"id":"DSC-004","title":"Approver supervisor di atas batasnya","pre":"-","steps":["Kasir diskon 30% + approver SPV-A"],"expected":["403 FORBIDDEN"],"priority":"P1","type":["PERM"],"layer":["API"],"ref":["FORBIDDEN"]},
+{"id":"DSC-005","title":"Approver manager tanpa batas","pre":"-","steps":["Kasir diskon 80% + approver MGR-A"],"expected":["Sukses; approved_by = MGR-A"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["Q18"]},
+{"id":"DSC-006","title":"Self-approval ditolak","pre":"SPV-A sebagai pelaku","steps":["Diskon 30% dengan approver = SPV-A sendiri"],"expected":["403 SELF_APPROVAL_NOT_ALLOWED"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["SELF_APPROVAL_NOT_ALLOWED"]},
+{"id":"DSC-007","title":"PIN approver salah & terkunci","pre":"-","steps":["PIN approver salah","Ulangi sampai 5×"],"expected":["401 INVALID_PIN","423 PIN_LOCKED (ikut penguncian per sumber approval)"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["INVALID_PIN","PIN_LOCKED"]},
+{"id":"DSC-008","title":"Owner/manager tanpa batas","pre":"MGR-A di device","steps":["Diskon 100% tanpa approval"],"expected":["Sukses"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["Q18"]},
+{"id":"DSC-009","title":"Basis persen diskon","pre":"-","steps":["Diskon item 5% + diskon order 6% terhadap harga kotor (kasir batas 10%)"],"expected":["Total diskon 11% → DISCOUNT_OVER_LIMIT (dihitung gabungan item + order)"],"priority":"P1","type":["CALC","EDGE"],"layer":["API"],"ref":["DISCOUNT_OVER_LIMIT","Q18"]},
+{"id":"DSC-010","title":"Approver dari tenant/outlet lain","pre":"-","steps":["approver_user_id milik tenant B"],"expected":["Ditolak (INVALID_PIN/404), diskon tidak diterapkan"],"priority":"P1","type":["ISO"],"layer":["API"],"ref":["INVALID_PIN"]},
+{"id":"DSC-011","title":"Diskon pada open bill","pre":"-","steps":["PUT /v1/orders/{id} dengan diskon di atas batas tanpa approval"],"expected":["Aturan sama: DISCOUNT_OVER_LIMIT"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["DISCOUNT_OVER_LIMIT","PUT /v1/orders/{id}"]}
+]},
+
+{"code":"VOID","name":"Void order","description":"POST /v1/orders/{id}/void, pengembalian stok/poin/stempel/voucher, refund manual online.","scenarios":[
+{"id":"VOID-001","title":"Void oleh supervisor","pre":"Order selesai di shift open","steps":["POST void {reason} oleh SPV-A"],"expected":["status voided, payments voided, stok kembali (void_return), voided_by tercatat"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["POST /v1/orders/{id}/void"]},
+{"id":"VOID-002","title":"Void kasir tanpa PIN","pre":"-","steps":["KSR-A void tanpa approver"],"expected":["403 APPROVAL_REQUIRED; order tetap completed"],"priority":"P1","type":["PERM"],"layer":["API"],"ref":["APPROVAL_REQUIRED"]},
+{"id":"VOID-003","title":"Void kasir dengan PIN supervisor","pre":"-","steps":["KSR-A void + approver SPV-A"],"expected":["Sukses; void_approved_by = SPV-A (terpisah dari approved_by diskon)"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["Q22"]},
+{"id":"VOID-004","title":"Void approver = pelaku / PIN salah","pre":"-","steps":["Approver = diri sendiri","PIN salah","PIN terkunci"],"expected":["SELF_APPROVAL_NOT_ALLOWED","INVALID_PIN","PIN_LOCKED"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["SELF_APPROVAL_NOT_ALLOWED","INVALID_PIN","PIN_LOCKED"]},
+{"id":"VOID-005","title":"Void tanpa alasan","pre":"-","steps":["reason kosong"],"expected":["422 VALIDATION_ERROR"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["VALIDATION_ERROR"]},
+{"id":"VOID-006","title":"Void order di shift tertutup","pre":"Shift order sudah closed","steps":["POST void"],"expected":["409 SHIFT_NOT_OPEN"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["SHIFT_NOT_OPEN"]},
+{"id":"VOID-007","title":"Void dua kali","pre":"Order voided","steps":["POST void lagi"],"expected":["200, data sama, meta.idempotent_replay true; stok tidak dikembalikan dua kali"],"priority":"P1","type":["IDEM"],"layer":["API"],"ref":["POST /v1/orders/{id}/void"]},
+{"id":"VOID-008","title":"Void open bill","pre":"Open bill belum lunas","steps":["Void"],"expected":["voided tanpa pergerakan stok"],"priority":"P2","type":["POS"],"layer":["API"],"ref":["POST /v1/orders/{id}/void"]},
+{"id":"VOID-009","title":"Void mengembalikan benefit member","pre":"Order member: dapat poin, tukar poin, stempel, voucher","steps":["Void"],"expected":["Poin kumpul ditarik, poin tukar kembali (void_reversal), stempel & voucher dikembalikan; saldo boleh minus"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["ADR 0013"]},
+{"id":"VOID-010","title":"Void order online lunas","pre":"Order self-order dibayar Midtrans","steps":["Void dengan PIN"],"expected":["refund_required = true; tanda 'perlu refund manual' di dashboard; tidak ada refund otomatis"],"priority":"P1","type":["POS"],"layer":["API","WEB"],"ref":["Q73"]},
+{"id":"VOID-011","title":"Void tidak dihitung di ringkasan & laporan","pre":"-","steps":["Void order, cek shift summary, reports/summary, audit"],"expected":["Tidak dihitung omzet; tampil di laporan Diskon & void / audit berdasar voided_at"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["Q23","GET /v1/reports/audit"]},
+{"id":"VOID-012","title":"Void dari dashboard","pre":"OWN-A","steps":["Penjualan → detail order → Void dengan alasan"],"expected":["Memanggil Action yang sama; hasil identik dengan API"],"priority":"P2","type":["POS"],"layer":["WEB","BRW"],"ref":["SPEC Panel dashboard"]},
+{"id":"VOID-013","title":"Void order tenant lain","pre":"-","steps":["POST void order tenant B"],"expected":["404 NOT_FOUND"],"priority":"P1","type":["ISO"],"layer":["API"],"ref":["NOT_FOUND"]}
+]},
+
+{"code":"MEM","name":"Program member & loyalti","description":"Member, poin, tukar poin, diskon member, tier, kartu stempel, voucher, import/ekspor, laporan (ADR 0013, Q60–Q67, Q75).","scenarios":[
+{"id":"MEM-001","title":"Setelan program member","pre":"OWN-A","steps":["Aktifkan program, isi earn_amount, earn_points, redeem_value, min_redeem, max_redeem_percent, expiry_months, diskon member","Kecualikan outlet A2","Coba sebagai MGR-A"],"expected":["Tersimpan; manager ditolak (member.settings hanya owner)"],"priority":"P1","type":["POS","PERM"],"layer":["WEB"],"ref":["Q60","GET /m/{business}"]},
+{"id":"MEM-002","title":"Daftar cepat member di kasir","pre":"Program aktif","steps":["POST /v1/members {name, phone 0812…, consent}","Ulangi dengan HP sama format +62","Tanpa consent"],"expected":["201; HP dinormalisasi +62…, code 6 karakter acak, consent_at terisi","HP duplikat dalam tenant → 422","Tanpa persetujuan → 422"],"priority":"P1","type":["POS","NEG"],"layer":["API"],"ref":["POST /v1/members","Q61"]},
+{"id":"MEM-003","title":"HP sama di tenant lain","pre":"Member HP X di tenant B","steps":["Daftar HP X di tenant A"],"expected":["Sukses; member terpisah"],"priority":"P1","type":["ISO"],"layer":["API"],"ref":["POST /v1/members","ADR 0013"]},
+{"id":"MEM-004","title":"Cari member","pre":"-","steps":["GET /v1/members?search= HP / kode / nama","31× dalam 1 menit"],"expected":["HP disamarkan •••• 1234","429 TOO_MANY_REQUESTS"],"priority":"P1","type":["POS","SEC"],"layer":["API"],"ref":["GET /v1/members","TOO_MANY_REQUESTS"]},
+{"id":"MEM-005","title":"Detail & poin member","pre":"-","steps":["GET /v1/members/{id}","GET /v1/members/{id}/points","ID member tenant B / nonaktif / dianonimkan"],"expected":["Detail & ledger benar","404 MEMBER_NOT_FOUND"],"priority":"P1","type":["POS","ISO"],"layer":["API"],"ref":["GET /v1/members/{id}","GET /v1/members/{id}/points","MEMBER_NOT_FOUND"]},
+{"id":"MEM-006","title":"Kumpul poin saat order selesai","pre":"earn 10.000 = 1 poin, tier pengali 1.5","steps":["Checkout member, subtotal setelah diskon 47.000"],"expected":["floor(47.000/10.000)×1×1.5 = poin sesuai; dihitung sebelum pajak/service/pembulatan; ledger earn + balance_after"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["Q62"]},
+{"id":"MEM-007","title":"Open bill tidak memberi poin sampai lunas","pre":"-","steps":["Open bill member","Lunasi"],"expected":["Poin hanya masuk saat completed"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["Q62"]},
+{"id":"MEM-008","title":"Tukar poin sebagai pembayaran","pre":"Saldo 500 poin, redeem_value 100","steps":["Bayar dengan metode points + bukti QR member"],"expected":["Pajak dari harga penuh; tidak masuk kas laci; tanpa kembalian; ledger redeem"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["Q62"]},
+{"id":"MEM-009","title":"Tukar poin ditolak","pre":"-","steps":["Melebihi saldo","Di bawah minimal","Di atas max_redeem_percent tagihan"],"expected":["422 INSUFFICIENT_POINTS"],"priority":"P1","type":["NEG","EDGE"],"layer":["API"],"ref":["INSUFFICIENT_POINTS"]},
+{"id":"MEM-010","title":"Bukti tukar poin","pre":"-","steps":["Tanpa bukti","QR kedaluwarsa (> 2 menit)","QR dipakai ulang","PIN member salah","PIN member benar","Persetujuan PIN supervisor"],"expected":["INVALID_MEMBER_PROOF untuk 4 kasus pertama","Sukses dengan PIN member / approval supervisor"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["INVALID_MEMBER_PROOF"]},
+{"id":"MEM-011","title":"PIN member terkunci","pre":"-","steps":["5× PIN member salah"],"expected":["423 MEMBER_PIN_LOCKED + retry_after; 15 menit"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["MEMBER_PIN_LOCKED"]},
+{"id":"MEM-012","title":"Program nonaktif / outlet dikecualikan","pre":"-","steps":["Tukar poin saat program nonaktif","Checkout member di A2 (dikecualikan)"],"expected":["422 MEMBER_PROGRAM_DISABLED","A2: member terpasang (kunjungan) tanpa poin/stempel/diskon/voucher"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["MEMBER_PROGRAM_DISABLED","Q60"]},
+{"id":"MEM-013","title":"Diskon member & urutan potongan","pre":"Diskon member 5%, tier 2%","steps":["Checkout member dengan diskon item, stempel gratis, diskon order, voucher"],"expected":["Urutan: item → stempel → order → voucher → member/tier → service → pajak → pembulatan"],"priority":"P1","type":["CALC"],"layer":["UNIT","API"],"ref":["Q63"]},
+{"id":"MEM-014","title":"Tier member","pre":"Tier Reguler/Silver/Gold dengan batas belanja 12 bulan","steps":["Order membuat member melewati batas Silver","Jalankan pos:evaluate-member-tiers setelah order lama > 12 bulan"],"expected":["Naik tier saat order selesai","Turun tier saat evaluasi harian"],"priority":"P2","type":["CALC"],"layer":["ACT","CMD"],"ref":["Q64"]},
+{"id":"MEM-015","title":"Kartu stempel","pre":"Program 'Kopi': 10 stempel = 1 gratis","steps":["Order 1 kopi → +1 stempel","Member dengan 10 stempel pilih program saat checkout 2 kopi berbeda harga","Void order"],"expected":["Stempel bertambah saat selesai","Item termurah yang memenuhi gratis (diskon item)","Void mengembalikan stempel"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["Q65"]},
+{"id":"MEM-016","title":"Voucher kode promo","pre":"Voucher HEMAT10","steps":["GET /v1/vouchers/check?code=HEMAT10&member_id&subtotal","Checkout dengan voucher_code"],"expected":["Valid → nilai potongan; tercatat voucher_redemptions"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["GET /v1/vouchers/check"]},
+{"id":"MEM-017","title":"Voucher tidak valid (semua alasan)","pre":"Dataset","steps":["not_found, inactive, not_started, expired, quota_exhausted, member_quota_exhausted, min_spend, member_only, tier, outlet, not_owner"],"expected":["422 VOUCHER_INVALID + details.reason sesuai untuk tiap kasus"],"priority":"P1","type":["NEG","EDGE"],"layer":["API"],"ref":["VOUCHER_INVALID","Q66"]},
+{"id":"MEM-018","title":"Kuota voucher paralel","pre":"MySQL, quota 1","steps":["2 checkout paralel dengan voucher sama"],"expected":["Hanya satu yang berhasil"],"priority":"P1","type":["CONC"],"layer":["MYSQL"],"ref":["VOUCHER_INVALID"]},
+{"id":"MEM-019","title":"Cek voucher rate limit","pre":"-","steps":["31× GET /v1/vouchers/check per menit"],"expected":["429 TOO_MANY_REQUESTS"],"priority":"P2","type":["SEC"],"layer":["API"],"ref":["GET /v1/vouchers/check","TOO_MANY_REQUESTS"]},
+{"id":"MEM-020","title":"Voucher ulang tahun","pre":"Member lahir bulan ini","steps":["Jalankan pos:issue-birthday-vouchers 2×"],"expected":["Satu voucher, berlaku sampai akhir bulan, sekali pakai"],"priority":"P2","type":["IDEM"],"layer":["CMD"],"ref":["Q66"]},
+{"id":"MEM-021","title":"Kedaluwarsa poin FIFO","pre":"Ledger earn lama > expiry_months","steps":["Jalankan pos:expire-member-points"],"expected":["Ledger expire, remaining FIFO berkurang, saldo cache konsisten; dijalankan ulang tidak ganda"],"priority":"P1","type":["CALC","IDEM"],"layer":["CMD"],"ref":["ADR 0013"]},
+{"id":"MEM-022","title":"Penyesuaian poin manual","pre":"MGR-A","steps":["Tambah/kurangi poin dengan alasan","Tanpa alasan","Oleh SPV"],"expected":["Ledger adjust","422","403"],"priority":"P2","type":["POS","PERM"],"layer":["WEB"],"ref":["member.points_adjust"]},
+{"id":"MEM-023","title":"Kelola member di dashboard","pre":"MGR-A","steps":["Ubah, nonaktifkan, reset kata sandi sementara, set PIN member","Hapus atas permintaan"],"expected":["Hapus = anonimkan data pribadi; transaksi & ledger tetap"],"priority":"P1","type":["POS","SEC"],"layer":["WEB"],"ref":["Q61"]},
+{"id":"MEM-024","title":"Import & ekspor member","pre":"-","steps":["Import file member valid / invalid","Ekspor daftar"],"expected":["Validasi per baris, HP dinormalisasi & unik","Ekspor aman dari formula injection"],"priority":"P2","type":["POS","SEC"],"layer":["WEB"],"ref":["Q75"]},
+{"id":"MEM-025","title":"Tier, stempel, voucher di dashboard","pre":"OWN-A","steps":["Atur tier","CRUD stamp-programs, aktif/nonaktif","CRUD vouchers, aktif/nonaktif, edit voucher ulang tahun"],"expected":["Tersimpan; validasi nilai; manager ditolak"],"priority":"P2","type":["POS","PERM"],"layer":["WEB"],"ref":["Q64","Q65","Q66"]},
+{"id":"MEM-026","title":"Struk member","pre":"Order member","steps":["GET receipt"],"expected":["Poin didapat, saldo, stempel, member_name & member_tier snapshot"],"priority":"P3","type":["POS"],"layer":["API"],"ref":["GET /v1/orders/{id}/receipt"]},
+{"id":"MEM-027","title":"Halaman member: daftar mandiri","pre":"GET /m/{slug}/register","steps":["Daftar baru dengan consent","Daftar HP yang sudah didaftarkan kasir (dengan kata sandi sementara)","Slug bisnis tidak ada"],"expected":["Akun dibuat, login otomatis","Akun diaktifkan lewat kata sandi sementara","404"],"priority":"P1","type":["POS"],"layer":["WEB","BRW"],"ref":["GET /m/{business}/register","POST /m/{business}/register","Q67"]},
+{"id":"MEM-028","title":"Halaman member: login","pre":"-","steps":["HP + kata sandi benar","HP tidak terdaftar / kata sandi salah","6×/menit per HP+IP, 21×/menit per IP","10× salah"],"expected":["Masuk","Pesan umum identik (waktu konstan)","429","Kunci 15 menit"],"priority":"P1","type":["POS","SEC"],"layer":["WEB"],"ref":["POST /m/{business}/login","Q67"]},
+{"id":"MEM-029","title":"Halaman member: kode QR dinamis","pre":"Member login","steps":["Buka /m/{slug}/code","Tunggu 30 detik","Gunakan kode > 2 menit"],"expected":["QR berganti tiap 30 detik, berlaku 2 menit, sekali pakai"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["GET /m/{business}/code"]},
+{"id":"MEM-030","title":"Halaman member: riwayat, profil, kata sandi, logout","pre":"Member login","steps":["Buka /history","Ubah profil","Ganti kata sandi (must_change_password dipaksa)","Logout"],"expected":["Riwayat poin & transaksi tenant ini saja","Ganti kata sandi mengeluarkan semua sesi lain"],"priority":"P2","type":["POS","SEC"],"layer":["WEB"],"ref":["GET /m/{business}/history","POST /m/{business}/profile","POST /m/{business}/password","POST /m/{business}/logout"]},
+{"id":"MEM-031","title":"Halaman member: hapus akun","pre":"Member login","steps":["POST /m/{slug}/delete dengan konfirmasi"],"expected":["Data pribadi dianonimkan, sesi berakhir, transaksi tetap"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["POST /m/{business}/delete"]},
+{"id":"MEM-032","title":"Sesi member tidak lintas bisnis","pre":"Member login di /m/tenant-a","steps":["Buka /m/tenant-b"],"expected":["Harus login terpisah; tidak ada data A"],"priority":"P1","type":["ISO"],"layer":["WEB"],"ref":["GET /m/{business}","ADR 0013"]}
+]},
+
+{"code":"SO","name":"Self-order QR meja","description":"Meja & QR, halaman pesan HP, terima/tolak kasir, kedaluwarsa, batas (ADR 0014, Q68–Q71, Q76, Q78, Q85).","scenarios":[
+{"id":"SO-001","title":"Kelola meja","pre":"MGR-A","steps":["CRUD meja (nama, area, urutan, aktif) di /settings/tables","Oleh SPV"],"expected":["qr_token acak 32 karakter + short_code 6 karakter dibuat","SPV ditolak (table.manage)"],"priority":"P1","type":["POS","PERM"],"layer":["WEB"],"ref":["Q69","Q85"]},
+{"id":"SO-002","title":"Ganti QR meja","pre":"-","steps":["Regenerate QR","Buka URL token lama"],"expected":["Token lama → TABLE_NOT_FOUND"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["TABLE_NOT_FOUND","GET /order/t/{token}"]},
+{"id":"SO-003","title":"Cetak QR","pre":"-","steps":["GET /tables/print satu meja & semua meja"],"expected":["PDF berisi QR & nama meja tenant sendiri"],"priority":"P3","type":["POS","ISO"],"layer":["WEB"],"ref":["GET /tables/print"]},
+{"id":"SO-004","title":"URL pendek meja","pre":"short_code AB2CD3","steps":["GET /t/ab2cd3 (huruf kecil)","Kode tidak ada","61×/menit"],"expected":["Redirect ke /order/t/{token}","404","429"],"priority":"P2","type":["POS","SEC"],"layer":["WEB"],"ref":["GET /t/{code}","Q85"]},
+{"id":"SO-005","title":"Setelan self-order outlet","pre":"OWN-A","steps":["Aktif/nonaktif, payment_timeout_minutes, jam layanan, metode online, teks sambutan"],"expected":["Tersimpan per outlet"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["ADR 0014"]},
+{"id":"SO-006","title":"Self-order nonaktif / di luar jam","pre":"-","steps":["Buka QR saat nonaktif","Buka di luar jam layanan"],"expected":["SELF_ORDER_DISABLED, pesan ramah di HP"],"priority":"P1","type":["NEG"],"layer":["WEB"],"ref":["SELF_ORDER_DISABLED"]},
+{"id":"SO-007","title":"Meja nonaktif / token salah","pre":"-","steps":["Buka QR meja nonaktif","Token acak"],"expected":["TABLE_NOT_FOUND"],"priority":"P1","type":["NEG"],"layer":["WEB"],"ref":["TABLE_NOT_FOUND"]},
+{"id":"SO-008","title":"Pesan sebagai tamu","pre":"GUEST","steps":["Buka /order/t/{token}","Pilih produk + opsi + catatan, ubah qty","Kirim dengan nama"],"expected":["Menu sesuai katalog outlet (dijual & tersedia)","Status pending, tampil 'menunggu kasir'"],"priority":"P1","type":["POS"],"layer":["WEB","BRW"],"ref":["GET /order/t/{token}","Q70"]},
+{"id":"SO-009","title":"Validasi pesanan HP","pre":"-","steps":["Tanpa nama tamu","Keranjang kosong","> 50 item","Produk/opsi habis"],"expected":["Ditolak dengan pesan"],"priority":"P2","type":["NEG","EDGE"],"layer":["WEB"],"ref":["ADR 0014"]},
+{"id":"SO-010","title":"Batas pesanan","pre":"-","steps":["Kirim pesanan ke-4 saat 3 pending di meja","11 pesanan/jam dari IP sama"],"expected":["Ditolak"],"priority":"P1","type":["SEC","EDGE"],"layer":["WEB"],"ref":["ADR 0014","TOO_MANY_REQUESTS"]},
+{"id":"SO-011","title":"Kirim ganda idempotent","pre":"-","steps":["Submit dengan id klien sama 2× (double tap)"],"expected":["Satu self_order"],"priority":"P1","type":["IDEM"],"layer":["WEB"],"ref":["ADR 0014"]},
+{"id":"SO-012","title":"Pesan sebagai member","pre":"MEM-A","steps":["Login dari /order/t/{token}/member","Pilih voucher","Kirim"],"expected":["Member terpasang; voucher divalidasi saat terima & saat lunas"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["GET /order/t/{token}/member"]},
+{"id":"SO-013","title":"Daftar pesanan masuk kasir","pre":"2 pending di A1, 1 di A2","steps":["GET /v1/self-orders dari DEV-A1"],"expected":["Hanya A1, paling lama di atas, maks 50; meta.pending_count & unpaid_count"],"priority":"P1","type":["POS","ISO"],"layer":["API"],"ref":["GET /v1/self-orders"]},
+{"id":"SO-014","title":"Terima pesanan","pre":"Shift open","steps":["POST /v1/self-orders/{id}/accept"],"expected":["201 order awaiting_payment, channel self_order, nomor order, table_label = nama meja, harga dihitung ulang, stok belum dipotong"],"priority":"P1","type":["POS","CALC"],"layer":["API"],"ref":["POST /v1/self-orders/{id}/accept"]},
+{"id":"SO-015","title":"Terima pesanan total 0","pre":"Voucher menutup semua","steps":["Accept"],"expected":["Langsung completed"],"priority":"P2","type":["EDGE"],"layer":["API"],"ref":["POST /v1/self-orders/{id}/accept"]},
+{"id":"SO-016","title":"Terima tanpa shift","pre":"Device tanpa shift","steps":["Accept"],"expected":["409 SHIFT_NOT_OPEN"],"priority":"P1","type":["NEG"],"layer":["API"],"ref":["SHIFT_NOT_OPEN"]},
+{"id":"SO-017","title":"Terima/tolak bersamaan dua kasir","pre":"MySQL","steps":["Dua device accept pesanan sama bersamaan","Accept setelah ditolak"],"expected":["Satu sukses, lainnya 409 ORDER_NOT_PENDING"],"priority":"P1","type":["CONC"],"layer":["API","MYSQL"],"ref":["ORDER_NOT_PENDING"]},
+{"id":"SO-018","title":"Tolak pesanan","pre":"-","steps":["POST reject {reason}","Tanpa reason / > 255"],"expected":["200 rejected, alasan tampil di HP","422"],"priority":"P1","type":["POS","NEG"],"layer":["API"],"ref":["POST /v1/self-orders/{id}/reject","VALIDATION_ERROR"]},
+{"id":"SO-019","title":"Pesanan kedaluwarsa","pre":"timeout 15 menit","steps":["Pending lewat batas → pos:expire-self-orders","Awaiting_payment lewat batas","Accept / bayar setelah expired"],"expected":["Status expired; transaksi Midtrans dibatalkan","409 ORDER_EXPIRED"],"priority":"P1","type":["EDGE"],"layer":["CMD","API"],"ref":["ORDER_EXPIRED","POST /v1/orders/{id}/payments"]},
+{"id":"SO-020","title":"Bayar di kasir","pre":"Order awaiting_payment","steps":["GET /v1/orders?status=awaiting_payment&channel=self_order","POST /v1/orders/{id}/payments tunai","PUT /v1/orders/{id}"],"expected":["Lunas → completed, stok dipotong saat lunas","PUT → 409 ORDER_ALREADY_CLOSED (item tidak bisa diubah)"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["GET /v1/orders","POST /v1/orders/{id}/payments","ORDER_ALREADY_CLOSED"]},
+{"id":"SO-021","title":"Status di HP (polling)","pre":"-","steps":["Pantau halaman setelah accept, reject, lunas, expired"],"expected":["Tampilan berganti: menunggu → bayar → lunas (struk digital) / ditolak / kedaluwarsa"],"priority":"P2","type":["POS"],"layer":["BRW"],"ref":["Q70"]},
+{"id":"SO-022","title":"Bayar dengan poin dari HP","pre":"Member login, saldo cukup","steps":["payWithPoints"],"expected":["Bukti = sesi member; aturan min/max sama; INSUFFICIENT_POINTS bila kurang"],"priority":"P2","type":["POS","NEG"],"layer":["WEB"],"ref":["INSUFFICIENT_POINTS"]},
+{"id":"SO-023","title":"Snapshot harga saat diterima","pre":"Order diterima","steps":["Ubah harga produk","Bayar"],"expected":["Tagihan tetap harga saat diterima"],"priority":"P2","type":["CALC"],"layer":["API"],"ref":["ADR 0014"]},
+{"id":"SO-024","title":"Pesanan susulan","pre":"Order meja sudah lunas","steps":["Kirim pesanan lagi dari meja sama"],"expected":["Order baru terpisah"],"priority":"P3","type":["POS"],"layer":["WEB"],"ref":["ADR 0014"]},
+{"id":"SO-025","title":"Kasir web: pesanan masuk & belum dibayar","pre":"Kasir web login","steps":["Buka /cashier/self-orders","Terima, tolak dengan alasan","Badge jumlah update via polling"],"expected":["Sama dengan perilaku API"],"priority":"P1","type":["POS"],"layer":["WEB","BRW"],"ref":["GET /cashier/self-orders","Q71"]}
+]},
+
+{"code":"MID","name":"Pembayaran online Midtrans","description":"Setelan gateway per owner, Snap, webhook, tes koneksi (Q72, Q73, Q77). Semua request Midtrans di-fake.","scenarios":[
+{"id":"MID-001","title":"Simpan setelan Midtrans","pre":"OWN-A","steps":["Isi Server/Client Key, mode sandbox, metode Snap","Buka ulang halaman","Simpan dengan key kosong"],"expected":["Key terenkripsi di DB, tidak pernah ditampilkan ulang","Kosong = tetap memakai key lama","Metode kategori online dibuat otomatis"],"priority":"P1","type":["POS","SEC"],"layer":["WEB"],"ref":["Q77"]},
+{"id":"MID-002","title":"Setelan Midtrans hanya owner","pre":"MGR-A","steps":["Buka /settings/online-payment"],"expected":["403"],"priority":"P1","type":["PERM"],"layer":["WEB"],"ref":["Q72"]},
+{"id":"MID-003","title":"Tes koneksi","pre":"Http::fake","steps":["Key benar (200)","Key salah (401)","Timeout"],"expected":["Pesan sukses / 'key salah' / gagal hubungi"],"priority":"P2","type":["POS","NEG"],"layer":["WEB"],"ref":["Q77"]},
+{"id":"MID-004","title":"Mulai pembayaran Snap dari HP","pre":"Order awaiting_payment, Midtrans aktif","steps":["payOnline"],"expected":["Snap token dibuat; order_id Midtrans = id pembayaran kita; nominal dari server"],"priority":"P1","type":["POS"],"layer":["WEB"],"ref":["ADR 0014"]},
+{"id":"MID-005","title":"Gateway belum dikonfigurasi","pre":"Midtrans nonaktif","steps":["payOnline"],"expected":["422 PAYMENT_GATEWAY_NOT_CONFIGURED; opsi bayar online tidak ditawarkan"],"priority":"P1","type":["NEG"],"layer":["WEB"],"ref":["PAYMENT_GATEWAY_NOT_CONFIGURED"]},
+{"id":"MID-006","title":"Midtrans error saat Snap","pre":"Http::fake 500/timeout","steps":["payOnline"],"expected":["502 PAYMENT_GATEWAY_ERROR, order tetap awaiting_payment"],"priority":"P1","type":["NEG"],"layer":["WEB"],"ref":["PAYMENT_GATEWAY_ERROR"]},
+{"id":"MID-007","title":"Webhook settlement valid","pre":"Signature SHA512 benar, cek ulang status = settlement, nominal cocok","steps":["POST /webhooks/midtrans/{tenant}"],"expected":["Order completed, stok dipotong, payment online dengan reference transaction_id"],"priority":"P1","type":["POS"],"layer":["WEB"],"ref":["POST /webhooks/midtrans/{tenant}"]},
+{"id":"MID-008","title":"Webhook signature salah","pre":"-","steps":["POST webhook dengan signature_key salah"],"expected":["Ditolak; order tidak berubah"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["POST /webhooks/midtrans/{tenant}"]},
+{"id":"MID-009","title":"Webhook nominal tidak cocok / status cek ulang beda","pre":"-","steps":["gross_amount berbeda","Cek ulang API mengembalikan pending"],"expected":["Tidak ditandai lunas"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["POST /webhooks/midtrans/{tenant}"]},
+{"id":"MID-010","title":"Webhook ganda","pre":"-","steps":["Kirim notifikasi settlement yang sama 3×"],"expected":["Satu pembayaran; idempotent"],"priority":"P1","type":["IDEM"],"layer":["WEB"],"ref":["POST /webhooks/midtrans/{tenant}"]},
+{"id":"MID-011","title":"Webhook ke tenant salah","pre":"-","steps":["Notifikasi transaksi tenant A dikirim ke URL tenant B"],"expected":["Ditolak (signature pakai server key B); order A tidak berubah"],"priority":"P1","type":["ISO","SEC"],"layer":["WEB"],"ref":["POST /webhooks/midtrans/{tenant}"]},
+{"id":"MID-012","title":"Midtrans tidak bisa dihubungi saat cek ulang","pre":"Http::fake timeout","steps":["POST webhook valid"],"expected":["503 agar Midtrans mengirim ulang"],"priority":"P2","type":["NEG"],"layer":["WEB"],"ref":["POST /webhooks/midtrans/{tenant}"]},
+{"id":"MID-013","title":"Webhook expire/cancel/deny","pre":"-","steps":["Status expire, cancel, deny"],"expected":["Order tidak lunas; status sesuai alur"],"priority":"P2","type":["NEG"],"layer":["WEB"],"ref":["POST /webhooks/midtrans/{tenant}"]},
+{"id":"MID-014","title":"Laporan pembayaran online","pre":"Order online lunas","steps":["Ringkasan shift & laporan metode bayar"],"expected":["Online tidak masuk kas laci; dilaporkan terpisah, nominal bruto"],"priority":"P2","type":["CALC"],"layer":["API"],"ref":["Q73","GET /v1/reports/payment-methods"]}
+]},
+
+{"code":"STK","name":"Stok: masuk, opname, transfer, supplier","description":"Dokumen stok, modal rata-rata tertimbang, nomor dokumen, izin (ADR 0015, Q79–Q83).","scenarios":[
+{"id":"STK-001","title":"Supplier","pre":"MGR-A","steps":["CRUD supplier, nonaktifkan","Nama duplikat dalam bisnis","Oleh SPV"],"expected":["Tersimpan; duplikat ditolak; SPV ditolak"],"priority":"P2","type":["POS","NEG","PERM"],"layer":["WEB"],"ref":["supplier.manage"]},
+{"id":"STK-002","title":"Stok masuk draf → posting","pre":"Produk lacak stok, stok A1=10, A2=5, modal 10.000","steps":["Buat draf stok masuk A1: 5 pcs @ 13.000 + supplier","Ubah draf","Posting"],"expected":["Stok A1=15","Modal baru = (15×10.000 + 5×13.000)/20 = 10.750,00; cost_before/after tersimpan","Nomor A1-SM-YYMMDD-0001; dokumen terkunci"],"priority":"P1","type":["POS","CALC"],"layer":["WEB","ACT"],"ref":["Q80"]},
+{"id":"STK-003","title":"Modal rata-rata dengan stok minus & modal kosong","pre":"Dataset","steps":["Stok total minus","Modal lama null"],"expected":["Stok minus dihitung 0; modal kosong = harga beli; dibulatkan 2 desimal"],"priority":"P1","type":["CALC","EDGE"],"layer":["UNIT","ACT"],"ref":["Q80"]},
+{"id":"STK-004","title":"Batal stok masuk","pre":"Dokumen diposting","steps":["Batal dengan alasan","Batal tanpa alasan"],"expected":["Stok dikurangi lagi (purchase_void); modal tidak diputar balik","422"],"priority":"P1","type":["POS","NEG"],"layer":["WEB","ACT"],"ref":["ADR 0015"]},
+{"id":"STK-005","title":"Validasi stok masuk","pre":"-","steps":["qty 0 / pecahan / negatif","Produk tidak lacak stok / tenant B","Ubah dokumen yang sudah diposting"],"expected":["Ditolak"],"priority":"P2","type":["NEG","ISO"],"layer":["WEB","ACT"],"ref":["ADR 0015"]},
+{"id":"STK-006","title":"Supervisor stok masuk","pre":"SPV-A (A1)","steps":["Buka menu Stok masuk","Buat untuk A2"],"expected":["Menu tampil walau dashboard hanya Laporan; hanya outlet yang ditugaskan"],"priority":"P1","type":["PERM","ISO"],"layer":["WEB"],"ref":["Q79"]},
+{"id":"STK-007","title":"Hapus draf","pre":"-","steps":["Hapus draf stok masuk / opname / transfer","Hapus dokumen yang sudah diposting"],"expected":["Draf terhapus; terposting tidak bisa dihapus"],"priority":"P2","type":["NEG"],"layer":["WEB"],"ref":["ADR 0015"]},
+{"id":"STK-008","title":"Stok opname","pre":"MGR-A","steps":["Buat lembar hitung A1 (semua / satu kategori)","Isi qty fisik","Penjualan terjadi sebelum posting","Posting"],"expected":["Lembar berisi produk lacak stok yang dijual (maks 1.000)","Selisih = fisik − stok saat posting; movement opname ±","Nomor A1-SO-…"],"priority":"P1","type":["POS","CALC"],"layer":["WEB","ACT"],"ref":["Q81"]},
+{"id":"STK-009","title":"Validasi opname","pre":"-","steps":["Qty fisik negatif / pecahan","Oleh SPV"],"expected":["Ditolak (opname ≥ 0 bilangan bulat)","403"],"priority":"P2","type":["NEG","PERM"],"layer":["WEB"],"ref":["Q81"]},
+{"id":"STK-010","title":"Transfer antar outlet","pre":"MGR-A memegang A1 & A2","steps":["Draf A1 → A2 10 pcs","Kirim","Terima 9 pcs di A2"],"expected":["Kirim: stok A1 −10 (dalam perjalanan)","Terima: A2 +9, selisih 1 tercatat","Nomor A1-TR-…; modal tidak berubah"],"priority":"P1","type":["POS","CALC"],"layer":["WEB","ACT"],"ref":["Q82"]},
+{"id":"STK-011","title":"Batal transfer","pre":"Transfer dikirim, belum diterima","steps":["Batal","Batal setelah diterima"],"expected":["Stok asal kembali","Setelah diterima tidak bisa batal"],"priority":"P1","type":["POS","NEG"],"layer":["WEB","ACT"],"ref":["ADR 0015"]},
+{"id":"STK-012","title":"Izin & visibilitas transfer","pre":"-","steps":["Pembuat tidak memegang outlet asal","Tujuan = outlet sama / nonaktif / tenant B","Menu dengan 1 outlet aktif"],"expected":["Ditolak; menu Transfer hanya tampil bila ≥ 2 outlet aktif"],"priority":"P1","type":["PERM","ISO"],"layer":["WEB"],"ref":["Q82"]},
+{"id":"STK-013","title":"Idempotensi & nomor dokumen paralel","pre":"MySQL","steps":["Posting dokumen dengan id sama 2×","Posting paralel 10 dokumen di outlet sama"],"expected":["Sekali efek stok","Nomor unik berurutan per outlet per hari lokal"],"priority":"P1","type":["IDEM","CONC"],"layer":["MYSQL"],"ref":["ADR 0015"]},
+{"id":"STK-014","title":"Riwayat stok menunjuk dokumen","pre":"-","steps":["Cek stock_movements dari semua jenis dokumen"],"expected":["reference_id terisi; tipe purchase, purchase_void, opname, transfer_out, transfer_in, sale, void_return, adjust"],"priority":"P2","type":["POS"],"layer":["ACT"],"ref":["ADR 0015"]}
+]},
+
+{"code":"RPT","name":"Beranda & laporan","description":"Widget beranda, 12+ tab laporan, API laporan, batas periode, export Excel/PDF, ringkasan email (Q23, Q49–Q53, Q57, Q75, Q83).","scenarios":[
+{"id":"RPT-001","title":"Rekonsiliasi angka laporan","pre":"Dataset order tetap (tunai, QRIS, split, diskon, void, member, online, beberapa outlet & hari)","steps":["Panggil semua endpoint laporan & beranda untuk periode sama"],"expected":["Omzet, transaksi, rata-rata, diskon, pajak, service sama di semua laporan & cocok dengan hitungan manual"],"priority":"P1","type":["CALC"],"layer":["API"],"ref":["GET /v1/reports/summary","GET /v1/reports/dashboard"]},
+{"id":"RPT-002","title":"Pengakuan omzet","pre":"Order dibuat 30 Sep, selesai 1 Okt; void 2 Okt","steps":["Laporan 1 Okt dan 2 Okt"],"expected":["Omzet pada completed_at; void dilaporkan berdasar voided_at"],"priority":"P1","type":["CALC","EDGE"],"layer":["API"],"ref":["Q23"]},
+{"id":"RPT-003","title":"Rentang tanggal lokal outlet","pre":"Order 23.30 WIB (16.30 UTC)","steps":["Laporan per tanggal lokal","Outlet berbeda zona"],"expected":["Masuk tanggal lokal yang benar"],"priority":"P1","type":["EDGE"],"layer":["API"],"ref":["ADR 0001"]},
+{"id":"RPT-004","title":"Validasi periode","pre":"-","steps":["to < from","Rentang 367 hari","Format tanggal salah","granularity tidak dikenal"],"expected":["422 VALIDATION_ERROR"],"priority":"P1","type":["NEG","EDGE"],"layer":["API"],"ref":["VALIDATION_ERROR"]},
+{"id":"RPT-005","title":"Batas supervisor 31 hari","pre":"SPV-A","steps":["Laporan operasional 31 hari ke belakang","from 32 hari lalu","Tab non-operasional (Kategori, Opsi, Stok, Laba)"],"expected":["Sukses","422 VALIDATION_ERROR (API) / dipotong di dashboard","403 FORBIDDEN / tab tidak tampil"],"priority":"P1","type":["PERM","EDGE"],"layer":["API","WEB"],"ref":["Q49","FORBIDDEN"]},
+{"id":"RPT-006","title":"Kasir hanya rekap shift sendiri","pre":"KSR-A","steps":["GET /v1/reports/shifts/{shift sendiri}","Shift kasir lain","GET /v1/reports/summary"],"expected":["200","403 FORBIDDEN","403 FORBIDDEN"],"priority":"P1","type":["PERM"],"layer":["API"],"ref":["GET /v1/reports/shifts/{id}","FORBIDDEN"]},
+{"id":"RPT-007","title":"Filter outlet laporan","pre":"MGR-A hanya A1","steps":["outlet_id=A2","Tanpa outlet_id"],"expected":["404 NOT_FOUND","Hanya outlet yang dipegang"],"priority":"P1","type":["ISO"],"layer":["API"],"ref":["NOT_FOUND","Q38"]},
+{"id":"RPT-008","title":"Setiap endpoint laporan","pre":"Dataset RPT-001","steps":["summary, products, payment-methods, dashboard (compare previous_period/previous_year/none), hourly (0–23 lokal), audit (20 terbaru + total), categories, channels, employees, heatmap, members, options, profit (HPP dari unit_cost), purchases, shifts, stock (nilai stok), trend"],"expected":["Bentuk data sesuai docs/api/report.md; persen perubahan null bila pembanding 0"],"priority":"P1","type":["POS","CALC"],"layer":["API"],"ref":["GET /v1/reports/products","GET /v1/reports/payment-methods","GET /v1/reports/hourly","GET /v1/reports/audit","GET /v1/reports/categories","GET /v1/reports/channels","GET /v1/reports/employees","GET /v1/reports/heatmap","GET /v1/reports/members","GET /v1/reports/options","GET /v1/reports/profit","GET /v1/reports/purchases","GET /v1/reports/shifts","GET /v1/reports/stock","GET /v1/reports/trend","GET /v1/reports/dashboard"]},
+{"id":"RPT-009","title":"Beranda dashboard","pre":"OWN-A","steps":["Buka beranda; ubah filter periode preset/kustom, pembanding, tipe order, metode bayar, kasir, outlet sidebar","Reload halaman"],"expected":["KPI + tren, grafik omzet vs pembanding, metode bayar, jam ramai, produk terlaris/kurang laku, tipe order, riwayat harian, perbandingan outlet (semua outlet), panel audit, stok ≤ 0, target omzet","Filter tersimpan di session & query string"],"priority":"P1","type":["POS"],"layer":["WEB","BRW"],"ref":["SPEC Panel dashboard"]},
+{"id":"RPT-010","title":"Halaman Laporan semua tab","pre":"OWN-A","steps":["Buka /reports, tiap tab: Ringkasan, Produk, Kategori, Opsi, Metode bayar, Karyawan, Shift, Waktu, Tipe order, Outlet, Diskon & void, Stok, Member, Pembelian"],"expected":["Angka sama dengan API; empty state saat tanpa data"],"priority":"P1","type":["POS"],"layer":["WEB","BRW"],"ref":["Q49","Q75","Q83"]},
+{"id":"RPT-011","title":"Export Excel & PDF","pre":"OWN-A","steps":["Export tiap tab","Export rentang terlalu berat","> batas export per menit","Export oleh kasir"],"expected":["File terunduh, angka sama dengan layar","Ditolak 'Persempit rentang tanggal' (tidak dipotong diam-diam)","429","Ditolak"],"priority":"P1","type":["POS","EDGE","PERM"],"layer":["WEB"],"ref":["Q52","TOO_MANY_REQUESTS"]},
+{"id":"RPT-012","title":"Formula injection di export","pre":"Produk bernama '=HYPERLINK(...)'","steps":["Export Excel"],"expected":["Sel di-escape (SafeCell), tidak dieksekusi"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["Q52"]},
+{"id":"RPT-013","title":"Preset laporan","pre":"-","steps":["Simpan, pakai, hapus preset filter"],"expected":["Preset per user & tenant"],"priority":"P3","type":["POS","ISO"],"layer":["WEB"],"ref":["ManageReportPresets"]},
+{"id":"RPT-014","title":"Ringkasan harian email","pre":"POS_DAILY_SUMMARY_HOUR 07.00","steps":["pos:daily-summary jam 06.00 lokal","Jam 07.05","Jalankan lagi jam 08.05"],"expected":["Belum terkirim","Rekap kemarin per outlet terkirim","Tidak terkirim dua kali per tanggal"],"priority":"P2","type":["POS","IDEM"],"layer":["CMD"],"ref":["Q57"]},
+{"id":"RPT-015","title":"Laporan cache","pre":"POS_REPORT_CACHE_SECONDS > 0","steps":["Ambil laporan, buat order baru, ambil lagi"],"expected":["Perilaku cache sesuai config; tidak mencampur tenant/outlet di key cache"],"priority":"P2","type":["ISO"],"layer":["API"],"ref":["GET /v1/reports/summary"]},
+{"id":"RPT-016","title":"Daftar penjualan dashboard","pre":"OWN-A","steps":["/orders: filter tanggal/status/shift/channel, cari, detail /orders/{id}, cetak ulang struk","Tanda perlu refund manual"],"expected":["Data benar per outlet terpilih"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["SPEC Panel dashboard"]}
+]},
+
+{"code":"CSH","name":"Kasir web (/cashier)","description":"Kasir cadangan di browser: login, outlet, shift, POS Livewire, member, open bill, simpan sementara, struk, void (Q35, Q54, Q55).","scenarios":[
+{"id":"CSH-001","title":"Login kasir web username","pre":"KSR-A web_cashier_access","steps":["/cashier/login: kode bisnis + username + kata sandi"],"expected":["Masuk; perangkat web terdaftar; pilih outlet bila > 1"],"priority":"P1","type":["POS"],"layer":["WEB","BRW"],"ref":["GET /cashier/login","POST /cashier/login","POST /cashier/outlet"]},
+{"id":"CSH-002","title":"Login kasir web gagal","pre":"-","steps":["Kode bisnis salah","Kata sandi salah","Tanpa web_cashier_access","Throttle"],"expected":["Pesan umum; 429 setelah batas"],"priority":"P1","type":["NEG","SEC"],"layer":["WEB"],"ref":["POST /cashier/login"]},
+{"id":"CSH-003","title":"Masuk kasir dari dashboard","pre":"OWN-A login dashboard","steps":["Transaksi → Kasir (tab baru /cashier/confirm)","Konfirmasi kata sandi / PIN"],"expected":["Wajib masuk ulang; salah ditolak"],"priority":"P1","type":["SEC"],"layer":["WEB","BRW"],"ref":["GET /cashier/confirm","POST /cashier/confirm","Q55"]},
+{"id":"CSH-004","title":"Akses kasir tanpa login","pre":"-","steps":["GET /cashier, /cashier/orders"],"expected":["Redirect ke /cashier/login"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["GET /cashier"]},
+{"id":"CSH-005","title":"Buka & tutup shift web","pre":"-","steps":["/cashier/shift buka dengan kas awal","Tutup dengan kas aktual","Lihat /cashier/shifts/{id} & PDF"],"expected":["Sama dengan aturan SHF"],"priority":"P1","type":["POS"],"layer":["WEB","BRW"],"ref":["POST /cashier/shift","POST /cashier/shift/close","GET /cashier/shifts/{id}","GET /cashier/shifts/{id}/pdf"]},
+{"id":"CSH-006","title":"Transaksi tunai lengkap","pre":"Shift open","steps":["Tambah produk dengan opsi (picker), +/− qty, edit baris, hapus baris","Bayar tunai, lihat kembalian","Buka struk"],"expected":["Total = OrderCalculator; struk benar"],"priority":"P1","type":["POS","E2E"],"layer":["BRW"],"ref":["GET /cashier/orders/{id}/receipt"]},
+{"id":"CSH-007","title":"Scan barcode","pre":"-","steps":["Scan barcode valid / tidak ada"],"expected":["Produk masuk keranjang / pesan tidak ditemukan"],"priority":"P2","type":["POS","NEG"],"layer":["WEB"],"ref":["PointOfSale::scan"]},
+{"id":"CSH-008","title":"Split payment web","pre":"-","steps":["Tambah baris pembayaran, pilih metode, isi tendered, hapus baris, bayar"],"expected":["Aturan alokasi & PAYMENT_EXCEEDS_BALANCE sama dengan API"],"priority":"P1","type":["CALC"],"layer":["WEB"],"ref":["PAYMENT_EXCEEDS_BALANCE"]},
+{"id":"CSH-009","title":"Diskon & approval di web","pre":"-","steps":["Diskon di atas batas","Pilih approver + PIN"],"expected":["Sama dengan DSC-002..007"],"priority":"P1","type":["PERM"],"layer":["WEB"],"ref":["DISCOUNT_OVER_LIMIT","SELF_APPROVAL_NOT_ALLOWED"]},
+{"id":"CSH-010","title":"Simpan sementara keranjang","pre":"-","steps":["Hold keranjang","Mulai order baru","Resume","Discard"],"expected":["Keranjang kembali utuh; discard menghapus"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["PointOfSale::hold"]},
+{"id":"CSH-011","title":"Open bill di web","pre":"-","steps":["Simpan bill (meja)","Load bill, tambah item, lunasi"],"expected":["Sama dengan OBL"],"priority":"P1","type":["POS"],"layer":["WEB"],"ref":["PUT /v1/orders/{id}"]},
+{"id":"CSH-012","title":"Member di kasir web","pre":"Program aktif","steps":["Cari member, pilih, daftar cepat","Pakai voucher, voucher pribadi, stempel, tukar poin","Lepas member"],"expected":["Sama dengan MEM; perkiraan poin tampil"],"priority":"P1","type":["POS"],"layer":["WEB","BRW"],"ref":["MEM"]},
+{"id":"CSH-013","title":"Tandai produk habis dari kasir","pre":"SPV login web","steps":["toggleAvailability","Sebagai kasir"],"expected":["SPV boleh, kasir ditolak"],"priority":"P2","type":["PERM"],"layer":["WEB"],"ref":["product.toggle_available"]},
+{"id":"CSH-014","title":"Riwayat & void di kasir web","pre":"-","steps":["/cashier/orders, detail, struk","Void dengan PIN approver"],"expected":["Visibilitas Q21; void sama dengan VOID"],"priority":"P1","type":["POS","PERM"],"layer":["WEB"],"ref":["GET /cashier/orders","GET /cashier/orders/{id}","POST /cashier/orders/{id}/void"]},
+{"id":"CSH-015","title":"Logout kasir web","pre":"-","steps":["POST /cashier/logout"],"expected":["Sesi berakhir; shift tetap open"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["POST /cashier/logout"]},
+{"id":"CSH-016","title":"Isolasi kasir web","pre":"-","steps":["Akses /cashier/orders/{id tenant B} / outlet tidak ditugaskan"],"expected":["404"],"priority":"P1","type":["ISO"],"layer":["WEB"],"ref":["NOT_FOUND"]}
+]},
+
+{"code":"ADM","name":"Panel super admin (/admin)","description":"Tenant, calon pelanggan, versi aplikasi, pengumuman, maintenance, backup, log, queue, admin, keamanan 2FA, onboarding.","scenarios":[
+{"id":"ADM-001","title":"Login admin + 2FA","pre":"ADM, 2FA wajib","steps":["Login email + kata sandi","Setup / masukkan kode 2FA","Kode salah"],"expected":["Masuk hanya setelah 2FA benar"],"priority":"P1","type":["SEC"],"layer":["WEB","BRW"],"ref":["ADR 0006"]},
+{"id":"ADM-002","title":"Toggle wajib 2FA","pre":"-","steps":["Menu Keamanan: matikan wajib 2FA tanpa konfirmasi kata sandi","Dengan konfirmasi"],"expected":["Wajib konfirmasi kata sandi"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["ADR 0006"]},
+{"id":"ADM-003","title":"Buat tenant + owner","pre":"-","steps":["Tenants → create: bisnis, outlet, owner, max_outlets, subscription_ends_at"],"expected":["Tenant & owner dibuat; owner menerima link atur kata sandi"],"priority":"P1","type":["POS"],"layer":["WEB"],"ref":["Q34"]},
+{"id":"ADM-004","title":"Ubah status tenant","pre":"-","steps":["active → suspended → active; atur subscription_ends_at; ubah max_outlets"],"expected":["Efek langsung terlihat (TEN-007/008)"],"priority":"P1","type":["POS"],"layer":["WEB"],"ref":["TENANT_SUSPENDED"]},
+{"id":"ADM-005","title":"Detail tenant & statistik","pre":"-","steps":["Buka /tenants/{id}"],"expected":["Statistik pemakaian; admin boleh lintas tenant"],"priority":"P3","type":["POS"],"layer":["WEB"],"ref":["SPEC Panel maintenance"]},
+{"id":"ADM-006","title":"Calon pelanggan","pre":"Lead dari SITE-002","steps":["Ubah status lead","Buat tenant dari lead"],"expected":["Data terisi otomatis; lead tertaut tenant"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["Q30"]},
+{"id":"ADM-007","title":"Versi aplikasi","pre":"-","steps":["Atur min_version & latest_version"],"expected":["System status & APP_UPDATE_REQUIRED mengikuti"],"priority":"P1","type":["POS"],"layer":["WEB","API"],"ref":["APP_UPDATE_REQUIRED","GET /v1/system/status"]},
+{"id":"ADM-008","title":"Pengumuman","pre":"-","steps":["Buat pengumuman aktif dengan periode","Nonaktifkan"],"expected":["Banner tampil di dashboard tenant & /system/status; hilang saat nonaktif/lewat periode"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["GET /v1/system/status"]},
+{"id":"ADM-009","title":"Maintenance mode","pre":"-","steps":["Aktifkan maintenance dengan secret","Akses API, dashboard","Akses admin dengan secret bypass","Matikan"],"expected":["API 503 MAINTENANCE; web halaman maintenance; admin tetap bisa via bypass"],"priority":"P1","type":["POS"],"layer":["WEB","API"],"ref":["MAINTENANCE"]},
+{"id":"ADM-010","title":"Backup","pre":"Storage di-fake","steps":["Backup manual","Unduh","Hapus"],"expected":["File muncul di daftar; unduh hanya oleh admin"],"priority":"P2","type":["POS","SEC"],"layer":["WEB"],"ref":["ManageBackups"]},
+{"id":"ADM-011","title":"Log viewer","pre":"-","steps":["Buka log","Bersihkan file log"],"expected":["Log tampil tanpa SSH; tidak ada path traversal lewat parameter file"],"priority":"P2","type":["POS","SEC"],"layer":["WEB"],"ref":["ClearLogFile"]},
+{"id":"ADM-012","title":"Queue monitor","pre":"Job gagal ada","steps":["Lihat, retry, hapus job gagal"],"expected":["Job dijalankan ulang / terhapus"],"priority":"P3","type":["POS"],"layer":["WEB"],"ref":["ManageFailedJobs"]},
+{"id":"ADM-013","title":"Kelola admin","pre":"-","steps":["Tambah admin, nonaktifkan, hapus diri sendiri / admin terakhir"],"expected":["Tidak bisa menghapus/menonaktifkan diri sendiri atau admin terakhir"],"priority":"P2","type":["POS","NEG"],"layer":["WEB"],"ref":["ManageAdmin"]},
+{"id":"ADM-014","title":"Setelan onboarding","pre":"-","steps":["Ubah trial_days, matikan registrasi"],"expected":["Daftar baru memakai trial_days baru; /register tertutup"],"priority":"P2","type":["POS"],"layer":["WEB"],"ref":["Q32","GET /register"]},
+{"id":"ADM-015","title":"Brute force login admin","pre":"-","steps":["Login salah berulang"],"expected":["Throttle; pesan umum"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["TOO_MANY_REQUESTS"]}
+]},
+
+{"code":"JOB","name":"Jadwal & command","description":"routes/console.php — satu cron schedule:run tiap menit (shared hosting).","scenarios":[
+{"id":"JOB-001","title":"Daftar jadwal","pre":"-","steps":["php artisan schedule:list"],"expected":["queue:work --stop-when-empty, sanctum:prune-expired, auth:clear-resets, pos:daily-summary (hourly :05), pos:expire-member-points (01:30 WIB), pos:evaluate-member-tiers (01:45), pos:expire-self-orders (tiap menit), pos:issue-birthday-vouchers (00:15)"],"priority":"P2","type":["POS"],"layer":["CMD"],"ref":["routes/console.php"]},
+{"id":"JOB-002","title":"Queue database tanpa proses permanen","pre":"Job email antre","steps":["schedule:run"],"expected":["queue:work berhenti saat kosong (max-time 50 detik), job terkirim, gagal → failed_jobs setelah 3 percobaan"],"priority":"P2","type":["POS"],"layer":["CMD"],"ref":["SPEC Deploy"]},
+{"id":"JOB-003","title":"Command per tenant tidak bocor","pre":"Tenant A & B","steps":["Jalankan tiap pos:* command"],"expected":["Setiap tenant diproses di TenantContext sendiri; tenant suspended dilewati sesuai aturan"],"priority":"P1","type":["ISO"],"layer":["CMD"],"ref":["ADR 0005"]},
+{"id":"JOB-004","title":"withoutOverlapping","pre":"-","steps":["Jalankan command yang sama dua kali bersamaan"],"expected":["Satu berjalan, lainnya dilewati"],"priority":"P3","type":["CONC"],"layer":["CMD"],"ref":["routes/console.php"]}
+]},
+
+{"code":"API","name":"Kontrak API umum","description":"Envelope, format, header, rate limit umum, error tak terduga (docs/standards/api).","scenarios":[
+{"id":"API-001","title":"Envelope sukses & gagal","pre":"-","steps":["Panggil sampel tiap endpoint sukses & gagal"],"expected":["Sukses {success:true,message,data,meta}; gagal {success:false,message,error{code,details},meta}; message Bahasa Indonesia"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["SPEC Standar respons"]},
+{"id":"API-002","title":"Format field","pre":"-","steps":["Periksa respons"],"expected":["snake_case; tanggal ISO 8601 UTC; uang string desimal 2 digit; ID UUID"],"priority":"P1","type":["POS"],"layer":["API"],"ref":["CLAUDE.md Standar API"]},
+{"id":"API-003","title":"Route tidak ada & method salah","pre":"-","steps":["GET /api/v1/tidak-ada","DELETE /api/v1/catalog"],"expected":["404 NOT_FOUND / 405 dalam envelope JSON, bukan HTML"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["NOT_FOUND"]},
+{"id":"API-004","title":"Error tak terduga","pre":"Paksa exception","steps":["Panggil endpoint"],"expected":["500 SERVER_ERROR tanpa stack trace; detail hanya di log dengan request_id"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["SERVER_ERROR"]},
+{"id":"API-005","title":"Rate limit umum","pre":"-","steps":["121 request/menit dengan satu token"],"expected":["429 TOO_MANY_REQUESTS + Retry-After"],"priority":"P2","type":["SEC"],"layer":["API"],"ref":["TOO_MANY_REQUESTS"]},
+{"id":"API-006","title":"Body JSON rusak / content-type salah","pre":"-","steps":["Kirim JSON tidak valid","Tanpa Accept: application/json"],"expected":["422 VALIDATION_ERROR / tetap JSON"],"priority":"P2","type":["NEG"],"layer":["API"],"ref":["VALIDATION_ERROR"]},
+{"id":"API-007","title":"Kode error resmi saja","pre":"-","steps":["Kumpulkan semua error.code dari kode (BusinessException)"],"expected":["Semua ada di daftar resmi SPEC (Unit ErrorCodeTest)"],"priority":"P1","type":["POS"],"layer":["UNIT"],"ref":["SPEC Daftar error.code resmi"]},
+{"id":"API-008","title":"Dokumentasi OpenAPI","pre":"-","steps":["Buka /docs/api"],"expected":["Halaman tampil; endpoint sinkron dengan route:list"],"priority":"P3","type":["POS"],"layer":["WEB"],"ref":["docs/TESTING-ACCESS.md"]},
+{"id":"API-009","title":"CORS","pre":"-","steps":["Preflight dari origin tidak diizinkan / diizinkan"],"expected":["Sesuai config/cors.php"],"priority":"P2","type":["SEC"],"layer":["API"],"ref":["SPEC Keamanan"]}
+]},
+
+{"code":"SEC","name":"Keamanan aplikasi","description":"Hal yang tidak terikat satu modul (SPEC Keamanan, docs/standards/security.md).","scenarios":[
+{"id":"SEC-001","title":"XSS tersimpan","pre":"Nama produk/member/meja/outlet berisi <script>","steps":["Tampilkan di dashboard, kasir web, halaman HP, struk, PDF, email ringkasan"],"expected":["Selalu ter-escape"],"priority":"P1","type":["SEC"],"layer":["WEB","BRW"],"ref":["SPEC Keamanan"]},
+{"id":"SEC-002","title":"CSRF form web","pre":"-","steps":["POST form dashboard/kasir/member/site tanpa token"],"expected":["419"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["SPEC Keamanan"]},
+{"id":"SEC-003","title":"Upload file berbahaya","pre":"-","steps":["Unggah .php, .svg berisi script, gambar raksasa ke logo/avatar/gambar produk/import"],"expected":["Ditolak / disanitasi; tidak bisa dieksekusi dari /storage"],"priority":"P1","type":["SEC"],"layer":["WEB","API"],"ref":["SPEC Keamanan"]},
+{"id":"SEC-004","title":"Hash kredensial","pre":"-","steps":["Periksa DB users, members, admins"],"expected":["Password & PIN di-hash; tidak pernah di respons/log"],"priority":"P1","type":["SEC"],"layer":["ACT"],"ref":["SPEC Keamanan"]},
+{"id":"SEC-005","title":"Header & cookie production","pre":"APP_ENV=production","steps":["Periksa respons"],"expected":["Redirect HTTPS; cookie secure+httponly; header keamanan; APP_DEBUG false"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["SPEC Keamanan"]},
+{"id":"SEC-006","title":"File sensitif tidak terjangkau","pre":"-","steps":["GET /.env, /storage/logs/laravel.log, /vendor/…, /installed.json"],"expected":["404/403"],"priority":"P1","type":["SEC"],"layer":["WEB"],"ref":["SPEC Keamanan"]},
+{"id":"SEC-007","title":"IDOR via ID UUID","pre":"-","steps":["Tebak/ganti ID di semua URL & body (lihat TEN-001)"],"expected":["404, tidak ada perbedaan respons yang membocorkan keberadaan data"],"priority":"P1","type":["SEC","ISO"],"layer":["API","WEB"],"ref":["NOT_FOUND"]},
+{"id":"SEC-008","title":"Session fixation & logout","pre":"-","steps":["Login dashboard, cek session id sebelum/sesudah","Logout lalu tombol back"],"expected":["Session id berganti; halaman terlindungi tidak bisa diakses"],"priority":"P2","type":["SEC"],"layer":["WEB"],"ref":["SPEC Keamanan"]},
+{"id":"SEC-009","title":"Enumerasi akun","pre":"-","steps":["Bandingkan respons login/lupa sandi/member login untuk akun ada vs tidak"],"expected":["Pesan & status identik"],"priority":"P2","type":["SEC"],"layer":["WEB","API"],"ref":["UNAUTHENTICATED"]},
+{"id":"SEC-010","title":"SQL injection pada parameter cari/urut","pre":"-","steps":["search=' OR 1=1 --, sort=price;drop"],"expected":["Tidak ada error SQL; allowlist kolom urut"],"priority":"P1","type":["SEC"],"layer":["API"],"ref":["GET /v1/products","GET /v1/members"]}
+]},
+
+{"code":"NFR","name":"Performa, konkurensi & kualitas","description":"Kebutuhan non-fungsional untuk shared hosting.","scenarios":[
+{"id":"NFR-001","title":"Tanpa N+1","pre":"50 order, 30 produk","steps":["Hitung query: GET /v1/catalog, /v1/orders, /v1/reports/dashboard, dashboard /orders, /products, /reports"],"expected":["Jumlah query konstan terhadap jumlah data (batas eksplisit di test)"],"priority":"P2","type":["EDGE"],"layer":["API","WEB"],"ref":["GET /v1/catalog","GET /v1/orders"]},
+{"id":"NFR-002","title":"Waktu respons","pre":"Data 1 tahun, 1 outlet ramai","steps":["Laporan 366 hari, checkout"],"expected":["Di bawah batas waktu PHP shared hosting; export besar ditolak rapi"],"priority":"P2","type":["EDGE"],"layer":["MYSQL"],"ref":["Q52"]},
+{"id":"NFR-003","title":"Kompatibilitas DB","pre":"MySQL 8 & MariaDB 10.6","steps":["Jalankan grup mysql di keduanya"],"expected":["Lulus semua"],"priority":"P1","type":["POS"],"layer":["MYSQL"],"ref":["SPEC Kebutuhan server"]},
+{"id":"NFR-004","title":"Kualitas kode","pre":"-","steps":["./vendor/bin/pint --test","./vendor/bin/phpstan analyse"],"expected":["Bersih (Larastan level 6)"],"priority":"P1","type":["POS"],"layer":["CMD"],"ref":["CLAUDE.md"]},
+{"id":"NFR-005","title":"Responsif & tema","pre":"-","steps":["Dashboard, kasir web, halaman HP, halaman member di 375px, 768px, desktop; tema terang/gelap"],"expected":["Tidak ada elemen terpotong; kontras terbaca"],"priority":"P3","type":["POS"],"layer":["BRW"],"ref":["docs/standards/ui"]}
+]},
+
+{"code":"E2E","name":"Skenario end-to-end (alur bisnis lengkap)","description":"Rangkaian lintas modul dari awal sampai akhir. Masing-masing dijalankan berurutan pada satu tenant bersih; angka akhir diverifikasi.","scenarios":[
+{"id":"E2E-001","title":"Dari daftar sampai transaksi pertama","pre":"Edisi saas, DB uji kosong","steps":["Daftar mandiri","Verifikasi email","Profil outlet (pajak, service, pembulatan)","Template menu Kafe + tambah produk & grup opsi","Tambah kasir + PIN","Registrasi device (API)","Login PIN, buka shift","Checkout pertama","Tutup shift"],"expected":["Setiap langkah sukses; laporan hari ini = 1 transaksi dengan angka benar"],"priority":"P1","type":["E2E"],"layer":["BRW","API"],"ref":["Q30","POST /v1/checkout"]},
+{"id":"E2E-002","title":"Satu hari operasional kafe","pre":"Tenant siap, 1 outlet","steps":["Buka shift kas 200.000","10 order campuran: tunai, QRIS, debit, split, takeaway, dine-in open bill","Diskon dalam batas & dengan approval","1 void dengan PIN supervisor","Tutup shift kas aktual"],"expected":["Selisih kas sesuai hitungan manual; stok konsisten; beranda, laporan, audit, Z-report saling cocok"],"priority":"P1","type":["E2E","CALC"],"layer":["API"],"ref":["SHF","ORD","DSC","VOID"]},
+{"id":"E2E-003","title":"Multi-outlet","pre":"2 outlet","steps":["Owner tambah outlet A2 (salin menu)","Atur produk tidak dijual & metode nonaktif di A2","Tugaskan kasir ke A2, registrasi device A2","Transaksi di kedua outlet","Laporan per outlet & semua outlet"],"expected":["Katalog & metode per outlet benar; laporan semua = A1 + A2; kasir A2 tidak bisa di A1"],"priority":"P1","type":["E2E","ISO"],"layer":["API","WEB"],"ref":["ADR 0010","ADR 0011"]},
+{"id":"E2E-004","title":"Siklus stok","pre":"Produk lacak stok di 2 outlet","steps":["Stok masuk A1 (modal tertimbang)","Penjualan","Transfer A1 → A2 (terima kurang)","Opname A2","Batal stok masuk","Laporan Stok & Pembelian"],"expected":["Stok tiap outlet, nilai stok, HPP & laba kotor sesuai hitungan manual"],"priority":"P1","type":["E2E","CALC"],"layer":["WEB","API"],"ref":["ADR 0015"]},
+{"id":"E2E-005","title":"Siklus member","pre":"Program member + tier + stempel + voucher","steps":["Daftar cepat di kasir","Transaksi → poin & stempel","Member daftar di halaman member (aktivasi)","Tukar poin dengan QR dinamis + voucher","Naik tier","Void satu order","Kedaluwarsa poin"],"expected":["Ledger, saldo, stempel, kuota voucher, tier konsisten; laporan Member cocok"],"priority":"P1","type":["E2E","CALC"],"layer":["API","WEB"],"ref":["ADR 0013"]},
+{"id":"E2E-006","title":"Self-order bayar online","pre":"Meja + Midtrans sandbox (fake)","steps":["Tamu scan QR & pesan","Kasir terima","Tamu bayar Snap","Webhook settlement (+ duplikat)","Order muncul selesai di kasir & laporan"],"expected":["Satu pembayaran online, stok dipotong saat lunas, tidak masuk kas laci"],"priority":"P1","type":["E2E"],"layer":["BRW","WEB","API"],"ref":["ADR 0014"]},
+{"id":"E2E-007","title":"Self-order bayar di kasir, ditolak, kedaluwarsa","pre":"Meja aktif","steps":["Pesanan 1 diterima → bayar tunai di kasir","Pesanan 2 ditolak dengan alasan","Pesanan 3 dibiarkan → expired"],"expected":["Status di HP benar untuk ketiganya; hanya pesanan 1 di laporan"],"priority":"P1","type":["E2E"],"layer":["BRW","API","CMD"],"ref":["ORDER_EXPIRED"]},
+{"id":"E2E-008","title":"Siklus langganan","pre":"Tenant trial","steps":["Trial berjalan","Waktu dimajukan lewat trial → hanya-baca","Admin perpanjang → aktif","Admin tangguhkan → diblokir","Admin aktifkan"],"expected":["Perilaku tiap tahap sesuai TEN-007/008; data utuh"],"priority":"P1","type":["E2E"],"layer":["WEB","API"],"ref":["SUBSCRIPTION_EXPIRED","TENANT_SUSPENDED"]},
+{"id":"E2E-009","title":"Tablet rusak → kasir web cadangan","pre":"Shift open di tablet","steps":["Device dicabut","Supervisor tutup paksa shift tablet","Kasir pindah ke /cashier, buka shift baru, lanjut transaksi & lunasi open bill dari tablet"],"expected":["Tidak ada transaksi hilang; open bill pindah shift; laporan konsisten"],"priority":"P1","type":["E2E"],"layer":["API","BRW"],"ref":["Q20","Q54"]},
+{"id":"E2E-010","title":"Upaya kecurangan","pre":"Kasir nakal","steps":["Kirim harga palsu","Diskon besar tanpa approval","Approve diri sendiri","Void order shift lalu","Brute force PIN supervisor","Akses order tenant lain"],"expected":["Semua ditolak dengan kode error resmi; tercatat di audit"],"priority":"P1","type":["E2E","SEC"],"layer":["API"],"ref":["DISCOUNT_OVER_LIMIT","SELF_APPROVAL_NOT_ALLOWED","SHIFT_NOT_OPEN","PIN_LOCKED","NOT_FOUND"]},
+{"id":"E2E-011","title":"Instal self-hosted sampai transaksi","pre":"Paket zip self_hosted, DB kosong","steps":["Web installer lengkap","Login owner","Setup minimal","Transaksi kasir web"],"expected":["Tanpa halaman depan; satu tenant; transaksi sukses"],"priority":"P1","type":["E2E"],"layer":["BRW"],"ref":["ADR 0016"]},
+{"id":"E2E-012","title":"Offline-retry Flutter","pre":"Simulasi koneksi putus","steps":["Kirim checkout, respons hilang","Kirim ulang id sama 3×","Kirim pembayaran open bill ulang"],"expected":["Satu order, satu pembayaran; replay ditandai idempotent_replay"],"priority":"P1","type":["E2E","IDEM"],"layer":["API"],"ref":["POST /v1/checkout","POST /v1/orders/{id}/payments"]}
+]}
+]
+}
+</script>
+
+<script>
+(() => {
+  const data = JSON.parse(document.getElementById('test-scenarios').textContent);
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const caret = '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.5 4.5 13 10l-5.5 5.5-1.06-1.06L10.88 10 6.44 5.56z"/></svg>';
+
+  // Pengelompokan kategori di daftar isi (hanya tampilan; data JSON tidak berubah)
+  const GROUPS = [
+    ['Fondasi', ['SYS', 'SITE', 'AUTH', 'TEN', 'RBAC']],
+    ['Operasional toko', ['OUT', 'SET', 'CAT', 'SHF', 'ORD', 'OBL', 'DSC', 'VOID']],
+    ['Loyalti & online', ['MEM', 'SO', 'MID']],
+    ['Back office', ['STK', 'RPT', 'CSH', 'ADM', 'JOB']],
+    ['Kualitas', ['API', 'SEC', 'NFR']],
+    ['End-to-end', ['E2E']],
+  ];
+  const cats = Object.fromEntries(data.categories.map((c, i) => [c.code, {...c, no: i + 1}]));
+  const grouped = GROUPS.flatMap(([, codes]) => codes);
+  const rest = data.categories.map(c => c.code).filter(c => !grouped.includes(c));
+  if (rest.length) GROUPS.push(['Lainnya', rest]);
+  const all = data.categories.flatMap(c => c.scenarios.map(s => ({...s, cat: c.code})));
+  const count = (list, p) => list.filter(s => s.priority === p).length;
+
+  // ---------- Filter & statistik ----------
+  const uniq = k => [...new Set(all.flatMap(s => s[k]))].sort();
+  uniq('type').forEach(v => $('#ft').insertAdjacentHTML('beforeend', `<option>${v}</option>`));
+  uniq('layer').forEach(v => $('#fl').insertAdjacentHTML('beforeend', `<option>${v}</option>`));
+  $('#stats').innerHTML = [['', 'Kategori', data.categories.length], ['', 'Skenario', all.length],
+    ['p1', 'P1 kritis', count(all, 'P1')], ['p2', 'P2 penting', count(all, 'P2')], ['p3', 'P3 normal', count(all, 'P3')]]
+    .map(([c, l, n]) => `<div class="stat ${c}"><span>${l}</span><b>${n}</b></div>`).join('');
+  $('#version').textContent = `v${data.version} · ${data.generated_at}`;
+  $('#sidebar-foot').textContent = `${all.length} skenario · ${data.categories.length} kategori`;
+
+  // ---------- Daftar isi tree ----------
+  const node = (href, label, num, children = '') => `
+    <div class="node${children ? '' : ' leafless'}" data-node="${href.slice(1)}">
+      <div class="row">${children ? `<button class="caret" type="button" aria-label="Buka/tutup">${caret}</button>` : '<span class="caret spacer"></span>'}
+        <a href="${href}"><span>${label}</span>${num !== '' ? `<span class="num">${num}</span>` : ''}</a></div>
+      ${children ? `<div class="children">${children}</div>` : ''}
+    </div>`;
+  const leaf = (href, id, label) => `<a class="leaf" href="${href}" data-leaf="${href.slice(1)}"><span class="mono">${id}</span><span>${esc(label)}</span></a>`;
+
+  $('#tree').innerHTML =
+    `<div class="tree-group">Pendahuluan</div>` +
+    node('#overview', 'Ringkasan', '') +
+    node('#guide', 'Cara membaca', '', leaf('#guide-columns', '·', 'Kolom skenario') + leaf('#guide-personas', '·', 'Persona & data uji') + leaf('#guide-rules', '·', 'Aturan eksekusi')) +
+    GROUPS.map(([g, codes]) => `<div class="tree-group" data-codes="${codes.join(" ")}">${g}</div>` + codes.filter(c => cats[c]).map(c =>
+      node(`#${c}`, `${cats[c].no}. ${esc(cats[c].name)}`, cats[c].scenarios.length,
+        cats[c].scenarios.map(s => leaf(`#${s.id}`, s.id, s.title)).join(''))).join('')).join('') +
+    `<div class="tree-group">Kelengkapan</div>` +
+    node('#traceability', 'Matriks keterlacakan', '', leaf('#trace-errors-card', '·', 'Error code resmi') + leaf('#trace-routes-card', '·', 'Endpoint & route'));
+
+  const setOpen = (n, open) => n.classList.toggle('open', open);
+  $('#tree').addEventListener('click', e => {
+    const btn = e.target.closest('.caret');
+    if (btn) { setOpen(btn.closest('.node'), !btn.closest('.node').classList.contains('open')); return; }
+    const a = e.target.closest('a');
+    if (a) {
+      const n = a.closest('.node');
+      if (a.parentElement.classList.contains('row') && n.querySelector('.children')) setOpen(n, true);
+      document.body.classList.remove('nav-open');
+    }
+  });
+  $('#expand-all').onclick = () => $$('.node').forEach(n => n.querySelector('.children') && setOpen(n, true));
+  $('#collapse-all').onclick = () => $$('.node').forEach(n => setOpen(n, false));
+  $('#menu-btn').onclick = () => document.body.classList.toggle('nav-open');
+  $('#scrim').onclick = () => document.body.classList.remove('nav-open');
+  // ---------- Geser lebar sidebar: min 240px, maks 35% layar, disimpan di browser ----------
+  const SIDEBAR_DEFAULT = 288, SIDEBAR_MIN = 240;
+  const root = document.documentElement, resizer = $('#resizer');
+  const clampWidth = w => Math.round(Math.max(SIDEBAR_MIN, Math.min(w, innerWidth * .35)));
+  const setWidth = (w, save) => {
+    root.style.setProperty('--sidebar-w', clampWidth(w) + 'px');
+    if (save) try { localStorage.setItem('gspos-qa-sidebar', clampWidth(w)); } catch (e) {}
+  };
+  const currentWidth = () => $('#sidebar').getBoundingClientRect().width;
+  resizer.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    resizer.setPointerCapture(e.pointerId);
+    document.body.classList.add('resizing');
+    const move = ev => setWidth(ev.clientX, false);
+    const up = () => {
+      document.body.classList.remove('resizing');
+      resizer.removeEventListener('pointermove', move);
+      resizer.removeEventListener('pointerup', up);
+      setWidth(currentWidth(), true);
+    };
+    resizer.addEventListener('pointermove', move);
+    resizer.addEventListener('pointerup', up);
+  });
+  resizer.addEventListener('dblclick', () => setWidth(SIDEBAR_DEFAULT, true));
+  // Keyboard: panah kiri/kanan mengubah lebar 16px
+  resizer.addEventListener('keydown', e => {
+    const step = {ArrowLeft: -16, ArrowRight: 16}[e.key];
+    if (step) { e.preventDefault(); setWidth(currentWidth() + step, true); }
+  });
+  // Jendela dikecilkan: lebar tetap dalam batas 35%
+  window.addEventListener('resize', () => { if (innerWidth > 960) setWidth(currentWidth(), false); });
+
+  $('#theme-btn').onclick = () => {
+    const dark = document.documentElement.classList.toggle('dark');
+    try { localStorage.setItem('gspos-qa-theme', dark ? 'dark' : 'light'); } catch (e) {}
+  };
+
+  // ---------- Konten per kategori ----------
+  const list = (a, cls) => `<ol class="${cls}">${a.map(x => `<li>${esc(x)}</li>`).join('')}</ol>`;
+  const pBadge = p => `<span class="badge ${p}"><span class="dot"></span>${p}</span>`;
+  $('#content').innerHTML = GROUPS.flatMap(([g, codes]) => codes.filter(c => cats[c]).map(code => {
+    const c = cats[code];
+    return `<section class="section" id="${c.code}" data-cat="${c.code}">
+      <div class="section-head">
+        <div><span class="eyebrow">${g} · ${c.code}</span><h2>${c.no}. ${esc(c.name)}</h2><p>${esc(c.description)}</p></div>
+        <div class="counts">${['P1', 'P2', 'P3'].filter(p => count(c.scenarios, p)).map(p => `<span class="badge ${p}">${count(c.scenarios, p)} ${p}</span>`).join('')}</div>
+      </div>
+      ${c.scenarios.map(s => `
+      <article class="card sc" id="${s.id}" data-p="${s.priority}" data-t="${s.type.join(' ')}" data-l="${s.layer.join(' ')}"
+        data-q="${esc([s.id, s.title, s.pre, ...s.steps, ...s.expected, ...s.ref].join(' ').toLowerCase())}">
+        <div class="sc-head">
+          <a class="sc-id" href="#${s.id}" title="Salin tautan">${s.id}</a>
+          <div class="sc-title"><b>${esc(s.title)}</b><div class="sc-pre"><em>Prasyarat</em>${esc(s.pre)}</div></div>
+          ${pBadge(s.priority)}
+        </div>
+        <div class="sc-body">
+          <div class="sc-col"><div class="overline">Langkah</div>${list(s.steps, 'steps')}</div>
+          <div class="sc-col"><div class="overline">Hasil yang diharapkan</div>${list(s.expected, 'expect')}</div>
+        </div>
+        <div class="sc-foot">
+          ${s.type.map(t => `<span class="badge">${t}</span>`).join('')}
+          ${s.layer.map(l => `<span class="badge layer">${l}</span>`).join('')}
+          <span class="ref">${s.ref.map(esc).join(' · ')}</span>
+        </div>
+      </article>`).join('')}
+    </section>`;
+  })).join('');
+
+  // Klik ID: salin tautan langsung ke skenario
+  $('#content').addEventListener('click', e => {
+    const a = e.target.closest('.sc-id');
+    if (a && navigator.clipboard) navigator.clipboard.writeText(location.href.split('#')[0] + a.getAttribute('href')).catch(() => {});
+  });
+
+  // ---------- Filter (hanya menyembunyikan, data tidak berubah) ----------
+  const apply = () => {
+    const q = $('#q').value.trim().toLowerCase(), p = $('#fp').value, t = $('#ft').value, l = $('#fl').value;
+    const active = q || p || t || l;
+    let shown = 0;
+    $$('.sc').forEach(el => {
+      const ok = (!q || el.dataset.q.includes(q)) && (!p || el.dataset.p === p)
+        && (!t || el.dataset.t.split(' ').includes(t)) && (!l || el.dataset.l.split(' ').includes(l));
+      el.classList.toggle('hidden', !ok);
+      $(`[data-leaf="${el.id}"]`)?.classList.toggle('hidden', !ok);
+      shown += ok;
+    });
+    $$('#content .section').forEach(sec => {
+      const any = !!sec.querySelector('.sc:not(.hidden)');
+      sec.classList.toggle('hidden', !any);
+      const n = $(`[data-node="${sec.id}"]`);
+      n?.classList.toggle('hidden', !any);
+      if (active && any) setOpen(n, true);
+    });
+    $$('#guide, #traceability, [data-node="guide"], [data-node="traceability"]').forEach(el => el.classList.toggle('hidden', !!active));
+    $$(".tree-group[data-codes]").forEach(g => g.classList.toggle("hidden",
+      !g.dataset.codes.split(" ").some(c => { const n = $(`[data-node="${c}"]`); return n && !n.classList.contains("hidden"); })));
+    $$(".tree-group:not([data-codes])").forEach(g => g.classList.toggle("hidden", !!active));
+    $('#empty').classList.toggle('hidden', shown > 0);
+    $('#count').textContent = active ? `Menampilkan ${shown} dari ${all.length} skenario sesuai filter.` : `Menampilkan semua ${all.length} skenario.`;
+  };
+  ['#q', '#fp', '#ft', '#fl'].forEach(s => $(s).addEventListener('input', apply));
+  apply();
+
+  // ---------- Matriks keterlacakan ----------
+  const trace = (el, keys, label) => {
+    $(el).innerHTML = `<thead><tr><th style="width:42%">${label}</th><th>Skenario</th></tr></thead><tbody>` + keys.map(k => {
+      const ids = all.filter(s => s.ref.includes(k)).map(s => s.id);
+      return `<tr><td><code>${esc(k)}</code></td><td>${ids.length ? ids.map(id => `<a href="#${id}">${id}</a>`).join(', ') : '<span class="miss">Belum ada skenario</span>'}</td></tr>`;
+    }).join('') + '</tbody>';
+  };
+  trace('#trace-errors', data.official_error_codes, 'error.code');
+  trace('#trace-routes', data.routes, 'Endpoint / route');
+
+  // ---------- Scrollspy: sorot posisi baca di tree & breadcrumb ----------
+  // Titik baca = elemen terakhir (urutan dokumen) yang bagian atasnya sudah melewati topbar.
+  const marks = $$('.hero, #guide, #guide-columns, #guide-personas, #guide-rules, .sc, #traceability, #trace-errors-card, #trace-routes-card');
+  let current = null, ticking = false;
+  const spy = () => {
+    ticking = false;
+    const visible = marks.filter(el => el.offsetParent !== null);
+    const line = $(".topbar").offsetHeight + 40;
+    let found = visible[0];
+    for (const el of visible) { if (el.getBoundingClientRect().top <= line) found = el; else break; }
+    if (found && found !== current) activate(found);
+  };
+
+  // Tandai elemen sebagai posisi aktif: item tree (kategori dibuka & digulir ke tampilan) + breadcrumb
+  const activate = el => {
+    current = el;
+    const sec = current.closest('.section') || current;
+    $$('.row.active, .leaf.active').forEach(el => el.classList.remove('active'));
+    const n = $(`[data-node="${sec.id}"]`);
+    if (n) {
+      n.querySelector('.row').classList.add('active');
+      if (n.querySelector('.children')) setOpen(n, true);
+    }
+    const lf = $(`[data-leaf="${current.id}"]`);
+    lf?.classList.add('active');
+    (lf || n)?.scrollIntoView({block: 'nearest'});
+    const cat = cats[sec.dataset.cat];
+    $('#crumb').innerHTML = cat
+      ? `Test Scenario <span style="opacity:.5">/</span> ${esc(cat.name)}${current.classList.contains('sc') ? ` <span style="opacity:.5">/</span> <b>${current.id}</b>` : ''}`
+      : `Test Scenario <span style="opacity:.5">/</span> <b>${esc(sec.querySelector('h1,h2')?.textContent ?? '')}</b>`;
+  };
+  const requestSpy = () => { if (!ticking) { ticking = true; requestAnimationFrame(spy); } };
+  window.addEventListener('scroll', requestSpy, {passive: true});
+  ['#q', '#fp', '#ft', '#fl'].forEach(s => $(s).addEventListener('input', () => { current = null; requestSpy(); }));
+  window.addEventListener('load', requestSpy);
+  requestSpy();
+
+  // Klik kartu skenario: kartu ditandai terpilih dan item di sidebar langsung ikut aktif
+  const select = card => {
+    $$('.sc.selected').forEach(el => el.classList.remove('selected'));
+    card.classList.add('selected');
+    activate(card);
+  };
+  $('#content').addEventListener('click', e => {
+    const card = e.target.closest('.sc');
+    if (card && !getSelection().toString()) select(card);
+  });
+  // Klik item skenario di sidebar juga menandai kartunya
+  $('#tree').addEventListener('click', e => {
+    const card = document.getElementById(e.target.closest('.leaf')?.dataset.leaf ?? '');
+    if (card?.classList.contains('sc')) select(card);
+  });
+
+  // Sorot sebentar skenario yang dibuka lewat tautan
+  const flash = () => {
+    const el = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+    if (el?.classList.contains('sc')) { select(el); el.classList.add("flash"); setTimeout(() => el.classList.remove('flash'), 1600); }
+  };
+  window.addEventListener('hashchange', flash);
+  // Konten dirender lewat JS, jadi lompatan bawaan browser ke #ID terjadi sebelum elemennya ada
+  if (location.hash) {
+    document.getElementById(location.hash.slice(1))?.scrollIntoView({behavior: 'instant', block: 'start'});
+    flash();
+    requestAnimationFrame(requestSpy);
+  }
+
+  const toTop = $('#to-top');
+  window.addEventListener('scroll', () => toTop.classList.toggle('show', scrollY > 600), {passive: true});
+  toTop.onclick = () => scrollTo({top: 0});
+})();
+</script>
+</body>
+</html>

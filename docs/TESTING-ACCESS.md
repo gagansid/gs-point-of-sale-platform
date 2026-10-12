@@ -16,6 +16,7 @@
 | Panel super admin | http://admin.gspos.localhost:8000/login | super admin |
 | API | http://api.gspos.localhost:8000/v1 | token (lihat `docs/api/auth.md`) |
 | Dokumentasi API (OpenAPI) | http://api.gspos.localhost:8000/docs/api | — |
+| Test scenario QA | http://gspos.localhost:8000/docs/test-scenarios | — (local/staging saja) |
 
 Tanpa subdomain (domain `POS_*` kosong): `/dashboard`, `/admin`, `/api/v1`.
 

@@ -20,11 +20,13 @@ use App\Http\Controllers\Web\SelfOrder\ShortTableLinkController;
 use App\Http\Controllers\Web\SelfOrder\TableController as SelfOrderTableController;
 use App\Http\Controllers\Web\SignupController;
 use App\Http\Controllers\Web\SiteController;
+use App\Http\Controllers\Web\TestScenarioController;
 use App\Http\Middleware\Cashier\SetCashierContext;
 use App\Http\Middleware\Member\SetMemberPortal;
 use App\Http\Middleware\SelfOrder\SetSelfOrderTable;
 use App\Support\Domains;
 use App\Support\Edition;
+use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\RedirectResponse;
@@ -83,6 +85,11 @@ Route::domain(Domains::main())->group(function (): void {
     Route::get('email/verify/{user}/{hash}', [EmailVerificationController::class, 'verify'])
         ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
+
+    // Test scenario QA untuk penguji: hanya local/staging, sama seperti /docs/api
+    Route::get('docs/test-scenarios', TestScenarioController::class)
+        ->middleware(RestrictedDocsAccess::class)
+        ->name('docs.test-scenarios');
 
     if (! Domains::enabled()) {
         return;
