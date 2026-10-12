@@ -37,6 +37,9 @@ enum UserRole: string implements HasColor, HasLabel
         'product.toggle_available',
         'product.manage',
         'stock.adjust',
+        // Stok masuk & supplier (ADR 0015)
+        'stock.receive',
+        'supplier.manage',
         'report.view',
         'report.view_shift',
         'report.view_own',
@@ -92,7 +95,7 @@ enum UserRole: string implements HasColor, HasLabel
     {
         return match ($this) {
             self::Owner => ['*'],
-            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view', 'member.view', 'member.create', 'member.manage', 'member.points_adjust', 'table.manage', 'self_order.handle'],
+            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view', 'member.view', 'member.create', 'member.manage', 'member.points_adjust', 'table.manage', 'self_order.handle', 'supplier.manage'],
             // Tanpa order.discount_over_limit: diskon supervisor dibatasi discount_limits.supervisor (Q18, GSPOS-SEC-014)
             self::Supervisor => [
                 'order.create', 'order.view_own', 'order.view_all', 'order.reprint',
@@ -100,6 +103,8 @@ enum UserRole: string implements HasColor, HasLabel
                 // Laporan operasional maks. 31 hari + rekap shift sendiri + export (Q49, Q52)
                 'report.view_shift', 'report.view_own', 'report.export',
                 'member.view', 'member.create', 'self_order.handle',
+                // Catat barang datang di outlet (ADR 0015)
+                'stock.receive',
             ],
             self::Cashier => [
                 'order.create', 'order.view_own', 'order.reprint',
