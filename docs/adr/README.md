@@ -20,3 +20,4 @@ template: `docs/templates/adr.md`.
 | [0013](0013-member-loyalty-program.md) | Program member milik bisnis: poin sebagai metode bayar, tier, stempel, voucher, halaman member HP + kata sandi | Diterima |
 | [0014](0014-table-qr-self-order-and-midtrans.md) | Self-order QR meja: terima kasir dulu, bayar dulu, Midtrans per owner | Diterima |
 | [0015](0015-stock-in-opname-transfer.md) | Stok masuk, opname, transfer antar outlet: produk jadi, modal rata-rata tertimbang | Diterima |
+| [0016](0016-web-installer.md) | Installer lewat form web: cek syarat, database, akun, progress, kunci setelah instal | Diusulkan |
