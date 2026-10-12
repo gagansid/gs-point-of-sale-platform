@@ -40,6 +40,7 @@ enum UserRole: string implements HasColor, HasLabel
         // Stok masuk & supplier (ADR 0015)
         'stock.receive',
         'stock.opname',
+        'stock.transfer',
         'supplier.manage',
         'report.view',
         'report.view_shift',

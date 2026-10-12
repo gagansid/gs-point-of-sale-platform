@@ -16,6 +16,9 @@ enum StockMovementType: string implements HasColor, HasLabel
     case Purchase = 'purchase';
     case PurchaseVoid = 'purchase_void';
     case Opname = 'opname';
+    case TransferOut = 'transfer_out';
+    case TransferIn = 'transfer_in';
+    case TransferCancel = 'transfer_cancel';
 
     public function getLabel(): string
     {
@@ -26,6 +29,9 @@ enum StockMovementType: string implements HasColor, HasLabel
             self::Purchase => 'Stok masuk',
             self::PurchaseVoid => 'Batal stok masuk',
             self::Opname => 'Stok opname',
+            self::TransferOut => 'Transfer keluar',
+            self::TransferIn => 'Transfer masuk',
+            self::TransferCancel => 'Batal transfer',
         };
     }
 
@@ -38,6 +44,9 @@ enum StockMovementType: string implements HasColor, HasLabel
             self::Purchase => 'success',
             self::PurchaseVoid => 'danger',
             self::Opname => 'primary',
+            self::TransferOut => 'warning',
+            self::TransferIn => 'success',
+            self::TransferCancel => 'gray',
         };
     }
 }
