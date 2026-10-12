@@ -8,6 +8,7 @@ use App\Actions\User\LogoutOtherSessions;
 use App\Actions\User\UpdateOwnAvatar;
 use App\Actions\User\UpdateOwnProfile;
 use App\Exceptions\BusinessException;
+use App\Filament\Dashboard\Resources\Products\Schemas\ProductForm;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Rules\SecurePin;
@@ -24,6 +25,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\Alignment;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +40,23 @@ use SensitiveParameter;
  */
 class EditProfile extends BaseEditProfile
 {
+    /** Bar tombol "Batal · Simpan" sticky rata kanan seperti form tambah/ubah lain (components.css) */
+    public function getFormActionsAlignment(): string|Alignment
+    {
+        return Alignment::End;
+    }
+
+    protected function getCancelFormAction(): Action
+    {
+        return parent::getCancelFormAction()->label('Batal');
+    }
+
+    /** @return array<string> */
+    public function getPageClasses(): array
+    {
+        return ['gs-form-page'];
+    }
+
     public function defaultForm(Schema $schema): Schema
     {
         // Label di atas kolom (bukan inline bawaan Filament) agar dua kolom tetap rata
@@ -112,10 +131,13 @@ class EditProfile extends BaseEditProfile
     protected function getAvatarFormComponent(): Component
     {
         return FileUpload::make('avatar_path')->label('Foto profil')->hiddenLabel()
-            ->avatar()->image()->imageEditor()->circleCropper()
+            // Persegi 1:1 (sama dengan hasil simpan); dibuat bulat hanya di avatar topbar
+            ->image()->imageEditor()->imageEditorAspectRatios(['1:1'])->imageCropAspectRatio('1:1')
+            ->panelAspectRatio('1:1')
+            ->placeholder(ProductForm::uploadPlaceholder())
             ->disk('public')->directory(fn (): string => UpdateOwnAvatar::directory($this->profileUser()))->visibility('public')
             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(2048)
-            ->helperText('JPG/PNG/WebP, maks. 2 MB')
+            ->helperText('JPG, PNG, atau WEBP · maks. 2 MB · dipotong persegi')
             ->alignCenter()
             ->extraAttributes(['class' => 'gs-profile-avatar']);
     }

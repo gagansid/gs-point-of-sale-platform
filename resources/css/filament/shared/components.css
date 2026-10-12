@@ -551,7 +551,7 @@
  * position: sticky (bukan fixed bawaan Filament) agar tidak menimpa sidebar. Dipasang di grid footer
  * form (anak terakhir <form>), bukan kolom tombolnya: kolom berada di grid setinggi tombol saja.
  */
-.fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
+.fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page, .gs-form-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
     position: sticky;
     bottom: 0;
     z-index: 20;
@@ -564,7 +564,7 @@
 }
 
 @media (max-width: 48rem) {
-    .fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
+    .fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page, .gs-form-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
         margin: 0 -12px -12px;
         padding: 10px 12px;
     }
@@ -2796,8 +2796,7 @@ select.fi-select-input {
 }
 
 .gs-profile-card .gs-profile-avatar .filepond--root {
-    width: 112px;
-    height: 112px;
+    width: 160px;
     margin-inline: auto;
 }
 
@@ -2855,4 +2854,32 @@ select.fi-select-input {
 /* Teks bantuan foto di tengah, di bawah foto */
 .gs-profile-card .fi-fo-field-content-col > .fi-sc {
     justify-content: center;
+}
+
+/* Editor gambar (FilePond): "Simpan" primary seperti tombol form lain (bawaan hijau), "Kembalikan" link abu (bawaan merah) */
+.fi-fo-file-upload-editor-control-panel-footer .fi-btn.fi-color-success {
+    background-color: var(--primary-600);
+    color: var(--primary-50);
+}
+
+.fi-fo-file-upload-editor-control-panel-footer .fi-btn.fi-color-success:hover {
+    background-color: var(--primary-500);
+    color: var(--primary-50);
+}
+
+.fi-fo-file-upload-editor-control-panel-footer .fi-btn {
+    min-width: 96px;
+}
+
+.fi-fo-file-upload-editor-control-panel-reset-action.fi-link {
+    color: var(--text-muted);
+}
+
+.fi-fo-file-upload-editor-control-panel-reset-action.fi-link:hover {
+    color: var(--text);
+}
+
+/* Profil: teks bantuan foto rata tengah */
+.gs-profile-card .fi-fo-field-content-col .fi-sc-text {
+    text-align: center;
 }
