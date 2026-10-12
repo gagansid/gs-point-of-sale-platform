@@ -8,6 +8,7 @@ use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\Cashier\SetCashierContext;
 use App\Http\Middleware\CheckAppVersion;
 use App\Http\Middleware\EnsureDeviceToken;
+use App\Http\Middleware\EnsureInstalled;
 use App\Http\Middleware\EnsureTenantActive;
 use App\Http\Middleware\EnsureUserToken;
 use App\Http\Middleware\ForceJsonResponse;
@@ -38,6 +39,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Paling awal agar semua log (termasuk error maintenance) punya request_id
         $middleware->prepend(AssignRequestId::class);
+        // Lebih awal lagi: sebelum terinstal semua request ke /install, session & cache file (ADR 0016)
+        $middleware->prepend(EnsureInstalled::class);
         $middleware->append(SecurityHeaders::class);
 
         // Hanya host aplikasi sendiri: cegah host header poisoning pada link email (GSPOS-SEC-016)

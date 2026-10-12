@@ -148,7 +148,13 @@ kedaluwarsa tetap diselesaikan, setelah void/lunas = refund manual. Cron `schedu
 Deploy otomatis: `.github/workflows/deploy.yml` (merge ke `master` → CI → down + backup DB → rsync → migrate/cache → up),
 persiapan secrets & branch protection di `docs/deploy.md` (belum diaktifkan di GitHub).
 
-**Berikutnya (lanjut dari sini):** diskusi installer web (form instal); uji Midtrans sandbox (S5) menunggu key dari owner.
+### Installer web (ADR 0016, SPEC Q86) — N1–N4 selesai 2026-10-12
+- `/install`: kode instal opsional → syarat → database → aplikasi → akun → proses per langkah (AJAX) → login. `docs/install.md`.
+- Sebelum terinstal: middleware `EnsureInstalled` (session/cache file, https mengikuti request), kunci `storage/app/installed.json`.
+- Paket zip: tag `v*` → workflow Release (`scripts/release/build-package.sh`, edisi self_hosted & saas).
+- Belum: uji di hosting cPanel nyata.
+
+**Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5) menunggu key dari owner.
 
 Catatan untuk tim Flutter (repo aplikasi): **F8** menu Pesanan masuk & Belum dibayar (`docs/api/self-order.md`), status order baru `awaiting_payment`/`expired`, jangan tampilkan metode `online`; **F5** tampilkan `tier` member & `member_tier` di struk; **F6** kartu stempel
 (`stamp_cards` di detail member → kirim `stamp_program_ids`; struk `member_stamps`); **F7** voucher (`vouchers` di detail

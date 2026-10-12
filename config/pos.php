@@ -28,6 +28,16 @@ return [
     // Edisi (ADR 0009, App\Support\Edition): saas | self_hosted (jual putus, satu bisnis)
     'edition' => env('POS_EDITION', 'saas'),
 
+    // Installer web /install (ADR 0016, App\Support\Installer\Installation)
+    'installer' => [
+        // false = dianggap selalu terinstal (test, atau instal manual lewat terminal)
+        'enabled' => (bool) env('POS_INSTALLER', true),
+        // Kode instal opsional: bila diisi, form instal memintanya sebelum langkah pertama
+        'token' => env('INSTALL_TOKEN'),
+        'lock_path' => storage_path('app/installed.json'),
+        'state_path' => storage_path('app/install-state.json'),
+    ],
+
     // Onboarding (ADR 0009). Nilai awal; super admin mengubahnya di Sistem → Pendaftaran
     'onboarding' => [
         'trial_days' => (int) env('POS_TRIAL_DAYS', 14),

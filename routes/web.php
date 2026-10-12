@@ -11,6 +11,7 @@ use App\Http\Controllers\Web\Cashier\SelfOrderController as CashierSelfOrderCont
 use App\Http\Controllers\Web\Cashier\ShiftController as CashierShiftController;
 use App\Http\Controllers\Web\DashboardLoginController;
 use App\Http\Controllers\Web\EmailVerificationController;
+use App\Http\Controllers\Web\Install\InstallController;
 use App\Http\Controllers\Web\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Web\Member\PortalController as MemberPortalController;
 use App\Http\Controllers\Web\MidtransWebhookController;
@@ -29,6 +30,26 @@ use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+/*
+ * Installer web (ADR 0016): tanpa domain (dibuka di host mana pun sebelum terinstal). Setelah terinstal
+ * middleware EnsureInstalled menjawab 404 untuk semua /install.
+ */
+Route::prefix('install')->name('install.')->middleware('throttle:120,1,install')->group(function (): void {
+    Route::get('/', [InstallController::class, 'index'])->name('index');
+    Route::get('token', [InstallController::class, 'token'])->name('token');
+    Route::post('token', [InstallController::class, 'verifyToken'])->middleware('throttle:10,1,install-token')->name('token.verify');
+    Route::get('requirements', [InstallController::class, 'requirements'])->name('requirements');
+    Route::post('requirements', [InstallController::class, 'acceptRequirements'])->name('requirements.accept');
+    Route::get('database', [InstallController::class, 'database'])->name('database');
+    Route::post('database', [InstallController::class, 'saveDatabase'])->middleware('throttle:10,1,install-db')->name('database.save');
+    Route::get('application', [InstallController::class, 'application'])->name('application');
+    Route::post('application', [InstallController::class, 'saveApplication'])->name('application.save');
+    Route::get('accounts', [InstallController::class, 'accounts'])->name('accounts');
+    Route::post('accounts', [InstallController::class, 'saveAccounts'])->name('accounts.save');
+    Route::get('run', [InstallController::class, 'run'])->name('run');
+    Route::post('run/{step}', [InstallController::class, 'runStep'])->name('run.step');
+});
 
 /*
  * Domain utama (gspos.id): halaman depan, form hubungi sales, dan login pelanggan.

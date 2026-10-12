@@ -224,7 +224,8 @@ return [
 
         'mail' => [
             // gs.POS: hanya notifikasi gagal/tidak sehat yang dikirim
-            'to' => env('BACKUP_NOTIFY_EMAIL', env('MAIL_FROM_ADDRESS')),
+            // Selalu email valid: kosong/null (mis. sebelum instal, tanpa .env) membuat spatie gagal saat boot
+            'to' => env('BACKUP_NOTIFY_EMAIL') ?: (env('MAIL_FROM_ADDRESS') ?: 'hello@example.com'),
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),

@@ -3512,3 +3512,264 @@
     font-size: 12px;
     text-align: center;
 }
+
+/* ---------- Installer /install (ADR 0016) ---------- */
+.install-card {
+    width: 100%;
+    max-width: 640px;
+}
+
+.install-card h1 {
+    text-align: start;
+}
+
+.install-card .site-auth-sub {
+    text-align: start;
+}
+
+.install-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+    margin: 0 0 20px;
+    padding: 0 0 16px;
+    border-bottom: 1px solid var(--site-border);
+    color: var(--site-muted);
+    font-size: 12.5px;
+    list-style: none;
+}
+
+.install-steps li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.install-steps li span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 1px solid var(--site-border);
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.install-steps li.is-current {
+    color: var(--site-text);
+    font-weight: 600;
+}
+
+.install-steps li.is-current span {
+    border-color: var(--site-primary);
+    background: var(--site-primary);
+    color: #ffffff;
+}
+
+.install-steps li.is-done span {
+    border-color: rgb(47 179 68 / 0.4);
+    background: rgb(47 179 68 / 0.1);
+    color: #1d7a2e;
+}
+
+.install-checklist,
+.install-progress {
+    display: grid;
+    gap: 2px;
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+}
+
+.install-checklist li,
+.install-progress li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--site-border);
+    font-size: 13.5px;
+}
+
+.install-checklist li > span:last-child,
+.install-progress li > span:last-child {
+    display: grid;
+    gap: 1px;
+}
+
+.install-checklist small,
+.install-progress small {
+    color: var(--site-muted);
+    font-size: 12px;
+}
+
+.install-check-icon,
+.install-progress-icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.install-checklist .is-ok .install-check-icon,
+.install-progress .is-done .install-progress-icon {
+    background: rgb(47 179 68 / 0.12);
+    color: #1d7a2e;
+}
+
+.install-checklist .is-fail .install-check-icon,
+.install-progress .is-failed .install-progress-icon {
+    background: rgb(214 57 57 / 0.12);
+    color: #d63939;
+}
+
+.install-checklist .is-warn .install-check-icon {
+    background: rgb(245 159 0 / 0.14);
+    color: #8a5a00;
+}
+
+.install-progress-icon {
+    border: 1px solid var(--site-border);
+}
+
+.install-progress .is-done .install-progress-icon::before {
+    content: '✓';
+}
+
+.install-progress .is-failed .install-progress-icon::before {
+    content: '✕';
+}
+
+.install-progress .is-running .install-progress-icon {
+    border: 2px solid var(--site-primary-lt);
+    border-top-color: var(--site-primary);
+    animation: install-spin 0.8s linear infinite;
+}
+
+@keyframes install-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.install-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.install-actions .site-error {
+    flex-basis: 100%;
+}
+
+.install-actions-end {
+    display: inline-flex;
+    gap: 8px;
+    margin-inline-start: auto;
+}
+
+.install-actions > .site-btn-primary:only-child,
+.install-actions > .site-btn-primary:last-child {
+    margin-inline-start: auto;
+}
+
+.install-actions .site-btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.install-card .site-form-grid {
+    align-items: start;
+}
+
+.install-grid-host {
+    grid-template-columns: 1fr 120px;
+}
+
+.install-section,
+.install-optional {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--site-border);
+    border-radius: 12px;
+}
+
+.install-section legend,
+.install-optional legend,
+.install-legend {
+    padding: 0 6px;
+    color: var(--site-text);
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.install-section legend small,
+.install-legend small {
+    color: var(--site-muted);
+    font-weight: 400;
+}
+
+.install-nested {
+    margin-top: 4px;
+}
+
+/* Bagian opsional: isi disembunyikan bila centang di legend tidak aktif (tanpa JavaScript) */
+.install-optional:has(> legend input[type='checkbox']:not(:checked)) > .install-optional-body {
+    display: none;
+}
+
+.site-field-hint {
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 12.5px;
+}
+
+.install-summary {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--site-bg);
+    font-size: 13px;
+}
+
+.install-summary div {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    gap: 8px;
+}
+
+.install-summary dt {
+    color: var(--site-muted);
+}
+
+.install-summary dd {
+    margin: 0;
+    color: var(--site-text);
+    overflow-wrap: anywhere;
+}
+
+#install-warnings p {
+    margin: 0;
+}
+
+@media (max-width: 640px) {
+    .install-grid-host,
+    .install-summary div {
+        grid-template-columns: 1fr;
+    }
+}
