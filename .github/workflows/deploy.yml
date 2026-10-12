@@ -1,0 +1,120 @@
+# Deploy production ke cPanel lewat SSH (docs/deploy.md).
+# Alur: PR → approve (branch protection) → merge ke master → CI hijau → deploy.
+name: Deploy
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Satu deploy dalam satu waktu; deploy berikutnya menunggu, tidak membatalkan yang sedang jalan.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    # Environment "production" menyimpan secrets & bisa diberi reviewer wajib (Settings → Environments).
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+    timeout-minutes: 20
+
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      PHP_BIN: ${{ vars.PHP_BIN || 'php' }}
+      DEPLOY_BACKUP: ${{ vars.DEPLOY_BACKUP || 'true' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cek secrets
+        run: |
+          for name in SSH_HOST SSH_USER DEPLOY_PATH; do
+            if [ -z "${!name}" ]; then echo "::error::Secret $name belum diisi"; exit 1; fi
+          done
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: bcmath, ctype, curl, dom, fileinfo, gd, intl, mbstring, openssl, pdo_mysql, tokenizer, xml, zip
+          coverage: none
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # vendor & aset dibangun di runner: hosting tidak perlu composer/npm.
+      - name: Composer install (production)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+
+      - name: Build aset
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Siapkan SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Host key wajib dari secret (tanpa ssh-keyscan otomatis) agar tidak tertipu server palsu.
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host deploy-target
+            HostName $SSH_HOST
+            Port $SSH_PORT
+            User $SSH_USER
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 30
+          EOF
+
+      - name: Mode perawatan + backup database
+        run: |
+          ssh deploy-target "cd '$DEPLOY_PATH' && PHP_BIN='$PHP_BIN' DEPLOY_BACKUP='$DEPLOY_BACKUP' bash -s pre" < scripts/deploy/remote.sh
+
+      - name: Kirim file (rsync)
+        run: |
+          rsync -az --delete --exclude-from=scripts/deploy/rsync-exclude.txt \
+            -e "ssh" ./ "deploy-target:$DEPLOY_PATH/"
+
+      - name: Migrasi, cache, aktifkan kembali
+        run: |
+          ssh deploy-target "cd '$DEPLOY_PATH' && PHP_BIN='$PHP_BIN' bash -s post" < scripts/deploy/remote.sh
+
+      - name: Cek kesehatan
+        if: vars.HEALTHCHECK_URL != ''
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -fsS --max-time 10 "${{ vars.HEALTHCHECK_URL }}" > /dev/null; then echo "OK"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::Health check gagal: ${{ vars.HEALTHCHECK_URL }}"; exit 1
+
+      - name: Petunjuk bila gagal
+        if: failure()
+        run: |
+          echo "::error::Deploy gagal. Bila langkah migrasi/cache yang gagal, situs tetap dalam mode perawatan."
+          echo "Periksa lewat SSH (storage/logs/laravel.log), perbaiki, lalu jalankan ulang workflow atau 'php artisan up'."
+
+      - name: Hapus kunci SSH
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

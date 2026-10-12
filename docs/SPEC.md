@@ -550,7 +550,8 @@ SSL (AutoSSL/Let's Encrypt) diaktifkan untuk keempatnya.
 └── public_html/                    # Website lain, tidak disentuh
 ```
 
-Langkah rilis:
+Langkah rilis otomatis (PR di-approve → merge ke `master` → CI → deploy SSH/rsync): lihat [`docs/deploy.md`](deploy.md).
+Langkah manual (bila tanpa GitHub Actions):
 
 1. Lokal: `npm run build` (aset Filament/Vite), commit, push.
 2. cPanel Terminal: `git pull` di folder project.

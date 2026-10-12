@@ -1,0 +1,19 @@
+# Tidak dikirim ke server (deploy.yml). Yang dikecualikan juga tidak dihapus oleh --delete.
+# Data & konfigurasi milik server
+/.env
+/storage/
+/bootstrap/cache/*.php
+/public/storage
+/public/hot
+/database/*.sqlite
+# Tidak dibutuhkan di production
+/.git/
+/.github/
+/.claude/
+/node_modules/
+/tests/
+/docs/
+/scripts/
+/.env.example
+/phpunit.xml
+/phpstan.neon

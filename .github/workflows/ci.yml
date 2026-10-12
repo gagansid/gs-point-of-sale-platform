@@ -2,8 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [feature/pos, master, main, develop]
+    # master tidak di sini: dijalankan oleh deploy.yml (workflow_call) sebelum deploy
+    branches: [feature/pos, main, develop]
   pull_request:
+  workflow_call:
 
 jobs:
   quality:

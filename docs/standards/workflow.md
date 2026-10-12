@@ -114,7 +114,8 @@ composer install → pint --test → phpstan analyse → php artisan test (SQLit
 
 1. Semantic Versioning `MAJOR.MINOR.PATCH`, tag `v1.0.0` di `main`.
 2. PR `develop` → `main`, isi changelog di deskripsi PR.
-3. Tag, lalu deploy sesuai SPEC → *Deploy ke cPanel*.
+3. Tag, lalu deploy sesuai SPEC → *Deploy ke cPanel*. Merge ke `master` men-deploy otomatis ke production
+   (`.github/workflows/deploy.yml`, persiapan di `docs/deploy.md`).
 4. Perubahan API yang merusak app lama → naikkan `min_version` di `/admin` atau buat `/api/v2`
    (lihat `docs/standards/api/conventions.md` §7).
 

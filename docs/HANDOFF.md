@@ -145,8 +145,10 @@ kedaluwarsa tetap diselesaikan, setelah void/lunas = refund manual. Cron `schedu
 - Ikon kolom isian 16px (CSS global `components.css`).
 - QR meja: `/t/{short_code}` → URL asli; kartu cetak 60 mm baru.
 
-**Berikutnya (lanjut dari sini):** workflow deploy GitHub Actions (cPanel via SSH saat PR di-merge ke `master`), lalu diskusi
-installer web; uji Midtrans sandbox (S5) menunggu key dari owner.
+Deploy otomatis: `.github/workflows/deploy.yml` (merge ke `master` → CI → down + backup DB → rsync → migrate/cache → up),
+persiapan secrets & branch protection di `docs/deploy.md` (belum diaktifkan di GitHub).
+
+**Berikutnya (lanjut dari sini):** diskusi installer web (form instal); uji Midtrans sandbox (S5) menunggu key dari owner.
 
 Catatan untuk tim Flutter (repo aplikasi): **F8** menu Pesanan masuk & Belum dibayar (`docs/api/self-order.md`), status order baru `awaiting_payment`/`expired`, jangan tampilkan metode `online`; **F5** tampilkan `tier` member & `member_tier` di struk; **F6** kartu stempel
 (`stamp_cards` di detail member → kirim `stamp_program_ids`; struk `member_stamps`); **F7** voucher (`vouchers` di detail
