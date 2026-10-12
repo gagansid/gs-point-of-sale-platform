@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Actions\User;
 
 use App\Actions\Auth\VerifyPin;
+use App\Enums\ErrorCode;
+use App\Exceptions\BusinessException;
 use App\Models\User;
 use App\Notifications\VerifyOwnerEmail;
+use App\Support\Phone;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use SensitiveParameter;
@@ -26,11 +29,22 @@ final class UpdateOwnProfile
      * @param  string|null  $password  kata sandi baru (boleh sudah di-hash oleh form; cast "hashed" tidak meng-hash ulang)
      * @param  string|null  $pin  PIN baru 6 digit (sudah divalidasi SecurePin); null = tidak diganti
      * @param  bool|null  $dailySummaryEmail  ringkasan harian email (Q57); null = tidak diubah
+     * @param  string|false|null  $phone  nomor HP (format apa pun, dinormalisasi +62…); null = dikosongkan; false = tidak diubah
+     *
+     * @throws BusinessException nomor HP tidak valid
      */
-    public function handle(User $user, string $name, string $email, #[SensitiveParameter] ?string $password = null, #[SensitiveParameter] ?string $pin = null, ?bool $dailySummaryEmail = null): User
+    public function handle(User $user, string $name, string $email, #[SensitiveParameter] ?string $password = null, #[SensitiveParameter] ?string $pin = null, ?bool $dailySummaryEmail = null, string|false|null $phone = false): User
     {
-        $user = DB::transaction(function () use ($user, $name, $email, $password, $pin, $dailySummaryEmail): User {
+        if ($phone !== false && $phone !== null && trim($phone) !== '') {
+            $phone = Phone::normalize($phone) ?? throw BusinessException::of(ErrorCode::ValidationError, 'Nomor HP tidak valid. Contoh: 0812 3456 7890', ['phone' => ['Nomor HP tidak valid']]);
+        }
+
+        $user = DB::transaction(function () use ($user, $name, $email, $password, $pin, $dailySummaryEmail, $phone): User {
             $user->fill(['name' => $name, 'email' => Str::lower(trim($email))]);
+
+            if ($phone !== false) {
+                $user->phone = $phone !== null && trim($phone) !== '' ? $phone : null;
+            }
 
             if ($dailySummaryEmail !== null) {
                 $user->daily_summary_email = $dailySummaryEmail && $user->hasPermission('report.view');

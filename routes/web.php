@@ -15,6 +15,7 @@ use App\Http\Controllers\Web\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Web\Member\PortalController as MemberPortalController;
 use App\Http\Controllers\Web\MidtransWebhookController;
 use App\Http\Controllers\Web\PasswordResetController;
+use App\Http\Controllers\Web\SelfOrder\ShortTableLinkController;
 use App\Http\Controllers\Web\SelfOrder\TableController as SelfOrderTableController;
 use App\Http\Controllers\Web\SignupController;
 use App\Http\Controllers\Web\SiteController;
@@ -109,6 +110,12 @@ Route::post('webhooks/midtrans/{tenant}', MidtransWebhookController::class)
  * Pesan dari meja (ADR 0014, Q69–Q70): gspos.id/order/t/{token} (tanpa subdomain: /order/t/{token}). Publik; meja &
  * tenant dari token QR (SetSelfOrderTable).
  */
+// URL pendek kartu meja: gspos.id/t/K7P2QX → URL asli /order/t/{token} (kode tidak peka huruf besar)
+Route::domain(Domains::main())->get('t/{code}', ShortTableLinkController::class)
+    ->where('code', '[A-Za-z0-9]{6}')
+    ->middleware('throttle:60,1')
+    ->name('self-order.short');
+
 Route::domain(Domains::main())->prefix('order')->name('self-order.')
     ->middleware(SetSelfOrderTable::class)
     ->group(function (): void {

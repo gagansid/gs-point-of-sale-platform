@@ -22,7 +22,8 @@ Catatan:
 - Kasir web butuh **shift terbuka** di browser itu (diminta otomatis saat masuk); Budi bertugas di **Kopi Senja Kemang**.
 - Member **Rina Kusuma** (`0812-3456-7890`) belum punya kata sandi halaman member; buat lewat dashboard → Member →
   Aksi lain → **Kata sandi sementara**.
-- Token QR **Meja 5** berubah bila tombol **Ganti QR** dipakai; ambil URL baru dari **Cetak QR**.
+- Token & URL pendek QR **Meja 5** berubah bila tombol **Ganti QR** dipakai; ambil URL baru dari **Cetak QR**.
+- URL pendek meja: `http://gspos.localhost:8000/t/{kode}` (kode 6 karakter di kartu cetak) → dialihkan ke URL asli `/order/t/{token}`.
 - Pembayaran online (Midtrans) butuh key **sandbox** milik owner di Pengaturan → Pembayaran online (key tidak
   dicatat di dokumen ini).
 
@@ -56,6 +57,7 @@ Catatan:
 | Beranda member | `/m/kopi-senja-demo` | M4–M7 | Saldo poin, **progres tier**, **voucher pribadi**, **kartu stempel**, QR dinamis untuk kasir |
 | Riwayat · Profil · Kata sandi | `/m/kopi-senja-demo/history` · `/profile` · `/password` | M4 | Riwayat poin & transaksi, ubah profil, ganti kata sandi, hapus akun |
 | Pesan dari meja | `/order/t/{token}` | S2–S4 | Tab **Menu** (kategori, opsi), **Keranjang** (nama, catatan, voucher), **Pesananku** (status polling: menunggu kasir → silakan bayar → lunas / ditolak / kedaluwarsa), tombol **Bayar online** (Midtrans) & **Pakai poin** (member) |
+| URL pendek meja | `/t/{kode}` | Q85 | Dialihkan ke `/order/t/{token}`; kode tercetak di kartu QR |
 | Masuk member dari meja | `/order/t/{token}/member` | S2 | Ke login member, lalu kembali ke meja |
 
 ## API (http://api.gspos.localhost:8000/v1) — token kasir/owner

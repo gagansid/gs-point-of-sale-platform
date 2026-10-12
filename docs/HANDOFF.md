@@ -139,8 +139,14 @@ kedaluwarsa tetap diselesaikan, setelah void/lunas = refund manual. Cron `schedu
 | I2 | Menu **Stok → Stok opname**: lembar hitung per outlet/kategori → isi qty fisik → Posting (selisih vs stok saat posting, nilai selisih dari modal), riwayat `opname`; izin `stock.opname` |
 | I1 | Menu **Stok → Stok masuk** (draf → Posting → Batalkan, nomor `{outlet}-SM-{YYMMDD}-{urut}`, supervisor ikut punya menu ini) & **Stok → Supplier**; modal produk rata-rata tertimbang lintas outlet saat posting (`WeightedCost`), riwayat stok `purchase`/`purchase_void`; izin `stock.receive`, `supplier.manage` |
 
-**Berikutnya (lanjut dari sini):** tanya pemilik — deploy (L2/L4/OWASP/deploy.md), uji Midtrans sandbox (S5), atau fitur lain
-(mis. PO & utang supplier, bahan baku & resep — Fase 2).
+### Profil, menu akun & URL pendek QR (SPEC Q84–Q85) — selesai 2026-10-12
+- Menu akun: kartu akun, Kata sandi & PIN, Perangkat & sesi, Bantuan (`POS_SUPPORT_WHATSAPP`/`POS_SUPPORT_EMAIL`); tombol tema di samping menu.
+- Profil: foto (disk `public`, `avatars/{tenant_id}` — perlu `php artisan storage:link` di server), nomor HP, Info akun, Perangkat & sesi (keluar dari perangkat lain).
+- Ikon kolom isian 16px (CSS global `components.css`).
+- QR meja: `/t/{short_code}` → URL asli; kartu cetak 60 mm baru.
+
+**Berikutnya (lanjut dari sini):** workflow deploy GitHub Actions (cPanel via SSH saat PR di-merge ke `master`), lalu diskusi
+installer web; uji Midtrans sandbox (S5) menunggu key dari owner.
 
 Catatan untuk tim Flutter (repo aplikasi): **F8** menu Pesanan masuk & Belum dibayar (`docs/api/self-order.md`), status order baru `awaiting_payment`/`expired`, jangan tampilkan metode `online`; **F5** tampilkan `tier` member & `member_tier` di struk; **F6** kartu stempel
 (`stamp_cards` di detail member → kirim `stamp_program_ids`; struk `member_stamps`); **F7** voucher (`vouchers` di detail

@@ -12,6 +12,7 @@ use App\Notifications\ResetUserPassword;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -33,6 +35,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string $tenant_id
  * @property string $name
  * @property string|null $email
+ * @property string|null $phone nomor HP +62… (profil)
+ * @property string|null $avatar_path foto profil di disk public
  * @property string|null $password
  * @property string|null $pin
  * @property int $pin_failed_attempts
@@ -45,7 +49,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property bool $daily_summary_email ringkasan harian lewat email (Q57)
  * @property CarbonImmutable|null $last_daily_summary_on tanggal lokal ringkasan terakhir yang dikirim
  */
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     /** @use HasFactory<UserFactory> */
     use BelongsToTenant, HasApiTokens, HasFactory, HasUuids, LogsChanges, Notifiable, RecordsAuthor, SoftDeletes;
@@ -60,7 +64,17 @@ class User extends Authenticatable implements FilamentUser
             'role',
             'is_active',
             'web_cashier_access',
+            'phone',
         ];
+    }
+
+    /** Foto profil di topbar & menu akun; tanpa foto = inisial nama (bawaan Filament). */
+    public function getFilamentAvatarUrl(): ?string
+    {
+        // Aman untuk model yang dimuat sebagian kolom (strict mode)
+        $path = $this->getAttributes()['avatar_path'] ?? null;
+
+        return is_string($path) && $path !== '' ? Storage::disk('public')->url($path) : null;
     }
 
     /** tenant_id sengaja tidak fillable: selalu dari tenant context (BelongsToTenant). */
@@ -74,10 +88,11 @@ class User extends Authenticatable implements FilamentUser
         'is_active',
         'web_cashier_access',
         'daily_summary_email',
+        'phone',
     ];
 
     /** @var array<string, mixed> Bawaan kolom (Q54) agar tersedia sebelum model dimuat ulang */
-    protected $attributes = ['web_cashier_access' => false];
+    protected $attributes = ['web_cashier_access' => false, 'phone' => null, 'avatar_path' => null];
 
     protected $hidden = [
         'password',

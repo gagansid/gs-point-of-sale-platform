@@ -334,6 +334,67 @@
     height: 14px;
 }
 
+/* Kartu akun di atas menu akun */
+.gs-account-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.gs-account-card .fi-user-avatar {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    font-size: 15px;
+}
+
+.gs-account-card-text {
+    display: grid;
+    min-width: 0;
+    gap: 1px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+.gs-account-card-text strong {
+    overflow: hidden;
+    color: var(--text);
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gs-account-card-text span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Tombol tema di kanan menu akun: satu ikon, klik berganti terang → gelap → sistem */
+.gs-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--control-h);
+    height: var(--control-h);
+    margin-inline-start: 4px;
+    border-radius: 999px;
+    color: var(--text-muted);
+    transition: background-color 120ms, color 120ms;
+}
+
+.gs-theme-toggle:hover {
+    background-color: var(--bg-surface-secondary);
+    color: var(--text);
+}
+
+.gs-theme-toggle .fi-icon {
+    width: 18px;
+    height: 18px;
+}
+
 @media (max-width: 37.5rem) {
     .gs-account-name {
         display: none;
@@ -1591,6 +1652,27 @@
 
 .fi-input-wrp .fi-input-wrp-suffix:not(.fi-inline) {
     padding-inline-start: 0.25rem;
+}
+
+/* Ikon di dalam field (prefix/suffix, tombol mata/kalender/hapus) ringkas 16px agar tidak memakan tempat ketikan */
+.fi-input-wrp .fi-input-wrp-prefix .fi-icon,
+.fi-input-wrp .fi-input-wrp-suffix .fi-icon,
+.fi-input-wrp .fi-input-wrp-actions .fi-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.fi-input-wrp .fi-input-wrp-prefix:not(.fi-inline):has(.fi-icon) {
+    padding-inline-start: 10px;
+}
+
+.fi-input-wrp .fi-input-wrp-suffix:not(.fi-inline):has(.fi-icon) {
+    padding-inline-end: 10px;
+}
+
+.fi-input-wrp .fi-input-wrp-actions {
+    gap: 2px;
+    padding-inline-end: 6px;
 }
 
 /* DatePicker setinggi kontrol lain (bawaan trigger lebih tinggi 4px); tombol ikon di suffix tidak menambah tinggi */

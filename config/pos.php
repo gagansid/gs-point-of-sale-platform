@@ -19,6 +19,12 @@ return [
         'api' => env('POS_API_DOMAIN'),
     ],
 
+    // Bantuan di menu akun dashboard (App\Support\Support): WhatsApp tim gs.POS (628…) atau email
+    'support' => [
+        'whatsapp' => env('POS_SUPPORT_WHATSAPP'),
+        'email' => env('POS_SUPPORT_EMAIL', 'halo@gspos.id'),
+    ],
+
     // Edisi (ADR 0009, App\Support\Edition): saas | self_hosted (jual putus, satu bisnis)
     'edition' => env('POS_EDITION', 'saas'),
 

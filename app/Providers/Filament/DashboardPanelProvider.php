@@ -17,6 +17,8 @@ use App\Http\Middleware\Filament\SetDashboardTenant;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Domains;
+use App\Support\Support;
+use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -53,6 +55,15 @@ final class DashboardPanelProvider extends PanelProvider
             // Dengan subdomain: mengalihkan ke gspos.id/login (ADR 0008)
             ->login(Login::class)
             ->profile(EditProfile::class, isSimple: false)
+            // Menu akun: profil (bawaan), keamanan, perangkat, bantuan; tema dipindah ke samping nama (user-menu override)
+            ->userMenuItems([
+                'security' => Action::make('security')->label('Kata sandi & PIN')->icon(Heroicon::OutlinedLockClosed)
+                    ->url(fn (): string => EditProfile::getUrl().'#keamanan')->sort(1),
+                'sessions' => Action::make('sessions')->label('Perangkat & sesi')->icon(Heroicon::OutlinedDevicePhoneMobile)
+                    ->url(fn (): string => EditProfile::getUrl().'#perangkat')->sort(2),
+                'help' => Action::make('help')->label('Bantuan')->icon(Heroicon::OutlinedQuestionMarkCircle)
+                    ->url(fn (): string => Support::helpUrl(), shouldOpenInNewTab: true)->sort(3),
+            ])
             ->colors(Theme::colors())
             ->font('Plus Jakarta Sans')
             ->brandName('gs.POS')

@@ -4,44 +4,115 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Pages\Auth;
 
+use App\Actions\User\LogoutOtherSessions;
+use App\Actions\User\UpdateOwnAvatar;
 use App\Actions\User\UpdateOwnProfile;
+use App\Exceptions\BusinessException;
+use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Rules\SecurePin;
+use App\Support\Phone;
+use Filament\Actions\Action;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use SensitiveParameter;
 
 /**
- * Profil owner/manager. Penyimpanan lewat Action (bukan $record->update bawaan Filament) agar
- * aturan email terverifikasi & pencabutan token berlaku (GSPOS-SEC-012, GSPOS-SEC-013).
- * PIN sendiri (approval & masuk kasir web, Q55) juga diatur di sini; mengganti PIN wajib kata sandi saat ini.
+ * Profil owner/manager: foto & data diri, keamanan (kata sandi & PIN), notifikasi, info akun, perangkat & sesi.
+ * Penyimpanan lewat Action (bukan $record->update bawaan Filament) agar aturan email terverifikasi & pencabutan
+ * token berlaku (GSPOS-SEC-012, GSPOS-SEC-013). Mengganti kata sandi, PIN, atau email wajib kata sandi saat ini.
+ * Bagian punya anchor (#keamanan, #perangkat) untuk tautan dari menu akun.
  */
 class EditProfile extends BaseEditProfile
 {
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            $this->getNameFormComponent(),
-            $this->getEmailFormComponent(),
-            $this->getPasswordFormComponent(),
-            $this->getPasswordConfirmationFormComponent(),
-            $this->getPinFormComponent(),
-            $this->getCurrentPasswordFormComponent(),
-            $this->getDailySummaryFormComponent(),
+            Section::make('Foto & data diri')
+                ->id('data-diri')
+                ->columns(['default' => 1, 'md' => 3])
+                ->schema([
+                    $this->getAvatarFormComponent(),
+                    Grid::make(1)->columnSpan(['md' => 2])->schema([
+                        $this->getNameFormComponent(),
+                        $this->getEmailFormComponent(),
+                        TextInput::make('phone')->label('Nomor HP')->tel()->maxLength(30)->placeholder('0812 3456 7890')
+                            ->formatStateUsing(fn (?string $state): ?string => $state !== null ? Phone::display($state) : null),
+                    ]),
+                ]),
+
+            Section::make('Keamanan')
+                ->description('Kata sandi baru mengeluarkan aplikasi kasir yang memakai akun ini. Mengganti kata sandi, PIN, atau email wajib kata sandi saat ini')
+                ->id('keamanan')
+                ->columns(['default' => 1, 'md' => 2])
+                ->schema([
+                    $this->getPasswordFormComponent(),
+                    $this->getPasswordConfirmationFormComponent(),
+                    $this->getPinFormComponent(),
+                    $this->getCurrentPasswordFormComponent(),
+                ]),
+
+            Section::make('Notifikasi')
+                ->visible(fn (): bool => $this->getUser() instanceof User && $this->getUser()->hasPermission('report.view'))
+                ->schema([$this->getDailySummaryFormComponent()]),
+
+            Section::make('Info akun')
+                ->columns(['default' => 1, 'md' => 3])
+                ->schema(self::accountInfo($this->profileUser())),
+
+            Section::make('Perangkat & sesi')
+                ->description('Tempat akun ini sedang masuk. Keluarkan semua bila ada perangkat yang tidak dikenal')
+                ->id('perangkat')
+                ->schema([
+                    View::make('filament.dashboard.profile.sessions')->viewData(fn (): array => self::sessions($this->profileUser())),
+                    Actions::make([
+                        Action::make('logoutOthers')->label('Keluar dari semua perangkat lain')->color('danger')
+                            ->icon(Heroicon::OutlinedArrowRightStartOnRectangle)
+                            ->requiresConfirmation()
+                            ->modalHeading('Keluar dari semua perangkat lain?')
+                            ->modalDescription('Sesi dashboard lain dan aplikasi kasir/owner yang memakai akun ini harus masuk ulang. Browser ini tetap masuk.')
+                            ->modalSubmitActionLabel('Keluarkan')
+                            ->action(function (): void {
+                                $result = app(LogoutOtherSessions::class)->handle($this->profileUser(), session()->getId());
+                                Notification::make()->success()->title('Perangkat lain dikeluarkan')
+                                    ->body($result['sessions'].' sesi dashboard & '.$result['tokens'].' perangkat aplikasi')->send();
+                            }),
+                    ]),
+                ]),
         ]);
+    }
+
+    /** Foto profil: gambar ≤ 2 MB, dipotong persegi, disimpan di folder tenant (UpdateOwnAvatar). */
+    protected function getAvatarFormComponent(): Component
+    {
+        return FileUpload::make('avatar_path')->label('Foto profil')
+            ->avatar()->image()->imageEditor()->circleCropper()
+            ->disk('public')->directory(fn (): string => UpdateOwnAvatar::directory($this->profileUser()))->visibility('public')
+            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(2048)
+            ->helperText('JPG/PNG/WebP, maks. 2 MB')
+            ->alignCenter();
     }
 
     /** Ringkasan harian lewat email (Q57): hanya untuk yang boleh melihat laporan. */
     protected function getDailySummaryFormComponent(): Component
     {
         return Toggle::make('daily_summary_email')->label('Ringkasan harian')
-            ->helperText('Email setiap pagi berisi omzet, void, selisih kas, dan target kemarin. Email harus sudah terverifikasi')
-            ->visible(fn (): bool => $this->getUser() instanceof User && $this->getUser()->hasPermission('report.view'));
+            ->helperText('Email setiap pagi berisi omzet, void, selisih kas, dan target kemarin. Email harus sudah terverifikasi');
     }
 
     protected function getPinFormComponent(): Component
@@ -73,13 +144,103 @@ class EditProfile extends BaseEditProfile
     protected function handleRecordUpdate(Model $record, #[SensitiveParameter] array $data): Model
     {
         /** @var User $record */
-        return app(UpdateOwnProfile::class)->handle(
-            $record,
-            (string) $data['name'],
-            (string) $data['email'],
-            isset($data['password']) ? (string) $data['password'] : null,
-            isset($data['pin']) ? (string) $data['pin'] : null,
-            array_key_exists('daily_summary_email', $data) ? (bool) $data['daily_summary_email'] : null,
-        );
+        try {
+            return DB::transaction(function () use ($record, $data): User {
+                $user = app(UpdateOwnProfile::class)->handle(
+                    $record,
+                    (string) $data['name'],
+                    (string) $data['email'],
+                    isset($data['password']) ? (string) $data['password'] : null,
+                    isset($data['pin']) ? (string) $data['pin'] : null,
+                    array_key_exists('daily_summary_email', $data) ? (bool) $data['daily_summary_email'] : null,
+                    array_key_exists('phone', $data) ? (filled($data['phone']) ? (string) $data['phone'] : null) : false,
+                );
+
+                return array_key_exists('avatar_path', $data)
+                    ? app(UpdateOwnAvatar::class)->handle($user, filled($data['avatar_path']) ? (string) $data['avatar_path'] : null)
+                    : $user;
+            });
+        } catch (BusinessException $e) {
+            throw ValidationException::withMessages(collect(is_array($e->details) ? $e->details : [])
+                ->mapWithKeys(fn (mixed $messages, string $field): array => ["data.{$field}" => (array) $messages])->all() ?: ['data.name' => $e->getMessage()]);
+        }
+    }
+
+    private function profileUser(): User
+    {
+        $user = $this->getUser();
+
+        return $user instanceof User ? $user : abort(403);
+    }
+
+    /** @return list<Component> */
+    private static function accountInfo(User $user): array
+    {
+        // Dimuat ulang: user sesi bisa belum punya semua kolom (strict mode)
+        $user = $user->fresh() ?? $user;
+        $tz = 'Asia/Jakarta';
+        $outlets = $user->accessibleOutlets()->orderBy('name')->pluck('name')->implode(', ');
+
+        return [
+            Placeholder::make('info_role')->label('Role')->content($user->role->getLabel()),
+            Placeholder::make('info_outlets')->label('Outlet')->content($outlets !== '' ? $outlets : '—'),
+            Placeholder::make('info_username')->label('Username kasir web')->content($user->username ?? '—'),
+            Placeholder::make('info_email')->label('Status email')
+                ->content($user->email_verified_at !== null ? 'Terverifikasi' : 'Belum diverifikasi'),
+            Placeholder::make('info_last_login')->label('Terakhir masuk')
+                ->content($user->last_login_at?->setTimezone($tz)->locale('id')->translatedFormat('j M Y, H.i') ?? '—'),
+            Placeholder::make('info_joined')->label('Bergabung')
+                ->content($user->created_at?->setTimezone($tz)->locale('id')->translatedFormat('j M Y') ?? '—'),
+        ];
+    }
+
+    /**
+     * Sesi dashboard (tabel sessions) & perangkat aplikasi (token API) milik user.
+     *
+     * @return array{sessions: list<array{agent: string, ip: string|null, last: string, current: bool}>, tokens: list<array{name: string, last: string}>}
+     */
+    private static function sessions(User $user): array
+    {
+        $tz = 'Asia/Jakarta';
+        $format = fn (?int $ts): string => $ts !== null ? now()->setTimestamp($ts)->setTimezone($tz)->locale('id')->translatedFormat('j M Y, H.i') : '—';
+
+        $sessions = DB::table('sessions')->where('user_id', $user->id)->orderByDesc('last_activity')->limit(20)->get()
+            ->map(fn (object $s): array => [
+                'agent' => self::agent((string) ($s->user_agent ?? '')),
+                'ip' => $s->ip_address !== null ? (string) $s->ip_address : null,
+                'last' => $format((int) $s->last_activity),
+                'current' => $s->id === session()->getId(),
+            ])->all();
+
+        $tokens = PersonalAccessToken::query()->where('tokenable_type', $user->getMorphClass())->where('tokenable_id', $user->id)
+            ->with('device:id,name')->latest('last_used_at')->limit(20)->get()
+            ->map(fn (PersonalAccessToken $t): array => [
+                'name' => $t->device->name ?? $t->name,
+                'last' => $format($t->last_used_at?->getTimestamp() ?? $t->created_at?->getTimestamp()),
+            ])->all();
+
+        return ['sessions' => array_values($sessions), 'tokens' => array_values($tokens)];
+    }
+
+    /** Ringkas user agent: "Chrome · macOS". */
+    private static function agent(string $ua): string
+    {
+        $browser = match (true) {
+            str_contains($ua, 'Edg/') => 'Edge',
+            str_contains($ua, 'Chrome/') => 'Chrome',
+            str_contains($ua, 'Firefox/') => 'Firefox',
+            str_contains($ua, 'Safari/') => 'Safari',
+            default => 'Browser',
+        };
+        $os = match (true) {
+            str_contains($ua, 'Android') => 'Android',
+            str_contains($ua, 'iPhone') || str_contains($ua, 'iPad') => 'iOS',
+            str_contains($ua, 'Mac OS') => 'macOS',
+            str_contains($ua, 'Windows') => 'Windows',
+            str_contains($ua, 'Linux') => 'Linux',
+            default => 'perangkat lain',
+        };
+
+        return $browser.' · '.$os;
     }
 }

@@ -29,12 +29,13 @@ final class TableQrController extends Controller
 
         return view('self-order.qr-print', [
             'business' => $user->tenant->name,
+            // QR berisi URL pendek (titik lebih sedikit, mudah dipindai); URL asli tetap berlaku
             'cards' => $tables->map(fn (DiningTable $t): array => [
                 'name' => $t->name,
                 'area' => $t->area,
                 'outlet' => $t->outlet->name ?? '',
-                'url' => $t->orderUrl(),
-                'svg' => QrSvg::make($t->orderUrl()),
+                'short' => preg_replace('#^https?://#', '', $t->shortUrl()),
+                'svg' => QrSvg::make($t->shortUrl()),
             ])->all(),
         ]);
     }
