@@ -61,6 +61,11 @@ final class CachedReportService extends ReportService
         return $this->remember(__FUNCTION__, [$start, $end, $timezone, $filters], fn (): array => parent::hourly($start, $end, $timezone, $filters));
     }
 
+    public function purchases(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        return $this->remember(__FUNCTION__, [$start, $end, $filters], fn (): array => parent::purchases($start, $end, $filters));
+    }
+
     public function channels(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
     {
         return $this->remember(__FUNCTION__, [$start, $end, $filters], fn (): array => parent::channels($start, $end, $filters));

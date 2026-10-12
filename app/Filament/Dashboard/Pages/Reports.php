@@ -29,6 +29,8 @@ use App\Filament\Dashboard\Widgets\Reports\PeakHoursTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ProductsTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ProfitStatsWidget;
 use App\Filament\Dashboard\Widgets\Reports\ProfitTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\PurchasesByProductTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\PurchasesBySupplierTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\ReportStatsWidget;
 use App\Filament\Dashboard\Widgets\Reports\ReportTrendChartWidget;
 use App\Filament\Dashboard\Widgets\Reports\ShiftDifferencesTableWidget;
@@ -223,7 +225,7 @@ final class Reports extends Page
             ReportTab::OrderTypes => [OrderTypesWidget::class, ChannelsTableWidget::class],
             ReportTab::Outlets => [OutletComparisonWidget::class],
             ReportTab::Discounts => [VoidsTableWidget::class, DiscountsTableWidget::class, ShiftDifferencesTableWidget::class],
-            ReportTab::Stock => [StockTableWidget::class],
+            ReportTab::Stock => [StockTableWidget::class, PurchasesBySupplierTableWidget::class, PurchasesByProductTableWidget::class],
         };
     }
 

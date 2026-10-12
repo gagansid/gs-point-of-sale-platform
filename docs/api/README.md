@@ -11,10 +11,10 @@ Satu file per domain, berisi semua endpoint domain tersebut dengan format
 | Order & pembayaran | [`order.md`](order.md) | ✅ 7 endpoint |
 | Member | [`member.md`](member.md) | ✅ 5 endpoint (cari, daftar, detail, riwayat poin, cek voucher) |
 | Self-order (QR meja) | [`self-order.md`](self-order.md) | ✅ 3 endpoint (pesanan masuk, terima, tolak) + webhook Midtrans |
-| Laporan | [`report.md`](report.md) | ✅ 18 endpoint (termasuk PDF rekap shift, laba kotor, member, kanal) + export Excel/PDF di dashboard |
+| Laporan | [`report.md`](report.md) | ✅ 19 endpoint (termasuk PDF rekap shift, laba kotor, member, kanal, pembelian) + export Excel/PDF di dashboard |
 | Setelan (outlet, karyawan, metode bayar) | [`settings.md`](settings.md) | 🟡 10 endpoint (outlet, daftar outlet, karyawan, metode bayar); perangkat menyusul |
 
-**Total: 69 endpoint** (cek: `php artisan scramble:analyze`). Dokumentasi interaktif (Scramble) dibuat
+**Total: 70 endpoint** (cek: `php artisan scramble:analyze`). Dokumentasi interaktif (Scramble) dibuat
 otomatis dari route & docblock controller — tidak perlu diperbarui manual; cukup jaga docblock tetap akurat.
 
 File dibuat bersamaan dengan endpoint pertama di domain tersebut.

@@ -11,6 +11,7 @@ use App\Enums\PaymentCategory;
 use App\Enums\PaymentStatus;
 use App\Enums\PointEntryType;
 use App\Enums\ShiftStatus;
+use App\Enums\StockDocumentStatus;
 use App\Enums\StockMovementType;
 use App\Models\Member;
 use App\Models\MemberPointEntry;
@@ -23,12 +24,15 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\Shift;
 use App\Models\StockMovement;
+use App\Models\StockReceipt;
+use App\Models\StockReceiptItem;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -866,7 +870,7 @@ class ReportService
      * Pergerakan stok per produk pada rentang (penjualan, pengembalian void, penyesuaian) +
      * stok saat ini. Hanya produk yang dilacak stoknya / punya pergerakan.
      *
-     * @return list<array{product_id: string, product_name: string, sold: int, void_return: int, adjustment: int, net_change: int, stock: int|null, min_stock: int|null, is_low: bool}>
+     * @return list<array{product_id: string, product_name: string, sold: int, void_return: int, adjustment: int, purchased: int, opname: int, transfer: int, net_change: int, stock: int|null, stock_value: string|null, min_stock: int|null, is_low: bool}>
      */
     public function stock(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
     {
@@ -883,6 +887,7 @@ class ReportService
         $stocks = ProductStock::query()->whereIn('outlet_id', CurrentOutlet::ids())->toBase()
             ->select('product_id', DB::raw('SUM(stock_qty) as stock'), DB::raw('SUM(min_stock) as min_stock'))
             ->groupBy('product_id')->get()->keyBy('product_id');
+        $qtyOf = fn (Collection $byType, StockMovementType ...$types): int => (int) array_sum(array_map(fn (StockMovementType $t): int => (int) ($byType[$t->value] ?? 0), $types));
 
         return Product::query()
             ->withTrashed()
@@ -890,8 +895,8 @@ class ReportService
             ->when($filters !== null && $filters->productIds !== [], fn (Builder $q) => $q->whereIn('id', $filters->productIds ?? []))
             ->when($filters !== null && $filters->categoryIds !== [], fn (Builder $q) => $q->whereIn('category_id', $filters->categoryIds ?? []))
             ->orderBy('name')
-            ->get(['id', 'name', 'track_stock'])
-            ->map(function (Product $product) use ($movements, $stocks): array {
+            ->get(['id', 'name', 'track_stock', 'cost_price'])
+            ->map(function (Product $product) use ($movements, $stocks, $qtyOf): array {
                 $byType = collect($movements[$product->id] ?? [])->mapWithKeys(fn (object $m): array => [(string) $m->type => (int) $m->qty]);
                 $stock = $product->track_stock && isset($stocks[$product->id]) ? (int) $stocks[$product->id]->stock : ($product->track_stock ? 0 : null);
                 $min = $product->track_stock && isset($stocks[$product->id]) ? (int) $stocks[$product->id]->min_stock : null;
@@ -903,8 +908,14 @@ class ReportService
                     'sold' => abs((int) ($byType[StockMovementType::Sale->value] ?? 0)),
                     'void_return' => (int) ($byType[StockMovementType::VoidReturn->value] ?? 0),
                     'adjustment' => (int) ($byType[StockMovementType::Adjustment->value] ?? 0),
+                    // Dokumen stok (ADR 0015): masuk bersih (setelah batal), selisih opname, transfer bersih outlet terpilih
+                    'purchased' => $qtyOf($byType, StockMovementType::Purchase, StockMovementType::PurchaseVoid),
+                    'opname' => $qtyOf($byType, StockMovementType::Opname),
+                    'transfer' => $qtyOf($byType, StockMovementType::TransferOut, StockMovementType::TransferIn, StockMovementType::TransferCancel),
                     'net_change' => (int) $byType->sum(),
                     'stock' => $stock,
+                    // Nilai stok saat ini = stok positif × harga modal (null bila tidak dilacak / tanpa modal)
+                    'stock_value' => $stock !== null && $product->cost_price !== null ? Money::mul(Money::of((string) $product->cost_price), max(0, $stock)) : null,
                     'min_stock' => $min,
                     // Sama dengan scopeOutOfStock / scopeLowStock: habis (≤ 0) atau ≤ stok minimum
                     'is_low' => $stock !== null && ($stock <= 0 || ($min !== null && $stock <= $min)),
@@ -912,6 +923,65 @@ class ReportService
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * Pembelian dari stok masuk (ADR 0015, Q83): dokumen DIPOSTING (bukan dibatalkan) di outlet terpilih dengan tanggal
+     * terima (lokal outlet) dalam periode; per supplier & per produk (qty, nilai beli, rata-rata harga beli).
+     *
+     * @return array{
+     *     suppliers: list<array{supplier_id: string|null, supplier_name: string, receipt_count: int, qty: int, total_cost: string}>,
+     *     products: list<array{product_id: string, product_name: string, qty: int, total_cost: string, average_cost: string}>,
+     *     totals: array{receipt_count: int, qty: int, total_cost: string}
+     * }
+     */
+    public function purchases(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
+    {
+        $timezone = CurrentOutlet::timezone();
+        $receipts = fn () => StockReceipt::query()->whereIn('stock_receipts.outlet_id', CurrentOutlet::ids())
+            ->where('stock_receipts.status', StockDocumentStatus::Posted)
+            // Kolom date tersimpan dengan jam 00:00:00 (cast immutable_date): bandingkan tanggalnya saja
+            ->whereDate('stock_receipts.received_on', '>=', $start->setTimezone($timezone)->toDateString())
+            ->whereDate('stock_receipts.received_on', '<=', $end->setTimezone($timezone)->toDateString());
+        $items = fn () => StockReceiptItem::query()->whereIn('stock_receipt_id', $receipts()->select('id'))
+            ->when($filters !== null && $filters->productIds !== [], fn (Builder $q) => $q->whereIn('product_id', $filters->productIds ?? []))
+            ->when($filters !== null && $filters->categoryIds !== [], fn (Builder $q) => $q->whereIn('product_id', Product::query()->withTrashed()->select('id')->whereIn('category_id', $filters->categoryIds ?? [])));
+
+        $suppliers = $items()->toBase()
+            ->join('stock_receipts', 'stock_receipts.id', '=', 'stock_receipt_items.stock_receipt_id')
+            ->leftJoin('suppliers', 'suppliers.id', '=', 'stock_receipts.supplier_id')
+            ->groupBy('stock_receipts.supplier_id')
+            ->selectRaw('stock_receipts.supplier_id, MAX(suppliers.name) AS supplier_name, COUNT(DISTINCT stock_receipts.id) AS receipt_count,
+                SUM(stock_receipt_items.qty) AS qty, SUM(stock_receipt_items.line_total) AS total_cost')
+            ->get()
+            ->map(fn (object $r): array => [
+                'supplier_id' => $r->supplier_id !== null ? (string) $r->supplier_id : null,
+                'supplier_name' => $r->supplier_name !== null ? (string) $r->supplier_name : 'Tanpa supplier',
+                'receipt_count' => (int) $r->receipt_count,
+                'qty' => (int) $r->qty,
+                'total_cost' => Money::fromDb($r->total_cost),
+            ])->sortByDesc(fn (array $r): float => (float) $r['total_cost'])->values()->all();
+
+        $products = $items()->toBase()->groupBy('product_id')
+            ->selectRaw('product_id, MAX(product_name) AS product_name, SUM(qty) AS qty, SUM(line_total) AS total_cost')
+            ->get()
+            ->map(fn (object $r): array => [
+                'product_id' => (string) $r->product_id,
+                'product_name' => (string) $r->product_name,
+                'qty' => (int) $r->qty,
+                'total_cost' => Money::fromDb($r->total_cost),
+                'average_cost' => Money::div(Money::fromDb($r->total_cost), (int) $r->qty),
+            ])->sortByDesc(fn (array $r): float => (float) $r['total_cost'])->values()->all();
+
+        return [
+            'suppliers' => $suppliers,
+            'products' => $products,
+            'totals' => [
+                'receipt_count' => (int) array_sum(array_column($suppliers, 'receipt_count')),
+                'qty' => (int) array_sum(array_column($products, 'qty')),
+                'total_cost' => Money::add('0', ...array_column($products, 'total_cost')),
+            ],
+        ];
     }
 
     /**

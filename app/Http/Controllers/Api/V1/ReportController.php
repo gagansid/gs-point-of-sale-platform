@@ -199,6 +199,19 @@ final class ReportController extends Controller
     }
 
     /**
+     * Pembelian (stok masuk).
+     *
+     * Stok masuk yang diposting (bukan dibatalkan) dengan tanggal terima dalam periode, di outlet terpilih: per supplier
+     * (dokumen, qty, nilai beli) & per produk (qty, rata-rata harga beli, nilai beli) + total (ADR 0015). Hanya report.view.
+     */
+    public function purchases(ReportRequest $request, ReportService $reports): JsonResponse
+    {
+        [$start, $end] = $request->utcRange();
+
+        return ApiResponse::success(['period' => $request->period(), ...$reports->purchases($start, $end, $request->filters())]);
+    }
+
+    /**
      * Penjualan per kanal.
      *
      * Kasir (`pos`) vs pesan dari QR meja (`self_order`, ADR 0014): transaksi, omzet, dan bagian yang dibayar online

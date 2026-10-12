@@ -29,7 +29,8 @@ beranda dashboard, halaman Laporan, dan file Excel/PDF.
 | GET | `/reports/options` | view | Opsi/add-on: `qty` (dipilih × qty item), `revenue` (tambahan omzet) |
 | GET | `/reports/hourly` | view | Per jam lokal (0–23) |
 | GET | `/reports/heatmap` | view | `heatmap[hari ISO 1–7][jam 0–23]` = jumlah transaksi |
-| GET | `/reports/stock` | view | Per produk: terjual, kembali dari void, penyesuaian, stok kini, `is_low` |
+| GET | `/reports/stock` | view | Per produk: terjual, kembali dari void, penyesuaian, `purchased` (stok masuk bersih), `opname`, `transfer`, stok kini, `stock_value` (stok × modal), `is_low` |
+| GET | `/reports/purchases` | view | Pembelian dari stok masuk diposting (ADR 0015): `suppliers[]` `{ supplier_id, supplier_name, receipt_count, qty, total_cost }`, `products[]` `{ product_id, product_name, qty, average_cost, total_cost }`, `totals` |
 | GET | `/reports/dashboard` | view | Ringkasan beranda (KPI + pembanding + tren + metode bayar + produk + tipe order + outlet) |
 
 ## Parameter (semua endpoint kecuali `shifts/{id}`)

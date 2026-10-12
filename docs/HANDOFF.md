@@ -1,8 +1,8 @@
 # Catatan Lanjut Pengerjaan
 
 > Diperbarui: 2026-10-11 · Branch: `feature/pos`
-> Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I3 (stok masuk, supplier, opname, transfer, ADR 0015) selesai, I4 berikutnya. Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1267 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih.
+> Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I4 (stok masuk, supplier, opname, transfer, laporan, ADR 0015) selesai. Deploy ditunda atas keputusan pemilik.
+> Kualitas: 1271 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
@@ -131,16 +131,16 @@ Catatan non-obvious: Livewire halaman HP membaca ulang meja dari token di `hydra
 middleware route); pembayaran online dicatat atas nama kasir yang menerima & di shift penerima; dibayar setelah
 kedaluwarsa tetap diselesaikan, setelah void/lunas = refund manual. Cron `schedule:run` tiap menit wajib di cPanel.
 
-### Stok masuk, opname, transfer (ADR 0015, SPEC Q79–Q80) — I1 selesai 2026-10-12
+### Stok masuk, opname, transfer (ADR 0015, SPEC Q79–Q83) — I1–I4 selesai 2026-10-12
 | Tahap | Isi |
 |---|---|
+| I4 | Laporan tab **Stok**: kolom stok masuk/opname/transfer & nilai stok; tabel pembelian per supplier & per produk; export; `GET /reports/purchases` |
 | I3 | Menu **Stok → Transfer** (≥ 2 outlet): draf → Kirim (stok asal turun) → Terima di tujuan (qty diterima, selisih tercatat) / Batalkan saat dalam perjalanan; akses per sisi outlet; izin `stock.transfer` |
 | I2 | Menu **Stok → Stok opname**: lembar hitung per outlet/kategori → isi qty fisik → Posting (selisih vs stok saat posting, nilai selisih dari modal), riwayat `opname`; izin `stock.opname` |
 | I1 | Menu **Stok → Stok masuk** (draf → Posting → Batalkan, nomor `{outlet}-SM-{YYMMDD}-{urut}`, supervisor ikut punya menu ini) & **Stok → Supplier**; modal produk rata-rata tertimbang lintas outlet saat posting (`WeightedCost`), riwayat stok `purchase`/`purchase_void`; izin `stock.receive`, `supplier.manage` |
 
-**Berikutnya (lanjut dari sini):** I4 laporan stok & pembelian. Setelah itu
-tanya pemilik — deploy (L2/L4/OWASP/deploy.md) atau fitur lain. Uji Midtrans
-sandbox dengan akun sungguhan belum dilakukan (test memakai `Http::fake`).
+**Berikutnya (lanjut dari sini):** tanya pemilik — deploy (L2/L4/OWASP/deploy.md), uji Midtrans sandbox (S5), atau fitur lain
+(mis. PO & utang supplier, bahan baku & resep — Fase 2).
 
 Catatan untuk tim Flutter (repo aplikasi): **F8** menu Pesanan masuk & Belum dibayar (`docs/api/self-order.md`), status order baru `awaiting_payment`/`expired`, jangan tampilkan metode `online`; **F5** tampilkan `tier` member & `member_tier` di struk; **F6** kartu stempel
 (`stamp_cards` di detail member → kirim `stamp_program_ids`; struk `member_stamps`); **F7** voucher (`vouchers` di detail

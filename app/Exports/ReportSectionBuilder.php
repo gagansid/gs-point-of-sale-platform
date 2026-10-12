@@ -207,12 +207,22 @@ final class ReportSectionBuilder
             })(),
             ReportTab::Stock => (function () use ($start, $end, $filters, $count): array {
                 $rows = $this->reports->stock($start, $end, $filters);
+                $purchases = $this->reports->purchases($start, $end, $filters);
+                $t = $purchases['totals'];
 
-                return [$this->section('Pergerakan stok', ['Produk', 'Terjual', 'Kembali (void)', 'Penyesuaian', 'Perubahan', 'Stok kini', 'Status'],
-                    array_map(fn (array $r): array => [
-                        $r['product_name'], $count($r['sold']), $r['void_return'], $r['adjustment'], $r['net_change'],
-                        $r['stock'] ?? '-', $r['stock'] === null ? 'Tidak dilacak' : ($r['is_low'] ? 'Habis/menipis' : 'Aman'),
-                    ], $rows))];
+                return [
+                    $this->section('Pergerakan stok', ['Produk', 'Terjual', 'Kembali (void)', 'Penyesuaian', 'Stok masuk', 'Opname', 'Transfer', 'Perubahan', 'Stok kini', 'Nilai stok', 'Status'],
+                        array_map(fn (array $r): array => [
+                            $r['product_name'], $count($r['sold']), $r['void_return'], $r['adjustment'], $r['purchased'], $r['opname'], $r['transfer'], $r['net_change'],
+                            $r['stock'] ?? '-', $r['stock_value'] ?? '-', $r['stock'] === null ? 'Tidak dilacak' : ($r['is_low'] ? 'Habis/menipis' : 'Aman'),
+                        ], $rows), [9]),
+                    $this->section('Pembelian per supplier', ['Supplier', 'Dokumen', 'Qty', 'Nilai beli'],
+                        array_map(fn (array $r): array => [$r['supplier_name'], $r['receipt_count'], $r['qty'], $r['total_cost']], $purchases['suppliers']),
+                        [3], ['Total', $t['receipt_count'], $t['qty'], $t['total_cost']]),
+                    $this->section('Pembelian per produk', ['Produk', 'Qty', 'Rata-rata harga beli', 'Nilai beli'],
+                        array_map(fn (array $r): array => [$r['product_name'], $r['qty'], $r['average_cost'], $r['total_cost']], $purchases['products']),
+                        [2, 3], ['Total', $t['qty'], null, $t['total_cost']]),
+                ];
             })(),
         };
     }
