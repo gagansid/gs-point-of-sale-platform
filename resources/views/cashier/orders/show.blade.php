@@ -7,7 +7,7 @@
                 <h1>{{ $order->order_number }}@if ($order->table_label) · {{ $order->table_label }}@endif</h1>
                 <span @class(['cashier-badge', 'is-'.$order->status->value])>{{ $order->status->getLabel() }}</span>
             </div>
-            <p class="cashier-muted">{{ $order->created_at->setTimezone($timezone)->format('j M Y H.i') }} · {{ $order->user?->name }} · {{ $order->order_type->getLabel() }}@if (filled($order->member_name)) · Member {{ $order->member_name }}@endif</p>
+            <p class="cashier-muted">{{ $order->created_at->setTimezone($timezone)->format('d-m-Y, H:i') }} · {{ $order->user?->name }} · {{ $order->order_type->getLabel() }}@if (filled($order->member_name)) · Member {{ $order->member_name }}@endif</p>
 
             <table class="cashier-table">
                 <tbody>

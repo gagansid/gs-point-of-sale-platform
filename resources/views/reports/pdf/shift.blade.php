@@ -1,7 +1,7 @@
 {{-- PDF rekap shift (X/Z-report), ADR 0012. Data dari ShiftRecap; semua teks di-escape. --}}
 @php($money = fn (?string $v): string => $v === null ? '–' : \App\Support\Money::format($v))
-@php($time = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone($timezone)->locale('id')->translatedFormat('j M Y H.i') : '–')
-@php($clock = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone($timezone)->format('H.i') : 'sekarang')
+@php($time = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone($timezone)->format('d-m-Y, H:i') : '–')
+@php($clock = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone($timezone)->format('H:i') : 'sekarang')
 <!DOCTYPE html>
 <html lang="id">
 <head>

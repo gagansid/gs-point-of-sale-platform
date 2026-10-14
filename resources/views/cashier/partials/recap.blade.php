@@ -1,9 +1,9 @@
 {{-- Rekap shift (X/Z-report) dari ShiftRecap::for(); semua teks di-escape. --}}
 @php
     $money = fn (?string $v): string => $v === null ? '–' : \App\Support\Money::format($v);
-    $time = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone($timezone)->locale('id')->translatedFormat('j M Y H.i') : '–';
+    $time = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone($timezone)->format('d-m-Y, H:i') : '–';
     $diff = $recap['cash']['difference'];
-    $clock = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone($timezone)->format('H.i') : 'sekarang';
+    $clock = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone($timezone)->format('H:i') : 'sekarang';
 @endphp
 <section class="cashier-card">
     <div class="cashier-card-head">

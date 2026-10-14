@@ -10,7 +10,7 @@
                 <header>
                     <strong>{{ $selfOrder->diningTable->name ?? '—' }}</strong>
                     <span>{{ $selfOrder->customer_name }}{{ $selfOrder->member ? ' · member '.$selfOrder->member->name : '' }}</span>
-                    <span class="cashier-muted">{{ $selfOrder->created_at->setTimezone($timezone)->format('H.i') }} · {{ $selfOrder->created_at->diffForHumans(short: true) }}</span>
+                    <span class="cashier-muted">{{ $selfOrder->created_at->setTimezone($timezone)->format('H:i') }} · {{ $selfOrder->created_at->diffForHumans(short: true) }}</span>
                 </header>
                 <ul>
                     @foreach ($selfOrder->items as $item)

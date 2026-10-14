@@ -432,7 +432,7 @@
                     <button type="button" class="site-choice" wire:click="loadBill('{{ $bill->id }}')" wire:key="b-{{ $bill->id }}">
                         <span>
                             <span class="site-choice-name">{{ $bill->table_label ?: $bill->order_number }}</span>
-                            <span class="site-choice-meta">{{ $bill->order_number }} · {{ $bill->user?->name }} · {{ $bill->created_at->setTimezone($outlet->timezone)->format('H.i') }}</span>
+                            <span class="site-choice-meta">{{ $bill->order_number }} · {{ $bill->user?->name }} · {{ $bill->created_at->setTimezone($outlet->timezone)->format('H:i') }}</span>
                         </span>
                         <span class="site-choice-name">{{ $money($bill->grand_total) }}</span>
                     </button>

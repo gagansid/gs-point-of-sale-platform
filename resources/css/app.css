@@ -650,6 +650,18 @@
     transition: border-color 120ms, box-shadow 120ms;
 }
 
+/* Semua dropdown form situs/kasir: panah sendiri dengan jarak dari tepi kanan (panah bawaan terlalu mepet) */
+.site-field select,
+.cashier-field select {
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-position: right 14px center;
+    background-repeat: no-repeat;
+    background-size: 18px 18px;
+    appearance: none;
+    cursor: pointer;
+}
+
 .site-field :is(input, select, textarea):hover {
     border-color: #c4c8cf;
 }
@@ -1732,11 +1744,14 @@
 .cashier-select {
     width: 100%;
     height: 44px;
-    padding: 0 12px;
+    padding: 0 40px 0 12px;
     border: 1px solid var(--site-border);
     border-radius: 10px;
-    background: #ffffff;
+    /* Panah sendiri: panah bawaan browser terlalu mepet ke tepi kanan */
+    background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat right 14px center / 18px 18px;
     font: inherit;
+    appearance: none;
+    cursor: pointer;
 }
 
 .cashier-announcement {
@@ -2208,6 +2223,18 @@
 .cashier-tabs input:focus-visible + span {
     outline: 2px solid var(--site-primary);
     outline-offset: 1px;
+}
+
+/* Tab tersegmentasi di halaman kasir (mis. Kas keluar/masuk): tinggi tombol kasir standar 40px */
+.cashier-body .cashier-tabs {
+    height: var(--pos-btn-h);
+    margin-bottom: 4px;
+    border-radius: var(--pos-radius);
+}
+
+.cashier-body .cashier-tabs span {
+    border-radius: 8px;
+    font-size: 14px;
 }
 
 /* Bagian khusus satu tab disembunyikan saat tab lain aktif */
