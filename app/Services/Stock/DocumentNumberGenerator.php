@@ -21,6 +21,9 @@ final class DocumentNumberGenerator
 
     public const TRANSFER = 'TR';
 
+    /** Purchase order (ADR 0021) */
+    public const PURCHASE = 'PO';
+
     public function next(Outlet $outlet, string $type, ?CarbonInterface $at = null): string
     {
         if (DB::transactionLevel() === 0) {

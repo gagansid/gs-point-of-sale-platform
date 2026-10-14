@@ -46,4 +46,10 @@ final class StockReceiptItem extends Model
     {
         return $this->belongsTo(Product::class)->withTrashed();
     }
+
+    /** @return BelongsTo<StockReceipt, $this> */
+    public function receipt(): BelongsTo
+    {
+        return $this->belongsTo(StockReceipt::class, 'stock_receipt_id');
+    }
 }

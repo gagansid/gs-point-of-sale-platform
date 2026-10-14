@@ -72,6 +72,11 @@ final class PostStockReceipt
 
             $locked->forceFill(['status' => StockDocumentStatus::Posted, 'posted_at' => now(), 'posted_by' => $by->id])->save();
 
+            // Stok masuk dari PO: qty diterima & status PO dihitung ulang (ADR 0021)
+            if ($locked->purchase_order_id !== null) {
+                app(SyncPurchaseOrderReceipts::class)->handle($locked->purchase_order_id);
+            }
+
             return $locked->load('items');
         });
     }

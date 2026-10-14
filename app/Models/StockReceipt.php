@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $outlet_id
  * @property string $number
  * @property string|null $supplier_id
+ * @property string|null $purchase_order_id asal PO (ADR 0021)
  * @property CarbonImmutable $received_on
  * @property string|null $invoice_number
  * @property string|null $notes
@@ -51,6 +52,12 @@ final class StockReceipt extends Model
             'posted_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',
         ];
+    }
+
+    /** @return BelongsTo<PurchaseOrder, $this> */
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
     }
 
     /** @return HasMany<StockReceiptItem, $this> */

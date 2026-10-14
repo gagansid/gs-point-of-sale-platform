@@ -14,6 +14,10 @@
         <div><dt>Tanggal terima</dt><dd>{{ $record->received_on->locale('id')->translatedFormat('j M Y') }}</dd></div>
         <div><dt>Supplier</dt><dd>{{ $record->supplier?->name ?? '—' }}</dd></div>
         <div><dt>Nomor nota</dt><dd>{{ $record->invoice_number ?? '—' }}</dd></div>
+        @if ($record->purchaseOrder)
+            {{-- Stok masuk dari purchase order (ADR 0021) --}}
+            <div><dt>Purchase order</dt><dd><a class="text-primary-600 hover:underline dark:text-primary-400" href="{{ \App\Filament\Dashboard\Resources\PurchaseOrders\PurchaseOrderResource::getUrl('view', ['record' => $record->purchaseOrder]) }}">{{ $record->purchaseOrder->number }}</a></dd></div>
+        @endif
         @if ($record->posted_at)
             <div><dt>Diposting</dt><dd>{{ $record->posted_at->setTimezone($tz)->locale('id')->translatedFormat('j M Y, H.i') }} · {{ $record->postedBy?->name }}</dd></div>
         @endif
