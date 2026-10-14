@@ -9,17 +9,21 @@ use App\Actions\Order\CheckoutOrder;
 use App\Actions\Order\Data\CheckoutData;
 use App\Actions\Order\Data\OpenBillData;
 use App\Actions\Order\Data\RefundData;
+use App\Actions\Order\MergeOpenBills;
 use App\Actions\Order\RefundableOrders;
 use App\Actions\Order\RefundOrder;
 use App\Actions\Order\SaveOpenBill;
+use App\Actions\Order\SplitOpenBill;
 use App\Actions\Order\VisibleOrders;
 use App\Actions\Order\VoidOrder;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Order\AddPaymentRequest;
 use App\Http\Requests\Api\V1\Order\CheckoutRequest;
+use App\Http\Requests\Api\V1\Order\MergeOpenBillRequest;
 use App\Http\Requests\Api\V1\Order\OpenBillRequest;
 use App\Http\Requests\Api\V1\Order\OrderIndexRequest;
 use App\Http\Requests\Api\V1\Order\RefundOrderRequest;
+use App\Http\Requests\Api\V1\Order\SplitOpenBillRequest;
 use App\Http\Requests\Api\V1\Order\VoidOrderRequest;
 use App\Http\Resources\Api\V1\OrderRefundResource;
 use App\Http\Resources\Api\V1\OrderResource;
@@ -217,5 +221,46 @@ final class OrderController extends Controller
         abort_if($order === null, 404);
 
         return ApiResponse::success(OrderResource::make(CheckoutOrder::load($order)->load('refunds.items'))->resolve($request));
+    }
+
+    /**
+     * Pecah open bill.
+     *
+     * Item & qty dipindah ke open bill baru (`new_order_id` dari app = idempotency key). Kedua bill dihitung ulang.
+     * Syarat: open bill di outlet device, belum ada pembayaran, tanpa diskon/voucher/kartu stempel (ADR 0019).
+     */
+    public function split(SplitOpenBillRequest $request, Order $order, SplitOpenBill $action): JsonResponse
+    {
+        $result = $action->handle(
+            ApiActor::user($request),
+            ApiActor::userDevice($request),
+            $order,
+            $request->string('new_order_id')->toString(),
+            SplitOpenBillRequest::moves($request->validated()),
+            $request->filled('table_label') ? $request->string('table_label')->toString() : null,
+        );
+
+        return ApiResponse::success([
+            'source' => OrderResource::make($result['source'])->resolve($request),
+            'target' => OrderResource::make($result['target'])->resolve($request),
+        ], $result['replayed'] ? 'Open bill sudah dipecah' : 'Open bill berhasil dipecah', $result['replayed'] ? 200 : 201, ['idempotent_replay' => $result['replayed']]);
+    }
+
+    /**
+     * Gabung open bill.
+     *
+     * Semua item `source_order_id` ditambahkan ke open bill ini; bill sumber berstatus `merged`. Syarat sama dengan
+     * pecah; dua member berbeda ditolak. Gabung ulang yang sama = hasil sama (ADR 0019).
+     */
+    public function merge(MergeOpenBillRequest $request, Order $order, MergeOpenBills $action): JsonResponse
+    {
+        $source = Order::query()->findOrFail($request->string('source_order_id')->toString());
+        $result = $action->handle(ApiActor::user($request), ApiActor::userDevice($request), $order, $source);
+
+        return ApiResponse::success(
+            OrderResource::make($result['order'])->resolve($request),
+            'Open bill berhasil digabung',
+            meta: ['idempotent_replay' => $result['replayed']],
+        );
     }
 }

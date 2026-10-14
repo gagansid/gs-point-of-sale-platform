@@ -16,6 +16,8 @@ enum OrderStatus: string implements HasColor, HasLabel
     case Voided = 'voided';
     // Self-order tidak dibayar dalam batas waktu (ADR 0014)
     case Expired = 'expired';
+    // Open bill digabung ke bill lain (ADR 0019)
+    case Merged = 'merged';
 
     public function getLabel(): string
     {
@@ -25,6 +27,7 @@ enum OrderStatus: string implements HasColor, HasLabel
             self::Completed => 'Selesai',
             self::Voided => 'Void',
             self::Expired => 'Kedaluwarsa',
+            self::Merged => 'Digabung',
         };
     }
 
@@ -42,6 +45,7 @@ enum OrderStatus: string implements HasColor, HasLabel
             self::Completed => 'success',
             self::Voided => 'danger',
             self::Expired => 'gray',
+            self::Merged => 'gray',
         };
     }
 }

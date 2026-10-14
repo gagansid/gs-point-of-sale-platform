@@ -207,6 +207,8 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
         Route::get('orders', [CashierOrderController::class, 'index'])->name('orders');
         Route::get('orders/{order}', [CashierOrderController::class, 'show'])->whereUuid('order')->name('orders.show');
         Route::post('orders/{order}/void', [CashierOrderController::class, 'void'])->whereUuid('order')->name('orders.void');
+        Route::post('orders/{order}/split', [CashierOrderController::class, 'split'])->whereUuid('order')->name('orders.split');
+        Route::post('orders/{order}/merge', [CashierOrderController::class, 'merge'])->whereUuid('order')->name('orders.merge');
         Route::get('orders/{order}/receipt', [CashierOrderController::class, 'receipt'])->whereUuid('order')->name('orders.receipt');
         // Retur sebagian (ADR 0018)
         Route::get('refunds', [CashierRefundController::class, 'search'])->name('refunds.search');

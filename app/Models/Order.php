@@ -44,6 +44,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $accepted_at self-order diterima kasir
  * @property bool $refund_required dibayar online lalu di-void: refund manual (Q73)
  * @property OrderStatus $status
+ * @property string|null $merged_into_id bill tujuan bila status merged (ADR 0019)
  * @property string|null $notes
  * @property DiscountType|null $discount_type
  * @property string|null $discount_value

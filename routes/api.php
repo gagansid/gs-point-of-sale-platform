@@ -99,6 +99,9 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::post('{order}/void', 'void')->name('void');
             // Retur sebagian (ADR 0018)
             Route::post('{order}/refunds', 'refund')->name('refunds.store');
+            // Pecah & gabung open bill (ADR 0019)
+            Route::post('{order}/split', 'split')->name('split');
+            Route::post('{order}/merge', 'merge')->name('merge');
         });
         Route::get('refundable-orders/{number}', [OrderController::class, 'refundable'])->where('number', '[A-Za-z0-9-]{1,40}')->name('refundable-orders.show');
 

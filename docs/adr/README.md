@@ -23,3 +23,4 @@ template: `docs/templates/adr.md`.
 | [0016](0016-web-installer.md) | Installer lewat form web: cek syarat, database, akun, progress, kunci setelah instal | Diterima |
 | [0017](0017-shared-shift-cash-handover.md) | Shift bersama per perangkat: ganti kasir tanpa hitung, setoran, carry-over kas awal, kas masuk/keluar | Diterima |
 | [0018](0018-partial-refund.md) | Retur sebagian per item: nilai proporsional, tunai dari laci / manual, poin & stok ikut | Diterima |
+| [0019](0019-split-merge-open-bill.md) | Pecah & gabung open bill: tanpa pembayaran/diskon, dihitung ulang, status merged | Diterima |

@@ -21,6 +21,8 @@ final class OrderResource extends JsonResource
             'order_type' => $this->order_type->value,
             'table_label' => $this->table_label,
             'status' => $this->status->value,
+            // Status merged: bill tujuan (ADR 0019)
+            'merged_into_id' => $this->merged_into_id,
             // Kanal & meja self-order (ADR 0014)
             'channel' => $this->channel->value,
             'dining_table_id' => $this->dining_table_id,

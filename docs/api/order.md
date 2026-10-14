@@ -13,6 +13,8 @@ Endpoint tulis (checkout, open bill, bayar) butuh token user terikat device kasi
 | POST | `/orders/{id}/void` | `order.void` atau PIN approver 🔑 | void ulang = hasil sama | `VoidOrder` |
 | POST | `/orders/{id}/refunds` | `order.refund` atau PIN approver 🔑 | ya: `id` dari aplikasi | `RefundOrder` |
 | GET | `/refundable-orders/{nomor}` | `order.create` | baca | `RefundableOrders` |
+| POST | `/orders/{id}/split` | `order.create` | ya: `new_order_id` | `SplitOpenBill` |
+| POST | `/orders/{id}/merge` | `order.create` | ya: gabung ulang = hasil sama | `MergeOpenBills` |
 
 Komponen bersama (aturan identik di semua alur): `ResolveOrderLines` (item & opsi), `PriceOrder`
 (kalkulator + batas diskon), `AllocatePayments` (alokasi & kembalian), `OrderWriter` (item, pembayaran,
@@ -216,3 +218,20 @@ Cari transaksi untuk diretur: nomor order di outlet device, status selesai, dala
 Sengaja tidak mengikuti visibilitas Q21 (kasir perlu meretur transaksi shift lain); retur tetap butuh izin/PIN.
 
 Test: `tests/Feature/Api/V1/Order/RefundOrderTest.php`, `tests/Feature/Cashier/WebCashierRefundTest.php`
+
+## `POST /v1/orders/{id}/split` · `POST /v1/orders/{id}/merge` — pecah & gabung open bill (ADR 0019)
+
+Syarat kedua endpoint: open bill (`status: open`) di outlet device, **belum ada pembayaran**, tanpa diskon item/order,
+voucher, atau kartu stempel (lepas dulu lewat `PUT /orders/{id}`); selain itu `422 VALIDATION_ERROR`. Harga dihitung
+ulang dengan harga & setelan saat ini.
+
+**Pecah** — body `{ new_order_id, items: [{ order_item_id, qty }], table_label? }`. Item & qty pindah ke open bill baru
+(`new_order_id` = idempotency key), bill asal minimal tersisa 1 item, member tetap di bill asal. Respons `201`
+`{ source: Order, target: Order }`; kiriman ulang → `200` + `meta.idempotent_replay: true`.
+
+**Gabung** — body `{ source_order_id }`. Semua item sumber pindah ke bill `{id}`; sumber menjadi `status: merged`
+(`merged_into_id` = tujuan) dan tidak masuk laporan. Dua member berbeda → `422`. Respons = bill tujuan.
+
+Pindah meja: `PUT /orders/{id}` dengan `table_label` baru.
+
+Test: `tests/Feature/Api/V1/Order/SplitMergeOpenBillTest.php`, `tests/Feature/Cashier/WebCashierSplitMergeTest.php`

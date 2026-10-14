@@ -288,7 +288,7 @@ Nilai enum status (keputusan Q7):
 
 | Kolom | Nilai |
 |---|---|
-| `orders.status` | `open` (open bill), `completed`, `voided` |
+| `orders.status` | `open` (open bill), `awaiting_payment`, `completed`, `voided`, `expired` (ADR 0014), `merged` (digabung, ADR 0019) |
 | `orders.order_type` | `takeaway`, `dine_in` |
 | `payments.status` | `paid`, `voided` |
 | `shifts.status` | `open`, `closed`, `force_closed` |
@@ -403,6 +403,8 @@ Standar teknis: [`docs/standards/api/`](standards/api/README.md).
 | PUT | `/orders/{id}` | Semua | Simpan / ubah open bill (dine-in) |
 | POST | `/orders/{id}/payments` | Semua | Tambah pembayaran ke open bill |
 | POST | `/orders/{id}/refunds` | Semua 🔑 | Retur sebagian per item (ADR 0018) |
+| POST | `/orders/{id}/split` | Semua | Pecah open bill ke bill baru (ADR 0019) |
+| POST | `/orders/{id}/merge` | Semua | Gabung open bill lain ke bill ini (ADR 0019) |
 | GET | `/refundable-orders/{nomor}` | Semua | Cari transaksi selesai untuk diretur (outlet device, batas hari) |
 | GET | `/orders?date=&status=&shift_id=` | Semua | Riwayat transaksi |
 | GET | `/orders/{id}` | Semua | Detail order |
@@ -746,5 +748,7 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q92 | Retur sebagian | ADR 0018. `POST /orders/{id}/refunds` & kasir web **Riwayat → Retur transaksi** (`/cashier/refunds`, cari nomor): order **selesai** di outlet perangkat, ≤ `pos.refund.max_days` (30) hari; item & qty ≤ terjual − sudah diretur; alasan wajib; cara `cash` (kas keluar alasan **Retur** di shift berjalan perangkat pelaku, ≤ isi laci) atau `manual`; `restock` (bawaan ya) mengembalikan stok produk lacak stok (riwayat `refund`); izin `order.refund` (owner, manager, supervisor) atau PIN approver ≠ pelaku; shift wajib terbuka; `id` dari klien = idempotency key. Order tetap `completed`, `refunded_total` & `order_items.refunded_qty` bertambah; order yang sudah diretur tidak bisa di-void. | Diterima | ADR 0018 |
 | Q93 | Nilai retur & member | Nilai per baris = `grand_total × line_total × qty_retur ÷ (qty × subtotal)` (2 desimal, `OrderCalculator::refundShare`); retur yang menghabiskan seluruh item = sisa `grand_total − refunded_total`. Bagian yang dibayar **poin** kembali sebagai poin, poin hasil belanja ditarik — keduanya proporsional kumulatif, dibulatkan ke bawah (ledger `refund`); `payout_amount` = nilai − bagian poin. Belanja member & tier (12 bulan = Σ grand_total − retur) dikurangi; voucher & stempel tidak dikembalikan. | Diterima | ADR 0018 |
 | Q94 | Laporan retur | Ringkasan/Laporan: `refund_count`, `refund_total`, `net_revenue` (omzet − retur, menurut tanggal retur), ikut export; panel Audit daftar **Retur** (kas keluar alasan Retur tidak masuk kartu Kas keluar); ringkasan harian baris retur; detail order dashboard & kasir web menampilkan riwayat retur; uang retur tunai tampil di kas masuk/keluar shift. Laporan per produk/kategori tetap penjualan bruto. `GET /refundable-orders/{nomor}` untuk aplikasi. | Diterima | ADR 0018 |
+| Q95 | Pecah open bill | ADR 0019. `POST /orders/{id}/split` (`new_order_id` dari klien = idempotency key, `items[]` `{order_item_id, qty}`, `table_label` opsional) & kasir web detail open bill → **Pecah bill**: item & qty pindah ke open bill baru (nomor baru, shift perangkat pelaku), bill asal minimal tersisa 1 item, member tetap di bill asal. Syarat bill: `open` di outlet perangkat, belum ada pembayaran, tanpa diskon item/order, voucher, kartu stempel (`VALIDATION_ERROR`). Kedua bill dihitung ulang lewat `SaveOpenBill` (harga terkini). Izin `order.create`. Pindah meja = ubah `table_label` open bill. | Diterima | ADR 0019 |
+| Q96 | Gabung open bill | `POST /orders/{id}/merge` (`source_order_id`) & kasir web → **Gabung bill**: semua item sumber ditambahkan ke tujuan (dihitung ulang), sumber berstatus baru **`merged`** (label "Digabung", `merged_into_id`), tidak masuk laporan. Syarat sama dengan pecah; member: tujuan, atau sumber bila tujuan tanpa member; dua member berbeda → `VALIDATION_ERROR`. Gabung ulang yang sama = hasil sama. | Diterima | ADR 0019 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

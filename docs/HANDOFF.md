@@ -2,7 +2,7 @@
 
 > Diperbarui: 2026-10-14 · Branch: `feature/pos`
 > Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I4 (ADR 0015), installer (ADR 0016), **shift bersama per perangkat C1–C4 (ADR 0017)** selesai. Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1363 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
+> Kualitas: 1375 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
@@ -175,9 +175,14 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
 - Laporan: Rincian finansial & export (retur, omzet setelah retur), panel Audit daftar Retur, ringkasan harian, detail
   order dashboard. Laporan per produk tetap bruto.
 
+### Pecah & gabung open bill (ADR 0019, SPEC Q95–Q96) — selesai 2026-10-14
+- `POST /v1/orders/{id}/split` (item & qty ke bill baru) dan `POST /v1/orders/{id}/merge` (status baru `merged`);
+  kasir web: detail open bill → **Pecah bill** / **Gabung bill**. Hanya open bill tanpa pembayaran, diskon, voucher,
+  stempel; harga dihitung ulang lewat `SaveOpenBill`.
+
 **Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5) menunggu key dari owner;
-backlog fitur kasir berikutnya: split/gabung bill → BOM + bundling → PO → promo otomatis → kasbon → paket langganan SaaS.
-Flutter **F10**: retur (`docs/api/order.md`).
+backlog fitur kasir berikutnya: BOM + bundling → PO → promo otomatis → kasbon → paket langganan SaaS.
+Flutter **F10**: retur (`docs/api/order.md`); **F11**: pecah/gabung bill, status order `merged`.
 
 Catatan untuk tim Flutter — **F9** shift bersama (ADR 0017, `docs/api/shift.md`): tombol Kunci + kunci otomatis
 (`outlet.auto_lock_minutes` dari `/auth/me`), buka kunci = `POST /auth/pin-login`; buka shift tanpa `opening_cash` bila

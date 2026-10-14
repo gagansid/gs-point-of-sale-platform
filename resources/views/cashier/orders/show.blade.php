@@ -49,7 +49,7 @@
             </p>
         </section>
 
-        @if ($order->status !== \App\Enums\OrderStatus::Voided)
+        @if (in_array($order->status, [\App\Enums\OrderStatus::Open, \App\Enums\OrderStatus::AwaitingPayment, \App\Enums\OrderStatus::Completed], true))
             <section class="cashier-card">
                 <h2>Void order</h2>
                 <p class="cashier-muted">Stok dikembalikan dan omzet dikeluarkan dari laporan. Hanya selama shift order masih terbuka.</p>
@@ -81,6 +81,59 @@
 
                     <button type="submit" class="site-btn site-btn-primary site-btn-block" data-confirm-step="Klik lagi untuk void">Void</button>
                 </form>
+            </section>
+        @endif
+
+        {{-- Pecah & gabung open bill (ADR 0019): belum dibayar, tanpa diskon/voucher/stempel --}}
+        @if ($order->status === \App\Enums\OrderStatus::Open)
+            <section class="cashier-card">
+                <h2>Pecah bill</h2>
+                <p class="cashier-muted">Pindahkan item ke bill baru, mis. tamu yang bayar sendiri. Harga kedua bill dihitung ulang.</p>
+                <form method="POST" action="{{ route('cashier.orders.split', $order->id) }}" class="site-form" novalidate>
+                    @csrf
+                    <input type="hidden" name="new_order_id" value="{{ $newOrderId }}">
+                    <table class="cashier-table">
+                        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Pindah</th></tr></thead>
+                        <tbody>
+                            @foreach ($order->items as $i => $item)
+                                <tr>
+                                    <td>{{ $item->product_name }}@if ($item->options->isNotEmpty())<br><small class="cashier-muted">{{ $item->options->pluck('option_name')->implode(', ') }}</small>@endif</td>
+                                    <td class="num">{{ $item->qty }}</td>
+                                    <td class="num">
+                                        <input type="hidden" name="items[{{ $i }}][order_item_id]" value="{{ $item->id }}">
+                                        <input type="number" name="items[{{ $i }}][qty]" min="0" max="{{ $item->qty }}" step="1" inputmode="numeric" value="0" class="cashier-qty" aria-label="Qty pindah {{ $item->product_name }}">
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    <div class="site-field">
+                        <label for="split-table">Meja bill baru</label>
+                        <input id="split-table" name="table_label" type="text" maxlength="50" value="{{ old('table_label', $order->table_label) }}">
+                    </div>
+                    <button type="submit" class="site-btn site-btn-outline site-btn-block">Pecah ke bill baru</button>
+                </form>
+            </section>
+
+            <section class="cashier-card">
+                <h2>Gabung bill</h2>
+                @if ($otherBills->isEmpty())
+                    <p class="cashier-muted">Tidak ada open bill lain yang bisa digabung.</p>
+                @else
+                    <p class="cashier-muted">Semua item bill yang dipilih pindah ke bill ini.</p>
+                    <form method="POST" action="{{ route('cashier.orders.merge', $order->id) }}" class="site-form" novalidate>
+                        @csrf
+                        <div class="site-field">
+                            <label for="source_order_id">Gabungkan dari</label>
+                            <select id="source_order_id" name="source_order_id" class="cashier-select" required>
+                                @foreach ($otherBills as $bill)
+                                    <option value="{{ $bill->id }}">{{ $bill->order_number }}@if ($bill->table_label) · {{ $bill->table_label }}@endif · {{ $money($bill->grand_total) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <button type="submit" class="site-btn site-btn-outline site-btn-block" data-confirm-step="Klik lagi untuk menggabung">Gabung ke bill ini</button>
+                    </form>
+                @endif
             </section>
         @endif
     </div>
