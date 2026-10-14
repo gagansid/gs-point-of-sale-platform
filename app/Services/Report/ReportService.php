@@ -150,7 +150,7 @@ class ReportService
         $outletId = CurrentOutlet::selectedId();
 
         return Product::query()
-            ->active()
+            ->active()->sellable()
             ->when($outletId !== null, fn (Builder $q) => $q->listedAt((string) $outletId))
             ->when($filters !== null && $filters->productIds !== [], fn (Builder $q) => $q->whereIn('id', $filters->productIds ?? []))
             ->when($filters !== null && $filters->categoryIds !== [], fn (Builder $q) => $q->whereIn('category_id', $filters->categoryIds ?? []))

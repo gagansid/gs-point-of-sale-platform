@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ProductKind;
 use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\LogsChanges;
 use App\Models\Concerns\RecordsAuthor;
@@ -22,6 +23,8 @@ use Illuminate\Support\Facades\Storage;
  * @property string $id
  * @property string $tenant_id
  * @property string|null $category_id
+ * @property ProductKind $kind produk / bahan baku / paket (ADR 0020)
+ * @property string $unit satuan stok (ADR 0020)
  * @property string $name
  * @property string|null $sku
  * @property string|null $barcode
@@ -59,8 +62,12 @@ final class Product extends Model
     }
 
     /** Stok, stok minimum, dan ketersediaan disimpan per outlet di ProductStock (ADR 0010). */
+    protected $attributes = ['kind' => 'regular', 'unit' => 'pcs'];
+
     protected $fillable = [
         'category_id',
+        'kind',
+        'unit',
         'name',
         'sku',
         'barcode',
@@ -76,6 +83,7 @@ final class Product extends Model
     protected function casts(): array
     {
         return [
+            'kind' => ProductKind::class,
             'price' => 'decimal:2',
             'cost_price' => 'decimal:2',
             'track_stock' => 'boolean',
@@ -203,6 +211,22 @@ final class Product extends Model
     {
         // Absolut untuk aplikasi Flutter; host mengikuti request (mis. https://api.gspos.id/storage/...)
         return $this->image_path !== null ? url(Storage::disk('public')->url($this->image_path)) : null;
+    }
+
+    /**
+     * Bisa dijual (bukan bahan baku, ADR 0020).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeSellable(Builder $query): void
+    {
+        $query->where('products.kind', '!=', ProductKind::Ingredient->value);
+    }
+
+    /** @return HasMany<ProductComponent, $this> resep / isi paket (ADR 0020) */
+    public function components(): HasMany
+    {
+        return $this->hasMany(ProductComponent::class)->orderBy('sort_order');
     }
 
     /**

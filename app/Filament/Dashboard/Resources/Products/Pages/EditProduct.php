@@ -35,6 +35,8 @@ final class EditProduct extends EditRecord
 
         if ($record instanceof Product) {
             $data['option_group_ids'] = $record->optionGroups()->pluck('option_groups.id')->all();
+            // Resep / isi paket (ADR 0020)
+            $data['components'] = $record->components()->get(['component_id', 'qty'])->map(fn ($c): array => ['component_id' => $c->component_id, 'qty' => $c->qty])->all();
             $data['current_stock'] = $record->stock_qty;
             $user = auth()->user();
             $data['listed_outlet_ids'] = SetProductListing::listedOutletIds($record, $user instanceof User ? $user : null);

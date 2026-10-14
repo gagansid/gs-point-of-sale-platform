@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Product;
 
+use App\Enums\ProductKind;
 use App\Models\Product;
 use App\Support\Money;
 use App\Support\TenantContext;
@@ -42,6 +43,12 @@ final class ProductRequest extends FormRequest
             'is_favorite' => ['sometimes', 'boolean'],
             'option_group_ids' => ['sometimes', 'array', 'max:20'],
             'option_group_ids.*' => ['uuid', 'distinct', self::tenantExists('option_groups')],
+            // ADR 0020: jenis, satuan stok, resep / isi paket (tidak dikirim = tidak diubah)
+            'kind' => ['sometimes', Rule::enum(ProductKind::class)],
+            'unit' => ['sometimes', 'string', 'max:20'],
+            'components' => ['sometimes', 'array', 'max:50'],
+            'components.*.component_id' => ['required', 'uuid', 'distinct', self::tenantExists('products')],
+            'components.*.qty' => ['required', 'integer', 'min:1', 'max:1000000'],
         ];
     }
 
@@ -55,6 +62,11 @@ final class ProductRequest extends FormRequest
             'stock_qty' => 'stok',
             'track_stock' => 'lacak stok',
             'min_stock' => 'stok minimum',
+            'kind' => 'jenis',
+            'unit' => 'satuan',
+            'components' => 'resep',
+            'components.*.component_id' => 'komponen',
+            'components.*.qty' => 'jumlah komponen',
         ];
     }
 

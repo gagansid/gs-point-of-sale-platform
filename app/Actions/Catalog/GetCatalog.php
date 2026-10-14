@@ -33,7 +33,8 @@ final class GetCatalog
      */
     public function handle(Outlet $outlet): array
     {
-        $products = Product::query()->atOutlet($outlet->id)->active()->listedAt($outlet->id)
+        // Bahan baku tidak dijual (ADR 0020)
+        $products = Product::query()->atOutlet($outlet->id)->active()->sellable()->listedAt($outlet->id)
             // Produk di kategori nonaktif ikut disembunyikan (Q27)
             ->where(fn (Builder $query) => $query->whereNull('category_id')
                 ->orWhereHas('category', fn (Builder $category) => $category->where('is_active', true)))

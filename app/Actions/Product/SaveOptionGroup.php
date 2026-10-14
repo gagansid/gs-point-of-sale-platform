@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Actions\Product;
 
 use App\Actions\Product\Data\OptionGroupData;
+use App\Enums\ProductKind;
 use App\Models\Option;
+use App\Models\OptionComponent;
 use App\Models\OptionGroup;
+use App\Models\Product;
 use App\Support\Idempotency;
 use Illuminate\Support\Facades\DB;
 
@@ -54,6 +57,10 @@ final class SaveOptionGroup
                     'sort_order' => $order,
                 ])->save();
 
+                if ($input['components'] !== null) {
+                    self::syncComponents($option, $input['components']);
+                }
+
                 $keep[] = $option->id;
             }
 
@@ -63,5 +70,23 @@ final class SaveOptionGroup
         });
 
         return ['group' => $group->load('options'), 'replayed' => false];
+    }
+
+    /**
+     * Bahan opsi (ADR 0020): hanya produk tenant ini yang bukan paket; lainnya diabaikan.
+     *
+     * @param  list<array{component_id: string, qty: int}>  $components
+     */
+    private static function syncComponents(Option $option, array $components): void
+    {
+        OptionComponent::query()->where('option_id', $option->id)->delete();
+        $valid = Product::query()->whereIn('id', array_column($components, 'component_id'))
+            ->where('kind', '!=', ProductKind::Bundle->value)->pluck('id')->all();
+
+        foreach ($components as $row) {
+            if (in_array($row['component_id'], $valid, true)) {
+                OptionComponent::query()->create(['option_id' => $option->id, 'component_id' => $row['component_id'], 'qty' => min($row['qty'], 1_000_000)]);
+            }
+        }
     }
 }

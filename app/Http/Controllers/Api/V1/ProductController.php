@@ -42,7 +42,7 @@ final class ProductController extends Controller
         // Stok & ketersediaan dari outlet device (ADR 0010)
         $products = Product::query()
             ->atOutlet(CurrentOutlet::getOrFail()->id)
-            ->with('optionGroups:id')
+            ->with(['optionGroups:id', 'components'])
             ->when($search !== '', function (Builder $query) use ($search): void {
                 // LIKE dengan binding; karakter wildcard dari input di-escape
                 $like = '%'.addcslashes($search, '%_\\').'%';
@@ -52,6 +52,8 @@ final class ProductController extends Controller
             })
             ->when($request->filled('category_id'), fn (Builder $q) => $q->where('category_id', $request->string('category_id')->toString()))
             ->when($request->has('is_active'), fn (Builder $q) => $q->where('is_active', $request->boolean('is_active')))
+            // ADR 0020: regular / ingredient / bundle
+            ->when($request->filled('kind'), fn (Builder $q) => $q->where('kind', $request->string('kind')->toString()))
             ->when(
                 $request->sort(),
                 fn (Builder $q, array $sort) => $q->orderBy($sort[0], $sort[1]),
@@ -71,7 +73,7 @@ final class ProductController extends Controller
      */
     public function barcode(Request $request, string $code): JsonResponse
     {
-        $product = Product::query()->atOutlet(CurrentOutlet::getOrFail()->id)->active()->with('optionGroups:id')->where('barcode', $code)->firstOrFail();
+        $product = Product::query()->atOutlet(CurrentOutlet::getOrFail()->id)->active()->sellable()->with('optionGroups:id')->where('barcode', $code)->firstOrFail();
 
         return ApiResponse::success(ProductResource::make($product)->resolve($request));
     }
@@ -86,7 +88,7 @@ final class ProductController extends Controller
         $result = $action->handle(null, ProductData::fromArray($request->validated()), CurrentOutlet::getOrFail(), ApiActor::user($request));
 
         return ApiResponse::success(
-            ProductResource::make($result['product']->load('optionGroups:id'))->resolve($request),
+            ProductResource::make($result['product']->load(['optionGroups:id', 'components']))->resolve($request),
             'Produk berhasil ditambahkan',
             $result['replayed'] ? 200 : 201,
             ['idempotent_replay' => $result['replayed']],
@@ -116,7 +118,7 @@ final class ProductController extends Controller
         $result = $action->handle($product, $data, $outlet, ApiActor::user($request));
 
         return ApiResponse::success(
-            ProductResource::make($result['product']->load('optionGroups:id'))->resolve($request),
+            ProductResource::make($result['product']->load(['optionGroups:id', 'components']))->resolve($request),
             'Produk berhasil diperbarui',
         );
     }

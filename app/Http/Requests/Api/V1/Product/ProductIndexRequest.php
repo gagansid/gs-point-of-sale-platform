@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1\Product;
 
+use App\Enums\ProductKind;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,6 +20,7 @@ final class ProductIndexRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:100'],
             'category_id' => ['nullable', 'uuid'],
             'is_active' => ['nullable', 'boolean'],
+            'kind' => ['nullable', Rule::enum(ProductKind::class)],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1'],
             // `price` = naik, `-price` = turun

@@ -25,15 +25,13 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderRefund;
 use App\Models\OrderRefundItem;
-use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\Shift;
-use App\Models\StockMovement;
 use App\Models\User;
 use App\Services\Member\PointLedger;
 use App\Services\Member\TierEvaluator;
 use App\Services\Order\OrderCalculator;
 use App\Services\Shift\ShiftSummary;
+use App\Services\Stock\StockConsumption;
 use App\Support\Idempotency;
 use App\Support\Money;
 use Closure;
@@ -259,27 +257,14 @@ final class RefundOrder
         $this->tiers->refresh($member);
     }
 
+    /** Stok kembali = konsumsi resep saat ini × qty retur (ADR 0020); hanya produk/bahan yang dilacak. */
     private static function restock(Order $order, OrderItem $item, int $qty, User $actor, OrderRefund $refund): void
     {
-        $product = Product::query()->withTrashed()->find($item->product_id);
+        $optionIds = $item->options()->pluck('option_id')->map(fn (mixed $id): string => (string) $id)->all();
 
-        if ($product === null || ! $product->track_stock) {
-            return;
+        foreach (app(StockConsumption::class)->for($item->product_id, $optionIds, $qty) as $productId => $change) {
+            OrderWriter::changeStock($order, $productId, $change, $actor, StockMovementType::Refund, $refund->id);
         }
-
-        $stock = ProductStock::for($product->id, $order->outlet_id, lock: true);
-        $stock->stock_qty += $qty;
-        $stock->save();
-
-        StockMovement::query()->create([
-            'outlet_id' => $order->outlet_id,
-            'product_id' => $product->id,
-            'user_id' => $actor->id,
-            'type' => StockMovementType::Refund,
-            'qty_change' => $qty,
-            'qty_after' => $stock->stock_qty,
-            'reference_id' => $refund->id,
-        ]);
     }
 
     /** @throws BusinessException */

@@ -2,7 +2,7 @@
 
 > Diperbarui: 2026-10-14 · Branch: `feature/pos`
 > Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I4 (ADR 0015), installer (ADR 0016), **shift bersama per perangkat C1–C4 (ADR 0017)** selesai. Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1375 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
+> Kualitas: 1384 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
@@ -180,8 +180,15 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
   kasir web: detail open bill → **Pecah bill** / **Gabung bill**. Hanya open bill tanpa pembayaran, diskon, voucher,
   stempel; harga dihitung ulang lewat `SaveOpenBill`.
 
+### Bahan baku, resep, paket (ADR 0020, SPEC Q97–Q99) — selesai 2026-10-14
+- `products.kind` (`regular`/`ingredient`/`bundle`) & `unit`; `product_components` (resep/isi paket), `option_components`
+  (bahan opsi). Konsumsi & HPP di `App\Services\Stock\StockConsumption` (resep dipecah ≤ 3 tingkat).
+- Order selesai memotong stok komponen; void membalik riwayat `sale` order (bukan resep saat ini); retur memakai resep
+  saat ini. Bahan tidak dijual (katalog, checkout, barcode, laporan produk kurang laku).
+- Dashboard: form produk (Jenis, Satuan, Resep/Isi paket), tab Bahan baku & Paket, kolom Bahan di grup opsi.
+
 **Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5) menunggu key dari owner;
-backlog fitur kasir berikutnya: BOM + bundling → PO → promo otomatis → kasbon → paket langganan SaaS.
+backlog fitur kasir berikutnya: PO → promo otomatis → kasbon → paket langganan SaaS.
 Flutter **F10**: retur (`docs/api/order.md`); **F11**: pecah/gabung bill, status order `merged`.
 
 Catatan untuk tim Flutter — **F9** shift bersama (ADR 0017, `docs/api/shift.md`): tombol Kunci + kunci otomatis

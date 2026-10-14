@@ -112,9 +112,15 @@ Produk **aktif** dengan barcode tersebut. `code`: `[A-Za-z0-9-]`, maks. 50. Tida
 | `is_active` | bool | Tidak | default `true` |
 | `is_favorite` | bool | Tidak | default `false`; tampil di tab Favorit kasir |
 | `option_group_ids` | uuid[] | Tidak | maks. 20, grup tenant sendiri, urutan = urutan tampil |
+| `kind` | string | Tidak | `regular` (bawaan), `ingredient` (bahan baku, tidak dijual, stok selalu dilacak), `bundle` (paket) — ADR 0020 |
+| `unit` | string | Tidak | satuan stok, maks. 20 (bawaan `pcs`), mis. `gram`, `ml` |
+| `components` | array | Tidak | resep / isi paket, maks. 50 `{ component_id, qty }` (qty bulat 1–1.000.000); komponen bukan paket, bukan dirinya, tanpa siklus. Paket wajib berisi. Produk beresep & paket tidak melacak stok sendiri |
 
-PUT: field yang tidak dikirim tetap memakai nilai lama. Respons `201` (baru), `200` (replay/ubah)
-dengan `meta.idempotent_replay`.
+PUT: field yang tidak dikirim tetap memakai nilai lama (termasuk `kind`, `unit`, `components`). Respons `201` (baru),
+`200` (replay/ubah) dengan `meta.idempotent_replay`. Respons memuat `kind`, `unit`, `components`.
+`GET /products?kind=ingredient` menyaring jenis. Bahan baku tidak ada di `/catalog`, scan barcode, maupun checkout.
+
+Grup opsi: `options[].components[]` `{ component_id, qty }` = bahan yang dipakai opsi (mis. Extra shot = 18 gram kopi).
 
 Test: `tests/Feature/Api/V1/Product/ProductTest.php`
 

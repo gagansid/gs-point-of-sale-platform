@@ -25,10 +25,13 @@ final class EditOptionGroup extends EditRecord
         $record = $this->getRecord();
 
         $data['options'] = $record instanceof OptionGroup
-            ? $record->options->map(fn ($option): array => [
+            ? $record->options()->with('components')->get()->map(fn ($option): array => [
                 'id' => $option->id,
                 'name' => $option->name,
                 'price_delta' => $option->price_delta,
+                // Bahan opsi (ADR 0020): form menampilkan satu bahan
+                'component_id' => $option->components->first()?->component_id,
+                'component_qty' => $option->components->first()?->qty,
             ])->all()
             : [];
 

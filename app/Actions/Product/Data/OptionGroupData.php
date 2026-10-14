@@ -12,7 +12,7 @@ use App\Support\Money;
 final readonly class OptionGroupData
 {
     /**
-     * @param  list<array{id: string|null, name: string, price_delta: string}>  $options
+     * @param  list<array{id: string|null, name: string, price_delta: string, components: list<array{component_id: string, qty: int}>|null}>  $options
      */
     public function __construct(
         public ?string $id,
@@ -32,6 +32,7 @@ final readonly class OptionGroupData
                 'id' => filled($option['id'] ?? null) ? (string) $option['id'] : null,
                 'name' => trim((string) $option['name']),
                 'price_delta' => Money::of((string) ($option['price_delta'] ?? '0')),
+                'components' => self::components($option),
             ];
         }
 
@@ -43,5 +44,37 @@ final readonly class OptionGroupData
             isActive: (bool) ($data['is_active'] ?? true),
             options: $options,
         );
+    }
+
+    /**
+     * Bahan opsi (ADR 0020): API `components[]`, form dashboard satu pasang `component_id` + `component_qty`.
+     * Null = tidak dikirim (tidak diubah).
+     *
+     * @param  array<string, mixed>  $option
+     * @return list<array{component_id: string, qty: int}>|null
+     */
+    private static function components(array $option): ?array
+    {
+        if (array_key_exists('component_id', $option)) {
+            $id = (string) ($option['component_id'] ?? '');
+            $qty = (int) ($option['component_qty'] ?? 0);
+
+            return $id !== '' && $qty > 0 ? [['component_id' => $id, 'qty' => $qty]] : [];
+        }
+
+        if (! array_key_exists('components', $option)) {
+            return null;
+        }
+
+        $lines = [];
+        foreach ((array) $option['components'] as $row) {
+            $id = (string) ($row['component_id'] ?? '');
+            $qty = (int) ($row['qty'] ?? 0);
+            if ($id !== '' && $qty > 0) {
+                $lines[] = ['component_id' => $id, 'qty' => $qty];
+            }
+        }
+
+        return $lines;
     }
 }

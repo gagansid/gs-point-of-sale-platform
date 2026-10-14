@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\Products\Schemas;
 
 use App\Actions\Product\SetProductListing;
+use App\Enums\ProductKind;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Filament\Shared\Forms\OutletPickList;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Models\Category;
 use App\Models\OptionGroup;
 use App\Models\Outlet;
+use App\Models\Product;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Money;
 use App\Support\TenantContext;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -44,12 +47,25 @@ final class ProductForm
                             ->schema([
                                 TextInput::make('name')->label('Nama produk')->placeholder('Es Kopi Susu')
                                     ->required()->maxLength(150)->autofocus()->columnSpanFull(),
+                                // ADR 0020: produk dijual, bahan baku (tidak dijual), atau paket
+                                Select::make('kind')->label('Jenis')->options(ProductKind::class)->default(ProductKind::Regular->value)
+                                    ->required()->native(false)->selectablePlaceholder(false)->live()
+                                    ->helperText(fn (Get $get): string => match (self::kind($get)) {
+                                        ProductKind::Ingredient => 'Tidak tampil di kasir; stok berkurang lewat resep produk lain',
+                                        ProductKind::Bundle => 'Dijual sebagai satu item; stok dipotong dari isi paket',
+                                        default => 'Dijual di kasir',
+                                    }),
+                                TextInput::make('unit')->label('Satuan stok')->default('pcs')->required()->maxLength(20)
+                                    ->placeholder('gram')
+                                    ->helperText('Stok & resep memakai bilangan bulat dalam satuan ini, mis. kopi 1 kg = 1000 gram'),
                                 Select::make('category_id')->label('Kategori')
                                     // Query Eloquent → otomatis hanya kategori tenant aktif
                                     ->options(fn (): array => Category::query()->orderBy('sort_order')->pluck('name', 'id')->all())
                                     ->searchable()
                                     ->placeholder('Tanpa kategori'),
-                                MoneyInput::make('price')->label('Harga jual')->required()->rule('max:'.Money::MAX_PRICE),
+                                MoneyInput::make('price')->label('Harga jual')->required()->rule('max:'.Money::MAX_PRICE)
+                                    ->default(0)
+                                    ->visible(fn (Get $get): bool => self::kind($get) !== ProductKind::Ingredient),
                                 TextInput::make('sku')->label('SKU')->maxLength(50)
                                     ->placeholder('KOP-001')
                                     ->helperText('Kode internal untuk stok & laporan. Opsional')
@@ -63,7 +79,33 @@ final class ProductForm
                                     ->helperText('Tidak ditampilkan ke kasir'),
                             ]),
 
+                        // Resep / isi paket (ADR 0020)
+                        Section::make(fn (Get $get): string => self::kind($get) === ProductKind::Bundle ? 'Isi paket' : 'Resep')
+                            ->description(fn (Get $get): string => self::kind($get) === ProductKind::Bundle
+                                ? 'Produk di dalam paket; stok dipotong dari isi ini'
+                                : 'Bahan per 1 porsi; bila diisi, stok bahan yang berkurang (bukan stok produk ini)')
+                            ->visible(fn (Get $get): bool => self::kind($get) !== ProductKind::Ingredient)
+                            ->schema([
+                                Repeater::make('components')
+                                    ->hiddenLabel()
+                                    ->columns(3)
+                                    ->defaultItems(0)
+                                    ->maxItems(50)
+                                    ->addActionLabel('Tambah komponen')
+                                    ->reorderable(false)
+                                    ->schema([
+                                        Select::make('component_id')->label('Produk / bahan')->required()->searchable()->columnSpan(2)
+                                            ->options(fn (?Product $record): array => Product::query()->where('kind', '!=', ProductKind::Bundle->value)
+                                                ->when($record !== null, fn ($q) => $q->whereKeyNot($record->id))
+                                                ->orderBy('name')->get(['id', 'name', 'unit'])
+                                                ->mapWithKeys(fn (Product $p): array => [$p->id => $p->name.' ('.$p->unit.')'])->all())
+                                            ->distinct(),
+                                        TextInput::make('qty')->label('Jumlah')->required()->integer()->minValue(1)->maxValue(1000000)->default(1),
+                                    ]),
+                            ]),
+
                         Section::make('Grup opsi')
+                            ->visible(fn (Get $get): bool => self::kind($get) !== ProductKind::Ingredient)
                             ->description('Urutan pilihan = urutan tampil di aplikasi kasir')
                             ->schema([
                                 Select::make('option_group_ids')
@@ -82,19 +124,21 @@ final class ProductForm
                             ->schema([
                                 Toggle::make('track_stock')->label('Lacak stok')
                                     ->helperText('Stok berkurang otomatis saat terjual. Boleh minus')
+                                    // Bahan selalu dilacak; paket & produk beresep memakai stok komponen (ADR 0020)
+                                    ->visible(fn (Get $get): bool => self::kind($get) === ProductKind::Regular && ($get('components') ?? []) === [])
                                     ->live(),
                                 TextInput::make('stock_qty')->label('Stok awal')
                                     ->integer()->minValue(-1000000)->maxValue(1000000)->default(0)
-                                    ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && (bool) $get('track_stock')),
+                                    ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && self::tracks($get)),
                                 TextInput::make('current_stock')->label('Stok saat ini')
                                     ->disabled()->dehydrated(false)
                                     ->helperText('Ubah lewat aksi Sesuaikan stok di daftar produk')
-                                    ->visible(fn (Get $get, string $operation): bool => $operation === 'edit' && (bool) $get('track_stock')),
+                                    ->visible(fn (Get $get, string $operation): bool => $operation === 'edit' && self::tracks($get)),
                                 TextInput::make('min_stock')->label('Stok minimum')
                                     ->integer()->minValue(0)->maxValue(1000000)
                                     ->placeholder('Tanpa peringatan')
                                     ->helperText('Stok ≤ angka ini ditandai "stok menipis"')
-                                    ->visible(fn (Get $get): bool => (bool) $get('track_stock')),
+                                    ->visible(fn (Get $get): bool => self::tracks($get)),
                             ]),
                     ]),
 
@@ -170,6 +214,23 @@ final class ProductForm
         $user = auth()->user();
 
         return $user instanceof User ? $user : null;
+    }
+
+    private static function kind(Get $get): ProductKind
+    {
+        $kind = $get('kind');
+
+        return $kind instanceof ProductKind ? $kind : (ProductKind::tryFrom((string) $kind) ?? ProductKind::Regular);
+    }
+
+    /** Stok produk ini sendiri dilacak (bahan selalu; produk biasa tanpa resep bila dicentang). */
+    private static function tracks(Get $get): bool
+    {
+        return match (self::kind($get)) {
+            ProductKind::Ingredient => true,
+            ProductKind::Bundle => false,
+            ProductKind::Regular => (bool) $get('track_stock') && ($get('components') ?? []) === [],
+        };
     }
 
     /** SKU/barcode unik di antara produk tenant aktif yang belum dihapus. */

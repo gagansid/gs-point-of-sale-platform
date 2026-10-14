@@ -5,13 +5,18 @@ declare(strict_types=1);
 namespace App\Actions\Product;
 
 use App\Actions\Product\Data\ProductData;
+use App\Enums\ErrorCode;
+use App\Enums\ProductKind;
 use App\Enums\StockMovementType;
+use App\Exceptions\BusinessException;
 use App\Models\OptionGroup;
 use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\ProductComponent;
 use App\Models\ProductStock;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Services\Stock\StockConsumption;
 use App\Support\Idempotency;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -36,8 +41,11 @@ final class SaveProduct
         }
 
         $oldImage = $product?->image_path;
+        $kind = $data->kind ?? $product->kind ?? ProductKind::Regular;
+        $components = $data->components ?? ($product !== null ? $product->components()->get(['component_id', 'qty'])->map(fn (ProductComponent $c): array => ['component_id' => $c->component_id, 'qty' => $c->qty])->all() : []);
+        $this->validateComposition($product, $kind, $components);
 
-        $product = DB::transaction(function () use ($product, $data, $outlet, $by): Product {
+        $product = DB::transaction(function () use ($product, $data, $outlet, $by, $kind, $components): Product {
             $isNew = $product === null;
             $product ??= new Product;
 
@@ -52,7 +60,10 @@ final class SaveProduct
                 'barcode' => $data->barcode,
                 'price' => $data->price,
                 'cost_price' => $data->costPrice,
-                'track_stock' => $data->trackStock,
+                'kind' => $kind,
+                'unit' => $data->unit ?? $product->unit ?? 'pcs',
+                // ADR 0020: bahan selalu dilacak; paket & produk beresep memotong stok komponennya
+                'track_stock' => self::tracksStock($kind, $components, $data->trackStock),
                 'image_path' => $data->imagePathProvided ? $data->imagePath : $product->image_path,
                 'is_active' => $data->isActive,
                 'is_favorite' => $data->isFavorite,
@@ -64,12 +75,12 @@ final class SaveProduct
             $stock->min_stock = $data->minStock;
 
             if ($isNew) {
-                $stock->stock_qty = $data->trackStock ? $data->initialStock : 0;
+                $stock->stock_qty = $product->track_stock ? $data->initialStock : 0;
             }
 
             $stock->save();
 
-            if ($isNew && $data->trackStock && $data->initialStock !== 0) {
+            if ($isNew && $product->track_stock && $data->initialStock !== 0) {
                 StockMovement::query()->create([
                     'outlet_id' => $outlet->id,
                     'product_id' => $product->id,
@@ -81,7 +92,9 @@ final class SaveProduct
                 ]);
             }
 
-            $this->syncOptionGroups($product, $data->optionGroupIds);
+            // Bahan baku tidak dijual: tanpa grup opsi
+            $this->syncOptionGroups($product, $kind === ProductKind::Ingredient ? [] : $data->optionGroupIds);
+            $this->syncComponents($product, $kind === ProductKind::Ingredient ? [] : $components);
 
             if ($data->listedOutletIds !== null) {
                 $this->listing->handle($product, $data->listedOutletIds, $by);
@@ -108,6 +121,84 @@ final class SaveProduct
 
         if ($inTenantFolder && Product::withTrashed()->where('image_path', $path)->doesntExist()) {
             Storage::disk('public')->delete($path);
+        }
+    }
+
+    /**
+     * @param  list<array{component_id: string, qty: int}>  $components
+     */
+    private static function tracksStock(ProductKind $kind, array $components, bool $requested): bool
+    {
+        return match ($kind) {
+            ProductKind::Ingredient => true,
+            ProductKind::Bundle => false,
+            ProductKind::Regular => $components === [] && $requested,
+        };
+    }
+
+    /**
+     * Aturan resep (ADR 0020): bahan tanpa resep, paket wajib berisi, komponen milik tenant ini, bukan paket, bukan
+     * dirinya sendiri, dan tidak membentuk siklus.
+     *
+     * @param  list<array{component_id: string, qty: int}>  $components
+     *
+     * @throws BusinessException
+     */
+    private function validateComposition(?Product $product, ProductKind $kind, array $components): void
+    {
+        $fail = fn (string $message) => throw BusinessException::of(ErrorCode::ValidationError, $message, ['components' => [$message]]);
+
+        if ($kind === ProductKind::Bundle && $components === []) {
+            $fail('Paket wajib berisi minimal satu produk.');
+        }
+
+        if ($kind === ProductKind::Ingredient || $components === []) {
+            return;
+        }
+
+        $ids = array_column($components, 'component_id');
+        $found = Product::query()->whereIn('id', $ids)->get(['id', 'kind', 'name'])->keyBy('id');
+
+        foreach ($components as $row) {
+            $component = $found->get($row['component_id']) ?? $fail('Komponen resep tidak ditemukan.');
+
+            if ($product !== null && $component->id === $product->id) {
+                $fail('Produk tidak bisa menjadi komponen dirinya sendiri.');
+            }
+
+            if ($component->kind === ProductKind::Bundle) {
+                $fail("{$component->name} adalah paket dan tidak bisa menjadi komponen.");
+            }
+
+            if ($product !== null && in_array($product->id, app(StockConsumption::class)->descendants($component->id), true)) {
+                $fail("{$component->name} sudah memakai produk ini di resepnya.");
+            }
+
+            if ($row['qty'] > 1_000_000) {
+                $fail('Jumlah komponen maksimal 1.000.000.');
+            }
+        }
+
+        // Produk yang sudah jadi komponen produk lain tidak boleh berubah menjadi paket
+        if ($kind === ProductKind::Bundle && $product !== null && ProductComponent::query()->where('component_id', $product->id)->exists()) {
+            $fail('Produk ini dipakai di resep/paket lain sehingga tidak bisa menjadi paket.');
+        }
+    }
+
+    /**
+     * @param  list<array{component_id: string, qty: int}>  $components
+     */
+    private function syncComponents(Product $product, array $components): void
+    {
+        ProductComponent::query()->where('product_id', $product->id)->delete();
+
+        foreach ($components as $position => $row) {
+            ProductComponent::query()->create([
+                'product_id' => $product->id,
+                'component_id' => $row['component_id'],
+                'qty' => $row['qty'],
+                'sort_order' => $position,
+            ]);
         }
     }
 

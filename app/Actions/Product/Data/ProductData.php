@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Product\Data;
 
+use App\Enums\ProductKind;
 use App\Support\Money;
 
 /**
@@ -14,6 +15,7 @@ final readonly class ProductData
     /**
      * @param  list<string>  $optionGroupIds  urutan = urutan tampil di aplikasi
      * @param  list<string>|null  $listedOutletIds  outlet tempat produk dijual; null = tidak diubah (ADR 0011)
+     * @param  list<array{component_id: string, qty: int}>|null  $components  resep / isi paket; null = tidak diubah
      */
     public function __construct(
         public ?string $id,
@@ -33,6 +35,10 @@ final readonly class ProductData
         // Bedakan "gambar tidak dikirim" (API) dari "gambar dikosongkan" (form dashboard)
         public bool $imagePathProvided = false,
         public ?array $listedOutletIds = null,
+        // ADR 0020: jenis, satuan, resep/isi paket (null = tidak diubah; produk baru = produk biasa, pcs)
+        public ?ProductKind $kind = null,
+        public ?string $unit = null,
+        public ?array $components = null,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -57,6 +63,36 @@ final readonly class ProductData
             optionGroupIds: array_values(array_map('strval', $data['option_group_ids'] ?? [])),
             imagePathProvided: array_key_exists('image_path', $data),
             listedOutletIds: isset($data['listed_outlet_ids']) ? array_values(array_map('strval', $data['listed_outlet_ids'])) : null,
+            // Form Filament mengirim enum, API mengirim string
+            kind: ($data['kind'] ?? null) instanceof ProductKind ? $data['kind'] : ProductKind::tryFrom((string) ($data['kind'] ?? '')),
+            unit: filled($data['unit'] ?? null) ? mb_substr(trim((string) $data['unit']), 0, 20) : null,
+            components: array_key_exists('components', $data) ? self::components((array) $data['components']) : null,
         );
+    }
+
+    /**
+     * Baris resep: komponen sama dijumlahkan, qty ≤ 0 dibuang.
+     *
+     * @param  array<int|string, mixed>  $rows
+     * @return list<array{component_id: string, qty: int}>
+     */
+    private static function components(array $rows): array
+    {
+        $qty = [];
+        foreach ($rows as $row) {
+            $id = (string) ($row['component_id'] ?? '');
+            if ($id !== '') {
+                $qty[$id] = ($qty[$id] ?? 0) + (int) ($row['qty'] ?? 0);
+            }
+        }
+
+        $lines = [];
+        foreach ($qty as $id => $amount) {
+            if ($amount > 0) {
+                $lines[] = ['component_id' => (string) $id, 'qty' => $amount];
+            }
+        }
+
+        return $lines;
     }
 }

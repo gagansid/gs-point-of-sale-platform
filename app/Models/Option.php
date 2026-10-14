@@ -58,4 +58,10 @@ final class Option extends Model
     {
         return $this->hasMany(OutletOption::class);
     }
+
+    /** @return HasMany<OptionComponent, $this> bahan yang dipakai opsi (ADR 0020) */
+    public function components(): HasMany
+    {
+        return $this->hasMany(OptionComponent::class);
+    }
 }

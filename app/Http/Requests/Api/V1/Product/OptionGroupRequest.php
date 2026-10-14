@@ -27,6 +27,10 @@ final class OptionGroupRequest extends FormRequest
             'options.*.id' => ['nullable', 'uuid'],
             'options.*.name' => ['required', 'string', 'max:100', 'distinct'],
             'options.*.price_delta' => ['nullable', 'decimal:0,2', 'min:0', 'max:'.Money::MAX_PRICE],
+            // ADR 0020: bahan opsi (tidak dikirim = tidak diubah)
+            'options.*.components' => ['sometimes', 'array', 'max:10'],
+            'options.*.components.*.component_id' => ['required', 'uuid'],
+            'options.*.components.*.qty' => ['required', 'integer', 'min:1', 'max:1000000'],
         ];
     }
 

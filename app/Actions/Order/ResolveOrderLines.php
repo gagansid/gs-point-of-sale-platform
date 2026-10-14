@@ -48,7 +48,7 @@ final class ResolveOrderLines
             $product = $products->get($item['product_id']);
 
             // Produk nonaktif, di kategori nonaktif, atau tidak dijual di outlet ini tidak bisa dijual
-            if ($product === null || ! $product->is_active || ! $product->is_listed || $product->category?->is_active === false) {
+            if ($product === null || ! $product->is_active || ! $product->is_listed || ! $product->kind->isSellable() || $product->category?->is_active === false) {
                 $errors["items.{$index}.product_id"] = ['Produk tidak tersedia'];
 
                 continue;

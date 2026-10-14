@@ -16,12 +16,12 @@ use App\Models\OrderItemOption;
 use App\Models\Outlet;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
-use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\Shift;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Services\Order\CalculationResult;
+use App\Services\Stock\StockConsumption;
 use App\Support\Money;
 
 /**
@@ -69,8 +69,8 @@ final class OrderWriter
                 // Snapshot kategori untuk laporan Kategori (Q51)
                 'category_name' => $line->product->category->name ?? OrderItem::UNCATEGORIZED,
                 'unit_price' => $line->product->price,
-                // Snapshot harga modal untuk HPP & margin (Q53); null = belum diisi
-                'unit_cost' => $line->product->cost_price,
+                // Snapshot harga modal untuk HPP & margin (Q53); resep/paket/opsi berbahan = modal komponen (ADR 0020)
+                'unit_cost' => app(StockConsumption::class)->unitCost($line->product, array_map(fn ($option): string => $option->id, $line->options)),
                 'options_total' => $line->optionsTotal,
                 'qty' => $line->qty,
                 'discount' => $totals->lines[$position]['discount'],
@@ -140,29 +140,50 @@ final class OrderWriter
      */
     public function moveStock(Order $order, ?User $actor, StockMovementType $type): void
     {
-        $sign = $type === StockMovementType::Sale ? -1 : 1;
+        // Void: balik persis riwayat penjualan order ini (resep yang berubah setelahnya tidak berpengaruh, ADR 0020)
+        if ($type !== StockMovementType::Sale) {
+            $sold = StockMovement::query()->where('reference_id', $order->id)->where('type', StockMovementType::Sale)
+                ->selectRaw('product_id, SUM(qty_change) as qty')->groupBy('product_id')->pluck('qty', 'product_id');
 
-        foreach ($order->items()->get() as $item) {
-            $product = Product::query()->withTrashed()->find($item->product_id);
-
-            if ($product === null || ! $product->track_stock) {
-                continue;
+            foreach ($sold as $productId => $qty) {
+                self::changeStock($order, (string) $productId, -(int) $qty, $actor, $type, $order->id);
             }
 
-            $stock = ProductStock::for($product->id, $order->outlet_id, lock: true);
-            $change = $sign * $item->qty;
-            $stock->stock_qty += $change;
-            $stock->save();
-
-            StockMovement::query()->create([
-                'outlet_id' => $order->outlet_id,
-                'product_id' => $product->id,
-                'user_id' => $actor?->id,
-                'type' => $type,
-                'qty_change' => $change,
-                'qty_after' => $stock->stock_qty,
-                'reference_id' => $order->id,
-            ]);
+            return;
         }
+
+        $usage = [];
+        foreach ($order->items()->with('options')->get() as $item) {
+            $consumed = app(StockConsumption::class)->for($item->product_id, $item->options->pluck('option_id')->map(fn (mixed $id): string => (string) $id)->all(), $item->qty);
+            foreach ($consumed as $productId => $qty) {
+                $usage[$productId] = ($usage[$productId] ?? 0) + $qty;
+            }
+        }
+
+        foreach ($usage as $productId => $qty) {
+            self::changeStock($order, $productId, -$qty, $actor, $type, $order->id);
+        }
+    }
+
+    /** Ubah stok satu produk di outlet order + riwayat (dikunci per baris stok). */
+    public static function changeStock(Order $order, string $productId, int $change, ?User $actor, StockMovementType $type, string $referenceId): void
+    {
+        if ($change === 0) {
+            return;
+        }
+
+        $stock = ProductStock::for($productId, $order->outlet_id, lock: true);
+        $stock->stock_qty += $change;
+        $stock->save();
+
+        StockMovement::query()->create([
+            'outlet_id' => $order->outlet_id,
+            'product_id' => $productId,
+            'user_id' => $actor?->id,
+            'type' => $type,
+            'qty_change' => $change,
+            'qty_after' => $stock->stock_qty,
+            'reference_id' => $referenceId,
+        ]);
     }
 }

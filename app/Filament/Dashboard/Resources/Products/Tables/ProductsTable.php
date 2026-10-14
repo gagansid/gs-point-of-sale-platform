@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\Products\Tables;
 
 use App\Actions\Product\DeleteProduct;
+use App\Enums\ProductKind;
 use App\Filament\Dashboard\Resources\Products\Actions\ProductActions;
 use App\Filament\Shared\Actions\BulkDeleteAction;
 use App\Filament\Shared\Columns\AuditColumns;
@@ -53,7 +54,11 @@ final class ProductsTable
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('name')
                     ->label('Nama produk')
-                    ->description(fn (Product $record): ?string => $record->sku)
+                    // Jenis selain produk biasa ikut di keterangan (ADR 0020)
+                    ->description(fn (Product $record): ?string => collect([
+                        $record->kind !== ProductKind::Regular ? $record->kind->getLabel().' · '.$record->unit : null,
+                        $record->sku,
+                    ])->filter()->implode(' · ') ?: null)
                     ->weight('medium')
                     ->searchable(['name', 'sku', 'barcode'])
                     ->sortable(),

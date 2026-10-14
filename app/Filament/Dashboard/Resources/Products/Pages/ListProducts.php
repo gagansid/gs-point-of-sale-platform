@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\Products\Pages;
 
 use App\Actions\Product\ImportProducts;
+use App\Enums\ProductKind;
 use App\Exceptions\BusinessException;
 use App\Exports\ProductImportTemplate;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
@@ -55,6 +56,13 @@ final class ListProducts extends ListRecords
     {
         return [
             'all' => Tab::make('Semua')->badge(fn (): int => Product::query()->count()),
+            // ADR 0020
+            'ingredients' => Tab::make('Bahan baku')
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('kind', ProductKind::Ingredient->value))
+                ->badge(fn (): int => Product::query()->where('kind', ProductKind::Ingredient->value)->count()),
+            'bundles' => Tab::make('Paket')
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('kind', ProductKind::Bundle->value))
+                ->badge(fn (): int => Product::query()->where('kind', ProductKind::Bundle->value)->count()),
             'favorite' => Tab::make('Favorit')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('is_favorite', true))
                 ->badge(fn (): int => Product::query()->where('is_favorite', true)->count()),

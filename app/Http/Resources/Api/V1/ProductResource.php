@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\Product;
+use App\Models\ProductComponent;
 use App\Models\User;
 use App\Support\ApiActor;
 use App\Support\Iso;
@@ -25,6 +26,13 @@ final class ProductResource extends JsonResource
             'id' => $this->id,
             'category_id' => $this->category_id,
             'name' => $this->name,
+            // ADR 0020: regular / ingredient / bundle, satuan stok, resep atau isi paket
+            'kind' => $this->kind->value,
+            'unit' => $this->unit,
+            'components' => $this->whenLoaded('components', fn () => $this->components->map(fn (ProductComponent $c): array => [
+                'component_id' => $c->component_id,
+                'qty' => $c->qty,
+            ])->values()->all()),
             'sku' => $this->sku,
             'barcode' => $this->barcode,
             'price' => $this->price,
