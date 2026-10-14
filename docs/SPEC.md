@@ -134,9 +134,11 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `order.discount` | Diskon manual sampai batas role | ✅ | ✅ | ✅ | ✅ |
 | `order.discount_over_limit` | Diskon tanpa batas | ✅ | ✅ | 🔑 | 🔑 |
 | `order.void` | Batalkan transaksi | ✅ | ✅ | ✅ | 🔑 |
-| `shift.operate` | Buka/tutup shift sendiri | ✅ | ✅ | ✅ | ✅ |
+| `shift.operate` | Buka/tutup shift di perangkat yang dipakai, kas masuk/keluar (ADR 0017) | ✅ | ✅ | ✅ | ✅ |
 | `shift.view_all` | Semua shift & selisih kas | ✅ | ✅ | ✅ | ❌ |
-| `shift.force_close` | Tutup paksa shift kasir lain | ✅ | ✅ | ✅ | ❌ |
+| `shift.force_close` | Tutup paksa shift dari perangkat lain / dashboard | ✅ | ✅ | ✅ | ❌ |
+| `shift.edit_opening_cash` | Kas awal berbeda dari sisa laci shift sebelumnya / koreksi kas awal (ADR 0017) | ✅ | ✅ | ✅ | 🔑 |
+| `shift.cash_out_over_limit` | Kas keluar di atas batas outlet tanpa PIN (ADR 0017) | ✅ | ✅ | ✅ | 🔑 |
 | `product.toggle_available` | Tandai menu habis/tersedia | ✅ | ✅ | ✅ | ❌ |
 | `product.manage` | Kategori, produk, opsi | ✅ | ✅ | ❌ | ❌ |
 | `stock.adjust` | Penyesuaian stok | ✅ | ✅ | ❌ | ❌ |
@@ -339,7 +341,10 @@ dari `order_sequences` dengan `SELECT ... FOR UPDATE`.
 ### Shift & void
 
 - Order hanya bisa dibuat jika device punya shift berstatus `open`.
-- Tutup shift: `expected_cash` = kas awal + penjualan cash − kembalian, dibandingkan dengan `actual_cash`.
+- Shift milik **perangkat**, dipakai bergantian (ADR 0017): ganti kasir = kunci layar → PIN karyawan lain, tanpa hitung
+  uang; operator tercatat di log shift. Tutup biasa oleh siapa saja yang bertugas di perangkat itu.
+- Tutup shift: `expected_cash` = kas awal + penjualan cash − kembalian + kas masuk − kas keluar, dibandingkan dengan
+  `actual_cash`. Isian Disetor → `closing_float` = aktual − disetor = kas awal shift berikutnya di perangkat yang sama.
 - Void hanya untuk order di shift yang masih terbuka, wajib alasan, kasir butuh PIN owner/manager/supervisor.
 
 ## API v1
@@ -377,11 +382,14 @@ Standar teknis: [`docs/standards/api/`](standards/api/README.md).
 
 | Method | Endpoint | Role | Fungsi |
 |---|---|---|---|
-| GET | `/shifts/current` | Semua | Shift terbuka di device ini |
-| POST | `/shifts` | Semua | Buka shift + kas awal |
-| POST | `/shifts/{id}/close` | Semua | Tutup shift + kas aktual, kembalikan ringkasan |
-| GET | `/shifts/{id}/summary` | Semua | Ringkasan penjualan per metode bayar |
-| POST | `/shifts/{id}/force-close` | O, M, S | Tutup paksa shift kasir yang lupa ditutup / device rusak |
+| GET | `/shifts/current` | Semua | Shift terbuka di device ini (+ `meta.carry_over_cash` bila belum ada) |
+| POST | `/shifts` | Semua | Buka shift; kas awal kosong = sisa laci shift sebelumnya (ADR 0017) |
+| POST | `/shifts/{id}/close` | Semua | Tutup shift di device ini + kas aktual & disetor, kembalikan ringkasan |
+| GET | `/shifts/{id}/summary` | Semua | Ringkasan penjualan per metode bayar, kas masuk/keluar |
+| POST | `/shifts/{id}/force-close` | O, M, S | Tutup paksa shift di device lain (lupa ditutup / device rusak) |
+| POST | `/shifts/{id}/opening-cash` | Semua 🔑 | Koreksi kas awal shift berjalan (ADR 0017) |
+| GET | `/shifts/{id}/cash-movements` | Semua | Kas masuk/keluar shift |
+| POST | `/cash-movements` | Semua 🔑 | Catat kas masuk/keluar di shift device ini (ADR 0017) |
 
 ### Order & pembayaran
 
@@ -440,7 +448,7 @@ Contoh `POST /checkout`:
 | GET | `/reports/hourly?from=&to=` | O, M | Omzet & transaksi per jam lokal outlet (0–23) |
 | GET | `/reports/audit?from=&to=` | O, M | Void (pelaku, approver, alasan), diskon dengan approval PIN, shift dengan selisih kas / ditutup paksa (20 terbaru + jumlah total) |
 | GET | `/outlets` | Semua | Outlet yang dipegang user (Q37) |
-| GET, PUT | `/outlet` | O | Pajak, service charge, pembulatan, header/footer struk (outlet perangkat) |
+| GET, PUT | `/outlet` | O | Pajak, service charge, pembulatan, header/footer struk, laci kasir (outlet perangkat) |
 | GET, POST, PUT | `/users`, `/users/{id}` | O | Kelola kasir & manager |
 | GET, PUT | `/payment-methods`, `/payment-methods/{id}` | O | Aktif/nonaktifkan metode bayar |
 
@@ -655,12 +663,12 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q13 | `options.tenant_id` | Ditambahkan agar semua model bisnis memakai `BelongsToTenant` (CLAUDE.md). | Diterima | Database |
 | Q14 | Riwayat stok | Tabel `stock_movements`; `POST /products/{id}/stock` wajib `id` dari client sebagai idempotency key. | Diterima | `docs/api/product.md` |
 | Q15 | Hapus kategori | Produknya tidak ikut dihapus; menjadi tanpa kategori (`category_id` null). | Diterima | `docs/api/product.md` |
-| Q16 | Shift per device | `POST /shifts` saat device sudah punya shift terbuka mengembalikan shift itu (idempotent). Tutup biasa hanya oleh pembuka; selain itu tutup paksa. | Diterima | `docs/api/shift.md` |
+| Q16 | Shift per device | `POST /shifts` saat device sudah punya shift terbuka mengembalikan shift itu (idempotent). Revisi ADR 0017 (Q87): tutup biasa oleh siapa saja yang bertugas di device shift itu; tutup paksa untuk menutup dari device lain/dashboard. | Diterima | `docs/api/shift.md` |
 | Q17 | Login email di device kasir | Token terikat device bila `device_uid` = device terdaftar, sehingga owner/manager bisa buka shift & checkout. | Diterima | `docs/api/auth.md` |
 | Q18 | Batas diskon | Persen total diskon (item + order) terhadap harga kotor. Hanya role dengan `order.discount_over_limit` (owner, manager) yang tidak dibatasi; kasir & supervisor sampai `discount_limits[role]`. Di atas batas → PIN approver yang batasnya ≥ persen diskon (mis. kasir 20% → supervisor; 50% → manager/owner). Revisi 2026-10-11 (GSPOS-SEC-014): sebelumnya supervisor tanpa batas sehingga `discount_limits.supervisor` tidak berlaku. | Diterima | `docs/api/order.md` |
 | Q19 | Alokasi pembayaran | Non-tunai dialokasikan lebih dulu, tunai menutup sisa + kembalian; checkout wajib lunas. | Diterima | `docs/api/order.md` |
 | Q20 | Open bill lintas shift | Open bill boleh tetap terbuka saat shift ditutup (ditampilkan di ringkasan); saat lunas, order pindah ke shift yang menerima uang. | Diterima | `docs/api/order.md` |
-| Q21 | Visibilitas order | Kasir: order di shift sendiri + semua open bill. Supervisor (view_all tanpa report.view): hari ini. Owner/manager: semua. | Diterima | `docs/api/order.md` |
+| Q21 | Visibilitas order | Kasir: order di shift yang ia buka + shift yang sedang terbuka di perangkatnya (ADR 0017) + semua open bill. Supervisor (view_all tanpa report.view): hari ini. Owner/manager: semua. | Diterima | `docs/api/order.md` |
 | Q22 | Approver void | Kolom `orders.void_approved_by` terpisah dari `approved_by` (approver diskon). | Diterima | Database |
 | Q24 | Stok menipis | Batas per produk `products.min_stock` (nullable). Menipis = `track_stock` dan 0 < stok ≤ `min_stock`; stok ≤ 0 = habis. API: `min_stock`, `is_low_stock`. Dashboard: tab "Stok menipis" + warna kuning. | Diterima | `docs/api/product.md` |
 | Q25 | Produk favorit | Tanda per produk untuk seluruh tenant (`products.is_favorite`), bukan per pengguna; aplikasi kasir menampilkan tab Favorit. Diubah dengan `product.manage`. | Diterima | `docs/api/product.md` |
@@ -724,5 +732,10 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q84 | Profil & menu akun dashboard | Menu akun (nama + avatar di kanan atas) hanya **Profil**, **Bantuan** (WhatsApp `POS_SUPPORT_WHATSAPP` atau email `POS_SUPPORT_EMAIL`), **Keluar**; pengalih tema (terang → gelap → sistem) berupa tombol di kiri nama, bukan di dalam menu. Halaman Profil dua kolom: kiri kartu profil (foto, nama, role · bisnis, email) + **Info akun**; kanan **Data diri**, Keamanan, Notifikasi, Perangkat & sesi; label di atas kolom. Foto JPG/PNG/WebP maks. 2 MB, dipotong persegi 1:1 (tampil bulat hanya di avatar topbar), disimpan di disk `public` folder `avatars/{tenant_id}`, foto lama dihapus saat diganti/dihapus. Data diri: nama, email, nomor HP opsional dinormalisasi +62. Info akun baca saja: outlet, username, status email, terakhir masuk, bergabung. **Perangkat & sesi** (sesi browser & token aplikasi; **Keluar dari semua perangkat lain** menghapus sesi lain & semua token API, browser ini tetap masuk). Ikon di dalam kolom isian 16px. | Diterima | — |
 | Q85 | URL pendek QR meja | Setiap meja punya `short_code` 6 karakter (huruf besar & angka tanpa 0/O/1/I/L, unik global). `gspos.id/t/{kode}` (tidak peka huruf besar/kecil, throttle 60/menit) mengalihkan ke URL asli `/order/t/{token}` yang tetap berlaku; meja nonaktif/kode tidak dikenal = 404. QR cetak memuat URL pendek; **Ganti QR** mengganti token dan kode. Kartu cetak 60 mm (3 per baris A4): nama bisnis & outlet satu baris (dipotong “…”), nama meja, area, QR, URL pendek. | Diterima | ADR 0014 |
 | Q86 | Installer web | `/install` (ADR 0016) bila aplikasi belum terinstal: kode instal opsional (`INSTALL_TOKEN`), cek syarat, database kosong (Tes koneksi), aplikasi (URL, edisi bawaan paket, zona waktu, subdomain & SMTP opsional), akun (super admin; bisnis + owner wajib untuk jual putus; manager opsional), proses per langkah lewat AJAX (lanjut setelah refresh), kunci `storage/app/installed.json` lalu ke login. Sebelum terinstal web → `/install`, API `503 MAINTENANCE`. Paket zip per edisi dari workflow Release (`docs/install.md`). | Diterima | ADR 0016 |
+| Q87 | Shift bersama per perangkat | ADR 0017. Shift milik perangkat; **ganti kasir tanpa hitung**: tombol **Kunci** (atau kunci otomatis) → karyawan yang ditugaskan di outlet pilih nama + PIN (kasir web) / login PIN (aplikasi) → operator berganti, shift & laci tetap. Log operator `shift_operators` (mulai/selesai) dari buka shift, login PIN/email di device, buka kunci, dan pilih outlet kasir web; diakhiri saat tutup. Tutup biasa oleh siapa saja yang bertugas di device itu (`shift.operate`); tutup paksa (`shift.force_close`) dari device lain/dashboard. Kasir melihat order shift yang terbuka di perangkatnya; rekap shift bisa dilihat pembuka & operatornya. Selisih kas ditanggung bersama (atas nama shift). | Diterima | ADR 0017 |
+| Q88 | Setoran & carry-over kas awal | Tutup shift: Kas dihitung (`actual_cash`) + **Disetor** (`cash_deposited`, 0 ≤ disetor ≤ dihitung; kosong = dihitung − modal laci tetap outlet bila diatur, selain itu 0); `closing_float` = dihitung − disetor. Buka shift: kas awal = `closing_float` shift terakhir yang ditutup di **perangkat yang sama** (`opening_cash_source` `carry_over`), tanpa diketik; perangkat tanpa shift sebelumnya / shift lama tanpa `closing_float` → diketik (`manual`). Angka berbeda saat buka, atau koreksi saat shift berjalan (`POST /shifts/{id}/opening-cash`, hanya dari device shift), = `adjusted`: alasan wajib + `shift.edit_opening_cash` atau PIN approver (≠ pelaku); nilai semula di `carried_cash`, pelaku/approver/waktu tercatat & tampil di panel Audit. | Diterima | ADR 0017 |
+| Q89 | Kas masuk/keluar | `cash_movements` per shift: jenis `in`/`out`, alasan `operational` (Belanja operasional, keluar), `deposit` (Setor ke owner, keluar), `change` (Tukar/tambah kembalian), `other` (Lainnya, catatan wajib), nominal > 0, catatan maks. 255; `id` dari klien = idempotency key. Hanya di shift terbuka device pelaku; tidak bisa diubah/dihapus. Kas keluar tidak boleh melebihi kas seharusnya di laci (`VALIDATION_ERROR`); di atas `outlets.cash_out_approval_limit` (bawaan Rp100.000, kosong = tanpa approval) kasir butuh PIN approver (`APPROVAL_REQUIRED`, `shift.cash_out_over_limit`). Masuk ke `expected_cash`, X/Z-report, laporan Shift, panel Audit (kas keluar). | Diterima | ADR 0017 |
+| Q90 | Setelan laci kasir | Profil outlet → **Laci kasir** (`outlet.settings`, juga `PUT /outlet` & `outlet` di `/auth/me`): `cash_float` modal laci tetap (opsional), `auto_lock_minutes` kunci layar otomatis (bawaan 5, kosong/0 = mati, maks. 120; dihitung di browser/aplikasi dari ketikan/sentuhan, polling tidak dihitung), `cash_out_approval_limit` (bawaan Rp100.000). | Diterima | ADR 0017 |
+| Q91 | Z-report shift bersama | X/Z-report (web, PDF, API `reports/shifts/{id}`) menampilkan asal kas awal (sisa laci / dikoreksi + alasan), kas masuk & keluar (rincian), disetor, ditinggal di laci, dan **Kasir bertugas** (jam bertugas dari log operator, transaksi, omzet, tunai per kasir). Laporan Shift & export menambah kolom kas masuk, kas keluar, disetor; ringkasan harian email menambah total disetor. | Diterima | ADR 0017 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |
