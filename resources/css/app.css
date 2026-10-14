@@ -1050,6 +1050,32 @@
     font-size: 13.5px;
 }
 
+/* Shift bersama (ADR 0017): keterangan kecil di rekap, bagian lipat (koreksi kas awal), kas awal carry-over */
+.cashier-muted-inline {
+    color: var(--site-muted);
+    font-size: 12.5px;
+}
+
+.cashier-details > summary {
+    color: var(--site-navy);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cashier-details[open] > summary {
+    margin-bottom: 12px;
+}
+
+.cashier-narrow .cashier-details {
+    margin-top: 16px;
+}
+
+.cashier-dl.cashier-carry {
+    margin-bottom: 16px;
+    font-size: 16px;
+}
+
 /* Pesanan meja di kasir web (ADR 0014) */
 .cashier-count {
     display: inline-flex;

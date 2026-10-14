@@ -42,6 +42,10 @@ final class OutletSettingsRequest extends FormRequest
             // Q56: 0 / kosong = tanpa target; batas DECIMAL(15,2)
             'daily_sales_target' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
             'monthly_sales_target' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
+            // ADR 0017: laci kasir
+            'cash_float' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
+            'auto_lock_minutes' => ['nullable', 'integer', 'min:0', 'max:120'],
+            'cash_out_approval_limit' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
         ];
     }
 
@@ -70,6 +74,9 @@ final class OutletSettingsRequest extends FormRequest
             'discount_limits.supervisor' => 'batas diskon supervisor',
             'daily_sales_target' => 'target omzet harian',
             'monthly_sales_target' => 'target omzet bulanan',
+            'cash_float' => 'modal laci tetap',
+            'auto_lock_minutes' => 'kunci layar otomatis',
+            'cash_out_approval_limit' => 'batas kas keluar tanpa PIN',
         ];
     }
 }

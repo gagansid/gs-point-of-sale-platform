@@ -9,6 +9,7 @@ use App\Enums\ReportTab;
 use App\Enums\ShiftStatus;
 use App\Exceptions\ReportTooLargeException;
 use App\Filament\Dashboard\Widgets\Reports\HeatmapWidget;
+use App\Models\CashMovement;
 use App\Models\Order;
 use App\Models\Shift;
 use App\Services\Report\ReportContext;
@@ -135,12 +136,13 @@ final class ReportSectionBuilder
                 $rows = $this->reports->shifts($start, $end, $filters);
                 $time = fn (?string $iso): string => $iso === null ? '-' : CarbonImmutable::parse($iso)->setTimezone($timezone)->format('Y-m-d H:i');
 
-                return [$this->section('Rekap shift', ['Kasir', 'Outlet', 'Buka', 'Tutup', 'Transaksi', 'Penjualan', 'Kas awal', 'Tunai', 'Seharusnya', 'Aktual', 'Selisih', 'Status'],
+                return [$this->section('Rekap shift', ['Kasir', 'Outlet', 'Buka', 'Tutup', 'Transaksi', 'Penjualan', 'Kas awal', 'Tunai', 'Kas masuk', 'Kas keluar', 'Seharusnya', 'Aktual', 'Selisih', 'Disetor', 'Status'],
                     array_map(fn (array $r): array => [
                         $r['cashier'], $r['outlet'], $time($r['opened_at']), $time($r['closed_at']), $r['order_count'], $r['sales_total'],
-                        $r['opening_cash'], $r['cash_sales'], $r['expected_cash'], $r['actual_cash'], $r['difference'], ShiftStatus::from($r['status'])->getLabel(),
+                        $r['opening_cash'], $r['cash_sales'], $r['cash_in'], $r['cash_out'], $r['expected_cash'], $r['actual_cash'], $r['difference'],
+                        $r['cash_deposited'], ShiftStatus::from($r['status'])->getLabel(),
                     ], $rows),
-                    [5, 6, 7, 8, 9, 10])];
+                    [5, 6, 7, 8, 9, 10, 11, 12, 13])];
             })(),
             ReportTab::Time => (function () use ($start, $end, $filters, $timezone): array {
                 $hours = $this->reports->hourly($start, $end, $timezone, $filters);
@@ -262,6 +264,14 @@ final class ReportSectionBuilder
             $shifts[] = [$shift->openedBy->name ?? '-', $time($shift->closed_at), Money::fromDb($shift->expected_cash), Money::fromDb($shift->actual_cash), Money::fromDb($shift->difference), $shift->status->getLabel(), $shift->closedBy->name ?? '-', (string) $shift->close_note];
         }
 
+        // Kas keluar laci (ADR 0017)
+        $cashOuts = [];
+        foreach ($this->reports->cashOutQuery($start, $end, $context->filters)->with(['user:id,name', 'approver:id,name'])->orderBy('created_at')->cursor() as $movement) {
+            /** @var CashMovement $movement */
+            $this->guard();
+            $cashOuts[] = [$time($movement->created_at), $movement->reason->getLabel(), Money::fromDb($movement->amount), $movement->user->name ?? '-', $movement->approver->name ?? '-', (string) $movement->note];
+        }
+
         return [
             new ReportSection('Transaksi void', ['No. order', 'Waktu', 'Nominal', 'Kasir', 'Di-void oleh', 'Disetujui', 'Alasan'], $voids, [2],
                 ['Total', count($voids).' transaksi', Money::add('0', ...array_column($voids, 2)), null, null, null, null]),
@@ -269,6 +279,8 @@ final class ReportSectionBuilder
                 ['Total', count($discounts).' transaksi', null, null, Money::add('0', ...array_column($discounts, 4)), null]),
             new ReportSection('Selisih kas & tutup paksa', ['Kasir', 'Ditutup', 'Seharusnya', 'Aktual', 'Selisih', 'Status', 'Ditutup oleh', 'Catatan'], $shifts, [2, 3, 4],
                 ['Total', count($shifts).' shift', null, null, Money::add('0', ...array_column($shifts, 4)), null, null, null]),
+            new ReportSection('Kas keluar', ['Waktu', 'Alasan', 'Nominal', 'Oleh', 'Disetujui', 'Catatan'], $cashOuts, [2],
+                ['Total', count($cashOuts).' catatan', Money::add('0', ...array_column($cashOuts, 2)), null, null, null]),
         ];
     }
 

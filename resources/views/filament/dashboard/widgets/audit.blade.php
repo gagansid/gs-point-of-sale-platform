@@ -1,8 +1,8 @@
-{{-- Panel audit: 3 kartu temuan; empty state positif bila tidak ada temuan (empty-state.md) --}}
+{{-- Panel audit: 4 kartu temuan (void, diskon, shift, kas keluar ADR 0017); empty state positif bila tidak ada temuan (empty-state.md) --}}
 @php($audit = $this->getAudit())
 @php($money = fn (?string $v): string => \App\Support\Money::format($v ?? '0.00'))
 @php($time = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone(\App\Support\CurrentOutlet::timezone())->locale('id')->translatedFormat('j M, H.i') : '–')
-@php($issues = $audit['void_count'] + $audit['discount_count'] + $audit['shift_issue_count'])
+@php($issues = $audit['void_count'] + $audit['discount_count'] + $audit['shift_issue_count'] + $audit['cash_out_count'])
 
 <x-filament-widgets::widget>
     <x-filament::section
@@ -19,7 +19,7 @@
                 </x-filament::link>
             </x-slot>
         @endif
-        <div class="grid gap-4 lg:grid-cols-3">
+        <div class="grid gap-4 lg:grid-cols-2 2xl:grid-cols-4">
             {{-- Void --}}
             <div class="pos-dash-audit">
                 <div class="pos-dash-audit__head">
@@ -94,9 +94,41 @@
                         @if ($row['status'] === 'force_closed')
                             <p class="pos-dash-audit__meta"><x-filament::badge color="danger" size="sm">Ditutup paksa oleh {{ $row['closed_by'] ?? '–' }}</x-filament::badge></p>
                         @endif
+                        @if ($row['opening_adjustment'])
+                            <p class="pos-dash-audit__meta">
+                                <x-filament::badge color="warning" size="sm">Kas awal dikoreksi</x-filament::badge>
+                                {{ $money($row['opening_adjustment']['from']) }} → {{ $money($row['opening_adjustment']['to']) }} oleh {{ $row['opening_adjustment']['by'] ?? '–' }}@if ($row['opening_adjustment']['approved_by']) · disetujui {{ $row['opening_adjustment']['approved_by'] }}@endif
+                            </p>
+                        @endif
                     </a>
                 @empty
                     <p class="pos-dash-audit__ok"><x-filament::icon icon="heroicon-o-check-circle" class="h-5 w-5" /> Semua kas shift sesuai</p>
+                @endforelse
+            </div>
+
+            {{-- Kas keluar laci (ADR 0017) --}}
+            <div class="pos-dash-audit">
+                <div class="pos-dash-audit__head">
+                    <span class="pos-dash-audit__title">
+                        <x-filament::icon icon="heroicon-o-arrow-up-tray" class="h-5 w-5" /> Kas keluar
+                    </span>
+                    <x-filament::badge :color="$audit['cash_out_count'] > 0 ? 'info' : 'success'">
+                        {{ $audit['cash_out_count'] }} · {{ $money($audit['cash_out_total']) }}
+                    </x-filament::badge>
+                </div>
+                @forelse ($audit['cash_outs'] as $row)
+                    <a href="{{ \App\Filament\Dashboard\Resources\Shifts\ShiftResource::getUrl('view', ['record' => $row['shift_id']]) }}" class="pos-dash-audit__item" wire:key="cash-out-{{ $row['id'] }}">
+                        <div class="flex justify-between gap-2">
+                            <span class="font-medium text-gray-950 dark:text-white">{{ $row['reason'] }}</span>
+                            <span class="tabular-nums font-medium text-gray-950 dark:text-white">−{{ $money($row['amount']) }}</span>
+                        </div>
+                        <p class="pos-dash-audit__meta">{{ $time($row['created_at']) }} · oleh {{ $row['user'] ?? '–' }}@if ($row['approved_by']) · disetujui {{ $row['approved_by'] }}@endif</p>
+                        @if ($row['note'])
+                            <p class="pos-dash-audit__meta italic">“{{ $row['note'] }}”</p>
+                        @endif
+                    </a>
+                @empty
+                    <p class="pos-dash-audit__ok"><x-filament::icon icon="heroicon-o-check-circle" class="h-5 w-5" /> Tidak ada kas keluar</p>
                 @endforelse
             </div>
         </div>

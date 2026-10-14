@@ -66,6 +66,11 @@ final class SetCashierContext
         CurrentOutlet::set($user, $device->outlet_id);
         WebCashier::setDevice($device);
 
+        // Layar terkunci (ADR 0017): semua halaman & aksi kasir menunggu PIN karyawan berikutnya
+        if (WebCashier::isLocked($request) && ! $request->routeIs('cashier.unlock', 'cashier.unlock.store')) {
+            return redirect()->route('cashier.unlock');
+        }
+
         return $next($request);
     }
 }

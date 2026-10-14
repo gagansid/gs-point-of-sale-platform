@@ -74,10 +74,11 @@ final class ActivityLogResource extends Resource
         'tax_rate' => 'Pajak', 'service_charge_rate' => 'Service', 'tax_inclusive' => 'Harga termasuk pajak', 'rounding' => 'Pembulatan',
         'receipt_header' => 'Header struk', 'receipt_footer' => 'Footer struk', 'receipt_show_rounding' => 'Pembulatan di struk',
         'discount_limits' => 'Batas diskon', 'daily_sales_target' => 'Target harian', 'monthly_sales_target' => 'Target bulanan',
+        'cash_float' => 'Modal laci tetap', 'auto_lock_minutes' => 'Kunci layar otomatis (menit)', 'cash_out_approval_limit' => 'Batas kas keluar tanpa PIN',
         'email' => 'Email', 'username' => 'Username', 'role' => 'Role', 'web_cashier_access' => 'Akses kasir web',
     ];
 
-    private const MONEY_FIELDS = ['price', 'cost_price', 'price_delta', 'daily_sales_target', 'monthly_sales_target'];
+    private const MONEY_FIELDS = ['price', 'cost_price', 'price_delta', 'daily_sales_target', 'monthly_sales_target', 'cash_float', 'cash_out_approval_limit'];
 
     public static function canViewAny(): bool
     {

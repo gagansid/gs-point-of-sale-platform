@@ -7,7 +7,8 @@ namespace App\Http\Requests\Api\V1\Shift;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * Tutup shift sendiri (shift.operate) atau tutup paksa (shift.force_close, catatan wajib).
+ * Tutup shift di perangkat ini (shift.operate, siapa saja yang bertugas, ADR 0017) atau tutup paksa
+ * (shift.force_close, catatan wajib).
  */
 final class CloseShiftRequest extends FormRequest
 {
@@ -21,6 +22,8 @@ final class CloseShiftRequest extends FormRequest
     {
         return [
             'actual_cash' => ['required', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
+            // ADR 0017: kosong = kas aktual − modal laci tetap outlet (atau 0)
+            'cash_deposited' => ['nullable', 'decimal:0,2', 'min:0', 'lte:actual_cash', 'max:9999999999999.99'],
             'note' => [$this->isForce() ? 'required' : 'nullable', 'string', 'max:255'],
         ];
     }
@@ -28,7 +31,7 @@ final class CloseShiftRequest extends FormRequest
     /** @return array<string, string> */
     public function attributes(): array
     {
-        return ['actual_cash' => 'kas aktual', 'note' => 'catatan'];
+        return ['actual_cash' => 'kas aktual', 'cash_deposited' => 'disetor', 'note' => 'catatan'];
     }
 
     public function isForce(): bool

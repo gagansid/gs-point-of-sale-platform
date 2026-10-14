@@ -57,6 +57,9 @@ pertama yang dipegang user. Outlet lain diubah dari dashboard (Pengaturan → Ou
 | `receipt_show_rounding` | boolean | Tampilkan baris pembulatan di struk (SPEC Q48). Bawaan `false`: pembulatan sudah termasuk di total |
 | `discount_limits` | object | `{ "cashier": 10, "supervisor": 25 }` persen 0–100 (maks. 2 desimal, tanpa notasi ilmiah), keduanya wajib bila dikirim (Q18) |
 | `daily_sales_target`, `monthly_sales_target` | desimal\|null | Target omzet harian/bulanan (SPEC Q56), 0–9.999.999.999.999,99; `null`/`0` = tanpa target. Progres tampil di Beranda dashboard |
+| `cash_float` | desimal\|null | Modal laci tetap (ADR 0017, Q90): saat tutup shift, `cash_deposited` bawaan = kas dihitung − modal ini. `null`/`0` = tidak dipakai |
+| `auto_lock_minutes` | int\|null | Kunci layar kasir otomatis setelah X menit tanpa sentuhan, 0–120 (bawaan 5). `null`/`0` = mati. Dipakai aplikasi & kasir web |
+| `cash_out_approval_limit` | desimal\|null | Kas keluar kasir di atas nominal ini butuh PIN approver (bawaan `100000.00`). `null` = tanpa approval, `0` = selalu |
 | `code` | — | **Tidak bisa diubah** (awalan nomor order); diabaikan bila dikirim |
 
 PUT: field yang tidak dikirim tetap memakai nilai lama. Order lama tidak berubah — setiap order
@@ -71,7 +74,8 @@ menyimpan tarif pajak/service/pembulatan saat transaksi.
     "timezone": "Asia/Jakarta", "tax_rate": "11.00", "service_charge_rate": "5.00",
     "tax_inclusive": false, "rounding": 100, "receipt_header": "Kopi Senja",
     "receipt_footer": "Terima kasih", "receipt_show_rounding": false, "discount_limits": { "cashier": 10, "supervisor": 25 },
-    "daily_sales_target": "3000000.00", "monthly_sales_target": null
+    "daily_sales_target": "3000000.00", "monthly_sales_target": null,
+    "cash_float": "500000.00", "auto_lock_minutes": 5, "cash_out_approval_limit": "100000.00"
   },
   "meta": { "request_id": "…" }
 }

@@ -62,7 +62,7 @@ final class OutletController extends Controller
         $outlet = CurrentOutlet::getOrFail();
 
         $data = OutletSettingsData::fromArray([
-            ...$outlet->only(['name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer', 'receipt_show_rounding', 'daily_sales_target', 'monthly_sales_target']),
+            ...$outlet->only(['name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer', 'receipt_show_rounding', 'daily_sales_target', 'monthly_sales_target', 'cash_float', 'auto_lock_minutes', 'cash_out_approval_limit']),
             'discount_limits' => $outlet->discount_limits ?? config('pos.outlet_defaults.discount_limits'),
             ...$request->validated(),
         ]);

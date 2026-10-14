@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Actions\Auth;
 
 use App\Actions\Auth\Data\AuthResult;
+use App\Actions\Shift\RecordShiftOperator;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Device;
 use App\Models\User;
 use App\Support\DummyPasswordHash;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -17,7 +19,10 @@ use Illuminate\Support\Facades\Hash;
  */
 final class LoginWithPassword
 {
-    public function __construct(private readonly IssueUserToken $issueToken) {}
+    public function __construct(
+        private readonly IssueUserToken $issueToken,
+        private readonly RecordShiftOperator $operators,
+    ) {}
 
     /**
      * @throws BusinessException
@@ -53,6 +58,11 @@ final class LoginWithPassword
             ->first();
 
         $token = $this->issueToken->handle($user, 'app:'.$deviceUid, $expiresAt, $device);
+
+        // Owner/manager login di perangkat kasir menjadi operator shift berjalan (ADR 0017)
+        if ($device !== null && ! $user->tenant->isReadOnly()) {
+            TenantContext::run($user->tenant_id, fn () => $this->operators->handle($device, $user));
+        }
 
         return new AuthResult($user, $token);
     }

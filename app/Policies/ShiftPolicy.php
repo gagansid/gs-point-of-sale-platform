@@ -8,7 +8,8 @@ use App\Models\Shift;
 use App\Models\User;
 
 /**
- * Melihat shift: shift sendiri, atau semua shift bila punya shift.view_all.
+ * Melihat shift: shift yang pernah dipegang (pembuka atau operator, ADR 0017), atau semua shift bila punya
+ * shift.view_all.
  */
 final class ShiftPolicy
 {
@@ -20,6 +21,6 @@ final class ShiftPolicy
     public function view(User $user, Shift $shift): bool
     {
         return $shift->tenant_id === $user->tenant_id
-            && ($shift->opened_by === $user->id || $user->can('shift.view_all'));
+            && ($user->can('shift.view_all') || $shift->wasOperatedBy($user));
     }
 }

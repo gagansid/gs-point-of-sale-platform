@@ -229,7 +229,8 @@ Login kasir/supervisor dengan PIN 6 digit di device terdaftar.
 ### Respons sukses — `200`
 
 Sama dengan `POST /auth/login`; token berlaku maks. 16 jam dan terikat ke device
-(mencabut device memutus token ini).
+(mencabut device memutus token ini). Bila device punya shift terbuka, user dicatat sebagai **operator** shift itu
+(ganti kasir tanpa hitung uang, ADR 0017); login email owner/manager dengan `device_uid` terdaftar juga dicatat.
 
 ### Error
 

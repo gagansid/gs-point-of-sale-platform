@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\Cashier\ConfirmController as CashierConfirmController;
 use App\Http\Controllers\Web\Cashier\HomeController as CashierHomeController;
+use App\Http\Controllers\Web\Cashier\LockController as CashierLockController;
 use App\Http\Controllers\Web\Cashier\LoginController as CashierLoginController;
 use App\Http\Controllers\Web\Cashier\OrderController as CashierOrderController;
 use App\Http\Controllers\Web\Cashier\OutletController as CashierOutletController;
@@ -197,6 +198,10 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
 
     Route::middleware(SetCashierContext::class)->group(function (): void {
         Route::get('/', CashierHomeController::class)->name('home');
+        // Kunci layar & ganti kasir dengan PIN tanpa hitung uang (ADR 0017)
+        Route::post('lock', [CashierLockController::class, 'store'])->name('lock');
+        Route::get('unlock', [CashierLockController::class, 'show'])->name('unlock');
+        Route::post('unlock', [CashierLockController::class, 'unlock'])->middleware('throttle:10,1')->name('unlock.store');
         Route::get('self-orders', CashierSelfOrderController::class)->name('self-orders');
         Route::get('orders', [CashierOrderController::class, 'index'])->name('orders');
         Route::get('orders/{order}', [CashierOrderController::class, 'show'])->whereUuid('order')->name('orders.show');
@@ -206,6 +211,9 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
         Route::get('shift', [CashierShiftController::class, 'show'])->name('shift');
         Route::post('shift', [CashierShiftController::class, 'store'])->name('shift.store');
         Route::post('shift/close', [CashierShiftController::class, 'close'])->name('shift.close');
+        // ADR 0017: koreksi kas awal & kas masuk/keluar
+        Route::post('shift/opening-cash', [CashierShiftController::class, 'correctOpeningCash'])->name('shift.opening-cash');
+        Route::post('shift/cash-movements', [CashierShiftController::class, 'storeCashMovement'])->name('shift.cash-movements.store');
         Route::get('shifts/{shift}', [CashierShiftController::class, 'recap'])->whereUuid('shift')->name('shifts.show');
         Route::get('shifts/{shift}/pdf', [CashierShiftController::class, 'pdf'])->whereUuid('shift')->name('shifts.pdf');
     });

@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace App\Services\Shift;
 
+use App\Enums\CashMovementType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentCategory;
 use App\Enums\PaymentStatus;
+use App\Models\CashMovement;
 use App\Models\Payment;
+use App\Models\Scopes\OutletScope;
 use App\Models\Shift;
 use App\Support\Money;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Rekap shift: penjualan per metode bayar dan kas yang seharusnya ada di laci.
  * Hanya order SELESAI yang dihitung (open bill & void tidak).
  *
- * expected_cash = kas awal + penjualan tunai − kembalian = kas awal + Σ amount pembayaran tunai
- * (amount sudah bersih dari kembalian).
+ * expected_cash = kas awal + Σ amount pembayaran tunai (sudah bersih dari kembalian)
+ *               + kas masuk − kas keluar (ADR 0017).
  */
 final class ShiftSummary
 {
@@ -28,6 +32,8 @@ final class ShiftSummary
      *     payment_methods: list<array{payment_method_id: string, name: string, category: string, count: int, amount: string}>,
      *     opening_cash: string,
      *     cash_sales: string,
+     *     cash_in: string,
+     *     cash_out: string,
      *     expected_cash: string
      * }
      */
@@ -54,6 +60,7 @@ final class ShiftSummary
         }
 
         $cashSales = Money::add(...$payments->where('category', PaymentCategory::Cash)->pluck('amount')->all());
+        ['in' => $cashIn, 'out' => $cashOut] = self::movements($shift);
 
         return [
             'order_count' => (clone $orders)->count(),
@@ -63,7 +70,25 @@ final class ShiftSummary
             'payment_methods' => $byMethod,
             'opening_cash' => $shift->opening_cash,
             'cash_sales' => $cashSales,
-            'expected_cash' => Money::add($shift->opening_cash, $cashSales),
+            'cash_in' => $cashIn,
+            'cash_out' => $cashOut,
+            'expected_cash' => Money::sub(Money::add($shift->opening_cash, $cashSales, $cashIn), $cashOut),
+        ];
+    }
+
+    /**
+     * Total kas masuk & keluar shift.
+     *
+     * @return array{in: string, out: string}
+     */
+    public static function movements(Shift $shift): array
+    {
+        $totals = CashMovement::query()->withoutGlobalScope(OutletScope::class)->where('shift_id', $shift->id)
+            ->toBase()->select('type', DB::raw('SUM(amount) as total'))->groupBy('type')->pluck('total', 'type');
+
+        return [
+            'in' => Money::fromDb($totals[CashMovementType::In->value] ?? null),
+            'out' => Money::fromDb($totals[CashMovementType::Out->value] ?? null),
         ];
     }
 }

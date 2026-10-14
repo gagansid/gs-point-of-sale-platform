@@ -62,7 +62,7 @@ it('tutup shift: selisih kas tercatat, lalu Z-report', function () {
     $this->post(route('cashier.shift.close'), ['actual_cash' => '1'])->assertSessionHasErrors('cashier');
 });
 
-it('shift dibuka orang lain di browser ini: kasir tidak bisa tutup paksa, supervisor bisa dengan catatan', function () {
+it('shift dibuka orang lain di browser ini: kasir yang sedang bertugas menutup biasa (ADR 0017)', function () {
     $this->post(route('cashier.shift.store'), ['opening_cash' => '100000']);
     $shift = webShifts()->sole();
 
@@ -71,18 +71,11 @@ it('shift dibuka orang lain di browser ini: kasir tidak bisa tutup paksa, superv
     Auth::forgetGuards();
     $this->actingAs($other, 'cashier')->withSession(['cashier.password_hash' => WebCashier::passwordFingerprint($other)]);
     $other->forceFill(['web_cashier_access' => true])->save();
-    $this->post(route('cashier.shift.close'), ['actual_cash' => '100000', 'note' => 'x'])->assertForbidden();
+    $this->get(route('cashier.shift'))->assertOk()->assertSee('Tutup shift')->assertDontSee('Tutup paksa');
+    $this->post(route('cashier.shift.close'), ['actual_cash' => '100000'])->assertRedirect(route('cashier.shifts.show', $shift));
 
-    $sari = $this->pos->supervisor;
-    $sari->forceFill(['web_cashier_access' => true])->save();
-    Auth::forgetGuards();
-    $this->actingAs($sari, 'cashier')->withSession(['cashier.password_hash' => WebCashier::passwordFingerprint($sari)]);
-    $this->get(route('cashier.shift'))->assertOk()->assertSee('Tutup paksa shift');
-    $this->post(route('cashier.shift.close'), ['actual_cash' => '100000'])->assertSessionHasErrors('note');
-    $this->post(route('cashier.shift.close'), ['actual_cash' => '100000', 'note' => 'Budi pulang'])->assertRedirect();
-
-    expect($shift->fresh()?->status)->toBe(ShiftStatus::ForceClosed)
-        ->and($shift->fresh()?->closed_by)->toBe($sari->id);
+    expect($shift->fresh()?->status)->toBe(ShiftStatus::Closed)
+        ->and($shift->fresh()?->closed_by)->toBe($other->id);
 });
 
 it('rekap & PDF shift: shift tenant lain 404, kasir lain di outlet ditolak', function () {

@@ -19,10 +19,10 @@ Member: {{ number_format($summary['members']['member_orders'], 0, ',', '.') }} t
 </x-mail::panel>
 
 <x-mail::table>
-| Outlet | Omzet | Transaksi | Void | Selisih kas | Target |
-|:--|--:|--:|--:|--:|--:|
+| Outlet | Omzet | Transaksi | Void | Selisih kas | Disetor | Target |
+|:--|--:|--:|--:|--:|--:|--:|
 @foreach ($outlets as $row)
-| {{ $row['name'] }} | {{ $money($row['revenue']) }} | {{ $row['order_count'] }} | {{ $row['void_count'] > 0 ? $row['void_count'].' ('.$money($row['void_total']).')' : '–' }} | {{ $row['shift_count'] > 0 ? $money($row['cash_difference']) : '–' }} | {{ $row['target_percent'] !== null ? str_replace('.', ',', $row['target_percent']).'%' : '–' }} |
+| {{ $row['name'] }} | {{ $money($row['revenue']) }} | {{ $row['order_count'] }} | {{ $row['void_count'] > 0 ? $row['void_count'].' ('.$money($row['void_total']).')' : '–' }} | {{ $row['shift_count'] > 0 ? $money($row['cash_difference']) : '–' }} | {{ $row['shift_count'] > 0 ? $money($row['cash_deposited']) : '–' }} | {{ $row['target_percent'] !== null ? str_replace('.', ',', $row['target_percent']).'%' : '–' }} |
 @endforeach
 </x-mail::table>
 

@@ -20,6 +20,7 @@ use App\Models\Product;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Shift\ShiftSummary;
+use App\Support\Money;
 use App\Support\TenantContext;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -60,7 +61,8 @@ final class DemoTransactionsSeeder extends Seeder
             for ($daysAgo = 6; $daysAgo >= 0; $daysAgo--) {
                 $day = $today->copy()->subDays($daysAgo);
                 Carbon::setTestNow($day->copy()->utc());
-                $shift = app(OpenShift::class)->handle($cashier, $device, '200000.00')['shift'];
+                // Hari pertama diketik; berikutnya carry-over modal laci Rp200.000 (ADR 0017)
+                $shift = app(OpenShift::class)->handle($cashier, $device, $daysAgo === 6 ? '200000.00' : null)['shift'];
 
                 $orders = mt_rand(4, 9);
                 for ($i = 0; $i < $orders; $i++) {
@@ -75,7 +77,8 @@ final class DemoTransactionsSeeder extends Seeder
                 if ($daysAgo > 0) {
                     Carbon::setTestNow($day->copy()->setTime(21, 0)->utc());
                     $expected = app(ShiftSummary::class)->for($shift)['expected_cash'];
-                    app(CloseShift::class)->handle($cashier, $shift, $expected, null);
+                    // Penjualan tunai disetor, modal Rp200.000 ditinggal di laci
+                    app(CloseShift::class)->handle($cashier, $shift, $device, $expected, Money::sub($expected, '200000.00'), null);
                 }
             }
 

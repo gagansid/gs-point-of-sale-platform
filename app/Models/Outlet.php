@@ -35,6 +35,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property array<string, int|float>|null $discount_limits
  * @property string|null $daily_sales_target target omzet harian (Q56), null = tanpa target
  * @property string|null $monthly_sales_target target omzet bulanan (Q56)
+ * @property string|null $cash_float modal laci tetap (ADR 0017), null = tidak dipakai
+ * @property int|null $auto_lock_minutes kunci layar kasir otomatis (ADR 0017), null = mati
+ * @property string|null $cash_out_approval_limit kas keluar di atas nominal ini butuh PIN (ADR 0017), null = tanpa approval
  * @property bool $is_active
  */
 final class Outlet extends Model
@@ -59,9 +62,15 @@ final class Outlet extends Model
             'discount_limits',
             'daily_sales_target',
             'monthly_sales_target',
+            'cash_float',
+            'auto_lock_minutes',
+            'cash_out_approval_limit',
             'is_active',
         ];
     }
+
+    /** Bawaan sama dengan kolom DB (ADR 0017): kunci otomatis 5 menit, kas keluar > Rp100.000 butuh PIN. */
+    protected $attributes = ['auto_lock_minutes' => 5, 'cash_out_approval_limit' => '100000.00'];
 
     protected $fillable = [
         'code',
@@ -78,6 +87,9 @@ final class Outlet extends Model
         'discount_limits',
         'daily_sales_target',
         'monthly_sales_target',
+        'cash_float',
+        'auto_lock_minutes',
+        'cash_out_approval_limit',
         'is_active',
     ];
 
@@ -92,6 +104,9 @@ final class Outlet extends Model
             'discount_limits' => 'array',
             'daily_sales_target' => 'decimal:2',
             'monthly_sales_target' => 'decimal:2',
+            'cash_float' => 'decimal:2',
+            'auto_lock_minutes' => 'integer',
+            'cash_out_approval_limit' => 'decimal:2',
             'is_active' => 'boolean',
         ];
     }

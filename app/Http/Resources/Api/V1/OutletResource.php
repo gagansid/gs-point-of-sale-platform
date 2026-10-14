@@ -34,6 +34,10 @@ final class OutletResource extends JsonResource
             'discount_limits' => $this->discount_limits,
             'daily_sales_target' => $this->daily_sales_target,
             'monthly_sales_target' => $this->monthly_sales_target,
+            // ADR 0017: aplikasi mengunci layar setelah auto_lock_minutes tanpa aktivitas (null = mati)
+            'cash_float' => $this->cash_float,
+            'auto_lock_minutes' => $this->auto_lock_minutes,
+            'cash_out_approval_limit' => $this->cash_out_approval_limit,
         ];
     }
 }

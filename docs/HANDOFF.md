@@ -1,8 +1,8 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-11 · Branch: `feature/pos`
-> Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I4 (stok masuk, supplier, opname, transfer, laporan, ADR 0015) selesai. Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1271 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih.
+> Diperbarui: 2026-10-14 · Branch: `feature/pos`
+> Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I4 (ADR 0015), installer (ADR 0016), **shift bersama per perangkat C1–C4 (ADR 0017)** selesai. Deploy ditunda atas keputusan pemilik.
+> Kualitas: 1342 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
@@ -154,7 +154,26 @@ persiapan secrets & branch protection di `docs/deploy.md` (belum diaktifkan di G
 - Paket zip: tag `v*` → workflow Release (`scripts/release/build-package.sh`, edisi self_hosted & saas).
 - Belum: uji di hosting cPanel nyata.
 
-**Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5) menunggu key dari owner.
+### Shift bersama per perangkat (ADR 0017, SPEC Q87–Q91) — C1–C4 selesai 2026-10-14
+| Tahap | Isi |
+|---|---|
+| C1 | Setelan outlet **Laci kasir** (`cash_float`, `auto_lock_minutes` bawaan 5, `cash_out_approval_limit` bawaan Rp100.000); tutup shift oleh siapa saja yang bertugas di device itu; isian **Disetor** → `closing_float`; buka shift = **carry-over** sisa laci device yang sama (`opening_cash` opsional), koreksi kas awal (izin baru `shift.edit_opening_cash` / PIN approver) |
+| C2 | Log operator `shift_operators` (buka shift, login PIN/email di device, buka kunci & pilih outlet kasir web); kasir web tombol **Kunci** + kunci otomatis (JS, tanpa polling) → `/cashier/unlock` pilih nama + PIN; kasir melihat order shift berjalan di device-nya |
+| C3 | `cash_movements` (masuk/keluar, alasan tetap, idempotent), `expected_cash` ikut kas masuk/keluar, kas keluar ≤ isi laci, di atas batas → izin baru `shift.cash_out_over_limit` / PIN approver; API `POST /cash-movements`, `GET /shifts/{id}/cash-movements`, `POST /shifts/{id}/opening-cash` |
+| C4 | X/Z-report (web, PDF, API) kasir bertugas + kas masuk/keluar + disetor; laporan Shift & export kolom kas masuk/keluar & disetor; panel Audit kartu **Kas keluar** + kas awal dikoreksi; ringkasan harian kolom Disetor; detail shift dashboard; tutup paksa dashboard dengan Disetor |
+
+Catatan non-obvious: shift lama (sebelum ADR 0017) tanpa `closing_float` → shift berikutnya tetap mengetik kas awal;
+selisih kas ditanggung bersama (atas nama shift), siapa bertugas jam berapa ada di log operator; seeder demo kini
+menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
+
+**Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5) menunggu key dari owner;
+backlog fitur kasir berikutnya: retur sebagian → split/gabung bill → BOM + bundling → PO → promo otomatis → kasbon → paket langganan SaaS.
+
+Catatan untuk tim Flutter — **F9** shift bersama (ADR 0017, `docs/api/shift.md`): tombol Kunci + kunci otomatis
+(`outlet.auto_lock_minutes` dari `/auth/me`), buka kunci = `POST /auth/pin-login`; buka shift tanpa `opening_cash` bila
+`meta.carry_over_cash` ada (koreksi = `opening_cash` + `opening_cash_note` + approver); form tutup dengan `cash_deposited`;
+menu kas masuk/keluar (`POST /cash-movements`, tangani `APPROVAL_REQUIRED` + `error.details.limit`); siapa pun yang
+login di device boleh menutup shift (tutup paksa hanya untuk device lain).
 
 Catatan untuk tim Flutter (repo aplikasi): **F8** menu Pesanan masuk & Belum dibayar (`docs/api/self-order.md`), status order baru `awaiting_payment`/`expired`, jangan tampilkan metode `online`; **F5** tampilkan `tier` member & `member_tier` di struk; **F6** kartu stempel
 (`stamp_cards` di detail member → kirim `stamp_program_ids`; struk `member_stamps`); **F7** voucher (`vouchers` di detail

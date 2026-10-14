@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\ShiftStatus;
+use App\Models\Device;
 use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -95,14 +96,26 @@ describe('tutup shift', function () {
             ->assertJsonPath('meta.idempotent_replay', true);
     });
 
-    it('kasir lain tidak boleh menutup shift biasa', function () {
+    it('kasir lain yang bertugas di device yang sama boleh menutup (shift bersama, ADR 0017)', function () {
+        $other = User::factory()->cashier()->forOutlet($this->pos->outlet)->create();
+
+        $this->withToken(userToken($other, $this->pos->device))
+            ->postJson("/api/v1/shifts/{$this->shift->id}/close", ['actual_cash' => 200000], apiHeaders())
+            ->assertOk()
+            ->assertJsonPath('data.shift.status', 'closed')
+            ->assertJsonPath('data.shift.closed_by', $other->id);
+    });
+
+    it('tutup biasa dari device lain ditolak (pakai tutup paksa)', function () {
+        $otherDevice = Device::factory()->forOutlet($this->pos->outlet)->create();
         $other = User::factory()->cashier()->forOutlet($this->pos->outlet)->create();
 
         assertApiError(
-            $this->withToken(userToken($other, $this->pos->device))->postJson("/api/v1/shifts/{$this->shift->id}/close", ['actual_cash' => 0], apiHeaders()),
+            $this->withToken(userToken($other, $otherDevice))->postJson("/api/v1/shifts/{$this->shift->id}/close", ['actual_cash' => 0], apiHeaders()),
             'FORBIDDEN',
             403,
         );
+        expect($this->shift->refresh()->status)->toBe(ShiftStatus::Open);
     });
 
     it('supervisor menutup paksa dengan catatan wajib', function () {

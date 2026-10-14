@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services\Report;
 
+use App\Enums\CashMovementType;
+use App\Enums\OpeningCashSource;
 use App\Enums\OrderChannel;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
@@ -13,6 +15,7 @@ use App\Enums\PointEntryType;
 use App\Enums\ShiftStatus;
 use App\Enums\StockDocumentStatus;
 use App\Enums\StockMovementType;
+use App\Models\CashMovement;
 use App\Models\Member;
 use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
@@ -404,7 +407,7 @@ class ReportService
 
     /**
      * Temuan audit periode ini: void, diskon dengan approval PIN, dan shift bermasalah
-     * (selisih kas ≠ 0 atau ditutup paksa). Tiap daftar dibatasi $limit baris terbaru,
+     * (selisih kas ≠ 0, ditutup paksa, atau kas awal dikoreksi), kas keluar laci (ADR 0017). Tiap daftar dibatasi $limit baris terbaru,
      * jumlah total ada di *_count.
      *
      * @return array{
@@ -413,7 +416,10 @@ class ReportService
      *     discount_count: int, discount_total: string,
      *     discounts: list<array{order_id: string, order_number: string, outlet: string, discount_total: string, grand_total: string, cashier: string|null, approved_by: string|null, completed_at: string|null}>,
      *     shift_issue_count: int, shift_difference_total: string,
-     *     shifts: list<array{shift_id: string, outlet: string, cashier: string|null, closed_by: string|null, status: string, expected_cash: string, actual_cash: string, difference: string, note: string|null, closed_at: string|null}>
+     *     shifts: list<array{shift_id: string, outlet: string, cashier: string|null, closed_by: string|null, status: string, expected_cash: string, actual_cash: string, difference: string, note: string|null, closed_at: string|null,
+     *         opening_adjustment: array{from: string, to: string, note: string|null, by: string|null, approved_by: string|null}|null}>,
+     *     cash_out_count: int, cash_out_total: string,
+     *     cash_outs: list<array{id: string, shift_id: string, outlet: string, reason: string, amount: string, note: string|null, user: string|null, approved_by: string|null, created_at: string}>
      * }
      */
     public function audit(CarbonImmutable $start, CarbonImmutable $end, int $limit = 10, ?ReportFilters $filters = null): array
@@ -432,17 +438,28 @@ class ReportService
         $shiftQuery = CurrentOutlet::scope(Shift::query())
             ->whereIn('status', [ShiftStatus::Closed, ShiftStatus::ForceClosed])
             ->whereBetween('closed_at', [$start, $end])
-            ->where(fn (Builder $q) => $q->where('difference', '!=', 0)->orWhere('status', ShiftStatus::ForceClosed))
+            // Selisih kas, tutup paksa, atau kas awal dikoreksi (ADR 0017)
+            ->where(fn (Builder $q) => $q->where('difference', '!=', 0)->orWhere('status', ShiftStatus::ForceClosed)
+                ->orWhere('opening_cash_source', OpeningCashSource::Adjusted))
             ->when($filters !== null && $filters->userIds !== [], fn (Builder $q) => $q->whereIn('opened_by', $filters->userIds ?? []));
         $shiftTotals = (clone $shiftQuery)->toBase()->selectRaw('COUNT(*) as c, SUM(difference) as t')->first();
         $shifts = $shiftQuery->latest('closed_at')->limit($limit)
-            ->get(['id', 'outlet_id', 'opened_by', 'closed_by', 'status', 'expected_cash', 'actual_cash', 'difference', 'close_note', 'closed_at']);
+            ->get(['id', 'outlet_id', 'opened_by', 'closed_by', 'status', 'expected_cash', 'actual_cash', 'difference', 'close_note', 'closed_at',
+                'opening_cash_source', 'opening_cash', 'carried_cash', 'opening_cash_note', 'opening_cash_adjusted_by', 'opening_cash_approved_by']);
+
+        // Kas keluar laci (ADR 0017)
+        $cashOutQuery = $this->cashOutQuery($start, $end, $filters);
+        $cashOutTotals = (clone $cashOutQuery)->toBase()->selectRaw('COUNT(*) as c, SUM(amount) as t')->first();
+        $cashOuts = $cashOutQuery->latest('created_at')->limit($limit)
+            ->get(['id', 'outlet_id', 'shift_id', 'user_id', 'reason', 'type', 'amount', 'note', 'approved_by', 'created_at']);
 
         // Nama user & outlet dalam 2 query (tanpa N+1)
         $users = User::query()->whereIn('id', collect([
             ...$voids->pluck('voided_by'), ...$voids->pluck('void_approved_by'),
             ...$discounts->pluck('user_id'), ...$discounts->pluck('approved_by'),
             ...$shifts->pluck('opened_by'), ...$shifts->pluck('closed_by'),
+            ...$shifts->pluck('opening_cash_adjusted_by'), ...$shifts->pluck('opening_cash_approved_by'),
+            ...$cashOuts->pluck('user_id'), ...$cashOuts->pluck('approved_by'),
         ])->filter()->unique()->values())->pluck('name', 'id');
         $outlets = Outlet::query()->whereIn('id', CurrentOutlet::ids())->pluck('name', 'id');
 
@@ -486,8 +503,42 @@ class ReportService
                 'difference' => Money::fromDb($s->difference),
                 'note' => $s->close_note,
                 'closed_at' => $s->closed_at?->toIso8601ZuluString(),
+                // Kas awal dikoreksi (ADR 0017): null bila tidak
+                'opening_adjustment' => $s->opening_cash_source === OpeningCashSource::Adjusted ? [
+                    'from' => Money::fromDb($s->carried_cash),
+                    'to' => Money::fromDb($s->opening_cash),
+                    'note' => $s->opening_cash_note,
+                    'by' => $name($s->opening_cash_adjusted_by),
+                    'approved_by' => $name($s->opening_cash_approved_by),
+                ] : null,
+            ])->values()->all(),
+            'cash_out_count' => (int) ($cashOutTotals->c ?? 0),
+            'cash_out_total' => Money::fromDb($cashOutTotals->t ?? null),
+            'cash_outs' => $cashOuts->map(fn (CashMovement $m): array => [
+                'id' => (string) $m->id,
+                'shift_id' => (string) $m->shift_id,
+                'outlet' => (string) ($outlets[$m->outlet_id] ?? ''),
+                'reason' => $m->reason->getLabel(),
+                'amount' => Money::fromDb($m->amount),
+                'note' => $m->note,
+                'user' => $name($m->user_id),
+                'approved_by' => $name($m->approved_by),
+                'created_at' => $m->created_at->toIso8601ZuluString(),
             ])->values()->all(),
         ];
+    }
+
+    /**
+     * Kas keluar laci pada rentang (ADR 0017), outlet terpilih; filter kasir = pencatat.
+     *
+     * @return Builder<CashMovement>
+     */
+    public function cashOutQuery(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): Builder
+    {
+        return CurrentOutlet::scope(CashMovement::query())
+            ->where('type', CashMovementType::Out)
+            ->whereBetween('created_at', [$start, $end])
+            ->when($filters !== null && $filters->userIds !== [], fn (Builder $q) => $q->whereIn('user_id', $filters->userIds ?? []));
     }
 
     /**
@@ -791,16 +842,17 @@ class ReportService
     }
 
     /**
-     * Rekap per shift yang DIBUKA pada rentang: kasir, waktu, kas awal, penjualan & tunai,
-     * kas seharusnya vs aktual, selisih. Shift berjalan: kas seharusnya dihitung saat ini.
+     * Rekap per shift yang DIBUKA pada rentang: kasir, waktu, kas awal, penjualan & tunai, kas masuk/keluar,
+     * kas seharusnya vs aktual, selisih, disetor (ADR 0017). Shift berjalan: kas seharusnya dihitung saat ini.
      *
      * @return list<array{shift_id: string, outlet: string, cashier: string, status: string, opened_at: string, closed_at: string|null,
-     *     order_count: int, sales_total: string, opening_cash: string, cash_sales: string, expected_cash: string, actual_cash: string|null, difference: string|null}>
+     *     order_count: int, sales_total: string, opening_cash: string, cash_sales: string, cash_in: string, cash_out: string, expected_cash: string,
+     *     actual_cash: string|null, difference: string|null, cash_deposited: string|null}>
      */
     public function shifts(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null, ?string $openedBy = null): array
     {
         $shifts = $this->shiftQuery($start, $end, $filters, $openedBy)->orderByDesc('opened_at')
-            ->get(['id', 'outlet_id', 'opened_by', 'status', 'opened_at', 'closed_at', 'opening_cash', 'expected_cash', 'actual_cash', 'difference']);
+            ->get(['id', 'outlet_id', 'opened_by', 'status', 'opened_at', 'closed_at', 'opening_cash', 'expected_cash', 'actual_cash', 'difference', 'cash_deposited']);
 
         $ids = $shifts->pluck('id');
         $sales = Order::query()->whereIn('shift_id', $ids)->where('status', OrderStatus::Completed)->toBase()
@@ -816,13 +868,20 @@ class ReportService
             ->toBase()
             ->select('orders.shift_id', DB::raw('SUM(payments.amount) as cash_sales'))
             ->groupBy('orders.shift_id')->get()->keyBy('shift_id');
+        // Kas masuk/keluar per shift (ADR 0017)
+        $movements = CashMovement::query()->whereIn('shift_id', $ids)->toBase()
+            ->select('shift_id', 'type', DB::raw('SUM(amount) as total'))
+            ->groupBy('shift_id', 'type')->get()->groupBy('shift_id');
 
         $names = User::query()->whereIn('id', $shifts->pluck('opened_by')->unique()->values())->pluck('name', 'id');
         $outlets = Outlet::query()->whereIn('id', CurrentOutlet::ids())->pluck('name', 'id');
 
-        return $shifts->map(function (Shift $shift) use ($sales, $cash, $names, $outlets): array {
+        return $shifts->map(function (Shift $shift) use ($sales, $cash, $movements, $names, $outlets): array {
             $cashSales = Money::fromDb($cash[$shift->id]->cash_sales ?? null);
             $opening = Money::fromDb($shift->opening_cash);
+            $moved = collect($movements[$shift->id] ?? [])->pluck('total', 'type');
+            $cashIn = Money::fromDb($moved[CashMovementType::In->value] ?? null);
+            $cashOut = Money::fromDb($moved[CashMovementType::Out->value] ?? null);
 
             return [
                 'shift_id' => (string) $shift->id,
@@ -835,9 +894,12 @@ class ReportService
                 'sales_total' => Money::fromDb($sales[$shift->id]->sales_total ?? null),
                 'opening_cash' => $opening,
                 'cash_sales' => $cashSales,
-                'expected_cash' => $shift->expected_cash !== null ? Money::fromDb($shift->expected_cash) : Money::add($opening, $cashSales),
+                'cash_in' => $cashIn,
+                'cash_out' => $cashOut,
+                'expected_cash' => $shift->expected_cash !== null ? Money::fromDb($shift->expected_cash) : Money::sub(Money::add($opening, $cashSales, $cashIn), $cashOut),
                 'actual_cash' => $shift->actual_cash !== null ? Money::fromDb($shift->actual_cash) : null,
                 'difference' => $shift->difference !== null ? Money::fromDb($shift->difference) : null,
+                'cash_deposited' => $shift->cash_deposited !== null ? Money::fromDb($shift->cash_deposited) : null,
             ];
         })->values()->all();
     }

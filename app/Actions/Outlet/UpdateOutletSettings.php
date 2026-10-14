@@ -33,6 +33,9 @@ final class UpdateOutletSettings
             'discount_limits' => $data->discountLimits,
             'daily_sales_target' => $data->dailySalesTarget,
             'monthly_sales_target' => $data->monthlySalesTarget,
+            'cash_float' => $data->cashFloat,
+            'auto_lock_minutes' => $data->autoLockMinutes,
+            'cash_out_approval_limit' => $data->cashOutApprovalLimit,
         ])->save());
 
         return $outlet->refresh();

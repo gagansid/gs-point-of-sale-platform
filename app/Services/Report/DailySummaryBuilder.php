@@ -27,9 +27,9 @@ final class DailySummaryBuilder
 {
     /**
      * @return array{date: string, has_activity: bool, outlets: list<array{name: string, order_count: int, revenue: string, average: string,
-     *     void_count: int, void_total: string, shift_count: int, cash_difference: string, target: string|null, target_percent: string|null,
+     *     void_count: int, void_total: string, shift_count: int, cash_difference: string, cash_deposited: string, target: string|null, target_percent: string|null,
      *     member_orders: int, member_revenue: string, new_members: int, points_redeemed: int}>,
-     *     totals: array{order_count: int, revenue: string, void_count: int, void_total: string, cash_difference: string},
+     *     totals: array{order_count: int, revenue: string, void_count: int, void_total: string, cash_difference: string, cash_deposited: string},
      *     members: array{member_orders: int, member_revenue: string, new_members: int, points_redeemed: int}|null}
      */
     public function build(User $user, string $date): array
@@ -52,7 +52,7 @@ final class DailySummaryBuilder
             $shifts = Shift::query()->where('outlet_id', $outlet->id)
                 ->whereIn('status', [ShiftStatus::Closed, ShiftStatus::ForceClosed])
                 ->whereBetween('closed_at', [$start, $end])->toBase()
-                ->selectRaw('COUNT(*) as shift_count, SUM(difference) as difference')->first();
+                ->selectRaw('COUNT(*) as shift_count, SUM(difference) as difference, SUM(cash_deposited) as deposited')->first();
 
             $count = (int) ($sales->order_count ?? 0);
             $revenue = Money::fromDb($sales->revenue ?? null);
@@ -67,6 +67,8 @@ final class DailySummaryBuilder
                 'void_total' => Money::fromDb($voids->void_total ?? null),
                 'shift_count' => (int) ($shifts->shift_count ?? 0),
                 'cash_difference' => Money::fromDb($shifts->difference ?? null),
+                // Uang yang diambil dari laci saat tutup shift (ADR 0017)
+                'cash_deposited' => Money::fromDb($shifts->deposited ?? null),
                 'target' => $target,
                 // Program member (ADR 0013, M7)
                 'member_orders' => (int) ($sales->member_orders ?? 0),
@@ -91,6 +93,7 @@ final class DailySummaryBuilder
                 'void_count' => (int) array_sum(array_column($rows, 'void_count')),
                 'void_total' => $sum('void_total'),
                 'cash_difference' => $sum('cash_difference'),
+                'cash_deposited' => $sum('cash_deposited'),
             ],
             // Null = program member belum aktif (baris member tidak ditampilkan)
             'members' => MemberSetting::current()->enabled ? [

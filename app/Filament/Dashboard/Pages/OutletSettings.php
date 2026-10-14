@@ -79,7 +79,7 @@ final class OutletSettings extends Page
         $limits = $outlet->discount_limits ?? config('pos.outlet_defaults.discount_limits');
 
         $this->settingsForm()->fill([
-            ...$outlet->only(['code', 'name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer', 'receipt_show_rounding', 'daily_sales_target', 'monthly_sales_target']),
+            ...$outlet->only(['code', 'name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer', 'receipt_show_rounding', 'daily_sales_target', 'monthly_sales_target', 'cash_float', 'auto_lock_minutes', 'cash_out_approval_limit']),
             'discount_limits' => ['cashier' => $limits['cashier'] ?? 0, 'supervisor' => $limits['supervisor'] ?? 0],
         ]);
     }
@@ -154,6 +154,21 @@ final class OutletSettings extends Page
                                 ->rules($rules['daily_sales_target'])->placeholder('3000000'),
                             TextInput::make('monthly_sales_target')->label('Bulanan')->prefix('Rp')->numeric()
                                 ->rules($rules['monthly_sales_target'])->placeholder('90000000'),
+                        ]),
+
+                    // ADR 0017: shift bersama per perangkat
+                    Section::make('Laci kasir')
+                        ->description('Ganti kasir tanpa hitung uang; uang dihitung sekali saat tutup shift')
+                        ->schema([
+                            TextInput::make('cash_float')->label('Modal laci tetap')->prefix('Rp')->numeric()
+                                ->rules($rules['cash_float'])->placeholder('500000')
+                                ->helperText('Saat tutup shift, Disetor terisi otomatis = kas dihitung − modal ini. Kosongkan bila tidak dipakai'),
+                            TextInput::make('auto_lock_minutes')->label('Kunci layar otomatis')->suffix('menit')->integer()
+                                ->rules($rules['auto_lock_minutes'])->placeholder('5')
+                                ->helperText('Layar kasir terkunci bila tidak dipakai. Kosongkan untuk mematikan'),
+                            TextInput::make('cash_out_approval_limit')->label('Kas keluar tanpa PIN maksimal')->prefix('Rp')->numeric()
+                                ->rules($rules['cash_out_approval_limit'])->placeholder('100000')
+                                ->helperText('Kas keluar kasir di atas nominal ini butuh PIN atasan. Kosongkan bila tidak perlu'),
                         ]),
                 ]),
             ]);

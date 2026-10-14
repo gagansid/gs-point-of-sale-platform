@@ -15,7 +15,7 @@ use Filament\Tables\Table;
 
 /**
  * Laporan › Shift: per shift yang dibuka pada periode — kasir, buka/tutup, kas awal, penjualan
- * tunai, kas seharusnya vs aktual, selisih (badge success/danger), ditutup paksa.
+ * tunai, kas masuk/keluar, kas seharusnya vs aktual, selisih (badge success/danger), disetor, ditutup paksa.
  */
 final class ShiftsTableWidget extends ReportTableWidget
 {
@@ -55,8 +55,13 @@ final class ShiftsTableWidget extends ReportTableWidget
                 self::countColumn('order_count', 'Transaksi')->visibleFrom('lg'),
                 self::moneyColumn('opening_cash', 'Kas awal')->visibleFrom('xl'),
                 self::moneyColumn('cash_sales', 'Tunai')->visibleFrom('lg'),
+                // ADR 0017: kas masuk − keluar selama shift & setoran saat tutup
+                TextColumn::make('cash_net')->label('Kas masuk/keluar')->alignEnd()->visibleFrom('2xl')
+                    ->state(fn (array $record): string => Money::sub($record['cash_in'], $record['cash_out']))
+                    ->formatStateUsing(fn (string $state): string => Money::compare($state, '0') === 0 ? '–' : (Money::compare($state, '0') > 0 ? '+' : '').Money::format($state)),
                 self::moneyColumn('expected_cash', 'Seharusnya'),
                 self::moneyColumn('actual_cash', 'Aktual')->visibleFrom('md'),
+                self::moneyColumn('cash_deposited', 'Disetor')->visibleFrom('xl'),
                 TextColumn::make('difference')->label('Selisih')->alignEnd()->sortable()->badge()
                     ->formatStateUsing(fn (?string $state): string => $state === null ? 'Berjalan' : Money::format($state))
                     ->color(fn (?string $state): string => match (true) {

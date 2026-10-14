@@ -18,7 +18,7 @@ final class ViewShift extends ViewRecord
 
     protected function resolveRecord(int|string $key): Model
     {
-        return parent::resolveRecord($key)->load(['openedBy', 'closedBy', 'device']);
+        return parent::resolveRecord($key)->load(['openedBy', 'closedBy', 'device', 'openingCashAdjustedBy', 'openingCashApprovedBy']);
     }
 
     /** Judul = "Shift {pembuka} · {waktu buka}" (layout.md: judul halaman detail = nama objek). */

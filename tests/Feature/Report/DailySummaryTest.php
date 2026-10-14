@@ -53,7 +53,7 @@ beforeEach(function () {
     TenantContext::run($this->pos->tenantId, function () use ($voided): void {
         app(VoidOrder::class)->handle($this->pos->supervisor, $voided, 'Batal', null);
         // Kas seharusnya 200.000 + 56.000 = 256.000; dihitung 251.000
-        app(CloseShift::class)->handle($this->pos->cashier, $this->pos->shift->refresh(), '251000', null);
+        app(CloseShift::class)->handle($this->pos->cashier, $this->pos->shift->refresh(), $this->pos->device, '251000', null, null);
         Shift::factory()->forDevice($this->pos->device, $this->pos->cashier)->create(['opening_cash' => '200000.00']);
     });
     // Hari ini (8 Okt WIB) tidak ikut ringkasan kemarin

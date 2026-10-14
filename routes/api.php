@@ -80,7 +80,11 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::post('{shift}/close', 'close')->name('close');
             Route::get('{shift}/summary', 'summary')->name('summary');
             Route::post('{shift}/force-close', 'forceClose')->name('force-close');
+            // ADR 0017: koreksi kas awal & kas masuk/keluar
+            Route::post('{shift}/opening-cash', 'correctOpeningCash')->name('opening-cash');
+            Route::get('{shift}/cash-movements', 'cashMovements')->name('cash-movements');
         });
+        Route::post('cash-movements', [ShiftController::class, 'storeCashMovement'])->name('cash-movements.store');
 
         // ---------- Order & pembayaran ----------
         Route::post('checkout', [OrderController::class, 'checkout'])->name('checkout');

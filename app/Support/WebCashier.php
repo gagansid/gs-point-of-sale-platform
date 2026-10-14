@@ -30,6 +30,9 @@ final class WebCashier
 
     public const SESSION_PASSWORD = 'cashier.password_hash';
 
+    /** Layar dikunci (ADR 0017): hanya halaman buka kunci & keluar yang bisa dibuka */
+    public const SESSION_LOCKED = 'cashier.locked';
+
     public static function guard(): StatefulGuard
     {
         return Auth::guard(self::GUARD);
@@ -70,11 +73,16 @@ final class WebCashier
         return hash_hmac('sha256', (string) $user->password, (string) config('app.key'));
     }
 
+    public static function isLocked(Request $request): bool
+    {
+        return (bool) $request->session()->get(self::SESSION_LOCKED, false);
+    }
+
     /** Keluar dari kasir web saja; sesi /dashboard di browser yang sama tidak ikut keluar. */
     public static function logout(Request $request): void
     {
         self::guard()->logout();
-        $request->session()->forget([self::SESSION_DEVICE, self::SESSION_PASSWORD]);
+        $request->session()->forget([self::SESSION_DEVICE, self::SESSION_PASSWORD, self::SESSION_LOCKED]);
         $request->session()->regenerateToken();
     }
 }

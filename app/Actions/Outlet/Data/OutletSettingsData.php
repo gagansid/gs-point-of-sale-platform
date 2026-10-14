@@ -31,6 +31,10 @@ final readonly class OutletSettingsData
         // Q56: target omzet (null = tanpa target)
         public ?string $dailySalesTarget = null,
         public ?string $monthlySalesTarget = null,
+        // ADR 0017: modal laci tetap, kunci layar otomatis (menit), batas kas keluar tanpa PIN; null = tidak dipakai
+        public ?string $cashFloat = null,
+        public ?int $autoLockMinutes = null,
+        public ?string $cashOutApprovalLimit = null,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -57,6 +61,10 @@ final readonly class OutletSettingsData
             receiptShowRounding: (bool) ($data['receipt_show_rounding'] ?? false),
             dailySalesTarget: $target('daily_sales_target'),
             monthlySalesTarget: $target('monthly_sales_target'),
+            cashFloat: $target('cash_float'),
+            autoLockMinutes: filled($data['auto_lock_minutes'] ?? null) && (int) $data['auto_lock_minutes'] > 0 ? (int) $data['auto_lock_minutes'] : null,
+            // 0 = setiap kas keluar kasir butuh PIN; kosong = tanpa approval
+            cashOutApprovalLimit: filled($data['cash_out_approval_limit'] ?? null) ? Money::of((string) $data['cash_out_approval_limit']) : null,
         );
     }
 }

@@ -9,7 +9,7 @@ beranda dashboard, halaman Laporan, dan file Excel/PDF.
 |---|---|---|
 | `report.view` | owner, manager | Semua, periode maks. 366 hari per query |
 | `report.view_shift` | + supervisor | `summary`, `trend`, `products`, `payment-methods`, `employees`, `shifts`, `audit` — `from` maks. **31 hari ke belakang** dari hari ini (lebih lama → `422`) |
-| `report.view_own` | + kasir | `shifts/{id}` untuk shift sendiri (X/Z-report) |
+| `report.view_own` | + kasir | `shifts/{id}` untuk shift yang pernah dipegang (pembuka atau operator, ADR 0017) — X/Z-report |
 
 | Method | Endpoint | Izin | Isi |
 |---|---|---|---|
@@ -18,10 +18,10 @@ beranda dashboard, halaman Laporan, dan file Excel/PDF.
 | GET | `/reports/products` | view / view_shift | Per produk, urut omzet terbesar |
 | GET | `/reports/payment-methods` | view / view_shift | Per metode bayar |
 | GET | `/reports/employees` | view / view_shift | Per kasir: transaksi, omzet, rata-rata, diskon, void |
-| GET | `/reports/shifts` | view / view_shift | Shift yang dibuka pada rentang: kas awal, tunai, kas seharusnya vs aktual, selisih |
-| GET | `/reports/shifts/{id}` | view / view_shift (≤ 31 hari) / view_own (shift sendiri) | Rekap satu shift: `type` `x_report` (berjalan) / `z_report` (ditutup), penjualan, kas, metode bayar, produk |
+| GET | `/reports/shifts` | view / view_shift | Shift yang dibuka pada rentang: kas awal, tunai, `cash_in`, `cash_out`, kas seharusnya vs aktual, selisih, `cash_deposited` |
+| GET | `/reports/shifts/{id}` | view / view_shift (≤ 31 hari) / view_own (pembuka/operator) | Rekap satu shift: `type` `x_report` (berjalan) / `z_report` (ditutup), penjualan, kas (`carried_cash`, `cash_in`, `cash_out`, `cash_deposited`, `closing_float`), `shift.opening_cash_source` + koreksinya, `operators` (jam bertugas, transaksi, omzet, tunai per kasir), `cash_movements`, metode bayar, produk (ADR 0017) |
 | GET | `/reports/shifts/{id}/pdf` | sama dengan `shifts/{id}` | PDF rekap shift (`application/pdf`), maks. 10 export/menit per user |
-| GET | `/reports/audit` | view / view_shift | Void, diskon dengan approval PIN, shift selisih kas (20 terbaru + jumlah) |
+| GET | `/reports/audit` | view / view_shift | Void, diskon dengan approval PIN, shift selisih kas / ditutup paksa / kas awal dikoreksi (`opening_adjustment`), kas keluar (`cash_out_count`, `cash_out_total`, `cash_outs`) — 20 terbaru + jumlah |
 | GET | `/reports/categories` | view | Per kategori dari snapshot `order_items.category_name` (Q51) |
 | GET | `/reports/channels` | view | Per kanal (ADR 0014): `channels[]` `{ channel (pos/self_order), label, order_count, revenue, online_total }` |
 | GET | `/reports/members` | view | Member (ADR 0013, M7): `summary` (member vs non-member: transaksi & omzet, `member_share` %, member aktif/berulang ≥ 2 kali/baru (outlet daftar), diskon member, poin didapat/ditukar/kedaluwarsa, **utang poin** saat ini = saldo aktif × nilai poin (seluruh bisnis), voucher & gratis stempel), `top_members` (20 teratas), `vouchers` (per kode), `tiers` (sebaran saat ini) |

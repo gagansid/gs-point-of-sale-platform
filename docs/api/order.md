@@ -157,7 +157,7 @@ Visibilitas (Q21):
 |---|---|
 | `order.view_all` + `report.view` (owner, manager) | Semua order |
 | `order.view_all` tanpa `report.view` (supervisor) | Semua order **hari ini** |
-| `order.view_own` (kasir) | Order di shift yang ia buka + **semua open bill** |
+| `order.view_own` (kasir) | Order di shift yang ia buka + shift yang **sedang terbuka di device-nya** (ganti kasir tanpa hitung, ADR 0017) + **semua open bill** |
 
 Order di luar visibilitas → `403` di detail/struk; order tenant lain → `404`.
 

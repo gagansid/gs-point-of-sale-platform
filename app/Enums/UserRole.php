@@ -34,6 +34,9 @@ enum UserRole: string implements HasColor, HasLabel
         'shift.operate',
         'shift.view_all',
         'shift.force_close',
+        // Shift bersama per perangkat (ADR 0017): koreksi kas awal carry-over, kas keluar di atas batas tanpa PIN
+        'shift.edit_opening_cash',
+        'shift.cash_out_over_limit',
         'product.toggle_available',
         'product.manage',
         'stock.adjust',

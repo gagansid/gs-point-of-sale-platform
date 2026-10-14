@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Auth;
 
 use App\Actions\Auth\Data\AuthResult;
+use App\Actions\Shift\RecordShiftOperator;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Device;
@@ -19,6 +20,7 @@ final class LoginWithPin
     public function __construct(
         private readonly VerifyPin $verifyPin,
         private readonly IssueUserToken $issueToken,
+        private readonly RecordShiftOperator $operators,
     ) {}
 
     /**
@@ -38,6 +40,9 @@ final class LoginWithPin
 
         $expiresAt = now()->addMinutes((int) config('pos.tokens.cashier_ttl'));
         $token = $this->issueToken->handle($user, 'pin:'.$device->device_uid, $expiresAt, $device);
+
+        // Ganti kasir tanpa hitung (ADR 0017): karyawan yang login di perangkat menjadi operator shift berjalan
+        $this->operators->handle($device, $user);
 
         return new AuthResult($user, $token);
     }

@@ -37,6 +37,11 @@
                 <a href="{{ $url }}" @class(['is-active' => $active === $key]) @if ($active === $key) aria-current="page" @endif>{{ $label }}@if ($key === 'self-orders')<livewire:cashier.self-order-badge />@endif</a>
             @endforeach
         </nav>
+        {{-- Kunci layar → kasir lain masuk dengan PIN, shift berlanjut tanpa hitung uang (ADR 0017) --}}
+        <form method="POST" action="{{ route('cashier.lock') }}" class="cashier-logout" data-lock-form>
+            @csrf
+            <button type="submit" class="site-link-button" title="Kunci layar untuk ganti kasir">Kunci</button>
+        </form>
         <form method="POST" action="{{ route('cashier.logout') }}" class="cashier-logout">
             @csrf
             <button type="submit" class="site-link-button">Keluar</button>
@@ -104,6 +109,21 @@
             @if ($errors->has('cashier'))
                 window.cashierToast(@js($errors->first('cashier')), 'danger');
             @endif
+        })();
+
+        // Kunci otomatis (ADR 0017): tanpa ketikan/sentuhan/klik selama auto_lock_minutes → layar PIN.
+        // Polling Livewire bukan aktivitas pengguna, jadi tidak menunda kunci.
+        (() => {
+            const minutes = @js($outlet?->auto_lock_minutes);
+            const form = document.querySelector('[data-lock-form]');
+            if (! minutes || ! form) return;
+            let timer;
+            const reset = () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => form.submit(), minutes * 60 * 1000);
+            };
+            ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach((name) => document.addEventListener(name, reset, { passive: true }));
+            reset();
         })();
 
         // Konfirmasi dua langkah tanpa dialog bawaan browser (bisa diblokir browser tertanam):

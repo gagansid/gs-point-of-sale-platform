@@ -35,11 +35,12 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | **Program member** | ADR 0013: M1 data & menu, M2 poin, M3 tukar poin & diskon member, M4 halaman member, M5 tier, M6 kartu stempel, M7 voucher + laporan member + ringkasan harian + import/export ✅ | ✅ | `0dd6186` … |
 | **Self-order QR meja** | ADR 0014: S1 meja & QR + setelan, S2 halaman HP + Pesanan meja di kasir web + kedaluwarsa, S3 Midtrans owner + webhook, S4 API Flutter + laporan kanal + bayar poin dari HP ✅ | ✅ | `2381693` … |
 | **Stok masuk, opname, transfer** | ADR 0015: I1 supplier + stok masuk (modal rata-rata tertimbang), I2 stok opname, I3 transfer antar outlet, I4 laporan stok & pembelian ✅ | ✅ | `c93026c` … |
+| **Shift bersama per perangkat** | ADR 0017 (Q87–Q91): C1 setoran + carry-over kas awal + koreksi + tutup oleh operator mana pun, C2 log operator + kunci layar (manual/otomatis) + buka kunci PIN di kasir web, C3 kas masuk/keluar (approval di atas batas), C4 Z-report/PDF, laporan Shift, panel Audit, ringkasan harian, detail shift dashboard ✅ | ✅ 2026-10-14 | — |
 | Self-order meja | ADR 0014 (S1–S4), setelah M5–M7 | ⏳ | — |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ✅ 2026-10-11 (sisa: OWASP ZAP & uji manual di staging) | `38a67cd`..`fe6d252` |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
-Endpoint selesai: **58** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q74, ADR 0001–0014.
+Endpoint selesai: **73** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q91, ADR 0001–0017.
 
 ---
 

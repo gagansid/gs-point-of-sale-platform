@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Cashier;
 
+use App\Actions\Auth\PinApprovers;
 use App\Actions\Order\Data\CheckoutData;
 use App\Actions\Order\VisibleOrders;
 use App\Actions\Order\VoidOrder;
@@ -45,9 +46,7 @@ final class OrderController extends Controller
             'order' => $model->load(['items.options', 'payments.method', 'user:id,name']),
             'timezone' => CurrentOutlet::timezone(),
             'canVoidSelf' => self::user()->can('order.void'),
-            'approvers' => self::user()->can('order.void') ? collect() : User::query()->where('is_active', true)->whereNotNull('pin')
-                ->whereKeyNot(self::user()->id)->orderBy('name')->get()
-                ->filter(fn (User $u): bool => $u->can('order.void') && $u->canAccessOutlet($model->outlet_id))->values(),
+            'approvers' => PinApprovers::for(self::user(), 'order.void', $model->outlet_id),
         ]);
     }
 

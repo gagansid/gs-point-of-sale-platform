@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web\Cashier;
 
 use App\Actions\Cashier\RegisterWebDevice;
+use App\Actions\Shift\RecordShiftOperator;
 use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
 use App\Models\Outlet;
@@ -59,6 +60,8 @@ final class OutletController extends Controller
         }
 
         $request->session()->put(WebCashier::SESSION_DEVICE, $device->id);
+        // Masuk dengan kata sandi di browser yang shift-nya berjalan = ganti kasir (ADR 0017)
+        app(RecordShiftOperator::class)->handle($device, self::user());
 
         return redirect()->route('cashier.home');
     }
