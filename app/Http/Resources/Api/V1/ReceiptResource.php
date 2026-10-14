@@ -74,6 +74,9 @@ final class ReceiptResource extends JsonResource
                 // Bagian discount_total dari diskon member (ADR 0013)
                 'member_discount' => $this->member_discount,
                 'stamp_free_total' => $this->stamp_free_total,
+                // Promo otomatis (ADR 0022): nominal & nama promo
+                'promo_discount' => $this->promo_discount,
+                'promotions' => array_map(fn (array $p): array => ['name' => $p['name'], 'amount' => $p['amount']], $this->promotions ?? []),
                 'voucher_code' => $this->voucher_code,
                 'voucher_discount' => $this->voucher_discount,
                 'service_rate' => $this->service_rate,

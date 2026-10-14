@@ -43,6 +43,9 @@ final class OrderResource extends JsonResource
             'member_discount' => $this->member_discount,
             // Gratis kartu stempel (M6): bagian dari discount_total
             'stamp_free_total' => $this->stamp_free_total,
+            // Promo otomatis (ADR 0022)
+            'promo_discount' => $this->promo_discount,
+            'promotions' => $this->promotions ?? [],
             'stamp_redemptions' => $this->stamp_redemptions ?? [],
             'stamps_earned' => $this->stamps_earned,
             // Voucher (M7): bagian dari discount_total

@@ -28,7 +28,8 @@ trait OpenBillItems
         $problem = match (true) {
             $order->status !== OrderStatus::Open => 'Hanya open bill yang bisa dipecah atau digabung.',
             Money::isPositive($order->paid_total) => 'Open bill '.$order->order_number.' sudah ada pembayaran.',
-            Money::isPositive($order->discount_total) || $order->discount_type !== null => 'Lepas diskon di open bill '.$order->order_number.' dulu.',
+            // Diskon manual (order/item); diskon member & promo otomatis dihitung ulang sendiri
+            $order->discount_type !== null || $order->items()->where('discount', '>', 0)->exists() => 'Lepas diskon di open bill '.$order->order_number.' dulu.',
             $order->voucher_id !== null => 'Lepas voucher di open bill '.$order->order_number.' dulu.',
             ($order->stamp_redemptions ?? []) !== [] => 'Lepas kartu stempel di open bill '.$order->order_number.' dulu.',
             default => null,

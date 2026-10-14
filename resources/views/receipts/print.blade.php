@@ -90,13 +90,18 @@
         @php($stampFree = $t['stamp_free_total'] ?? '0.00')
         {{-- Diskon kasir (item + order); potongan program member ditampilkan terpisah --}}
         @php($voucherDiscount = $t['voucher_discount'] ?? '0.00')
-        @php($manualDiscount = Money::sub(Money::sub(Money::sub($t['discount_total'], $memberDiscount), $stampFree), $voucherDiscount))
+        @php($promoDiscount = $t['promo_discount'] ?? '0.00')
+        @php($manualDiscount = Money::sub(Money::sub(Money::sub(Money::sub($t['discount_total'], $memberDiscount), $stampFree), $voucherDiscount), $promoDiscount))
         @if (Money::isPositive($manualDiscount))
             <div class="row"><span>Diskon</span><span>-{{ $rp($manualDiscount) }}</span></div>
         @endif
         @if (Money::isPositive($stampFree))
             <div class="row"><span>Gratis stempel</span><span>-{{ $rp($stampFree) }}</span></div>
         @endif
+        {{-- Promo otomatis per nama (ADR 0022) --}}
+        @foreach ($t['promotions'] ?? [] as $promo)
+            <div class="row"><span>{{ $promo['name'] }}</span><span>-{{ $rp($promo['amount']) }}</span></div>
+        @endforeach
         @if (Money::isPositive($voucherDiscount))
             <div class="row"><span>Voucher {{ $t['voucher_code'] ?? '' }}</span><span>-{{ $rp($voucherDiscount) }}</span></div>
         @endif

@@ -15,6 +15,7 @@ Endpoint tulis (checkout, open bill, bayar) butuh token user terikat device kasi
 | GET | `/refundable-orders/{nomor}` | `order.create` | baca | `RefundableOrders` |
 | POST | `/orders/{id}/split` | `order.create` | ya: `new_order_id` | `SplitOpenBill` |
 | POST | `/orders/{id}/merge` | `order.create` | ya: gabung ulang = hasil sama | `MergeOpenBills` |
+| POST | `/orders/quote` | `order.create` | baca | `QuoteOrder` |
 
 Komponen bersama (aturan identik di semua alur): `ResolveOrderLines` (item & opsi), `PriceOrder`
 (kalkulator + batas diskon), `AllocatePayments` (alokasi & kembalian), `OrderWriter` (item, pembayaran,
@@ -235,3 +236,13 @@ ulang dengan harga & setelan saat ini.
 Pindah meja: `PUT /orders/{id}` dengan `table_label` baru.
 
 Test: `tests/Feature/Api/V1/Order/SplitMergeOpenBillTest.php`, `tests/Feature/Cashier/WebCashierSplitMergeTest.php`
+
+## `POST /v1/orders/quote` — pratinjau total (ADR 0022)
+
+Body sama dengan checkout tanpa `id`, `payments`, approver: `items[]`, `discount`, `member_id`, `voucher_code`/`voucher_id`,
+`stamp_program_ids`. Tidak menyimpan apa pun. Respons: `subtotal`, `promo_discount`, `promotions[]` `{promotion_id, name,
+amount}`, `stamp_free_total`, `order_discount`, `voucher_discount`, `member_discount`, `discount_total`, `service_total`,
+`tax_total`, `rounding`, `grand_total`, `lines[]`. Pakai untuk menampilkan promo otomatis di keranjang aplikasi;
+nominal final tetap dihitung ulang saat checkout/open bill (promo yang berlaku saat itu).
+
+Order & struk memuat `promo_discount` dan `promotions` (bagian dari `discount_total`).

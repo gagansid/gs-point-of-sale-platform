@@ -251,6 +251,10 @@
                 @if (\App\Support\Money::isPositive($totals->stampDiscount))
                     <dt>Gratis stempel</dt><dd>−{{ $money($totals->stampDiscount) }}</dd>
                 @endif
+                {{-- Promo otomatis (ADR 0022) --}}
+                @foreach ($totals->promotions as $promo)
+                    <dt>{{ $promo['name'] }}</dt><dd>−{{ $money($promo['amount']) }}</dd>
+                @endforeach
                 @if (\App\Support\Money::isPositive($totals->voucherDiscount))
                     <dt>Voucher</dt><dd>−{{ $money($totals->voucherDiscount) }}</dd>
                 @endif

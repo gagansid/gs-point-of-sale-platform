@@ -14,7 +14,7 @@ use App\Support\Money;
  * Urutan (docs/SPEC.md → Aturan bisnis → Urutan perhitungan total):
  *   1. Harga item   = (harga produk + total opsi) × qty − diskon item
  *   2. Subtotal     = Σ harga item
- *   3. Dasar        = subtotal − gratis stempel − diskon order − voucher − diskon member/tier (ADR 0013, Q63)
+ *   3. Dasar        = subtotal − gratis stempel − promo otomatis (ADR 0022) − diskon order − voucher − diskon member/tier (ADR 0013, Q63)
  *   4. Service      = dasar × tarif service
  *   5. Pajak        = (dasar + service) × tarif pajak   (inclusive: diekstrak dari dasar + service)
  *   6. Pembulatan   = ke kelipatan Rp {rounding} terdekat (half-up)
@@ -36,8 +36,10 @@ final class OrderCalculator
         bool $taxInclusive,
         int $rounding,
         ?MemberPricing $member = null,
+        ?PromoPricing $promo = null,
     ): CalculationResult {
         $member ??= MemberPricing::none();
+        $promo ??= PromoPricing::none();
         $resultLines = [];
         $gross = '0.00';
         $itemDiscounts = '0.00';
@@ -59,8 +61,12 @@ final class OrderCalculator
         $stampDiscount = Money::min(Money::max($member->stampFree, '0.00'), $subtotal);
         $afterStamp = Money::sub($subtotal, $stampDiscount);
 
-        $orderDiscount = self::discount($discountType, $discountValue, $afterStamp);
-        $afterManual = Money::sub($afterStamp, $orderDiscount);
+        // Promo otomatis (nominal dari AutomaticPromotions), sebelum diskon manual; tidak masuk batas diskon kasir
+        $promoDiscount = Money::min(Money::max($promo->discount, '0.00'), $afterStamp);
+        $afterPromo = Money::sub($afterStamp, $promoDiscount);
+
+        $orderDiscount = self::discount($discountType, $discountValue, $afterPromo);
+        $afterManual = Money::sub($afterPromo, $orderDiscount);
 
         $voucherDiscount = self::discount($member->voucherType, $member->voucherValue, $afterManual);
         if ($member->voucherMax !== null && $member->voucherType === DiscountType::Percent) {
@@ -89,7 +95,7 @@ final class OrderCalculator
             grossTotal: $gross,
             subtotal: $subtotal,
             orderDiscount: $orderDiscount,
-            discountTotal: Money::add($itemDiscounts, $stampDiscount, $orderDiscount, $voucherDiscount, $memberDiscount),
+            discountTotal: Money::add($itemDiscounts, $stampDiscount, $promoDiscount, $orderDiscount, $voucherDiscount, $memberDiscount),
             serviceTotal: $service,
             taxTotal: $tax,
             rounding: Money::sub($grandTotal, $beforeRounding),
@@ -98,6 +104,8 @@ final class OrderCalculator
             stampDiscount: $stampDiscount,
             voucherDiscount: $voucherDiscount,
             memberDiscount: $memberDiscount,
+            promoDiscount: $promoDiscount,
+            promotions: Money::compare($promoDiscount, $promo->discount) === 0 ? $promo->applied : self::scaleApplied($promo, $promoDiscount),
         );
     }
 
@@ -116,6 +124,28 @@ final class OrderCalculator
         $share = bcdiv(bcmul(bcmul($grandTotal, $lineTotal, 8), (string) $refundQty, 8), bcmul($subtotal, (string) $lineQty, 8), 8);
 
         return Money::round($share);
+    }
+
+    /**
+     * Rincian promo bila totalnya terpotong batas (dibagi proporsional, sisa pembulatan ke promo terakhir).
+     *
+     * @return list<array{promotion_id: string, name: string, amount: string}>
+     */
+    private static function scaleApplied(PromoPricing $promo, string $total): array
+    {
+        if (! Money::isPositive($promo->discount)) {
+            return [];
+        }
+
+        $rows = [];
+        $left = $total;
+        foreach ($promo->applied as $i => $row) {
+            $amount = $i === array_key_last($promo->applied) ? $left : Money::round(bcdiv(bcmul($row['amount'], $total, 8), $promo->discount, 8));
+            $left = Money::sub($left, $amount);
+            $rows[] = [...$row, 'amount' => $amount];
+        }
+
+        return $rows;
     }
 
     /** Potongan nominal/persen dari $amount, tidak minus dan tidak melebihi $amount. */

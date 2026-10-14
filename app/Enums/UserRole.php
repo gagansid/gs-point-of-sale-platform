@@ -71,6 +71,8 @@ enum UserRole: string implements HasColor, HasLabel
         'table.manage',
         'self_order.handle',
         'payment_gateway.manage',
+        // Promo otomatis (ADR 0022)
+        'promo.manage',
     ];
 
     /**
@@ -104,7 +106,7 @@ enum UserRole: string implements HasColor, HasLabel
     {
         return match ($this) {
             self::Owner => ['*'],
-            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view', 'member.view', 'member.create', 'member.manage', 'member.points_adjust', 'table.manage', 'self_order.handle', 'supplier.manage', 'purchase.manage'],
+            self::Manager => ['order.*', 'shift.*', 'product.*', 'stock.*', 'report.*', 'audit.view', 'member.view', 'member.create', 'member.manage', 'member.points_adjust', 'table.manage', 'self_order.handle', 'supplier.manage', 'purchase.manage', 'promo.manage'],
             // Tanpa order.discount_over_limit: diskon supervisor dibatasi discount_limits.supervisor (Q18, GSPOS-SEC-014)
             self::Supervisor => [
                 'order.create', 'order.view_own', 'order.view_all', 'order.reprint',

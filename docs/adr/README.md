@@ -26,3 +26,4 @@ template: `docs/templates/adr.md`.
 | [0019](0019-split-merge-open-bill.md) | Pecah & gabung open bill: tanpa pembayaran/diskon, dihitung ulang, status merged | Diterima |
 | [0020](0020-recipes-and-bundles.md) | Bahan baku, resep, opsi berbahan, paket: stok dipotong dari komponen, HPP dari modal bahan | Diterima |
 | [0021](0021-purchase-orders.md) | Purchase order ke supplier: kirim, terima sebagian lewat Stok masuk, batal | Diterima |
+| [0022](0022-automatic-promotions.md) | Promo otomatis: diskon produk, beli X gratis Y, minimal belanja, terjadwal; dihitung sebelum diskon manual | Diterima |

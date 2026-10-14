@@ -11,6 +11,7 @@ final readonly class CalculationResult
 {
     /**
      * @param  list<array{gross: string, discount: string, line_total: string}>  $lines
+     * @param  list<array{promotion_id: string, name: string, amount: string}>  $promotions
      */
     public function __construct(
         public array $lines,
@@ -28,6 +29,9 @@ final readonly class CalculationResult
         public string $stampDiscount = '0.00',
         public string $voucherDiscount = '0.00',
         public string $memberDiscount = '0.00',
+        // Promo otomatis (ADR 0022): total & rincian per promo
+        public string $promoDiscount = '0.00',
+        public array $promotions = [],
     ) {}
 
     /** Persen diskon MANUAL (item + order) terhadap harga kotor, untuk batas diskon per role. */

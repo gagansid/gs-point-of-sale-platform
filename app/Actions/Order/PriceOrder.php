@@ -12,6 +12,7 @@ use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Outlet;
 use App\Models\User;
+use App\Services\Order\AutomaticPromotions;
 use App\Services\Order\CalculationResult;
 use App\Services\Order\CalculatorLine;
 use App\Services\Order\MemberPricing;
@@ -58,6 +59,8 @@ final class PriceOrder
             $outlet->tax_inclusive,
             $outlet->rounding,
             $member,
+            // Promo otomatis yang berlaku saat ini di outlet (ADR 0022)
+            app(AutomaticPromotions::class)->for($outlet, $lines),
         );
 
         self::ensureFitsStorage($totals);

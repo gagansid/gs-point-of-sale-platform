@@ -39,6 +39,9 @@ final class OrderWriter
             'order_discount' => $totals->orderDiscount,
             'member_discount' => $totals->memberDiscount,
             'stamp_free_total' => $totals->stampDiscount,
+            // Promo otomatis (ADR 0022)
+            'promo_discount' => $totals->promoDiscount,
+            'promotions' => $totals->promotions !== [] ? $totals->promotions : null,
             'voucher_discount' => $totals->voucherDiscount,
             'subtotal' => $totals->subtotal,
             'discount_total' => $totals->discountTotal,

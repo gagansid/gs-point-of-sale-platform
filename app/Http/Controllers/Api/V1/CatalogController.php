@@ -10,6 +10,7 @@ use App\Http\Resources\Api\V1\CategoryResource;
 use App\Http\Resources\Api\V1\OptionGroupResource;
 use App\Http\Resources\Api\V1\PaymentMethodResource;
 use App\Http\Resources\Api\V1\ProductResource;
+use App\Models\Promotion;
 use App\Support\ApiResponse;
 use App\Support\CurrentOutlet;
 use Dedoc\Scramble\Attributes\Group;
@@ -35,6 +36,14 @@ final class CatalogController extends Controller
             'products' => ProductResource::collection($catalog['products'])->resolve($request),
             'option_groups' => OptionGroupResource::collection($catalog['option_groups'])->resolve($request),
             'payment_methods' => PaymentMethodResource::collection($catalog['payment_methods'])->resolve($request),
+            'promotions' => $catalog['promotions']->map(fn (Promotion $p): array => [
+                'id' => $p->id, 'name' => $p->name, 'type' => $p->type->value,
+                'discount_type' => $p->discount_type?->value, 'discount_value' => $p->discount_value, 'max_discount' => $p->max_discount,
+                'min_subtotal' => $p->min_subtotal, 'buy_qty' => $p->buy_qty, 'get_qty' => $p->get_qty,
+                'applies_to' => $p->applies_to, 'product_ids' => $p->product_ids ?? [], 'category_ids' => $p->category_ids ?? [],
+                'days' => $p->days ?? [], 'time_start' => $p->time_start, 'time_end' => $p->time_end,
+                'starts_on' => $p->starts_on?->toDateString(), 'ends_on' => $p->ends_on?->toDateString(),
+            ])->values()->all(),
         ];
 
         // ETag dari isi katalog (bukan request_id) agar stabil selama data tidak berubah

@@ -11,6 +11,7 @@ use App\Models\Outlet;
 use App\Models\OutletOption;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\Promotion;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -28,7 +29,8 @@ final class GetCatalog
      *     categories: Collection<int, Category>,
      *     products: Collection<int, Product>,
      *     option_groups: Collection<int, OptionGroup>,
-     *     payment_methods: Collection<int, PaymentMethod>
+     *     payment_methods: Collection<int, PaymentMethod>,
+     *     promotions: Collection<int, Promotion>
      * }
      */
     public function handle(Outlet $outlet): array
@@ -60,6 +62,11 @@ final class GetCatalog
             'option_groups' => $optionGroups,
             // Online (Midtrans) dibayar pelanggan dari HP, bukan dipilih kasir (ADR 0014)
             'payment_methods' => PaymentMethod::query()->activeAt($outlet->id)->where('category', '!=', PaymentCategory::Online)->orderBy('sort_order')->get(),
+            // Promo otomatis aktif untuk outlet ini beserta jadwalnya (ADR 0022); nominal final dari server
+            'promotions' => Promotion::query()->where('is_active', true)->orderBy('name')->get()
+                ->filter(fn (Promotion $promo): bool => $promo->outlet_ids === null || $promo->outlet_ids === [] || in_array($outlet->id, $promo->outlet_ids, true))
+                ->filter(fn (Promotion $promo): bool => $promo->ends_on === null || $promo->ends_on->toDateString() >= $outlet->localDate())
+                ->values(),
         ];
     }
 }

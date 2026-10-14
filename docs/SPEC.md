@@ -148,6 +148,7 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `stock.transfer` | Transfer stok antar outlet: kirim (outlet asal), terima (outlet tujuan), batal (ADR 0015) | ✅ | ✅ | ❌ | ❌ |
 | `supplier.manage` | Data supplier (ADR 0015) | ✅ | ✅ | ❌ | ❌ |
 | `purchase.manage` | Purchase order ke supplier (ADR 0021) | ✅ | ✅ | ❌ | ❌ |
+| `promo.manage` | Promo otomatis (ADR 0022) | ✅ | ✅ | ❌ | ❌ |
 | `report.view` | Semua laporan, semua periode (maks. 366 hari per query) | ✅ | ✅ | ❌ | ❌ |
 | `report.view_shift` | Laporan operasional (Ringkasan, Produk, Metode bayar, Karyawan, Shift, Diskon & void), maks. 31 hari ke belakang (Q49) | ✅ | ✅ | ✅ | ❌ |
 | `report.view_own` | Rekap shift sendiri: X-report (shift berjalan) & Z-report (saat tutup), Q49 | ✅ | ✅ | ✅ | ✅ |
@@ -314,7 +315,7 @@ untuk pratinjau.
 
 1. Harga item = (harga produk + total opsi) × qty − diskon item
 2. Subtotal = jumlah semua harga item
-3. Dasar = subtotal − gratis stempel − diskon order − voucher − diskon member/tier (ADR 0013, Q63)
+3. Dasar = subtotal − gratis stempel − promo otomatis (ADR 0022) − diskon order − voucher − diskon member/tier (ADR 0013, Q63)
 4. Service charge = dasar × tarif service outlet
 5. Pajak = (dasar + service charge) × tarif pajak outlet (atau diekstrak dari harga jika `tax_inclusive`)
 6. Pembulatan sesuai setelan outlet (misal ke Rp100 terdekat)
@@ -401,6 +402,7 @@ Standar teknis: [`docs/standards/api/`](standards/api/README.md).
 | Method | Endpoint | Role | Fungsi |
 |---|---|---|---|
 | POST | `/checkout` | Semua | Buat order + bayar sekaligus (takeaway/retail) |
+| POST | `/orders/quote` | Semua | Pratinjau total dari server, termasuk promo otomatis (ADR 0022) |
 | PUT | `/orders/{id}` | Semua | Simpan / ubah open bill (dine-in) |
 | POST | `/orders/{id}/payments` | Semua | Tambah pembayaran ke open bill |
 | POST | `/orders/{id}/refunds` | Semua 🔑 | Retur sebagian per item (ADR 0018) |
@@ -756,5 +758,8 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q99 | Paket | `kind: bundle` wajib minimal 1 komponen; harga paket sendiri, stok dipotong dari isi (isi beresep dipecah ke bahannya). Produk yang sudah menjadi komponen tidak bisa diubah menjadi paket. Laporan penjualan mencatat paket sebagai satu item. | Diterima | ADR 0020 |
 | Q100 | Purchase order | ADR 0021. Dashboard **Stok → Purchase order** (`purchase.manage`: owner, manager): draf per outlet, supplier aktif wajib, tanggal pesan & perkiraan datang, item produk/bahan lacak stok (qty bulat, harga beli perkiraan; produk sama digabung), nomor `{outlet}-PO-{YYMMDD}-{urut}`. **Kirim** mengunci isi; **Batalkan** (alasan) untuk PO dikirim/diterima sebagian; draf dihapus. Tab **Menunggu barang**. Tanpa API. | Diterima | ADR 0021 |
 | Q101 | Terima barang PO | Aksi **Terima barang** (`stock.receive`) membuat draf Stok masuk berisi sisa qty & harga PO (`stock_receipts.purchase_order_id`); qty/harga boleh diubah. Posting/batal stok masuk itu menghitung ulang `received_qty` per produk & status PO (**Diterima sebagian** / **Diterima**; boleh lebih dari dipesan). PO dibatalkan tidak membatalkan stok masuk yang sudah diposting. | Diterima | ADR 0021 |
+| Q102 | Promo otomatis | ADR 0022. Dashboard **Pelanggan → Promo** (`promo.manage`: owner, manager): `item_discount` (persen ≤ 100 / nominal per unit, semua/produk/kategori), `buy_get` (beli X gratis Y 1–100, Y unit termurah gratis per kelompok X+Y), `order_discount` (subtotal setelah promo item ≥ minimal → persen dengan maks. / nominal). Jadwal: aktif, tanggal mulai–selesai, hari (ISO 1–7), jam mulai–selesai waktu outlet (selesai < mulai = lewat tengah malam), outlet tertentu/semua. Riwayat perubahan dicatat. | Diterima | ADR 0022 |
+| Q103 | Hitung promo | `AutomaticPromotions` (saat harga dihitung: checkout, open bill, self-order, pratinjau): per baris satu diskon item terbesar (maks. nilai baris); baris berdiskon item tidak ikut beli X gratis Y; antar promo beli-gratis unit tidak dipakai dua kali; satu diskon order terbesar; total ≤ subtotal. Dasar = subtotal − stempel − **promo** − diskon order − voucher − member; promo tidak masuk batas diskon kasir (Q18). Snapshot `orders.promo_discount` & `orders.promotions` [{promotion_id, name, amount}] (ikut `discount_total`); struk & keranjang kasir web menampilkan nama promo. Open bill memakai promo saat terakhir disimpan. | Diterima | ADR 0022 |
+| Q104 | Promo di aplikasi | `GET /catalog` → `promotions[]` (promo aktif outlet yang belum berakhir, beserta aturan & jadwal) untuk ditampilkan; `POST /orders/quote` (items, discount, member_id, voucher, stamp_program_ids) → total dari server termasuk `promo_discount` & `promotions`. Order & struk: `promo_discount`, `promotions`. | Diterima | ADR 0022 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

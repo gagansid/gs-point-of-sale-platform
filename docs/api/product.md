@@ -79,6 +79,11 @@ Test: `tests/Feature/Api/V1/Product/CatalogTest.php`
 
 ---
 
+Katalog juga memuat `promotions[]` (ADR 0022): promo otomatis aktif di outlet device yang belum berakhir —
+`id, name, type (item_discount|buy_get|order_discount), discount_type, discount_value, max_discount, min_subtotal,
+buy_qty, get_qty, applies_to, product_ids, category_ids, days (1=Senin…7), time_start, time_end, starts_on, ends_on`.
+Nominal promo final dihitung server (`POST /orders/quote`, checkout).
+
 ## `GET /v1/products`
 
 Query: `search` (nama/SKU/barcode; `%` dan `_` dicari apa adanya), `category_id`, `is_active`,

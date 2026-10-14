@@ -88,6 +88,8 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
 
         // ---------- Order & pembayaran ----------
         Route::post('checkout', [OrderController::class, 'checkout'])->name('checkout');
+        // Pratinjau total dari server, termasuk promo otomatis (ADR 0022)
+        Route::post('orders/quote', [OrderController::class, 'quote'])->name('orders.quote');
 
         Route::controller(OrderController::class)->prefix('orders')->name('orders.')->group(function (): void {
             Route::get('/', 'index')->name('index');

@@ -4,24 +4,29 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Member\Data\BenefitSelection;
+use App\Actions\Member\ResolveOrderMember;
 use App\Actions\Order\AddPayment;
 use App\Actions\Order\CheckoutOrder;
 use App\Actions\Order\Data\CheckoutData;
 use App\Actions\Order\Data\OpenBillData;
 use App\Actions\Order\Data\RefundData;
 use App\Actions\Order\MergeOpenBills;
+use App\Actions\Order\QuoteOrder;
 use App\Actions\Order\RefundableOrders;
 use App\Actions\Order\RefundOrder;
 use App\Actions\Order\SaveOpenBill;
 use App\Actions\Order\SplitOpenBill;
 use App\Actions\Order\VisibleOrders;
 use App\Actions\Order\VoidOrder;
+use App\Enums\DiscountType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Order\AddPaymentRequest;
 use App\Http\Requests\Api\V1\Order\CheckoutRequest;
 use App\Http\Requests\Api\V1\Order\MergeOpenBillRequest;
 use App\Http\Requests\Api\V1\Order\OpenBillRequest;
 use App\Http\Requests\Api\V1\Order\OrderIndexRequest;
+use App\Http\Requests\Api\V1\Order\QuoteOrderRequest;
 use App\Http\Requests\Api\V1\Order\RefundOrderRequest;
 use App\Http\Requests\Api\V1\Order\SplitOpenBillRequest;
 use App\Http\Requests\Api\V1\Order\VoidOrderRequest;
@@ -29,9 +34,11 @@ use App\Http\Resources\Api\V1\OrderRefundResource;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Http\Resources\Api\V1\ReceiptResource;
 use App\Models\Order;
+use App\Models\Outlet;
 use App\Support\ApiActor;
 use App\Support\ApiResponse;
 use App\Support\CurrentOutlet;
+use App\Support\Money;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -262,5 +269,44 @@ final class OrderController extends Controller
             'Open bill berhasil digabung',
             meta: ['idempotent_replay' => $result['replayed']],
         );
+    }
+
+    /**
+     * Pratinjau total.
+     *
+     * Total keranjang dihitung server tanpa menyimpan apa pun: promo otomatis yang berlaku saat ini (ADR 0022),
+     * member, voucher, stempel, pajak, service, pembulatan. Batas diskon kasir & pembayaran dicek saat checkout.
+     */
+    public function quote(QuoteOrderRequest $request, QuoteOrder $action): JsonResponse
+    {
+        $data = $request->validated();
+        $discount = $data['discount'] ?? null;
+        $member = app(ResolveOrderMember::class)->handle(filled($data['member_id'] ?? null) ? (string) $data['member_id'] : null);
+        $outlet = Outlet::query()->findOrFail(ApiActor::userDevice($request)->outlet_id);
+
+        $totals = $action->handle(
+            $outlet,
+            (array) $data['items'],
+            is_array($discount) ? DiscountType::from((string) $discount['type']) : null,
+            is_array($discount) ? Money::of((string) $discount['value']) : '0.00',
+            $member,
+            BenefitSelection::fromArray($data),
+        );
+
+        return ApiResponse::success([
+            'subtotal' => $totals->subtotal,
+            'promo_discount' => $totals->promoDiscount,
+            'promotions' => $totals->promotions,
+            'stamp_free_total' => $totals->stampDiscount,
+            'order_discount' => $totals->orderDiscount,
+            'voucher_discount' => $totals->voucherDiscount,
+            'member_discount' => $totals->memberDiscount,
+            'discount_total' => $totals->discountTotal,
+            'service_total' => $totals->serviceTotal,
+            'tax_total' => $totals->taxTotal,
+            'rounding' => $totals->rounding,
+            'grand_total' => $totals->grandTotal,
+            'lines' => $totals->lines,
+        ]);
     }
 }
