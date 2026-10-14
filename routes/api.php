@@ -97,7 +97,10 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::post('{order}/payments', 'addPayment')->name('payments.store');
             Route::get('{order}/receipt', 'receipt')->name('receipt');
             Route::post('{order}/void', 'void')->name('void');
+            // Retur sebagian (ADR 0018)
+            Route::post('{order}/refunds', 'refund')->name('refunds.store');
         });
+        Route::get('refundable-orders/{number}', [OrderController::class, 'refundable'])->where('number', '[A-Za-z0-9-]{1,40}')->name('refundable-orders.show');
 
         // ---------- Member (ADR 0013) ----------
         Route::controller(MemberController::class)->prefix('members')->name('members.')->group(function (): void {

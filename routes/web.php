@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Cashier\LockController as CashierLockController;
 use App\Http\Controllers\Web\Cashier\LoginController as CashierLoginController;
 use App\Http\Controllers\Web\Cashier\OrderController as CashierOrderController;
 use App\Http\Controllers\Web\Cashier\OutletController as CashierOutletController;
+use App\Http\Controllers\Web\Cashier\RefundController as CashierRefundController;
 use App\Http\Controllers\Web\Cashier\SelfOrderController as CashierSelfOrderController;
 use App\Http\Controllers\Web\Cashier\ShiftController as CashierShiftController;
 use App\Http\Controllers\Web\DashboardLoginController;
@@ -207,6 +208,10 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
         Route::get('orders/{order}', [CashierOrderController::class, 'show'])->whereUuid('order')->name('orders.show');
         Route::post('orders/{order}/void', [CashierOrderController::class, 'void'])->whereUuid('order')->name('orders.void');
         Route::get('orders/{order}/receipt', [CashierOrderController::class, 'receipt'])->whereUuid('order')->name('orders.receipt');
+        // Retur sebagian (ADR 0018)
+        Route::get('refunds', [CashierRefundController::class, 'search'])->name('refunds.search');
+        Route::get('refunds/{order}', [CashierRefundController::class, 'create'])->name('refunds.create');
+        Route::post('refunds/{order}', [CashierRefundController::class, 'store'])->name('refunds.store');
 
         Route::get('shift', [CashierShiftController::class, 'show'])->name('shift');
         Route::post('shift', [CashierShiftController::class, 'store'])->name('shift.store');

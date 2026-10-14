@@ -22,3 +22,4 @@ template: `docs/templates/adr.md`.
 | [0015](0015-stock-in-opname-transfer.md) | Stok masuk, opname, transfer antar outlet: produk jadi, modal rata-rata tertimbang | Diterima |
 | [0016](0016-web-installer.md) | Installer lewat form web: cek syarat, database, akun, progress, kunci setelah instal | Diterima |
 | [0017](0017-shared-shift-cash-handover.md) | Shift bersama per perangkat: ganti kasir tanpa hitung, setoran, carry-over kas awal, kas masuk/keluar | Diterima |
+| [0018](0018-partial-refund.md) | Retur sebagian per item: nilai proporsional, tunai dari laci / manual, poin & stok ikut | Diterima |

@@ -22,6 +22,12 @@
                     <dt>Void</dt>
                     <dd class="{{ $s['void_count'] > 0 ? 'pos-fin-list__warn' : '' }}">{{ $s['void_count'] }} · {{ $money($s['void_total']) }}</dd>
                 </div>
+                {{-- Retur sebagian menurut tanggal retur (ADR 0018) --}}
+                <div>
+                    <dt>Retur</dt>
+                    <dd class="{{ $s['refund_count'] > 0 ? 'pos-fin-list__warn' : '' }}">{{ $s['refund_count'] }} · {{ $money($s['refund_total']) }}</dd>
+                </div>
+                <div class="pos-fin-list__total"><dt>Omzet setelah retur</dt><dd>{{ $money($s['net_revenue']) }}</dd></div>
             </dl>
         </div>
     </x-filament::section>

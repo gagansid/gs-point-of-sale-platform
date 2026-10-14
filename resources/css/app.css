@@ -1083,6 +1083,28 @@
     margin-top: 16px;
 }
 
+/* Retur (ADR 0018): qty per baris & form cari nomor transaksi sebaris */
+.cashier-qty {
+    width: 84px;
+    height: var(--pos-btn-h, 40px);
+    padding: 0 8px;
+    border: 1px solid #dcdee3;
+    border-radius: 8px;
+    font: inherit;
+    text-align: right;
+}
+
+.cashier-inline-search {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.cashier-inline-search .site-field {
+    flex: 1;
+    margin: 0;
+}
+
 .cashier-dl.cashier-carry {
     margin-bottom: 16px;
     font-size: 16px;

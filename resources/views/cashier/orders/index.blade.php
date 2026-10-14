@@ -1,7 +1,10 @@
 {{-- /cashier/orders: transaksi shift terbuka di browser ini. --}}
 <x-cashier.layout title="Riwayat" active="orders">
     <section class="cashier-card">
-        <div class="cashier-card-head"><h1>Riwayat shift ini</h1></div>
+        <div class="cashier-card-head">
+            <h1>Riwayat shift ini</h1>
+            <a href="{{ route('cashier.refunds.search') }}" class="site-btn site-btn-outline">Retur transaksi</a>
+        </div>
 
         @if ($shift === null)
             <p class="cashier-muted">Belum ada shift terbuka. <a href="{{ route('cashier.shift') }}">Buka shift</a></p>

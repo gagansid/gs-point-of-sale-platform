@@ -25,7 +25,8 @@ final class CashMovementRequest extends FormRequest
     {
         return [
             'type' => ['required', Rule::enum(CashMovementType::class)],
-            'reason' => ['required', Rule::enum(CashMovementReason::class)],
+            // Retur dibuat sistem (ADR 0018), tidak bisa dikirim manual
+            'reason' => ['required', Rule::in(array_map(fn (CashMovementReason $r): string => $r->value, CashMovementReason::manual()))],
             'amount' => ['required', 'decimal:0,2', 'gt:0', 'max:9999999999999.99'],
             'note' => ['nullable', 'required_if:reason,'.CashMovementReason::Other->value, 'string', 'max:255'],
             ...ApprovalRules::rules(),

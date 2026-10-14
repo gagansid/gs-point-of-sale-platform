@@ -11,6 +11,8 @@ Endpoint tulis (checkout, open bill, bayar) butuh token user terikat device kasi
 | GET | `/orders/{id}` | idem | baca | `OrderPolicy::view` |
 | GET | `/orders/{id}/receipt` | `order.reprint` + visibilitas | baca | `ReceiptResource` |
 | POST | `/orders/{id}/void` | `order.void` atau PIN approver 🔑 | void ulang = hasil sama | `VoidOrder` |
+| POST | `/orders/{id}/refunds` | `order.refund` atau PIN approver 🔑 | ya: `id` dari aplikasi | `RefundOrder` |
+| GET | `/refundable-orders/{nomor}` | `order.create` | baca | `RefundableOrders` |
 
 Komponen bersama (aturan identik di semua alur): `ResolveOrderLines` (item & opsi), `PriceOrder`
 (kalkulator + batas diskon), `AllocatePayments` (alokasi & kembalian), `OrderWriter` (item, pembayaran,
@@ -185,3 +187,32 @@ Body `{ "reason": "…", "approver_user_id"?: uuid, "approver_pin"?: "123456" }`
 - Void kedua kali → `200`, data sama, `meta.idempotent_replay: true`.
 
 Test: `OpenBillTest.php`, `OrderQueryTest.php`, `VoidOrderTest.php` di `tests/Feature/Api/V1/Order/`.
+
+## `POST /v1/orders/{id}/refunds` — retur sebagian (ADR 0018)
+
+| Field | Wajib | Aturan |
+|---|---|---|
+| `id` | Ya | UUID dari aplikasi (idempotency key) |
+| `items[]` | Ya | 1–100 baris `{ order_item_id, qty }`; qty ≤ terjual − sudah diretur (`refunded_qty`) |
+| `reason` | Ya | maks. 255 |
+| `method` | Ya | `cash` (kas keluar laci shift berjalan device, alasan Retur) / `manual` (diproses di luar sistem) |
+| `restock` | tidak | bawaan `true`: produk lacak stok kembali ke stok outlet |
+| `approver_user_id`, `approver_pin` | 🔑 | kasir tanpa `order.refund` |
+
+- Order wajib **selesai** di outlet device, maks. 30 hari (`POS_REFUND_MAX_DAYS`); shift wajib terbuka di device
+  (`409 SHIFT_NOT_OPEN`). Qty berlebih / order bukan selesai / sudah habis diretur / lewat batas → `422 VALIDATION_ERROR`.
+- Nilai dihitung server: bagian proporsional `grand_total`; retur yang menghabiskan semua item = sisa nilai order.
+  Bagian yang dibayar poin kembali sebagai poin (`points_returned`), poin hasil belanja ditarik (`points_reversed`);
+  `payout_amount` = uang yang dikembalikan. Tunai melebihi isi laci → `422` (pilih `manual`).
+- Order tetap `completed`; `refunded_total` & `items[].refunded_qty` bertambah, `refunds[]` di detail order.
+  Order yang sudah diretur tidak bisa di-void.
+
+Respons `201`: `{ id, order_id, shift_id, reason, method, restock, amount, payout_amount, points_returned, points_reversed,
+user_id, user_name, approved_by, approved_by_name, items: [{ order_item_id, product_name, qty, amount }], created_at }`.
+
+## `GET /v1/refundable-orders/{nomor}`
+
+Cari transaksi untuk diretur: nomor order di outlet device, status selesai, dalam batas hari; selain itu `404 NOT_FOUND`.
+Sengaja tidak mengikuti visibilitas Q21 (kasir perlu meretur transaksi shift lain); retur tetap butuh izin/PIN.
+
+Test: `tests/Feature/Api/V1/Order/RefundOrderTest.php`, `tests/Feature/Cashier/WebCashierRefundTest.php`

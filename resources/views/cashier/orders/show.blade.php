@@ -27,6 +27,9 @@
             <dl class="cashier-dl" style="margin-top: 12px">
                 <dt>Total</dt><dd><strong>{{ $money($order->grand_total) }}</strong></dd>
                 <dt>Dibayar</dt><dd>{{ $money($order->paid_total) }}</dd>
+                @if (\App\Support\Money::isPositive($order->refunded_total))
+                    <dt>Diretur</dt><dd class="cashier-negative">−{{ $money($order->refunded_total) }}</dd>
+                @endif
                 @foreach ($order->payments as $payment)
                     <dt>· {{ $payment->method?->name }}</dt><dd>{{ $money($payment->amount) }}</dd>
                 @endforeach
@@ -35,11 +38,15 @@
                 @endif
             </dl>
 
-            @can('reprint', $order)
-                <p style="margin-top: 16px">
+            <p style="margin-top: 16px">
+                @can('reprint', $order)
                     <a href="{{ route('cashier.orders.receipt', ['order' => $order->id, 'print' => 1]) }}" target="_blank" rel="noopener" class="site-btn site-btn-outline">Cetak struk</a>
-                </p>
-            @endcan
+                @endcan
+                {{-- Retur sebagian (ADR 0018) --}}
+                @if ($order->status === \App\Enums\OrderStatus::Completed && ! $order->isFullyRefunded())
+                    <a href="{{ route('cashier.refunds.create', $order->id) }}" class="site-btn site-btn-outline">Retur</a>
+                @endif
+            </p>
         </section>
 
         @if ($order->status !== \App\Enums\OrderStatus::Voided)

@@ -22,6 +22,8 @@ final class OrderItemResource extends JsonResource
             'unit_price' => $this->unit_price,
             'options_total' => $this->options_total,
             'qty' => $this->qty,
+            // Sudah diretur (ADR 0018)
+            'refunded_qty' => $this->refunded_qty,
             'discount' => $this->discount,
             'line_total' => $this->line_total,
             'notes' => $this->notes,

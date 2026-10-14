@@ -2,7 +2,7 @@
 @php($audit = $this->getAudit())
 @php($money = fn (?string $v): string => \App\Support\Money::format($v ?? '0.00'))
 @php($time = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone(\App\Support\CurrentOutlet::timezone())->locale('id')->translatedFormat('j M, H.i') : '–')
-@php($issues = $audit['void_count'] + $audit['discount_count'] + $audit['shift_issue_count'] + $audit['cash_out_count'])
+@php($issues = $audit['void_count'] + $audit['refund_count'] + $audit['discount_count'] + $audit['shift_issue_count'] + $audit['cash_out_count'])
 
 <x-filament-widgets::widget>
     <x-filament::section
@@ -44,6 +44,26 @@
                 @empty
                     <p class="pos-dash-audit__ok"><x-filament::icon icon="heroicon-o-check-circle" class="h-5 w-5" /> Tidak ada void</p>
                 @endforelse
+
+                {{-- Retur sebagian (ADR 0018) --}}
+                @if ($audit['refund_count'] > 0)
+                    <div class="pos-dash-audit__head mt-3">
+                        <span class="pos-dash-audit__title">
+                            <x-filament::icon icon="heroicon-o-arrow-uturn-left" class="h-5 w-5" /> Retur
+                        </span>
+                        <x-filament::badge color="warning">{{ $audit['refund_count'] }} · {{ $money($audit['refund_total']) }}</x-filament::badge>
+                    </div>
+                    @foreach ($audit['refunds'] as $row)
+                        <a href="{{ \App\Filament\Dashboard\Resources\Orders\OrderResource::getUrl('view', ['record' => $row['order_id']]) }}" class="pos-dash-audit__item" wire:key="refund-{{ $row['id'] }}">
+                            <div class="flex justify-between gap-2">
+                                <span class="font-medium text-gray-950 dark:text-white">{{ $row['order_number'] }}</span>
+                                <span class="tabular-nums font-medium text-gray-950 dark:text-white">−{{ $money($row['amount']) }}</span>
+                            </div>
+                            <p class="pos-dash-audit__meta">{{ $time($row['created_at']) }} · oleh {{ $row['user'] ?? '–' }}@if ($row['approved_by']) · disetujui {{ $row['approved_by'] }}@endif</p>
+                            <p class="pos-dash-audit__meta italic">“{{ $row['reason'] }}”</p>
+                        </a>
+                    @endforeach
+                @endif
             </div>
 
             {{-- Diskon dengan approval --}}

@@ -95,6 +95,11 @@ return [
         'max_devices_per_outlet' => (int) env('POS_WEB_CASHIER_MAX_DEVICES', 10),
     ],
 
+    // Retur sebagian (ADR 0018): order bisa diretur maks. sekian hari setelah selesai
+    'refund' => [
+        'max_days' => (int) env('POS_REFUND_MAX_DAYS', 30),
+    ],
+
     // Cache agregat laporan (R2, CachedReportService); 0 = nonaktif
     'reports' => [
         'cache_seconds' => (int) env('POS_REPORT_CACHE_SECONDS', 60),

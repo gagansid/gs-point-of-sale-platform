@@ -126,6 +126,10 @@ final class RecordCashMovement
     /** @throws BusinessException */
     private static function validate(CashMovementData $data): void
     {
+        if (! $data->reason->isManual()) {
+            throw BusinessException::of(ErrorCode::ValidationError, 'Alasan tidak bisa dipilih', ['reason' => ['Alasan ini dibuat otomatis oleh sistem.']]);
+        }
+
         if (! $data->reason->allows($data->type)) {
             throw BusinessException::of(ErrorCode::ValidationError, 'Alasan tidak sesuai jenis kas', [
                 'reason' => ['"'.$data->reason->getLabel().'" hanya untuk kas keluar.'],

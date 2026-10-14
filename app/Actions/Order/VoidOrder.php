@@ -17,6 +17,7 @@ use App\Models\Order;
 use App\Models\Shift;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -52,6 +53,13 @@ final class VoidOrder
         }
 
         $this->ensureShiftOpen($order);
+
+        // Sudah diretur sebagian: void akan mengembalikan uang dua kali (ADR 0018)
+        if (Money::isPositive($order->refunded_total)) {
+            throw BusinessException::of(ErrorCode::ValidationError, 'Transaksi ini sudah diretur sebagian; void tidak bisa dilakukan', [
+                'order' => ['Transaksi ini sudah diretur sebagian; void tidak bisa dilakukan.'],
+            ]);
+        }
 
         // Di luar transaksi: percobaan PIN salah harus tetap tercatat untuk penguncian
         $approverId = $this->verifyApproval->handle($actor, $order->outlet_id, 'order.void', $approval);

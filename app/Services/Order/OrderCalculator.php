@@ -101,6 +101,23 @@ final class OrderCalculator
         );
     }
 
+    /**
+     * Nilai retur sebagian (ADR 0018): bagian grand total untuk $refundQty dari satu baris order, proporsional
+     * terhadap line_total baris itu di subtotal (diskon, service, pajak, pembulatan ikut terbagi rata).
+     * Subtotal 0 (semua gratis) = 0.
+     */
+    public static function refundShare(string $grandTotal, string $subtotal, string $lineTotal, int $lineQty, int $refundQty): string
+    {
+        if (! Money::isPositive($subtotal) || $lineQty <= 0 || $refundQty <= 0) {
+            return '0.00';
+        }
+
+        // Pecahan dihitung dengan presisi tinggi lalu dibulatkan sekali ke 2 desimal
+        $share = bcdiv(bcmul(bcmul($grandTotal, $lineTotal, 8), (string) $refundQty, 8), bcmul($subtotal, (string) $lineQty, 8), 8);
+
+        return Money::round($share);
+    }
+
     /** Potongan nominal/persen dari $amount, tidak minus dan tidak melebihi $amount. */
     private static function discount(?DiscountType $type, string $value, string $amount): string
     {

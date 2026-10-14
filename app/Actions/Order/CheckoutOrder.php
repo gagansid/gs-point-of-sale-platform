@@ -164,6 +164,6 @@ final class CheckoutOrder
 
     public static function load(Order $order): Order
     {
-        return $order->load(['items.options', 'payments.method']);
+        return $order->load(['items.options', 'payments.method', 'refunds.items']);
     }
 }

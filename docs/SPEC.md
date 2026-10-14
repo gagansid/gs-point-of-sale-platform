@@ -134,6 +134,7 @@ Kode tidak pernah mengecek role secara langsung; semua pengecekan memakai permis
 | `order.discount` | Diskon manual sampai batas role | ✅ | ✅ | ✅ | ✅ |
 | `order.discount_over_limit` | Diskon tanpa batas | ✅ | ✅ | 🔑 | 🔑 |
 | `order.void` | Batalkan transaksi | ✅ | ✅ | ✅ | 🔑 |
+| `order.refund` | Retur sebagian per item (ADR 0018) | ✅ | ✅ | ✅ | 🔑 |
 | `shift.operate` | Buka/tutup shift di perangkat yang dipakai, kas masuk/keluar (ADR 0017) | ✅ | ✅ | ✅ | ✅ |
 | `shift.view_all` | Semua shift & selisih kas | ✅ | ✅ | ✅ | ❌ |
 | `shift.force_close` | Tutup paksa shift dari perangkat lain / dashboard | ✅ | ✅ | ✅ | ❌ |
@@ -346,6 +347,9 @@ dari `order_sequences` dengan `SELECT ... FOR UPDATE`.
 - Tutup shift: `expected_cash` = kas awal + penjualan cash − kembalian + kas masuk − kas keluar, dibandingkan dengan
   `actual_cash`. Isian Disetor → `closing_float` = aktual − disetor = kas awal shift berikutnya di perangkat yang sama.
 - Void hanya untuk order di shift yang masih terbuka, wajib alasan, kasir butuh PIN owner/manager/supervisor.
+  Order yang sudah diretur sebagian tidak bisa di-void.
+- Retur sebagian (ADR 0018): order selesai ≤ 30 hari, per item & qty, nilai proporsional grand total, uang tunai dari
+  laci shift berjalan di perangkat pelaku (atau manual), stok kembali bila dipilih.
 
 ## API v1
 
@@ -398,6 +402,8 @@ Standar teknis: [`docs/standards/api/`](standards/api/README.md).
 | POST | `/checkout` | Semua | Buat order + bayar sekaligus (takeaway/retail) |
 | PUT | `/orders/{id}` | Semua | Simpan / ubah open bill (dine-in) |
 | POST | `/orders/{id}/payments` | Semua | Tambah pembayaran ke open bill |
+| POST | `/orders/{id}/refunds` | Semua 🔑 | Retur sebagian per item (ADR 0018) |
+| GET | `/refundable-orders/{nomor}` | Semua | Cari transaksi selesai untuk diretur (outlet device, batas hari) |
 | GET | `/orders?date=&status=&shift_id=` | Semua | Riwayat transaksi |
 | GET | `/orders/{id}` | Semua | Detail order |
 | GET | `/orders/{id}/receipt` | Semua | Data struk siap cetak |
@@ -737,5 +743,8 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q89 | Kas masuk/keluar | `cash_movements` per shift: jenis `in`/`out`, alasan `operational` (Belanja operasional, keluar), `deposit` (Setor ke owner, keluar), `change` (Tukar/tambah kembalian), `other` (Lainnya, catatan wajib), nominal > 0, catatan maks. 255; `id` dari klien = idempotency key. Hanya di shift terbuka device pelaku; tidak bisa diubah/dihapus. Kas keluar tidak boleh melebihi kas seharusnya di laci (`VALIDATION_ERROR`); di atas `outlets.cash_out_approval_limit` (bawaan Rp100.000, kosong = tanpa approval) kasir butuh PIN approver (`APPROVAL_REQUIRED`, `shift.cash_out_over_limit`). Masuk ke `expected_cash`, X/Z-report, laporan Shift, panel Audit (kas keluar). | Diterima | ADR 0017 |
 | Q90 | Setelan laci kasir | Profil outlet → **Laci kasir** (`outlet.settings`, juga `PUT /outlet` & `outlet` di `/auth/me`): `cash_float` modal laci tetap (opsional), `auto_lock_minutes` kunci layar otomatis (bawaan 5, kosong/0 = mati, maks. 120; dihitung di browser/aplikasi dari ketikan/sentuhan, polling tidak dihitung), `cash_out_approval_limit` (bawaan Rp100.000). | Diterima | ADR 0017 |
 | Q91 | Z-report shift bersama | X/Z-report (web, PDF, API `reports/shifts/{id}`) menampilkan asal kas awal (sisa laci / dikoreksi + alasan), kas masuk & keluar (rincian), disetor, ditinggal di laci, dan **Kasir bertugas** (jam bertugas dari log operator, transaksi, omzet, tunai per kasir). Laporan Shift & export menambah kolom kas masuk, kas keluar, disetor; ringkasan harian email menambah total disetor. | Diterima | ADR 0017 |
+| Q92 | Retur sebagian | ADR 0018. `POST /orders/{id}/refunds` & kasir web **Riwayat → Retur transaksi** (`/cashier/refunds`, cari nomor): order **selesai** di outlet perangkat, ≤ `pos.refund.max_days` (30) hari; item & qty ≤ terjual − sudah diretur; alasan wajib; cara `cash` (kas keluar alasan **Retur** di shift berjalan perangkat pelaku, ≤ isi laci) atau `manual`; `restock` (bawaan ya) mengembalikan stok produk lacak stok (riwayat `refund`); izin `order.refund` (owner, manager, supervisor) atau PIN approver ≠ pelaku; shift wajib terbuka; `id` dari klien = idempotency key. Order tetap `completed`, `refunded_total` & `order_items.refunded_qty` bertambah; order yang sudah diretur tidak bisa di-void. | Diterima | ADR 0018 |
+| Q93 | Nilai retur & member | Nilai per baris = `grand_total × line_total × qty_retur ÷ (qty × subtotal)` (2 desimal, `OrderCalculator::refundShare`); retur yang menghabiskan seluruh item = sisa `grand_total − refunded_total`. Bagian yang dibayar **poin** kembali sebagai poin, poin hasil belanja ditarik — keduanya proporsional kumulatif, dibulatkan ke bawah (ledger `refund`); `payout_amount` = nilai − bagian poin. Belanja member & tier (12 bulan = Σ grand_total − retur) dikurangi; voucher & stempel tidak dikembalikan. | Diterima | ADR 0018 |
+| Q94 | Laporan retur | Ringkasan/Laporan: `refund_count`, `refund_total`, `net_revenue` (omzet − retur, menurut tanggal retur), ikut export; panel Audit daftar **Retur** (kas keluar alasan Retur tidak masuk kartu Kas keluar); ringkasan harian baris retur; detail order dashboard & kasir web menampilkan riwayat retur; uang retur tunai tampil di kas masuk/keluar shift. Laporan per produk/kategori tetap penjualan bruto. `GET /refundable-orders/{nomor}` untuk aplikasi. | Diterima | ADR 0018 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

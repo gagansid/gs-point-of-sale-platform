@@ -75,7 +75,7 @@
                             <div class="site-field">
                                 <label for="reason">Alasan<span class="site-required" aria-hidden="true">*</span></label>
                                 <select id="reason" name="reason" class="cashier-select" required>
-                                    @foreach (\App\Enums\CashMovementReason::cases() as $reason)
+                                    @foreach (\App\Enums\CashMovementReason::manual() as $reason)
                                         <option value="{{ $reason->value }}" @selected(old('reason') === $reason->value)
                                             data-types="{{ collect(\App\Enums\CashMovementType::cases())->filter(fn ($t) => $reason->allows($t))->map->value->implode(' ') }}">{{ $reason->getLabel() }}</option>
                                     @endforeach

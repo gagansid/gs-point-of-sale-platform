@@ -22,6 +22,9 @@ enum CashMovementReason: string implements HasLabel
 
     case Other = 'other';
 
+    /** Uang retur pelanggan (ADR 0018) — dibuat sistem, tidak bisa dipilih manual */
+    case Refund = 'refund';
+
     public function getLabel(): string
     {
         return match ($this) {
@@ -29,20 +32,33 @@ enum CashMovementReason: string implements HasLabel
             self::Deposit => 'Setor ke owner',
             self::Change => 'Tukar/tambah kembalian',
             self::Other => 'Lainnya',
+            self::Refund => 'Retur',
         };
     }
 
     public function allows(CashMovementType $type): bool
     {
         return match ($this) {
-            self::Operational, self::Deposit => $type === CashMovementType::Out,
+            self::Operational, self::Deposit, self::Refund => $type === CashMovementType::Out,
             self::Change, self::Other => true,
         };
+    }
+
+    /** Bisa dipilih kasir (Retur hanya dibuat sistem). */
+    public function isManual(): bool
+    {
+        return $this !== self::Refund;
+    }
+
+    /** @return list<self> */
+    public static function manual(): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $reason): bool => $reason->isManual()));
     }
 
     /** @return list<self> */
     public static function for(CashMovementType $type): array
     {
-        return array_values(array_filter(self::cases(), fn (self $reason): bool => $reason->allows($type)));
+        return array_values(array_filter(self::manual(), fn (self $reason): bool => $reason->allows($type)));
     }
 }

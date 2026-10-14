@@ -11,6 +11,7 @@ use App\Enums\OrderType;
 use App\Models\Concerns\BelongsToOutlet;
 use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\RecordsAuthor;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -54,6 +55,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $rounding
  * @property string $grand_total
  * @property string $paid_total
+ * @property string $refunded_total nilai yang sudah diretur (ADR 0018)
  * @property string $change_total
  * @property string $service_rate
  * @property string $tax_rate
@@ -77,6 +79,7 @@ final class Order extends Model
         'stamp_free_total' => '0.00',
         'voucher_discount' => '0.00',
         'paid_total' => '0.00',
+        'refunded_total' => '0.00',
         'change_total' => '0.00',
         'order_discount' => '0.00',
     ];
@@ -106,6 +109,7 @@ final class Order extends Model
             'rounding' => 'decimal:2',
             'grand_total' => 'decimal:2',
             'paid_total' => 'decimal:2',
+            'refunded_total' => 'decimal:2',
             'change_total' => 'decimal:2',
             'service_rate' => 'decimal:2',
             'tax_rate' => 'decimal:2',
@@ -125,6 +129,18 @@ final class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class)->orderBy('created_at');
+    }
+
+    /** @return HasMany<OrderRefund, $this> */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(OrderRefund::class)->orderBy('created_at');
+    }
+
+    /** Seluruh nilai order sudah diretur (ADR 0018). */
+    public function isFullyRefunded(): bool
+    {
+        return Money::isPositive($this->grand_total) ? Money::compare($this->refunded_total, $this->grand_total) >= 0 : false;
     }
 
     /** @return BelongsTo<Shift, $this> */

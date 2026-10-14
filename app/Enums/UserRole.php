@@ -31,6 +31,8 @@ enum UserRole: string implements HasColor, HasLabel
         'order.discount',
         'order.discount_over_limit',
         'order.void',
+        // Retur sebagian (ADR 0018)
+        'order.refund',
         'shift.operate',
         'shift.view_all',
         'shift.force_close',
@@ -104,7 +106,7 @@ enum UserRole: string implements HasColor, HasLabel
             // Tanpa order.discount_over_limit: diskon supervisor dibatasi discount_limits.supervisor (Q18, GSPOS-SEC-014)
             self::Supervisor => [
                 'order.create', 'order.view_own', 'order.view_all', 'order.reprint',
-                'order.discount', 'order.void', 'shift.*', 'product.toggle_available',
+                'order.discount', 'order.void', 'order.refund', 'shift.*', 'product.toggle_available',
                 // Laporan operasional maks. 31 hari + rekap shift sendiri + export (Q49, Q52)
                 'report.view_shift', 'report.view_own', 'report.export',
                 'member.view', 'member.create', 'self_order.handle',

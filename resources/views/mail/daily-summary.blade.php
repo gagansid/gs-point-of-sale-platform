@@ -12,6 +12,9 @@ Halo {{ $name }}, berikut rekap penjualan **{{ $business }}** kemarin.
 @if ($totals['void_count'] > 0)
 · {{ $totals['void_count'] }} void ({{ $money($totals['void_total']) }})
 @endif
+@if ($totals['refund_count'] > 0)
+· {{ $totals['refund_count'] }} retur ({{ $money($totals['refund_total']) }})
+@endif
 @if ($summary['members'] ?? null)
 
 Member: {{ number_format($summary['members']['member_orders'], 0, ',', '.') }} transaksi ({{ $money($summary['members']['member_revenue']) }}) · {{ $summary['members']['new_members'] }} member baru{{ $summary['members']['points_redeemed'] > 0 ? ' · '.number_format($summary['members']['points_redeemed'], 0, ',', '.').' poin ditukar' : '' }}

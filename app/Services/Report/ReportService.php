@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Report;
 
+use App\Enums\CashMovementReason;
 use App\Enums\CashMovementType;
 use App\Enums\OpeningCashSource;
 use App\Enums\OrderChannel;
@@ -21,6 +22,7 @@ use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderRefund;
 use App\Models\Outlet;
 use App\Models\Payment;
 use App\Models\Product;
@@ -56,7 +58,8 @@ class ReportService
      * berlaku untuk pajak inklusif maupun eksklusif).
      *
      * @return array{order_count: int, revenue: string, average: string, items_sold: int, subtotal_total: string, discount_total: string,
-     *     service_total: string, tax_total: string, rounding_total: string, net_sales: string, void_count: int, void_total: string}
+     *     service_total: string, tax_total: string, rounding_total: string, net_sales: string, void_count: int, void_total: string,
+     *     refund_count: int, refund_total: string, net_revenue: string}
      */
     public function summary(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): array
     {
@@ -71,8 +74,12 @@ class ReportService
             ->selectRaw('COUNT(*) as void_count, SUM(grand_total) as void_total')
             ->first();
 
+        // Retur sebagian menurut tanggal retur (ADR 0018)
+        $refunds = $this->refundQuery($start, $end, $filters)->toBase()->selectRaw('COUNT(*) as refund_count, SUM(amount) as refund_total')->first();
+
         $orderCount = (int) ($totals->order_count ?? 0);
         $revenue = Money::fromDb($totals->revenue ?? null);
+        $refundTotal = Money::fromDb($refunds->refund_total ?? null);
         $service = Money::fromDb($totals->service_total ?? null);
         $tax = Money::fromDb($totals->tax_total ?? null);
         $rounding = Money::fromDb($totals->rounding_total ?? null);
@@ -90,7 +97,22 @@ class ReportService
             'net_sales' => Money::sub(Money::sub(Money::sub($revenue, $tax), $service), $rounding),
             'void_count' => (int) ($voids->void_count ?? 0),
             'void_total' => Money::fromDb($voids->void_total ?? null),
+            'refund_count' => (int) ($refunds->refund_count ?? 0),
+            'refund_total' => $refundTotal,
+            'net_revenue' => Money::sub($revenue, $refundTotal),
         ];
+    }
+
+    /**
+     * Retur sebagian pada rentang (ADR 0018), outlet terpilih; filter kasir = pencatat retur.
+     *
+     * @return Builder<OrderRefund>
+     */
+    public function refundQuery(CarbonImmutable $start, CarbonImmutable $end, ?ReportFilters $filters = null): Builder
+    {
+        return CurrentOutlet::scope(OrderRefund::query())
+            ->whereBetween('created_at', [$start, $end])
+            ->when($filters !== null && $filters->userIds !== [], fn (Builder $q) => $q->whereIn('user_id', $filters->userIds ?? []));
     }
 
     /**
@@ -418,6 +440,8 @@ class ReportService
      *     shift_issue_count: int, shift_difference_total: string,
      *     shifts: list<array{shift_id: string, outlet: string, cashier: string|null, closed_by: string|null, status: string, expected_cash: string, actual_cash: string, difference: string, note: string|null, closed_at: string|null,
      *         opening_adjustment: array{from: string, to: string, note: string|null, by: string|null, approved_by: string|null}|null}>,
+     *     refund_count: int, refund_total: string,
+     *     refunds: list<array{id: string, order_id: string, order_number: string, outlet: string, amount: string, reason: string, user: string|null, approved_by: string|null, created_at: string}>,
      *     cash_out_count: int, cash_out_total: string,
      *     cash_outs: list<array{id: string, shift_id: string, outlet: string, reason: string, amount: string, note: string|null, user: string|null, approved_by: string|null, created_at: string}>
      * }
@@ -447,6 +471,12 @@ class ReportService
             ->get(['id', 'outlet_id', 'opened_by', 'closed_by', 'status', 'expected_cash', 'actual_cash', 'difference', 'close_note', 'closed_at',
                 'opening_cash_source', 'opening_cash', 'carried_cash', 'opening_cash_note', 'opening_cash_adjusted_by', 'opening_cash_approved_by']);
 
+        // Retur sebagian (ADR 0018)
+        $refundQuery = $this->refundQuery($start, $end, $filters);
+        $refundTotals = (clone $refundQuery)->toBase()->selectRaw('COUNT(*) as c, SUM(amount) as t')->first();
+        $refunds = $refundQuery->with('order:id,order_number')->latest('created_at')->limit($limit)
+            ->get(['id', 'order_id', 'outlet_id', 'user_id', 'approved_by', 'reason', 'amount', 'created_at']);
+
         // Kas keluar laci (ADR 0017)
         $cashOutQuery = $this->cashOutQuery($start, $end, $filters);
         $cashOutTotals = (clone $cashOutQuery)->toBase()->selectRaw('COUNT(*) as c, SUM(amount) as t')->first();
@@ -460,6 +490,7 @@ class ReportService
             ...$shifts->pluck('opened_by'), ...$shifts->pluck('closed_by'),
             ...$shifts->pluck('opening_cash_adjusted_by'), ...$shifts->pluck('opening_cash_approved_by'),
             ...$cashOuts->pluck('user_id'), ...$cashOuts->pluck('approved_by'),
+            ...$refunds->pluck('user_id'), ...$refunds->pluck('approved_by'),
         ])->filter()->unique()->values())->pluck('name', 'id');
         $outlets = Outlet::query()->whereIn('id', CurrentOutlet::ids())->pluck('name', 'id');
 
@@ -512,6 +543,19 @@ class ReportService
                     'approved_by' => $name($s->opening_cash_approved_by),
                 ] : null,
             ])->values()->all(),
+            'refund_count' => (int) ($refundTotals->c ?? 0),
+            'refund_total' => Money::fromDb($refundTotals->t ?? null),
+            'refunds' => $refunds->map(fn (OrderRefund $r): array => [
+                'id' => (string) $r->id,
+                'order_id' => (string) $r->order_id,
+                'order_number' => (string) ($r->order->order_number ?? ''),
+                'outlet' => (string) ($outlets[$r->outlet_id] ?? ''),
+                'amount' => Money::fromDb($r->amount),
+                'reason' => $r->reason,
+                'user' => $name($r->user_id),
+                'approved_by' => $name($r->approved_by),
+                'created_at' => $r->created_at->toIso8601ZuluString(),
+            ])->values()->all(),
             'cash_out_count' => (int) ($cashOutTotals->c ?? 0),
             'cash_out_total' => Money::fromDb($cashOutTotals->t ?? null),
             'cash_outs' => $cashOuts->map(fn (CashMovement $m): array => [
@@ -537,6 +581,8 @@ class ReportService
     {
         return CurrentOutlet::scope(CashMovement::query())
             ->where('type', CashMovementType::Out)
+            // Uang retur tampil di daftar retur (ADR 0018), bukan kas keluar manual
+            ->where('reason', '!=', CashMovementReason::Refund)
             ->whereBetween('created_at', [$start, $end])
             ->when($filters !== null && $filters->userIds !== [], fn (Builder $q) => $q->whereIn('user_id', $filters->userIds ?? []));
     }

@@ -2,7 +2,7 @@
 
 > Diperbarui: 2026-10-14 · Branch: `feature/pos`
 > Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I4 (ADR 0015), installer (ADR 0016), **shift bersama per perangkat C1–C4 (ADR 0017)** selesai. Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1342 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
+> Kualitas: 1363 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
@@ -166,8 +166,18 @@ Catatan non-obvious: shift lama (sebelum ADR 0017) tanpa `closing_float` → shi
 selisih kas ditanggung bersama (atas nama shift), siapa bertugas jam berapa ada di log operator; seeder demo kini
 menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
 
+### Retur sebagian (ADR 0018, SPEC Q92–Q94) — selesai 2026-10-14
+- `POST /v1/orders/{id}/refunds` + `GET /v1/refundable-orders/{nomor}`; kasir web **Riwayat → Retur transaksi**
+  (`/cashier/refunds`) dan tombol **Retur** di detail order. Order selesai ≤ 30 hari (`POS_REFUND_MAX_DAYS`), item & qty,
+  nilai proporsional (`OrderCalculator::refundShare`), tunai = kas keluar alasan **Retur** di shift berjalan / manual,
+  restock opsional, poin pembayaran kembali & poin didapat ditarik, belanja & tier member dikurangi.
+- Izin baru `order.refund` (owner, manager, supervisor; kasir PIN). Order yang sudah diretur tidak bisa di-void.
+- Laporan: Rincian finansial & export (retur, omzet setelah retur), panel Audit daftar Retur, ringkasan harian, detail
+  order dashboard. Laporan per produk tetap bruto.
+
 **Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5) menunggu key dari owner;
-backlog fitur kasir berikutnya: retur sebagian → split/gabung bill → BOM + bundling → PO → promo otomatis → kasbon → paket langganan SaaS.
+backlog fitur kasir berikutnya: split/gabung bill → BOM + bundling → PO → promo otomatis → kasbon → paket langganan SaaS.
+Flutter **F10**: retur (`docs/api/order.md`).
 
 Catatan untuk tim Flutter — **F9** shift bersama (ADR 0017, `docs/api/shift.md`): tombol Kunci + kunci otomatis
 (`outlet.auto_lock_minutes` dari `/auth/me`), buka kunci = `POST /auth/pin-login`; buka shift tanpa `opening_cash` bila

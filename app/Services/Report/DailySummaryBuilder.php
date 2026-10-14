@@ -9,6 +9,7 @@ use App\Enums\ShiftStatus;
 use App\Models\Member;
 use App\Models\MemberSetting;
 use App\Models\Order;
+use App\Models\OrderRefund;
 use App\Models\Outlet;
 use App\Models\Shift;
 use App\Models\User;
@@ -27,9 +28,9 @@ final class DailySummaryBuilder
 {
     /**
      * @return array{date: string, has_activity: bool, outlets: list<array{name: string, order_count: int, revenue: string, average: string,
-     *     void_count: int, void_total: string, shift_count: int, cash_difference: string, cash_deposited: string, target: string|null, target_percent: string|null,
+     *     void_count: int, void_total: string, refund_count: int, refund_total: string, shift_count: int, cash_difference: string, cash_deposited: string, target: string|null, target_percent: string|null,
      *     member_orders: int, member_revenue: string, new_members: int, points_redeemed: int}>,
-     *     totals: array{order_count: int, revenue: string, void_count: int, void_total: string, cash_difference: string, cash_deposited: string},
+     *     totals: array{order_count: int, revenue: string, void_count: int, void_total: string, refund_count: int, refund_total: string, cash_difference: string, cash_deposited: string},
      *     members: array{member_orders: int, member_revenue: string, new_members: int, points_redeemed: int}|null}
      */
     public function build(User $user, string $date): array
@@ -49,6 +50,9 @@ final class DailySummaryBuilder
             $voids = Order::query()->where('outlet_id', $outlet->id)->where('status', OrderStatus::Voided)
                 ->whereBetween('voided_at', [$start, $end])->toBase()
                 ->selectRaw('COUNT(*) as void_count, SUM(grand_total) as void_total')->first();
+            // Retur sebagian menurut tanggal retur (ADR 0018)
+            $refunds = OrderRefund::query()->where('outlet_id', $outlet->id)->whereBetween('created_at', [$start, $end])->toBase()
+                ->selectRaw('COUNT(*) as refund_count, SUM(amount) as refund_total')->first();
             $shifts = Shift::query()->where('outlet_id', $outlet->id)
                 ->whereIn('status', [ShiftStatus::Closed, ShiftStatus::ForceClosed])
                 ->whereBetween('closed_at', [$start, $end])->toBase()
@@ -65,6 +69,8 @@ final class DailySummaryBuilder
                 'average' => Money::div($revenue, $count),
                 'void_count' => (int) ($voids->void_count ?? 0),
                 'void_total' => Money::fromDb($voids->void_total ?? null),
+                'refund_count' => (int) ($refunds->refund_count ?? 0),
+                'refund_total' => Money::fromDb($refunds->refund_total ?? null),
                 'shift_count' => (int) ($shifts->shift_count ?? 0),
                 'cash_difference' => Money::fromDb($shifts->difference ?? null),
                 // Uang yang diambil dari laci saat tutup shift (ADR 0017)
@@ -85,13 +91,15 @@ final class DailySummaryBuilder
 
         return [
             'date' => $date,
-            'has_activity' => collect($rows)->contains(fn (array $r): bool => $r['order_count'] > 0 || $r['void_count'] > 0 || $r['shift_count'] > 0),
+            'has_activity' => collect($rows)->contains(fn (array $r): bool => $r['order_count'] > 0 || $r['void_count'] > 0 || $r['refund_count'] > 0 || $r['shift_count'] > 0),
             'outlets' => $rows,
             'totals' => [
                 'order_count' => (int) array_sum(array_column($rows, 'order_count')),
                 'revenue' => $sum('revenue'),
                 'void_count' => (int) array_sum(array_column($rows, 'void_count')),
                 'void_total' => $sum('void_total'),
+                'refund_count' => (int) array_sum(array_column($rows, 'refund_count')),
+                'refund_total' => $sum('refund_total'),
                 'cash_difference' => $sum('cash_difference'),
                 'cash_deposited' => $sum('cash_deposited'),
             ],

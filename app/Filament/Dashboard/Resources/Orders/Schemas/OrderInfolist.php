@@ -7,6 +7,7 @@ namespace App\Filament\Dashboard\Resources\Orders\Schemas;
 use App\Enums\OrderStatus;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Models\Order;
+use App\Support\Money;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -24,9 +25,14 @@ final class OrderInfolist
         return $schema
             ->columns(['default' => 1, 'lg' => 3])
             ->components([
-                Section::make()
-                    ->columnSpan(['lg' => 2])
-                    ->schema([View::make('filament.dashboard.orders.nota')]),
+                Grid::make(1)->columnSpan(['lg' => 2])->schema([
+                    Section::make()->schema([View::make('filament.dashboard.orders.nota')]),
+                    // Retur sebagian (ADR 0018)
+                    Section::make('Retur')
+                        ->description(fn (Order $record): string => 'Total diretur '.Money::format($record->refunded_total))
+                        ->visible(fn (Order $record): bool => Money::isPositive($record->refunded_total))
+                        ->schema([View::make('filament.dashboard.orders.refunds')]),
+                ]),
 
                 Grid::make(1)->columnSpan(['lg' => 1])->schema([
                     Section::make('Dibatalkan')

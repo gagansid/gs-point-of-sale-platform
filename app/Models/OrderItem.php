@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $unit_cost
  * @property string $options_total
  * @property int $qty
+ * @property int $refunded_qty sudah diretur (ADR 0018)
  * @property string $discount
  * @property string $line_total
  * @property string|null $notes
@@ -34,6 +35,8 @@ final class OrderItem extends Model
     /** Snapshot kategori untuk produk tanpa kategori (Q51) */
     public const UNCATEGORIZED = 'Tanpa kategori';
 
+    protected $attributes = ['refunded_qty' => 0];
+
     protected $fillable = ['order_id', 'product_id', 'product_name', 'category_name', 'unit_price', 'unit_cost', 'options_total', 'qty', 'discount', 'line_total', 'notes', 'sort_order'];
 
     protected function casts(): array
@@ -43,6 +46,7 @@ final class OrderItem extends Model
             'unit_cost' => 'decimal:2',
             'options_total' => 'decimal:2',
             'qty' => 'integer',
+            'refunded_qty' => 'integer',
             'discount' => 'decimal:2',
             'line_total' => 'decimal:2',
             'sort_order' => 'integer',

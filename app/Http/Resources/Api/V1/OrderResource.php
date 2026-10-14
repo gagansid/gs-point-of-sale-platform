@@ -52,6 +52,9 @@ final class OrderResource extends JsonResource
             'rounding' => $this->rounding,
             'grand_total' => $this->grand_total,
             'paid_total' => $this->paid_total,
+            // Retur sebagian (ADR 0018)
+            'refunded_total' => $this->refunded_total,
+            'refunds' => OrderRefundResource::collection($this->whenLoaded('refunds')),
             'change_total' => $this->change_total,
             'tax_inclusive' => $this->tax_inclusive,
             'approved_by' => $this->approved_by,

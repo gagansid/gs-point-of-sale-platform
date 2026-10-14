@@ -12,6 +12,8 @@ enum PointEntryType: string implements HasLabel
     case Earn = 'earn';
     case Redeem = 'redeem';
     case VoidReversal = 'void_reversal';
+    // Retur sebagian: poin didapat ditarik / poin pembayaran dikembalikan (ADR 0018)
+    case Refund = 'refund';
     case Adjust = 'adjust';
     case Expire = 'expire';
 
@@ -21,6 +23,7 @@ enum PointEntryType: string implements HasLabel
             self::Earn => 'Didapat',
             self::Redeem => 'Ditukar',
             self::VoidReversal => 'Batal (void)',
+            self::Refund => 'Retur',
             self::Adjust => 'Penyesuaian',
             self::Expire => 'Kedaluwarsa',
         };

@@ -8,6 +8,9 @@ use App\Actions\Order\AddPayment;
 use App\Actions\Order\CheckoutOrder;
 use App\Actions\Order\Data\CheckoutData;
 use App\Actions\Order\Data\OpenBillData;
+use App\Actions\Order\Data\RefundData;
+use App\Actions\Order\RefundableOrders;
+use App\Actions\Order\RefundOrder;
 use App\Actions\Order\SaveOpenBill;
 use App\Actions\Order\VisibleOrders;
 use App\Actions\Order\VoidOrder;
@@ -16,7 +19,9 @@ use App\Http\Requests\Api\V1\Order\AddPaymentRequest;
 use App\Http\Requests\Api\V1\Order\CheckoutRequest;
 use App\Http\Requests\Api\V1\Order\OpenBillRequest;
 use App\Http\Requests\Api\V1\Order\OrderIndexRequest;
+use App\Http\Requests\Api\V1\Order\RefundOrderRequest;
 use App\Http\Requests\Api\V1\Order\VoidOrderRequest;
+use App\Http\Resources\Api\V1\OrderRefundResource;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Http\Resources\Api\V1\ReceiptResource;
 use App\Models\Order;
@@ -173,5 +178,44 @@ final class OrderController extends Controller
             'Transaksi berhasil dibatalkan',
             meta: ['idempotent_replay' => $result['replayed']],
         );
+    }
+
+    /**
+     * Retur sebagian.
+     *
+     * Order selesai di outlet device, maks. `pos.refund.max_days` hari (bawaan 30). Butuh shift terbuka di device
+     * (uang tunai keluar dari laci). Kasir wajib PIN approver (`order.refund`). Nilai dihitung server (bagian
+     * proporsional grand total). `id` dari app = idempotency key (ADR 0018).
+     */
+    public function refund(RefundOrderRequest $request, Order $order, RefundOrder $action): JsonResponse
+    {
+        $result = $action->handle(
+            ApiActor::user($request),
+            ApiActor::userDevice($request),
+            $order,
+            RefundData::fromArray($request->validated()),
+            CheckoutData::parseApproval($request->validated()),
+        );
+
+        return ApiResponse::success(
+            OrderRefundResource::make($result['refund'])->resolve($request),
+            $result['replayed'] ? 'Retur sudah tercatat' : 'Retur berhasil dicatat',
+            $result['replayed'] ? 200 : 201,
+            ['idempotent_replay' => $result['replayed']],
+        );
+    }
+
+    /**
+     * Cari transaksi untuk diretur.
+     *
+     * Nomor order di outlet device, status selesai, dalam batas hari retur; selain itu 404. Mengembalikan order
+     * beserta item (`refunded_qty`) dan riwayat retur.
+     */
+    public function refundable(Request $request, string $number): JsonResponse
+    {
+        $order = RefundableOrders::find($number, ApiActor::userDevice($request)->outlet_id);
+        abort_if($order === null, 404);
+
+        return ApiResponse::success(OrderResource::make(CheckoutOrder::load($order)->load('refunds.items'))->resolve($request));
     }
 }

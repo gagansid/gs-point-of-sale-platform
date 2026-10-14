@@ -12,6 +12,8 @@ enum StockMovementType: string implements HasColor, HasLabel
     case Adjustment = 'adjustment';
     case Sale = 'sale';
     case VoidReturn = 'void_return';
+    // Retur sebagian, barang kembali ke stok (ADR 0018)
+    case Refund = 'refund';
     // Dokumen stok (ADR 0015)
     case Purchase = 'purchase';
     case PurchaseVoid = 'purchase_void';
@@ -26,6 +28,7 @@ enum StockMovementType: string implements HasColor, HasLabel
             self::Adjustment => 'Penyesuaian',
             self::Sale => 'Penjualan',
             self::VoidReturn => 'Pengembalian void',
+            self::Refund => 'Retur pelanggan',
             self::Purchase => 'Stok masuk',
             self::PurchaseVoid => 'Batal stok masuk',
             self::Opname => 'Stok opname',
@@ -41,6 +44,7 @@ enum StockMovementType: string implements HasColor, HasLabel
             self::Adjustment => 'info',
             self::Sale => 'gray',
             self::VoidReturn => 'warning',
+            self::Refund => 'warning',
             self::Purchase => 'success',
             self::PurchaseVoid => 'danger',
             self::Opname => 'primary',

@@ -11,9 +11,10 @@ use App\Models\Order;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
- * Evaluasi tier member (ADR 0013, Q64): total belanja 12 bulan bergulir = Σ grand_total order SELESAI (void tidak
+ * Evaluasi tier member (ADR 0013, Q64): total belanja 12 bulan bergulir = Σ (grand_total − retur) order SELESAI (void tidak
  * dihitung) sejak 12 bulan lalu; tier = tier tertinggi yang batasnya terpenuhi (bisa naik atau turun).
  * `members.spend_12m` & `tier_id` adalah cache yang ditulis hanya lewat kelas ini. Dipanggil di dalam transaksi
  * Action pemanggil (order selesai/void) atau per tenant oleh jadwal harian.
@@ -32,7 +33,8 @@ final class TierEvaluator
             ->where('status', OrderStatus::Completed)
             ->where('completed_at', '>=', self::windowStart($now))
             ->when($excludeOrderId !== null, fn ($q) => $q->whereKeyNot($excludeOrderId))
-            ->sum('grand_total'));
+            // Dikurangi retur sebagian (ADR 0018)
+            ->sum(DB::raw('grand_total - refunded_total')));
 
         return $this->apply($member, $spend, $tiers ?? MemberTier::ordered());
     }
@@ -51,7 +53,7 @@ final class TierEvaluator
             ->where('status', OrderStatus::Completed)
             ->where('completed_at', '>=', self::windowStart($now))
             ->groupBy('member_id')
-            ->selectRaw('member_id, SUM(grand_total) AS spend')
+            ->selectRaw('member_id, SUM(grand_total - refunded_total) AS spend')
             ->pluck('spend', 'member_id');
 
         $changed = 0;
