@@ -119,7 +119,7 @@ Belum ada test flaky yang terdeteksi (SQLite paralel & MySQL serial sama hasilny
 | `POST /checkout` | `Order/CheckoutTest`, `Security/GspoSec001…`, `GspoBug00x` | ✅ | ✅ | ✅ | ✅ | ✅ | paling lengkap |
 | `POST /orders/quote` | `Order/AutomaticPromotionTest` | ✅ | ✅ | ❌ | ❌ | n/a | |
 | `GET /orders` | `Order/OrderQueryTest` | ✅ | ✅ | ⚠️ | ✅ | n/a | |
-| `PUT /orders/{id}` | `Order/OpenBillTest`, `GspoSec011` | ✅ | ✅ | ❌ | ✅ | ⚠️ | `idempotent_replay` tidak di-assert |
+| `PUT /orders/{id}` | `Order/OpenBillTest`, `GspoSec011`, `OrderContractTest` | ✅ | ✅ | ✅ | ✅ | ✅ | upsert 201/200, tanpa `idempotent_replay` (sesuai kontrak) |
 | `GET /orders/{id}` | `OrderQueryTest` | ✅ | n/a | ✅ | ✅ | n/a | |
 | `POST /orders/{id}/merge` | `Order/SplitMergeOpenBillTest` | ✅ | ✅ | ❌ | ⚠️ | ✅ | tenant lain belum |
 | `POST /orders/{id}/payments` | `OpenBillTest`, `GspoSec011` | ✅ | ✅ | ⚠️ | ✅ | ✅ | |
@@ -290,7 +290,33 @@ Panel: `AdminPanelAccessTest` (tamu, akun tenant, 2FA).
 | MEMBER_PIN_LOCKED | 423 | ⚠️ | assert pesan; `retry_after` belum |
 | **PAYMENT_GATEWAY_ERROR** | 502 | ❌ | |
 
-## 9. Rencana fase berikutnya
+## 9. Status setelah Fase 2 (kontrak API & uang kasir web)
+
+109 test baru (SQLite & MySQL hijau, tanpa skip), **tanpa bug produksi ditemukan**:
+
+| File | Test | Menutup |
+|---|---|---|
+| `tests/Feature/Api/V1/Order/OrderContractTest.php` | 26 | G2, G3 (API), G4, receipt `reprint`, `vouchers/check`, self-order accept/reject |
+| `tests/Feature/Api/V1/Shift/ShiftContractTest.php` | 8 | G6 (force-close tenant lain & ganda → replay, opening-cash ganda, `shifts/current`) |
+| `tests/Feature/Api/V1/Report/ReportIsolationTest.php` | 17 | G5 (10 endpoint laporan + PDF shift tenant lain, role kasir ditolak) |
+| `tests/Feature/Api/V1/Product/CatalogContractTest.php` | 15 | G11 (produk, kategori, grup opsi), isolasi daftar produk/metode bayar/katalog |
+| `tests/Feature/Api/V1/Settings/EmployeeContractTest.php` | 9 | G11 (`users/{id}`, `unlock-pin`), logout ganda |
+| `tests/Feature/Member/MemberContractTest.php` | 10 | G5 (poin & kasbon member tenant lain), validasi `GET /members` |
+| `tests/Feature/Api/ErrorCodeContractTest.php` | 9 | G9 (`MEMBER_PIN_LOCKED` + `retry_after`, `INSUFFICIENT_POINTS`, `EMAIL_NOT_VERIFIED` di payments, `PAYMENT_GATEWAY_*`, `OUTLET_LIMIT_REACHED` jalur kedua) |
+| `tests/Feature/Cashier/WebCashierMoneyContractTest.php` | 15 | G1 (retur ganda), G3 (web), G6 (web), G7 (void ganda), kasbon web |
+
+Catatan kontrak yang terungkap (bukan bug, sudah didokumentasikan di test):
+- Semua role tenant memegang `order.create`, `order.reprint`, `self_order.handle`, `member.view`; "izin ditolak" untuk
+  endpoint itu diuji lewat token perangkat tanpa user (401) dan tenant hanya-baca (403 `SUBSCRIPTION_EXPIRED` / `FORBIDDEN`).
+- `GET /products` tidak memeriksa izin (semua role boleh membaca).
+- Kasir web: `BusinessException` menjadi error sesi `cashier` (redirect), bukan status HTTP; hanya `findOrFail` → 404.
+- `LAST_OWNER_REQUIRED` memang hanya punya satu jalur (turunkan role owner terakhir).
+- Kosmetik: `CorrectOpeningCash` tetap menulis log info saat kiriman ulang tanpa perubahan.
+
+Sisa: G7 (replay webhook billing di level HTTP), G8 (PlanResource, CancelInvoice, TenantPlanAction), G10 (toggle aktif),
+G12 (`TABLE_NOT_FOUND` — menunggu keputusan), isolasi Filament (Shift/Employee/PaymentMethod/Promotion) → Fase 3–5.
+
+## 10. Rencana fase berikutnya
 
 - **Fase 2 (kontrak API):** tutup G2, G4–G6, G9, G11 dan kolom ❌ di §4.
 - **Fase 3 (skenario lintas modul):** `tests/Feature/Scenarios/` — hari normal, void & approval, diskon, multi-outlet,
