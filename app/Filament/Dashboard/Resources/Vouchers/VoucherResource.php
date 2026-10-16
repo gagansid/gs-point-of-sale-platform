@@ -21,6 +21,7 @@ use App\Models\Outlet;
 use App\Models\User;
 use App\Models\Voucher;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\Money;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
@@ -68,7 +69,7 @@ final class VoucherResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->role->hasFullDashboard() && $user->hasPermission('member.settings');
+        return $user instanceof User && Features::enabled('member') && $user->role->hasFullDashboard() && $user->hasPermission('member.settings');
     }
 
     public static function canCreate(): bool

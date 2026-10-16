@@ -13,6 +13,7 @@ use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\StockOpname;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\Money;
 use BackedEnum;
 use Filament\Actions\EditAction;
@@ -63,7 +64,7 @@ final class StockOpnameResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->role->hasFullDashboard() && $user->hasPermission('stock.opname');
+        return $user instanceof User && Features::enabled('stock') && $user->role->hasFullDashboard() && $user->hasPermission('stock.opname');
     }
 
     public static function canCreate(): bool

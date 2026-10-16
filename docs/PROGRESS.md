@@ -35,6 +35,7 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | **Program member** | ADR 0013: M1 data & menu, M2 poin, M3 tukar poin & diskon member, M4 halaman member, M5 tier, M6 kartu stempel, M7 voucher + laporan member + ringkasan harian + import/export ✅ | ✅ | `0dd6186` … |
 | **Self-order QR meja** | ADR 0014: S1 meja & QR + setelan, S2 halaman HP + Pesanan meja di kasir web + kedaluwarsa, S3 Midtrans owner + webhook, S4 API Flutter + laporan kanal + bayar poin dari HP ✅ | ✅ | `2381693` … |
 | **Stok masuk, opname, transfer** | ADR 0015: I1 supplier + stok masuk (modal rata-rata tertimbang), I2 stok opname, I3 transfer antar outlet, I4 laporan stok & pembelian ✅ | ✅ | `c93026c` … |
+| **Langganan SaaS** | ADR 0024 (Q108–Q111): paket & fitur (admin), batasan fitur per paket, tagihan owner (Pengaturan → Langganan), Midtrans vendor + webhook / transfer manual (admin Tandai lunas), perpanjangan otomatis saat lunas, pengingat 7/3/1 hari ✅ | ✅ 2026-10-16 | — |
 | **Kasbon member** | ADR 0023 (Q105–Q107): metode bayar Kasbon (member + bukti, batas kredit), void & retur, pelunasan (API, kasir web, dashboard) dengan kas masuk shift, laporan ✅ | ✅ 2026-10-16 | — |
 | **Promo otomatis** | ADR 0022 (Q102–Q104): diskon produk/kategori (happy hour), beli X gratis Y, diskon minimal belanja, jadwal hari/jam/tanggal/outlet; dihitung sebelum diskon manual; struk, kasir web, `/orders/quote`, katalog ✅ | ✅ 2026-10-14 | — |
 | **Purchase order** | ADR 0021 (Q100–Q101): PO ke supplier (draf, kirim, batal), terima barang → draf Stok masuk, status diterima sebagian/penuh, izin `purchase.manage` ✅ | ✅ 2026-10-14 | — |
@@ -46,7 +47,7 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ✅ 2026-10-11 (sisa: OWASP ZAP & uji manual di staging) | `38a67cd`..`fe6d252` |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
-Endpoint selesai: **80** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q107, ADR 0001–0023.
+Endpoint selesai: **80** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q111, ADR 0001–0024.
 
 ---
 

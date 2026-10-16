@@ -2,7 +2,7 @@
 
 > Diperbarui: 2026-10-14 · Branch: `feature/pos`
 > Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I4 (ADR 0015), installer (ADR 0016), **shift bersama per perangkat C1–C4 (ADR 0017)** selesai. Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1405 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
+> Kualitas: 1412 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
@@ -204,8 +204,18 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
   `RedeemPoints::check` (QR sekali pakai).
 - Pelunasan `PayReceivable`: API, kasir web **Kasbon**, dashboard Member (tanpa laci). Ledger `receivable_entries`.
 
-**Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5) menunggu key dari owner;
-backlog fitur berikutnya: paket langganan SaaS. Flutter **F13**: kasbon (`docs/api/member.md`). Flutter **F12**: tampilkan promo (`/catalog`, `/orders/quote`).
+### Paket langganan & tagihan SaaS (ADR 0024, SPEC Q108–Q111) — selesai 2026-10-16
+- Admin **Pelanggan → Paket** & **Tagihan** (Tandai lunas/Batalkan), detail bisnis → **Atur paket**. Owner
+  **Pengaturan → Langganan** (izin baru `billing.manage`): buat tagihan, bayar online (Midtrans vendor) atau transfer.
+- `App\Support\Features::enabled()` membatasi menu & mesin per paket; tanpa paket / jual putus = semua fitur.
+- Webhook `POST /webhooks/billing/midtrans`; jadwal `pos:billing-reminders` 08.00 WIB. Env baru `POS_BILLING_*`
+  (lihat `.env.example`). URL notifikasi Midtrans vendor: `{APP_URL}/webhooks/billing/midtrans`.
+
+**Backlog 1–4 selesai** (shift bersama, retur, pecah/gabung bill, resep & paket, PO, promo otomatis, kasbon, langganan).
+
+**Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5 owner & billing
+vendor) menunggu key; integrasi Flutter F9–F13. Belum: utang supplier, cetak PO, laporan per produk dikurangi retur,
+prorata ganti paket, WhatsApp ringkasan harian. Flutter **F12**: tampilkan promo (`/catalog`, `/orders/quote`).
 Flutter **F10**: retur (`docs/api/order.md`); **F11**: pecah/gabung bill, status order `merged`.
 
 Catatan untuk tim Flutter — **F9** shift bersama (ADR 0017, `docs/api/shift.md`): tombol Kunci + kunci otomatis

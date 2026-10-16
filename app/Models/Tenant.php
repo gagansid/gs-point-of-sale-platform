@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\BillingCycle;
 use App\Enums\BusinessType;
 use App\Enums\TenantAccess;
 use App\Enums\TenantStatus;
@@ -16,6 +17,7 @@ use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -30,6 +32,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property TenantStatus $status
  * @property CarbonImmutable|null $subscription_ends_at
  * @property int|null $max_outlets batas outlet aktif (SaaS, diatur admin); null = tanpa batas
+ * @property string|null $plan_id paket langganan (ADR 0024); null = semua fitur
+ * @property BillingCycle|null $billing_cycle
  */
 final class Tenant extends Model
 {
@@ -52,6 +56,7 @@ final class Tenant extends Model
             'status' => TenantStatus::class,
             'subscription_ends_at' => 'immutable_datetime',
             'max_outlets' => 'integer',
+            'billing_cycle' => BillingCycle::class,
         ];
     }
 
@@ -124,6 +129,12 @@ final class Tenant extends Model
      * Relasi dari tenant sudah dibatasi oleh foreign key tenant_id, sehingga TenantScope dilepas
      * agar panel /admin (tanpa tenant context) bisa menghitung & menampilkan datanya.
      */
+
+    /** @return BelongsTo<Plan, $this> */
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
+    }
 
     /** @return HasMany<Outlet, $this> */
     public function outlets(): HasMany

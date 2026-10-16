@@ -73,6 +73,8 @@ enum UserRole: string implements HasColor, HasLabel
         'payment_gateway.manage',
         // Promo otomatis (ADR 0022)
         'promo.manage',
+        // Paket langganan & tagihan SaaS (ADR 0024)
+        'billing.manage',
     ];
 
     /**

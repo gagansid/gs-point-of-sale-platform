@@ -19,6 +19,7 @@ use App\Models\StockReceipt;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\Money;
 use BackedEnum;
 use Filament\Actions\EditAction;
@@ -74,7 +75,7 @@ final class StockReceiptResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasPermission('stock.receive');
+        return $user instanceof User && Features::enabled('stock') && $user->hasPermission('stock.receive');
     }
 
     public static function canCreate(): bool

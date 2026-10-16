@@ -9,6 +9,7 @@ use App\Enums\DiscountType;
 use App\Enums\PromotionType;
 use App\Models\Outlet;
 use App\Models\Promotion;
+use App\Support\Features;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 
@@ -25,7 +26,8 @@ final class AutomaticPromotions
     /** @param list<ResolvedLine> $lines */
     public function for(Outlet $outlet, array $lines, ?CarbonImmutable $at = null): PromoPricing
     {
-        if ($lines === []) {
+        // Paket tanpa fitur promo (ADR 0024)
+        if ($lines === [] || ! Features::enabled('promotions')) {
             return PromoPricing::none();
         }
 

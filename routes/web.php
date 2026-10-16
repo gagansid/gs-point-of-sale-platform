@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\BillingWebhookController;
 use App\Http\Controllers\Web\Cashier\ConfirmController as CashierConfirmController;
 use App\Http\Controllers\Web\Cashier\HomeController as CashierHomeController;
 use App\Http\Controllers\Web\Cashier\LockController as CashierLockController;
@@ -136,6 +137,12 @@ Route::post('webhooks/midtrans/{tenant}', MidtransWebhookController::class)
     ->withoutMiddleware(ValidateCsrfToken::class)
     ->middleware('throttle:120,1')
     ->name('webhooks.midtrans');
+
+// Notifikasi Midtrans milik vendor untuk tagihan langganan SaaS (ADR 0024)
+Route::post('webhooks/billing/midtrans', BillingWebhookController::class)
+    ->withoutMiddleware(ValidateCsrfToken::class)
+    ->middleware('throttle:120,1')
+    ->name('webhooks.billing');
 
 /*
  * Pesan dari meja (ADR 0014, Q69–Q70): gspos.id/order/t/{token} (tanpa subdomain: /order/t/{token}). Publik; meja &

@@ -18,6 +18,7 @@ use App\Models\MemberStamp;
 use App\Models\Product;
 use App\Models\StampProgram;
 use App\Models\User;
+use App\Support\Features;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
@@ -60,7 +61,7 @@ final class StampProgramResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->role->hasFullDashboard() && $user->hasPermission('member.settings');
+        return $user instanceof User && Features::enabled('member') && $user->role->hasFullDashboard() && $user->hasPermission('member.settings');
     }
 
     public static function canCreate(): bool

@@ -17,6 +17,7 @@ use App\Models\MemberTier;
 use App\Models\Outlet;
 use App\Models\OutletMemberProgram;
 use App\Models\User;
+use App\Support\Features;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
@@ -70,7 +71,7 @@ final class MemberProgramSettings extends Page
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasPermission('member.settings');
+        return $user instanceof User && Features::enabled('member') && $user->hasPermission('member.settings');
     }
 
     public function mount(): void

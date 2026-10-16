@@ -14,6 +14,7 @@ use App\Models\MemberSetting;
 use App\Models\Order;
 use App\Models\ReceivableEntry;
 use App\Services\Member\ReceivableLedger;
+use App\Support\Features;
 use App\Support\Money;
 
 /**
@@ -37,7 +38,7 @@ final class ChargeReceivable
             return;
         }
 
-        if (! MemberSetting::current()->credit_enabled) {
+        if (! MemberSetting::current()->credit_enabled || ! Features::enabled('credit')) {
             throw self::invalid('Kasbon tidak aktif');
         }
 

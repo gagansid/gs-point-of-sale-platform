@@ -2664,6 +2664,10 @@ select.fi-select-input {
     margin: 16px 0 0;
 }
 
+.gs-nota-meta--single {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .gs-nota-meta .is-wide {
     grid-column: 1 / -1;
 }

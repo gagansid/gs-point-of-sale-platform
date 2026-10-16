@@ -15,6 +15,7 @@ use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\Money;
 use App\Support\TenantContext;
 use Filament\Forms\Components\FileUpload;
@@ -48,7 +49,9 @@ final class ProductForm
                                 TextInput::make('name')->label('Nama produk')->placeholder('Es Kopi Susu')
                                     ->required()->maxLength(150)->autofocus()->columnSpanFull(),
                                 // ADR 0020: produk dijual, bahan baku (tidak dijual), atau paket
-                                Select::make('kind')->label('Jenis')->options(ProductKind::class)->default(ProductKind::Regular->value)
+                                Select::make('kind')->label('Jenis')
+                                    // Paket tanpa fitur resep (ADR 0024): field tersembunyi = jenis lama tetap
+                                    ->visible(fn (): bool => Features::enabled('recipes'))->options(ProductKind::class)->default(ProductKind::Regular->value)
                                     ->required()->native(false)->selectablePlaceholder(false)->live()
                                     ->helperText(fn (Get $get): string => match (self::kind($get)) {
                                         ProductKind::Ingredient => 'Tidak tampil di kasir; stok berkurang lewat resep produk lain',
@@ -84,7 +87,7 @@ final class ProductForm
                             ->description(fn (Get $get): string => self::kind($get) === ProductKind::Bundle
                                 ? 'Produk di dalam paket; stok dipotong dari isi ini'
                                 : 'Bahan per 1 porsi; bila diisi, stok bahan yang berkurang (bukan stok produk ini)')
-                            ->visible(fn (Get $get): bool => self::kind($get) !== ProductKind::Ingredient)
+                            ->visible(fn (Get $get): bool => self::kind($get) !== ProductKind::Ingredient && Features::enabled('recipes'))
                             ->schema([
                                 Repeater::make('components')
                                     ->hiddenLabel()

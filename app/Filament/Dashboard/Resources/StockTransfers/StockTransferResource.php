@@ -16,6 +16,7 @@ use App\Models\Product;
 use App\Models\StockTransfer;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use BackedEnum;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -67,7 +68,7 @@ final class StockTransferResource extends Resource
         $user = auth()->user();
 
         // Butuh minimal 2 outlet aktif di bisnis
-        return $user instanceof User && $user->role->hasFullDashboard() && $user->hasPermission('stock.transfer')
+        return $user instanceof User && Features::enabled('stock') && $user->role->hasFullDashboard() && $user->hasPermission('stock.transfer')
             && Outlet::query()->active()->count() > 1;
     }
 

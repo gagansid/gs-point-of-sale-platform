@@ -21,6 +21,7 @@ use App\Models\Product;
 use App\Models\Promotion;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\Money;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
@@ -71,7 +72,7 @@ final class PromotionResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->role->hasFullDashboard() && $user->hasPermission('promo.manage');
+        return $user instanceof User && Features::enabled('promotions') && $user->role->hasFullDashboard() && $user->hasPermission('promo.manage');
     }
 
     public static function canCreate(): bool

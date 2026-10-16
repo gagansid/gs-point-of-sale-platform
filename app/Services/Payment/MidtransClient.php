@@ -26,6 +26,20 @@ final class MidtransClient
         return new self($setting);
     }
 
+    /** Akun Midtrans milik vendor gs.POS untuk tagihan langganan (ADR 0024); null bila server key belum diisi. */
+    public static function vendor(): ?self
+    {
+        $key = config('pos.billing.midtrans_server_key');
+        if (blank($key)) {
+            return null;
+        }
+
+        $setting = new PaymentGatewaySetting;
+        $setting->forceFill(['server_key' => (string) $key, 'is_production' => (bool) config('pos.billing.midtrans_production')]);
+
+        return new self($setting);
+    }
+
     /**
      * Buat transaksi Snap; nominal bulat rupiah (IDR tanpa desimal).
      *

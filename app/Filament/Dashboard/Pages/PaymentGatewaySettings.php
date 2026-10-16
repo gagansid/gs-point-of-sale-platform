@@ -10,6 +10,7 @@ use App\Exceptions\BusinessException;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\PaymentGatewaySetting;
 use App\Models\User;
+use App\Support\Features;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
@@ -57,7 +58,7 @@ final class PaymentGatewaySettings extends Page
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasPermission('payment_gateway.manage');
+        return $user instanceof User && Features::enabled('self_order') && $user->hasPermission('payment_gateway.manage');
     }
 
     public function mount(): void

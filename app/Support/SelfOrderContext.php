@@ -63,7 +63,8 @@ final class SelfOrderContext
     public function unavailableReason(?CarbonImmutable $now = null): ?string
     {
         return match (true) {
-            ! $this->setting->enabled => 'Pesan dari meja belum aktif di outlet ini. Silakan pesan di kasir.',
+            // Paket tanpa self-order (ADR 0024) diperlakukan seperti belum aktif
+            ! $this->setting->enabled || ! Features::enabled('self_order', $this->tenant) => 'Pesan dari meja belum aktif di outlet ini. Silakan pesan di kasir.',
             $this->tenant->isReadOnly() => 'Pesan dari meja sedang tidak tersedia. Silakan pesan di kasir.',
             ! $this->setting->isOpenAt($now ?? CarbonImmutable::now(), $this->outlet->timezone) => 'Di luar jam layanan pesan dari meja ('
                 .substr((string) $this->setting->opens_at, 0, 5).'–'.substr((string) $this->setting->closes_at, 0, 5).'). Silakan pesan di kasir.',

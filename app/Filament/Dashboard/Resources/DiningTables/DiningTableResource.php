@@ -18,6 +18,7 @@ use App\Models\DiningTable;
 use App\Models\Outlet;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -63,7 +64,7 @@ final class DiningTableResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->role->hasFullDashboard() && $user->hasPermission('table.manage');
+        return $user instanceof User && Features::enabled('self_order') && $user->role->hasFullDashboard() && $user->hasPermission('table.manage');
     }
 
     public static function canCreate(): bool

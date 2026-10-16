@@ -95,6 +95,15 @@ return [
         'max_devices_per_outlet' => (int) env('POS_WEB_CASHIER_MAX_DEVICES', 10),
     ],
 
+    // Tagihan langganan SaaS (ADR 0024): Midtrans milik vendor; tanpa key = transfer manual (instruksi di bank_info)
+    'billing' => [
+        'midtrans_server_key' => env('POS_BILLING_MIDTRANS_SERVER_KEY'),
+        'midtrans_production' => (bool) env('POS_BILLING_MIDTRANS_PRODUCTION', false),
+        'bank_info' => env('POS_BILLING_BANK_INFO', 'Transfer ke rekening gs.POS, lalu kirim bukti ke tim kami.'),
+        'due_days' => (int) env('POS_BILLING_DUE_DAYS', 3),
+        'reminder_days' => [7, 3, 1],
+    ],
+
     // Retur sebagian (ADR 0018): order bisa diretur maks. sekian hari setelah selesai
     'refund' => [
         'max_days' => (int) env('POS_REFUND_MAX_DAYS', 30),

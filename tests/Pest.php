@@ -15,6 +15,7 @@ use App\Models\ProductStock;
 use App\Models\Shift;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\TenantContext;
 use App\Support\WebCashier;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -84,6 +85,8 @@ function freshAuth(): void
     // Satu instance aplikasi dipakai semua request di test: tenant request sebelumnya tidak boleh terbawa
     TenantContext::forget();
     CurrentOutlet::forget();
+    // Paket tenant di-cache per request (ADR 0024)
+    Features::flush();
 }
 
 /**

@@ -19,6 +19,7 @@ use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\Money;
 use BackedEnum;
 use Filament\Actions\EditAction;
@@ -73,7 +74,7 @@ final class PurchaseOrderResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasPermission('purchase.manage');
+        return $user instanceof User && Features::enabled('stock') && $user->hasPermission('purchase.manage');
     }
 
     public static function canCreate(): bool

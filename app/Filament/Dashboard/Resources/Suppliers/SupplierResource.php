@@ -14,6 +14,7 @@ use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Support\Features;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
@@ -52,7 +53,7 @@ final class SupplierResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->role->hasFullDashboard() && $user->hasPermission('supplier.manage');
+        return $user instanceof User && Features::enabled('stock') && $user->role->hasFullDashboard() && $user->hasPermission('supplier.manage');
     }
 
     public static function canCreate(): bool

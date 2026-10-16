@@ -28,3 +28,4 @@ template: `docs/templates/adr.md`.
 | [0021](0021-purchase-orders.md) | Purchase order ke supplier: kirim, terima sebagian lewat Stok masuk, batal | Diterima |
 | [0022](0022-automatic-promotions.md) | Promo otomatis: diskon produk, beli X gratis Y, minimal belanja, terjadwal; dihitung sebelum diskon manual | Diterima |
 | [0023](0023-customer-credit.md) | Kasbon member: bukti QR/PIN, batas kredit, void/retur, pelunasan masuk kas shift | Diterima |
+| [0024](0024-subscription-plans-billing.md) | Paket langganan & tagihan SaaS: fitur per paket, Midtrans vendor / manual, pengingat | Diterima |
