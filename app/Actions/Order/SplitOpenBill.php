@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Order;
 
 use App\Actions\Order\Concerns\OpenBillItems;
+use App\Enums\DiscountType;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Device;
@@ -16,7 +17,8 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Pecah open bill (ADR 0019, POST /orders/{id}/split): item & qty pindah ke open bill baru (ID dari klien), kedua bill
- * dihitung ulang. Bill asal minimal tersisa 1 item. Member tetap di bill asal.
+ * dihitung ulang. Bill asal minimal tersisa 1 item. Member tetap di bill asal. Diskon manual ikut dibagi (lihat
+ * OpenBillItems::lines dan diskon order di bawah).
  */
 final class SplitOpenBill
 {
@@ -67,8 +69,19 @@ final class SplitOpenBill
             }
 
             $moved = $items->filter(fn ($item): bool => isset($moves[$item->id]));
-            $target = $this->save->handle($actor, $device, $newOrderId, self::billData($locked, self::lines($moved, $moves), tableLabel: $tableLabel))['order'];
-            $source = $this->save->handle($actor, $device, $locked->id, self::billData($locked, self::lines($items, $remaining)))['order'];
+            // Diskon order: persen berlaku di kedua bill; nominal tetap di bill asal (tidak digandakan)
+            $type = $locked->discount_type;
+            $value = $locked->discount_value ?? '0.00';
+            $targetPercent = $type === DiscountType::Percent;
+
+            $target = $this->save->handle($actor, $device, $newOrderId, self::billData(
+                $locked, self::lines($moved, $moves), tableLabel: $tableLabel,
+                discountType: $targetPercent ? $type : null, discountValue: $value, approvedBy: $locked->approved_by,
+            ))['order'];
+            $source = $this->save->handle($actor, $device, $locked->id, self::billData(
+                $locked, self::lines($items, $remaining, $moves),
+                discountType: $type, discountValue: $value, approvedBy: $locked->approved_by,
+            ))['order'];
 
             return ['source' => $source, 'target' => $target];
         });

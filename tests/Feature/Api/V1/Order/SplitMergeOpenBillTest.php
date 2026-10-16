@@ -85,13 +85,41 @@ describe('pecah', function () {
         'item lain' => [fn (string $s) => [['order_item_id' => uuid(), 'qty' => 1]]],
     ]);
 
-    it('bill dengan diskon atau pembayaran tidak bisa dipecah', function () {
-        $discounted = openBill($this, ['coffee' => 2], ['discount' => ['type' => 'percent', 'value' => 5]]);
-        assertApiError(billApi($this, 'POST', "/orders/{$discounted}/split", ['new_order_id' => uuid(), 'items' => [['order_item_id' => itemIdOf($discounted, 'Es Kopi Susu'), 'qty' => 1]]]), 'VALIDATION_ERROR', 422);
-
+    it('bill dengan pembayaran tidak bisa dipecah', function () {
         $paid = openBill($this, ['coffee' => 2]);
         billApi($this, 'POST', "/orders/{$paid}/payments", ['payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['cash']->id, 'amount' => 10000]]])->assertSuccessful();
         assertApiError(billApi($this, 'POST', "/orders/{$paid}/split", ['new_order_id' => uuid(), 'items' => [['order_item_id' => itemIdOf($paid, 'Es Kopi Susu'), 'qty' => 1]]]), 'VALIDATION_ERROR', 422);
+    });
+
+    it('diskon item dibagi per qty, diskon persen di kedua bill, approval lama ikut tanpa PIN ulang', function () {
+        // 44.000: diskon item 3.001,01 + 5% order ≈ 11,5% > batas kasir 10% → PIN supervisor
+        $source = openBill($this, [], [
+            'items' => [['product_id' => $this->pos->coffee->id, 'qty' => 2, 'option_ids' => [$this->pos->regular->id], 'discount' => '3001.01']],
+            'discount' => ['type' => 'percent', 'value' => 5],
+            'approver_user_id' => $this->pos->supervisor->id, 'approver_pin' => '123456',
+        ]);
+        $newId = uuid();
+
+        $response = billApi($this, 'POST', "/orders/{$source}/split", ['new_order_id' => $newId, 'items' => [['order_item_id' => itemIdOf($source, 'Es Kopi Susu'), 'qty' => 1]]])
+            ->assertCreated()
+            ->assertJsonPath('data.target.discount', ['type' => 'percent', 'value' => '5.00'])
+            ->assertJsonPath('data.source.discount', ['type' => 'percent', 'value' => '5.00'])
+            ->assertJsonPath('data.target.approved_by', $this->pos->supervisor->id)
+            ->assertJsonPath('data.source.approved_by', $this->pos->supervisor->id);
+
+        expect($response->json('data.target.items.0.discount'))->toBe('1500.51')
+            ->and($response->json('data.source.items.0.discount'))->toBe('1500.50');
+    });
+
+    it('diskon order nominal tetap di bill asal', function () {
+        $source = openBill($this, ['coffee' => 1, 'croissant' => 1], ['discount' => ['type' => 'fixed', 'value' => 4000]]);
+
+        billApi($this, 'POST', "/orders/{$source}/split", ['new_order_id' => uuid(), 'items' => [['order_item_id' => itemIdOf($source, 'Croissant'), 'qty' => 1]]])
+            ->assertCreated()
+            ->assertJsonPath('data.target.discount', null)
+            ->assertJsonPath('data.target.order_discount', '0.00')
+            ->assertJsonPath('data.source.discount', ['type' => 'fixed', 'value' => '4000.00'])
+            ->assertJsonPath('data.source.order_discount', '4000.00');
     });
 
     it('isolasi: bill tenant lain → 404', function () {
@@ -132,6 +160,22 @@ describe('gabung', function () {
 
         $other = openBill($this, ['croissant' => 1], ['member_id' => $b->id]);
         assertApiError(billApi($this, 'POST', "/orders/{$target}/merge", ['source_order_id' => $other]), 'VALIDATION_ERROR', 422);
+    });
+
+    it('diskon: persen sama tetap persen; berbeda jadi nominal = jumlah potongan; diskon item ikut', function () {
+        $target = openBill($this, ['coffee' => 1], ['discount' => ['type' => 'percent', 'value' => 5]]);
+        $source = openBill($this, ['croissant' => 1], ['discount' => ['type' => 'percent', 'value' => 5]]);
+        billApi($this, 'POST', "/orders/{$target}/merge", ['source_order_id' => $source])->assertOk()
+            ->assertJsonPath('data.discount', ['type' => 'percent', 'value' => '5.00']);
+
+        // 5% × 22.000 = 1.100 + nominal 1.000 → nominal 2.100
+        $target = openBill($this, ['coffee' => 1], ['discount' => ['type' => 'percent', 'value' => 5]]);
+        $source = openBill($this, [], ['items' => [['product_id' => $this->pos->croissant->id, 'qty' => 1, 'discount' => '1000']], 'discount' => ['type' => 'fixed', 'value' => 1000]]);
+        $merged = billApi($this, 'POST', "/orders/{$target}/merge", ['source_order_id' => $source])->assertOk()
+            ->assertJsonPath('data.discount', ['type' => 'fixed', 'value' => '2100.00'])
+            ->assertJsonPath('data.order_discount', '2100.00');
+
+        expect(collect($merged->json('data.items'))->firstWhere('product_name', 'Croissant')['discount'])->toBe('1000.00');
     });
 
     it('bill yang sama, sudah selesai, atau dari device outlet lain ditolak', function () {

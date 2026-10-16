@@ -177,8 +177,10 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
 
 ### Pecah & gabung open bill (ADR 0019, SPEC Q95–Q96) — selesai 2026-10-14
 - `POST /v1/orders/{id}/split` (item & qty ke bill baru) dan `POST /v1/orders/{id}/merge` (status baru `merged`);
-  kasir web: detail open bill → **Pecah bill** / **Gabung bill**. Hanya open bill tanpa pembayaran, diskon, voucher,
-  stempel; harga dihitung ulang lewat `SaveOpenBill`.
+  kasir web: detail open bill → **Pecah bill** / **Gabung bill**. Hanya open bill tanpa pembayaran, voucher,
+  stempel; harga dihitung ulang lewat `SaveOpenBill`. Revisi 2026-10-16: diskon manual ikut dibagi (item proporsional
+  qty, order persen di kedua bill / nominal di bill asal; gabung → nominal jumlah potongan), `approved_by` lama ikut lewat
+  `OpenBillData::keepApproval` (hanya diisi server).
 
 ### Bahan baku, resep, paket (ADR 0020, SPEC Q97–Q99) — selesai 2026-10-14
 - `products.kind` (`regular`/`ingredient`/`bundle`) & `unit`; `product_components` (resep/isi paket), `option_components`

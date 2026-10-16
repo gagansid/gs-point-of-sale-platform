@@ -34,6 +34,10 @@ final readonly class OpenBillData
         public bool $benefitsProvided = false,
         // Voucher (M7): voucherProvided = false → voucher lama di open bill tetap; null = dilepas
         public bool $voucherProvided = false,
+        // Pecah/gabung (ADR 0019): approval diskon lama dibawa tanpa cek batas ulang (total diskon tidak bertambah).
+        // Hanya diisi server, tidak dari request.
+        public bool $keepApproval = false,
+        public ?string $approvedBy = null,
     ) {}
 
     /** @param array<string, mixed> $data */

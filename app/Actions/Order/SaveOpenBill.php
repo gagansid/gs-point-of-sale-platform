@@ -16,6 +16,7 @@ use App\Models\Member;
 use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\User;
+use App\Services\Order\CalculationResult;
 use App\Services\Order\OrderNumberGenerator;
 use App\Support\Idempotency;
 use App\Support\Money;
@@ -66,7 +67,9 @@ final class SaveOpenBill
             voucherId: $data->voucherProvided || $existing === null ? $data->benefits->voucherId : $existing->voucher_id,
         );
         $pricing = app(ResolveMemberPricing::class)->handle($pricingMember, $outlet, $lines, $benefits);
-        $priced = $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval, $pricing);
+        $priced = $data->keepApproval
+            ? self::keptApproval($this->priceOrder->totals($outlet, $lines, $data->discountType, $data->discountValue, $pricing), $data->approvedBy)
+            : $this->priceOrder->handle($actor, $outlet, $lines, $data->discountType, $data->discountValue, $data->approval, $pricing);
         $totals = $priced['totals'];
 
         try {
@@ -134,6 +137,16 @@ final class SaveOpenBill
         }
 
         return ['order' => CheckoutOrder::load($result['order']), 'created' => $result['created']];
+    }
+
+    /**
+     * Pecah/gabung: diskon manual hasil pembagian sudah disetujui sebelumnya; approver lama tetap dicatat.
+     *
+     * @return array{totals: CalculationResult, approved_by: string|null}
+     */
+    private static function keptApproval(CalculationResult $totals, ?string $approvedBy): array
+    {
+        return ['totals' => $totals, 'approved_by' => Money::isPositive($totals->manualDiscount) ? $approvedBy : null];
     }
 
     /** @throws BusinessException */

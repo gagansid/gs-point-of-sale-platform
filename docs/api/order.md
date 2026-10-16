@@ -222,9 +222,17 @@ Test: `tests/Feature/Api/V1/Order/RefundOrderTest.php`, `tests/Feature/Cashier/W
 
 ## `POST /v1/orders/{id}/split` · `POST /v1/orders/{id}/merge` — pecah & gabung open bill (ADR 0019)
 
-Syarat kedua endpoint: open bill (`status: open`) di outlet device, **belum ada pembayaran**, tanpa diskon item/order,
-voucher, atau kartu stempel (lepas dulu lewat `PUT /orders/{id}`); selain itu `422 VALIDATION_ERROR`. Harga dihitung
-ulang dengan harga & setelan saat ini.
+Syarat kedua endpoint: open bill (`status: open`) di outlet device, **belum ada pembayaran**, tanpa voucher
+atau kartu stempel (lepas dulu lewat `PUT /orders/{id}`); selain itu `422 VALIDATION_ERROR`. Harga dihitung ulang
+dengan harga & setelan saat ini.
+
+Diskon manual ikut, tanpa PIN ulang (`approved_by` lama dibawa, total diskon tidak bertambah):
+
+| | Pecah | Gabung |
+|---|---|---|
+| Diskon item | Dibagi proporsional qty; sisa pembulatan di bill asal | Ikut apa adanya |
+| Diskon order persen | Berlaku di kedua bill | Persen sama di kedua bill → tetap persen |
+| Diskon order nominal / campuran | Tetap di bill asal | `fixed` = jumlah `order_discount` kedua bill |
 
 **Pecah** — body `{ new_order_id, items: [{ order_item_id, qty }], table_label? }`. Item & qty pindah ke open bill baru
 (`new_order_id` = idempotency key), bill asal minimal tersisa 1 item, member tetap di bill asal. Respons `201`

@@ -84,7 +84,7 @@
             </section>
         @endif
 
-        {{-- Pecah & gabung open bill (ADR 0019): belum dibayar, tanpa diskon/voucher/stempel --}}
+        {{-- Pecah & gabung open bill (ADR 0019): belum dibayar, tanpa voucher/stempel; diskon manual ikut dibagi --}}
         @if ($order->status === \App\Enums\OrderStatus::Open)
             <section class="cashier-card">
                 <h2>Pecah bill</h2>

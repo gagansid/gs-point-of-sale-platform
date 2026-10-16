@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Actions\Order;
 
 use App\Actions\Order\Concerns\OpenBillItems;
+use App\Enums\DiscountType;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
 use App\Exceptions\BusinessException;
 use App\Models\Device;
 use App\Models\Order;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -60,7 +62,11 @@ final class MergeOpenBills
                 ...self::lines($lockedSource->items()->with('options')->get()),
             ];
 
-            $merged = $this->save->handle($actor, $device, $lockedTarget->id, self::billData($lockedTarget, $items, $memberId, $lockedTarget->member_id === null && $memberId !== null))['order'];
+            [$type, $value] = self::mergedDiscount($lockedTarget, $lockedSource);
+            $merged = $this->save->handle($actor, $device, $lockedTarget->id, self::billData(
+                $lockedTarget, $items, $memberId, $lockedTarget->member_id === null && $memberId !== null,
+                discountType: $type, discountValue: $value, approvedBy: $lockedTarget->approved_by ?? $lockedSource->approved_by,
+            ))['order'];
             $lockedSource->forceFill(['status' => OrderStatus::Merged, 'merged_into_id' => $lockedTarget->id])->save();
 
             return $merged;
@@ -69,6 +75,28 @@ final class MergeOpenBills
         Log::info('Open bill digabung', ['order_id' => $target->id, 'merged_order_id' => $source->id, 'user_id' => $actor->id]);
 
         return ['order' => $order, 'replayed' => false];
+    }
+
+    /**
+     * Diskon order hasil gabung: persen sama di kedua bill → tetap persen; selain itu nominal = jumlah potongan order
+     * kedua bill (persen tidak diperluas ke item bill lain, jadi total diskon tidak bertambah).
+     *
+     * @return array{0: DiscountType|null, 1: string}
+     */
+    private static function mergedDiscount(Order $target, Order $source): array
+    {
+        if ($target->discount_type === null && $source->discount_type === null) {
+            return [null, '0.00'];
+        }
+
+        if ($target->discount_type === DiscountType::Percent && $source->discount_type === DiscountType::Percent
+            && Money::compare($target->discount_value ?? '0.00', $source->discount_value ?? '0.00') === 0) {
+            return [DiscountType::Percent, $target->discount_value ?? '0.00'];
+        }
+
+        $amount = Money::add($target->order_discount, $source->order_discount);
+
+        return Money::isPositive($amount) ? [DiscountType::Fixed, $amount] : [null, '0.00'];
     }
 
     private static function invalid(string $message): BusinessException
