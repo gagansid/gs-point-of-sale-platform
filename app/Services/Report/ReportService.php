@@ -480,7 +480,8 @@ class ReportService
         // Kas keluar laci (ADR 0017)
         $cashOutQuery = $this->cashOutQuery($start, $end, $filters);
         $cashOutTotals = (clone $cashOutQuery)->toBase()->selectRaw('COUNT(*) as c, SUM(amount) as t')->first();
-        $cashOuts = $cashOutQuery->latest('created_at')->limit($limit)
+        // id sebagai pemecah seri bila created_at sama detik (urutan stabil; UUIDv7 = urutan waktu)
+        $cashOuts = $cashOutQuery->latest('created_at')->latest('id')->limit($limit)
             ->get(['id', 'outlet_id', 'shift_id', 'user_id', 'reason', 'type', 'amount', 'note', 'approved_by', 'created_at']);
 
         // Nama user & outlet dalam 2 query (tanpa N+1)
@@ -822,7 +823,9 @@ class ReportService
                 ->selectRaw('voucher_code, COUNT(*) AS uses, SUM(voucher_discount) AS discount')->orderByDesc('uses')->get()
                 ->map(fn (object $r): array => ['voucher_code' => (string) $r->voucher_code, 'uses' => (int) $r->uses, 'discount' => Money::fromDb($r->discount)])->all(),
             'tiers' => Member::query()->whereNull('anonymized_at')->leftJoin('member_tiers', 'member_tiers.id', '=', 'members.tier_id')
-                ->groupBy('member_tiers.name')->selectRaw('member_tiers.name AS tier, COUNT(*) AS member_count')->orderByDesc('member_count')->toBase()->get()
+                ->groupBy('member_tiers.name')->selectRaw('member_tiers.name AS tier, COUNT(*) AS member_count')->orderByDesc('member_count')
+                // Urutan stabil saat jumlah sama: tier bernama dulu (A–Z), "Tanpa tier" terakhir
+                ->orderByRaw('member_tiers.name IS NULL')->orderBy('member_tiers.name')->toBase()->get()
                 ->map(fn (object $r): array => ['tier' => $r->tier !== null ? (string) $r->tier : 'Tanpa tier', 'member_count' => (int) $r->member_count])->all(),
         ];
     }

@@ -27,6 +27,10 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('dining_tables', fn (Blueprint $table) => $table->dropColumn('short_code'));
+        // SQLite menolak menghapus kolom yang masih punya index
+        Schema::table('dining_tables', function (Blueprint $table): void {
+            $table->dropUnique(['short_code']);
+            $table->dropColumn('short_code');
+        });
     }
 };

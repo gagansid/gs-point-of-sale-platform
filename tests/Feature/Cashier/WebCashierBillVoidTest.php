@@ -59,7 +59,7 @@ it('simpan open bill → buka lagi → tambah item → lunasi', function () {
 
     $bill->refresh();
     expect($bill->status)->toBe(OrderStatus::Completed)
-        ->and($bill->items()->sum('qty'))->toBe(2)
+        ->and((int) $bill->items()->sum('qty'))->toBe(2)
         ->and(Order::query()->count())->toBe(1);
 });
 
