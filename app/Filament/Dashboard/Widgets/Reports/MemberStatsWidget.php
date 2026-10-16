@@ -49,6 +49,9 @@ final class MemberStatsWidget extends StatsOverviewWidget
                 ->description($count($s['points_redeemed']).' ditukar · '.$count($s['points_expired']).' kedaluwarsa')->icon(Heroicon::OutlinedStar),
             Stat::make('Utang poin', Money::format($s['points_liability_value']))
                 ->description($count($s['points_liability']).' poin aktif (saat ini, semua outlet)')->icon(Heroicon::OutlinedScale),
+            // Kasbon (ADR 0023)
+            Stat::make('Kasbon', Money::format($s['receivable_total']))
+                ->description($count($s['receivable_members']).' member (saat ini, semua outlet)')->icon(Heroicon::OutlinedBanknotes),
             Stat::make('Voucher', Money::format($s['voucher_discount']))
                 ->description($count($s['voucher_uses']).' kali dipakai')->icon(Heroicon::OutlinedReceiptPercent),
             Stat::make('Gratis stempel', Money::format($s['stamp_free_total']))

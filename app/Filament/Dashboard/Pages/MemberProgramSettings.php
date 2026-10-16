@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Pages;
 
 use App\Actions\Member\SaveMemberTiers;
 use App\Actions\Member\UpdateBirthdayVoucher;
+use App\Actions\Member\UpdateCreditProgram;
 use App\Actions\Member\UpdateMemberProgram;
 use App\Enums\DiscountType;
 use App\Exceptions\BusinessException;
@@ -81,6 +82,9 @@ final class MemberProgramSettings extends Page
         $this->settingsForm()->fill([
             ...$setting->only(['earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months', 'member_discount_percent']),
             'enabled' => $setting->enabled,
+            // Kasbon (ADR 0023)
+            'credit_enabled' => $setting->credit_enabled,
+            'default_credit_limit' => $setting->default_credit_limit,
             'outlet_ids' => Outlet::query()->whereNotIn('id', $excluded)->pluck('id')->all(),
             // Kunci acak per baris (pola Repeater); id tier lama dibawa di field tersembunyi
             'birthday' => $setting->birthdayVoucher(),
@@ -138,6 +142,19 @@ final class MemberProgramSettings extends Page
                             ->suffix('%')->helperText('0 = tanpa diskon member'),
                     ]),
 
+                // Kasbon member (ADR 0023)
+                Section::make('Kasbon')
+                    ->description('Member boleh belanja sekarang, bayar nanti, dengan bukti QR/PIN member. Pelunasan tunai masuk kas shift')
+                    ->visible(fn (Get $get): bool => (bool) $get('enabled'))
+                    ->columns(2)
+                    ->schema([
+                        Toggle::make('credit_enabled')->label('Aktifkan kasbon')->live()->columnSpanFull()
+                            ->helperText('Metode bayar "Kasbon" muncul di kasir saat member terpasang'),
+                        TextInput::make('default_credit_limit')->label('Batas kasbon bawaan')->prefix('Rp')->numeric()->minValue(0)
+                            ->helperText('Per member; bisa diubah per member di menu Member. Kosong = hanya member dengan batas sendiri')
+                            ->visible(fn (Get $get): bool => (bool) $get('credit_enabled')),
+                    ]),
+
                 self::tierSection(),
                 self::birthdaySection(),
             ]);
@@ -172,6 +189,12 @@ final class MemberProgramSettings extends Page
         try {
             DB::transaction(function () use ($data, $outletIds, $rules): void {
                 app(UpdateMemberProgram::class)->handle((bool) $data['enabled'], $outletIds, array_map(fn (mixed $v): string => (string) $v, $rules));
+
+                // Program mati = kasbon ikut mati; field tersembunyi = setelan lama dipertahankan
+                if (array_key_exists('credit_enabled', $data) || ! (bool) $data['enabled']) {
+                    app(UpdateCreditProgram::class)->handle((bool) $data['enabled'] && (bool) ($data['credit_enabled'] ?? false),
+                        array_key_exists('default_credit_limit', $data) ? (filled($data['default_credit_limit']) ? (string) $data['default_credit_limit'] : null) : MemberSetting::current()->default_credit_limit);
+                }
 
                 if (array_key_exists('birthday', $data)) {
                     // Field tersembunyi (voucher nonaktif) tidak ikut state: nilai lama dipertahankan

@@ -25,6 +25,9 @@ enum CashMovementReason: string implements HasLabel
     /** Uang retur pelanggan (ADR 0018) — dibuat sistem, tidak bisa dipilih manual */
     case Refund = 'refund';
 
+    /** Pelunasan kasbon member tunai (ADR 0023) — dibuat sistem */
+    case ReceivablePayment = 'receivable';
+
     public function getLabel(): string
     {
         return match ($this) {
@@ -33,6 +36,7 @@ enum CashMovementReason: string implements HasLabel
             self::Change => 'Tukar/tambah kembalian',
             self::Other => 'Lainnya',
             self::Refund => 'Retur',
+            self::ReceivablePayment => 'Pelunasan kasbon',
         };
     }
 
@@ -40,6 +44,7 @@ enum CashMovementReason: string implements HasLabel
     {
         return match ($this) {
             self::Operational, self::Deposit, self::Refund => $type === CashMovementType::Out,
+            self::ReceivablePayment => $type === CashMovementType::In,
             self::Change, self::Other => true,
         };
     }
@@ -47,7 +52,7 @@ enum CashMovementReason: string implements HasLabel
     /** Bisa dipilih kasir (Retur hanya dibuat sistem). */
     public function isManual(): bool
     {
-        return $this !== self::Refund;
+        return $this !== self::Refund && $this !== self::ReceivablePayment;
     }
 
     /** @return list<self> */

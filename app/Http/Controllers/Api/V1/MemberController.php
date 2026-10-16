@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Member\Data\MemberData;
+use App\Actions\Member\PayReceivable;
 use App\Actions\Member\SaveMember;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
@@ -15,10 +16,13 @@ use App\Http\Resources\Api\V1\VoucherResource;
 use App\Models\Member;
 use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
+use App\Models\ReceivableEntry;
 use App\Services\Member\StampCards;
 use App\Services\Member\Vouchers;
+use App\Support\ApiActor;
 use App\Support\ApiResponse;
 use App\Support\CurrentOutlet;
+use App\Support\Money;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -125,6 +129,69 @@ final class MemberController extends Controller
             ]);
 
         return ApiResponse::success(['balance' => $member->points_balance, 'entries' => $entries], 'Riwayat poin');
+    }
+
+    /**
+     * Riwayat kasbon member.
+     *
+     * Permission member.view. 50 mutasi terbaru: `type` (charge, payment, void, refund), `amount` (+ kasbon, −
+     * pelunasan/void/retur), `balance_after` (ADR 0023).
+     */
+    public function receivables(Request $request, string $memberId): JsonResponse
+    {
+        abort_unless($request->user()?->can('member.view') ?? false, 403);
+        $member = self::findMember($memberId);
+
+        $entries = ReceivableEntry::query()->where('member_id', $member->id)->latest()->limit(50)->get()
+            ->map(fn (ReceivableEntry $e): array => [
+                'id' => $e->id,
+                'type' => $e->type->value,
+                'type_label' => $e->type->getLabel(),
+                'amount' => $e->amount,
+                'balance_after' => $e->balance_after,
+                'order_id' => $e->order_id,
+                'note' => $e->note,
+                'created_at' => $e->created_at->toIso8601ZuluString(),
+            ]);
+
+        return ApiResponse::success(['balance' => $member->receivable_balance, 'credit_limit' => $member->effectiveCreditLimit(), 'entries' => $entries], 'Riwayat kasbon');
+    }
+
+    /**
+     * Pelunasan kasbon.
+     *
+     * Permission order.create. Body `{ id, amount, payment_method_id, note? }`; `id` = idempotency key. Tunai masuk kas
+     * shift terbuka di device (409 SHIFT_NOT_OPEN bila belum). Nominal ≤ saldo kasbon (ADR 0023).
+     */
+    public function payReceivable(Request $request, string $memberId, PayReceivable $action): JsonResponse
+    {
+        abort_unless($request->user()?->can('order.create') ?? false, 403);
+        $data = $request->validate([
+            'id' => ['required', 'uuid'],
+            'amount' => ['required', 'decimal:0,2', 'gt:0', 'max:9999999999999.99'],
+            'payment_method_id' => ['required', 'uuid'],
+            'note' => ['nullable', 'string', 'max:255'],
+        ]);
+        $member = self::findMember($memberId);
+
+        $result = $action->handle(ApiActor::user($request), $member, ApiActor::userDevice($request), (string) $data['id'],
+            Money::of((string) $data['amount']), (string) $data['payment_method_id'], $data['note'] ?? null);
+
+        return ApiResponse::success([
+            'id' => $result['entry']->id,
+            'amount' => $result['entry']->amount,
+            'balance_after' => $result['entry']->balance_after,
+            'created_at' => $result['entry']->created_at->toIso8601ZuluString(),
+        ], $result['replayed'] ? 'Pelunasan sudah tercatat' : 'Pelunasan kasbon dicatat', $result['replayed'] ? 200 : 201, ['idempotent_replay' => $result['replayed']]);
+    }
+
+    /** @throws BusinessException */
+    private static function findMember(string $memberId): Member
+    {
+        self::ensureProgramEnabled();
+
+        return Member::query()->whereNull('anonymized_at')->find($memberId)
+            ?? throw BusinessException::of(ErrorCode::MemberNotFound);
     }
 
     /** @throws BusinessException */

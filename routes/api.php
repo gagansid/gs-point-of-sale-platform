@@ -113,6 +113,9 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::post('/', 'store')->name('store');
             Route::get('{memberId}', 'show')->whereUuid('memberId')->name('show');
             Route::get('{memberId}/points', 'points')->whereUuid('memberId')->name('points');
+            // Kasbon (ADR 0023)
+            Route::get('{memberId}/receivables', 'receivables')->whereUuid('memberId')->name('receivables');
+            Route::post('{memberId}/receivable-payments', 'payReceivable')->whereUuid('memberId')->name('receivable-payments.store');
         });
         Route::get('vouchers/check', [VoucherController::class, 'check'])->name('vouchers.check');
 

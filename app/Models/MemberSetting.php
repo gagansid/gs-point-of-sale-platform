@@ -24,13 +24,15 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $max_redeem_percent
  * @property int $expiry_months 0 = tidak kedaluwarsa
  * @property string $member_discount_percent diskon member % (Q63)
+ * @property bool $credit_enabled kasbon aktif (ADR 0023)
+ * @property string|null $default_credit_limit batas kasbon bawaan per member
  * @property array{enabled?: bool, type?: string, value?: string, max_discount?: string|null, min_spend?: string}|null $birthday_voucher voucher ulang tahun (M7)
  */
 final class MemberSetting extends Model
 {
     use BelongsToTenant, HasUuids, LogsChanges, RecordsAuthor;
 
-    protected $fillable = ['enabled', 'earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months', 'member_discount_percent'];
+    protected $fillable = ['enabled', 'earn_amount', 'earn_points', 'redeem_value', 'min_redeem_points', 'max_redeem_percent', 'expiry_months', 'member_discount_percent', 'credit_enabled', 'default_credit_limit'];
 
     /** Bawaan sama dengan kolom DB (model baru sebelum disimpan) */
     protected $attributes = [
@@ -47,6 +49,8 @@ final class MemberSetting extends Model
     protected function casts(): array
     {
         return [
+            'credit_enabled' => 'boolean',
+            'default_credit_limit' => 'decimal:2',
             'enabled' => 'boolean',
             'earn_amount' => 'decimal:2',
             'earn_points' => 'integer',

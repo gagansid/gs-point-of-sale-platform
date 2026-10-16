@@ -741,7 +741,7 @@ class ReportService
      * @return array{
      *     summary: array{member_orders: int, member_revenue: string, guest_orders: int, guest_revenue: string, member_share: string|null,
      *         active_members: int, repeat_members: int, new_members: int, member_discount: string, points_earned: int, points_redeemed: int,
-     *         points_expired: int, points_liability: int, points_liability_value: string, voucher_uses: int, voucher_discount: string,
+     *         points_expired: int, points_liability: int, points_liability_value: string, receivable_total: string, receivable_members: int, voucher_uses: int, voucher_discount: string,
      *         stamp_free_count: int, stamp_free_total: string},
      *     top_members: list<array{member_id: string, member_name: string, tier: string|null, order_count: int, revenue: string, points_earned: int}>,
      *     vouchers: list<array{voucher_code: string, uses: int, discount: string}>,
@@ -813,6 +813,9 @@ class ReportService
                 'voucher_discount' => Money::fromDb($benefits->voucher_discount ?? null),
                 'stamp_free_count' => $stampFreeCount,
                 'stamp_free_total' => Money::fromDb($benefits->stamp_free_total ?? null),
+                // Kasbon (ADR 0023): piutang saat ini (semua outlet)
+                'receivable_total' => Money::fromDb(Member::query()->where('receivable_balance', '>', 0)->sum('receivable_balance')),
+                'receivable_members' => Member::query()->where('receivable_balance', '>', 0)->count(),
             ],
             'top_members' => $top,
             'vouchers' => $orders()->toBase()->whereNotNull('voucher_id')->groupBy('voucher_code')

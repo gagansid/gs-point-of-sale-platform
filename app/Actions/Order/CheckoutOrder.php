@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Member\ChargeReceivable;
 use App\Actions\Member\RedeemPoints;
 use App\Actions\Member\ResolveMemberPricing;
 use App\Actions\Member\ResolveOrderMember;
@@ -70,6 +71,8 @@ final class CheckoutOrder
         $payments = $this->allocatePayments->handle($data->payments, $totals->grandTotal, $outlet->id);
         // Bayar dengan poin: bukti pemilik diverifikasi di luar transaksi (percobaan PIN salah tetap tercatat)
         app(RedeemPoints::class)->check($payments, $member?->id, $outlet->id, $data->memberCode, $data->memberPin);
+        // Kasbon member (ADR 0023)
+        app(ChargeReceivable::class)->check($payments, $member?->id);
 
         $paid = Money::add(...array_column($payments, 'amount'));
         if (Money::compare($paid, $totals->grandTotal) < 0) {
@@ -112,6 +115,7 @@ final class CheckoutOrder
                 $this->writer->replaceItems($order, $lines, $totals);
                 $this->writer->addPayments($order, $payments, $actor);
                 app(RedeemPoints::class)->handle($order, $payments);
+                app(ChargeReceivable::class)->handle($order, $payments, $actor->id);
                 $this->writer->complete($order, $shift, $actor);
 
                 return $order;

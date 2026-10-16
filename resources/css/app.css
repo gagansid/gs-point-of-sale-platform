@@ -1100,6 +1100,18 @@
     gap: 8px;
 }
 
+.cashier-inline-pay {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.cashier-inline-pay .cashier-select {
+    width: auto;
+    height: var(--pos-btn-h, 40px);
+}
+
 .cashier-inline-search .site-field {
     flex: 1;
     margin: 0;

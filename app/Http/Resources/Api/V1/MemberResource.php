@@ -30,6 +30,9 @@ final class MemberResource extends JsonResource
             'phone_masked' => Phone::masked($this->phone),
             'is_active' => $this->is_active,
             'points_balance' => $this->points_balance,
+            // Kasbon (ADR 0023): saldo & batas yang berlaku (null = tidak boleh kasbon)
+            'receivable_balance' => $this->receivable_balance,
+            'credit_limit' => $this->effectiveCreditLimit(),
             // Tier saat ini (M5); null = di bawah tier terendah / belum ada tier
             'tier' => $this->tier !== null ? [
                 'id' => $this->tier->id,

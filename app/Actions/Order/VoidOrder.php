@@ -6,6 +6,7 @@ namespace App\Actions\Order;
 
 use App\Actions\Auth\Data\ApprovalData;
 use App\Actions\Auth\VerifyApproval;
+use App\Actions\Member\ChargeReceivable;
 use App\Actions\Member\ReverseOrderBenefits;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
@@ -78,6 +79,9 @@ final class VoidOrder
                 // Poin & statistik member ditarik (ADR 0013)
                 app(ReverseOrderBenefits::class)->handle($locked);
             }
+
+            // Kasbon order dibalik (ADR 0023), juga untuk open bill yang sudah dibayar sebagian dengan kasbon
+            app(ChargeReceivable::class)->reverse($locked, $actor->id);
 
             // Dana online tidak dikembalikan otomatis: tandai perlu refund manual (ADR 0014, Q73)
             $paidOnline = $locked->payments()->where('category', PaymentCategory::Online)->where('status', PaymentStatus::Paid)->exists();

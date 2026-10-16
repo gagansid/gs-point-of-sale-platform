@@ -10,6 +10,10 @@
     ];
     // Pesanan meja (ADR 0014): hanya bila self-order aktif di outlet ini
     $selfOrder = $outlet !== null && ($user?->can('self_order.handle') ?? false) && \App\Models\SelfOrderSetting::forOutlet($outlet->id)->enabled;
+    // Kasbon (ADR 0023): bila aktif atau masih ada saldo
+    if (($user?->can('member.view') ?? false) && \App\Models\MemberSetting::current()->credit_enabled) {
+        $links['receivables'] = ['Kasbon', route('cashier.receivables')];
+    }
     if ($selfOrder) {
         $links = ['pos' => $links['pos'], 'self-orders' => ['Pesanan meja', route('cashier.self-orders')], ...$links];
     }

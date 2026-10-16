@@ -180,3 +180,14 @@ minimal belanja tidak dicek). Maks. 30 cek/menit per user.
 `422 VOUCHER_INVALID` → `error.details.reason`: `not_found`, `inactive`, `not_started`, `expired`,
 `quota_exhausted`, `member_quota_exhausted`, `min_spend` (+ `min_spend`), `member_only`, `tier`, `outlet`,
 `not_owner`.
+
+## Kasbon (ADR 0023)
+
+| Method | Endpoint | Permission | Keterangan |
+|---|---|---|---|
+| GET | `/v1/members/{id}/receivables` | `member.view` | `{ balance, credit_limit, entries[] }` — 50 mutasi terbaru: `type` (`charge`, `payment`, `void`, `refund`), `amount` (+ kasbon, − pelunasan/void/retur), `balance_after`, `order_id`, `note` |
+| POST | `/v1/members/{id}/receivable-payments` | `order.create`, token device | Body `{ id (uuid, idempotency key), amount (> 0, ≤ saldo), payment_method_id (aktif, bukan poin/online/kasbon), note? }`. Tunai → kas masuk "Pelunasan kasbon" di shift terbuka device (`409 SHIFT_NOT_OPEN`). Respons `201 { id, amount, balance_after, created_at }`; ulang → `200` + `meta.idempotent_replay` |
+
+Bayar dengan kasbon: metode bayar kategori `receivable` di `/catalog` (tampilkan hanya bila member terpasang), kirim
+`member_id` + bukti `member_code`/`member_pin` seperti poin. Melebihi batas / batas belum diatur → `422 VALIDATION_ERROR`.
+`GET /members/{id}` memuat `receivable_balance` & `credit_limit` (null = tidak boleh kasbon).

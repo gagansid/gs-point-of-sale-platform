@@ -533,7 +533,7 @@ final class PointOfSale extends Component
     public function addPaymentRow(): void
     {
         $remaining = $this->remaining();
-        $method = $this->paymentMethods->first(fn (PaymentMethod $m): bool => $m->category !== PaymentCategory::Points);
+        $method = $this->paymentMethods->first(fn (PaymentMethod $m): bool => ! in_array($m->category, [PaymentCategory::Points, PaymentCategory::Receivable], true));
 
         if ($method !== null && count($this->payments) < 10) {
             $this->payments[] = self::paymentRow($method->id, Money::isPositive($remaining) ? $remaining : '0.00');
@@ -648,14 +648,21 @@ final class PointOfSale extends Component
     public function paymentMethods(): Collection
     {
         $points = $this->memberId !== null && OutletMemberProgram::activeAt($this->outlet()->id);
+        // Kasbon (ADR 0023): hanya bila member terpasang & kasbon aktif
+        $credit = $this->memberId !== null && MemberSetting::current()->credit_enabled;
 
-        return $this->catalog['payment_methods']->filter(fn (PaymentMethod $m): bool => $m->category !== PaymentCategory::Points || $points)->values();
+        return $this->catalog['payment_methods']->filter(fn (PaymentMethod $m): bool => match ($m->category) {
+            PaymentCategory::Points => $points,
+            PaymentCategory::Receivable => $credit,
+            default => true,
+        })->values();
     }
 
     public function usesPoints(): bool
     {
         foreach ($this->payments as $payment) {
-            if ($this->paymentMethods->firstWhere('id', $payment['payment_method_id'])?->category === PaymentCategory::Points) {
+            // Poin & kasbon butuh bukti QR/PIN member yang sama (ADR 0013, ADR 0023)
+            if (in_array($this->paymentMethods->firstWhere('id', $payment['payment_method_id'])?->category, [PaymentCategory::Points, PaymentCategory::Receivable], true)) {
                 return true;
             }
         }
@@ -668,6 +675,24 @@ final class PointOfSale extends Component
     public function memberPoints(): ?int
     {
         return $this->memberId !== null ? Member::query()->whereKey($this->memberId)->value('points_balance') : null;
+    }
+
+    /**
+     * Kasbon member terpasang (ADR 0023): saldo & batas; null = kasbon mati / tanpa member / tanpa batas.
+     *
+     * @return array{balance: string, limit: string}|null
+     */
+    #[Computed]
+    public function memberCredit(): ?array
+    {
+        if ($this->memberId === null || ! MemberSetting::current()->credit_enabled) {
+            return null;
+        }
+
+        $member = Member::query()->find($this->memberId);
+        $limit = $member?->effectiveCreditLimit();
+
+        return $member !== null && $limit !== null ? ['balance' => $member->receivable_balance, 'limit' => $limit] : null;
     }
 
     /** Nama tier member terpasang (M5); null = tanpa tier. */

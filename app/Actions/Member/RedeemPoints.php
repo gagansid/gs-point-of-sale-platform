@@ -35,7 +35,12 @@ final class RedeemPoints
      */
     public function check(array $payments, ?string $memberId, string $outletId, ?string $code, ?string $pin): void
     {
+        // Kasbon (ADR 0023) memakai bukti pemilik yang sama; QR sekali pakai, jadi diverifikasi satu kali di sini
         if (! self::hasPoints($payments)) {
+            if (self::has($payments, PaymentCategory::Receivable) && $memberId !== null && ($member = Member::query()->find($memberId)) !== null) {
+                $this->verifyProof->handle($member, $code, $pin);
+            }
+
             return;
         }
 
@@ -112,8 +117,14 @@ final class RedeemPoints
     /** @param list<array{category: PaymentCategory, amount: string}> $payments */
     private static function hasPoints(array $payments): bool
     {
+        return self::has($payments, PaymentCategory::Points);
+    }
+
+    /** @param list<array{category: PaymentCategory, amount: string}> $payments */
+    private static function has(array $payments, PaymentCategory $category): bool
+    {
         foreach ($payments as $payment) {
-            if ($payment['category'] === PaymentCategory::Points) {
+            if ($payment['category'] === $category) {
                 return true;
             }
         }

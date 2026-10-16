@@ -32,6 +32,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $birth_day
  * @property int|null $birth_month
  * @property string|null $notes
+ * @property string|null $credit_limit batas kasbon; null = bawaan program (ADR 0023)
+ * @property string $receivable_balance saldo kasbon (ADR 0023)
  * @property int $points_balance
  * @property string|null $tier_id tier saat ini (M5); null = di bawah tier terendah
  * @property string $spend_12m total belanja 12 bulan bergulir (cache, dihitung TierEvaluator)
@@ -54,7 +56,7 @@ final class Member extends Model implements AuthenticatableContract
 
     protected $hidden = ['password', 'pin'];
 
-    protected $attributes = ['is_active' => true, 'points_balance' => 0, 'visit_count' => 0];
+    protected $attributes = ['is_active' => true, 'points_balance' => 0, 'visit_count' => 0, 'receivable_balance' => '0.00'];
 
     /** Kolom yang dicatat di audit log (Q58). */
     public static function auditAttributes(): array
@@ -78,6 +80,8 @@ final class Member extends Model implements AuthenticatableContract
             'birth_day' => 'integer',
             'birth_month' => 'integer',
             'points_balance' => 'integer',
+            'credit_limit' => 'decimal:2',
+            'receivable_balance' => 'decimal:2',
             'spend_12m' => 'decimal:2',
             'total_spent' => 'decimal:2',
             'visit_count' => 'integer',
@@ -172,5 +176,17 @@ final class Member extends Model implements AuthenticatableContract
         });
 
         return $query;
+    }
+
+    /** @return HasMany<ReceivableEntry, $this> ledger kasbon (ADR 0023) */
+    public function receivables(): HasMany
+    {
+        return $this->hasMany(ReceivableEntry::class)->latest('created_at');
+    }
+
+    /** Batas kasbon yang berlaku: batas member, atau bawaan program; null/0 = tidak boleh kasbon. */
+    public function effectiveCreditLimit(): ?string
+    {
+        return $this->credit_limit ?? MemberSetting::current()->default_credit_limit;
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Cashier\LockController as CashierLockController;
 use App\Http\Controllers\Web\Cashier\LoginController as CashierLoginController;
 use App\Http\Controllers\Web\Cashier\OrderController as CashierOrderController;
 use App\Http\Controllers\Web\Cashier\OutletController as CashierOutletController;
+use App\Http\Controllers\Web\Cashier\ReceivableController as CashierReceivableController;
 use App\Http\Controllers\Web\Cashier\RefundController as CashierRefundController;
 use App\Http\Controllers\Web\Cashier\SelfOrderController as CashierSelfOrderController;
 use App\Http\Controllers\Web\Cashier\ShiftController as CashierShiftController;
@@ -211,6 +212,9 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
         Route::post('orders/{order}/merge', [CashierOrderController::class, 'merge'])->whereUuid('order')->name('orders.merge');
         Route::get('orders/{order}/receipt', [CashierOrderController::class, 'receipt'])->whereUuid('order')->name('orders.receipt');
         // Retur sebagian (ADR 0018)
+        // Kasbon member (ADR 0023)
+        Route::get('receivables', [CashierReceivableController::class, 'index'])->name('receivables');
+        Route::post('receivables/{member}', [CashierReceivableController::class, 'store'])->name('receivables.pay');
         Route::get('refunds', [CashierRefundController::class, 'search'])->name('refunds.search');
         Route::get('refunds/{order}', [CashierRefundController::class, 'create'])->name('refunds.create');
         Route::post('refunds/{order}', [CashierRefundController::class, 'store'])->name('refunds.store');

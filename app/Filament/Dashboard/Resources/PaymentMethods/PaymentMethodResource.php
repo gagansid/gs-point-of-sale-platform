@@ -98,7 +98,7 @@ final class PaymentMethodResource extends Resource
     {
         $table = $table
             // Metode sistem diatur fiturnya sendiri: Poin (Program member, ADR 0013), Online (Pembayaran online, ADR 0014)
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereNotIn('category', [PaymentCategory::Points, PaymentCategory::Online]))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereNotIn('category', [PaymentCategory::Points, PaymentCategory::Online, PaymentCategory::Receivable]))
             ->reorderable('sort_order')
             ->reorderRecordsTriggerAction(fn (Action $action, bool $isReordering): Action => $action
                 ->tooltip($isReordering ? 'Selesai mengatur urutan' : 'Atur urutan tampil di kasir'))

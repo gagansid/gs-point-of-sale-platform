@@ -197,6 +197,8 @@ final class ReportSectionBuilder
                         ['Poin kedaluwarsa', $s['points_expired']],
                         ['Utang poin (poin aktif saat ini)', $s['points_liability']],
                         ['Utang poin (nilai)', $s['points_liability_value']],
+                        ['Kasbon member (saat ini)', $s['receivable_total']],
+                        ['Member berkasbon', $s['receivable_members']],
                         ['Voucher dipakai', $s['voucher_uses']],
                         ['Potongan voucher', $s['voucher_discount']],
                         ['Item gratis stempel', $s['stamp_free_count']],

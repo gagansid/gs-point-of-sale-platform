@@ -6,6 +6,7 @@ namespace App\Actions\Order;
 
 use App\Actions\Auth\Data\ApprovalData;
 use App\Actions\Auth\VerifyApproval;
+use App\Actions\Member\ChargeReceivable;
 use App\Actions\Order\Data\RefundData;
 use App\Enums\CashMovementReason;
 use App\Enums\CashMovementType;
@@ -14,11 +15,13 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentCategory;
 use App\Enums\PaymentStatus;
 use App\Enums\PointEntryType;
+use App\Enums\ReceivableEntryType;
 use App\Enums\RefundMethod;
 use App\Enums\StockMovementType;
 use App\Exceptions\BusinessException;
 use App\Models\CashMovement;
 use App\Models\Device;
+use App\Models\Member;
 use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
 use App\Models\Order;
@@ -28,6 +31,7 @@ use App\Models\OrderRefundItem;
 use App\Models\Shift;
 use App\Models\User;
 use App\Services\Member\PointLedger;
+use App\Services\Member\ReceivableLedger;
 use App\Services\Member\TierEvaluator;
 use App\Services\Order\OrderCalculator;
 use App\Services\Shift\ShiftSummary;
@@ -141,7 +145,11 @@ final class RefundOrder
 
         $refundedAfter = Money::add($locked->refunded_total, $total);
         [$pointsMoney, $pointsReturned, $pointsReversed] = $this->pointShares($locked, $total, $refundedAfter);
-        $payout = Money::max(Money::sub($total, $pointsMoney), '0.00');
+        // Bagian yang dibayar kasbon mengurangi kasbon member, bukan dibayar uang (ADR 0023)
+        $creditShare = Money::isPositive($locked->grand_total)
+            ? Money::round(bcdiv(bcmul($total, ChargeReceivable::paidWithCredit($locked), 8), $locked->grand_total, 8))
+            : '0.00';
+        $payout = Money::max(Money::sub(Money::sub($total, $pointsMoney), $creditShare), '0.00');
 
         $movementId = null;
         if ($data->method === RefundMethod::Cash && Money::isPositive($payout)) {
@@ -203,6 +211,13 @@ final class RefundOrder
 
         $locked->forceFill(['refunded_total' => $refundedAfter])->save();
         $this->adjustMember($locked, $refund, $total);
+
+        if (Money::isPositive($creditShare) && $locked->member_id !== null) {
+            $member = app(ReceivableLedger::class)->lock(Member::query()->findOrFail($locked->member_id));
+            app(ReceivableLedger::class)->record($member, ReceivableEntryType::Refund, Money::sub('0.00', $creditShare), [
+                'outlet_id' => $locked->outlet_id, 'order_id' => $locked->id, 'user_id' => $actor->id, 'note' => 'Retur '.$locked->order_number,
+            ]);
+        }
 
         return $refund;
     }

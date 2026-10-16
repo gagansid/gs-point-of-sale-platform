@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Order;
 
+use App\Actions\Member\ChargeReceivable;
 use App\Actions\Member\RedeemPoints;
 use App\Actions\Tenant\EnsureOwnerEmailVerified;
 use App\Enums\ErrorCode;
@@ -67,6 +68,11 @@ final class AddPayment
             array_map(fn (array $p): array => ['category' => $categories[$p['payment_method_id']] ?? PaymentCategory::Cash, 'amount' => $p['amount']], $payments),
             $order->member_id, $order->outlet_id, $memberCode, $memberPin,
         );
+        // Kasbon member (ADR 0023)
+        app(ChargeReceivable::class)->check(
+            array_map(fn (array $p): array => ['category' => $categories[$p['payment_method_id']] ?? PaymentCategory::Cash, 'amount' => $p['amount']], $payments),
+            $order->member_id,
+        );
 
         $order = DB::transaction(function () use ($actor, $shift, $order, $payments): Order {
             // Kunci order: dua pembayaran bersamaan tidak bisa melebihi sisa tagihan
@@ -87,6 +93,7 @@ final class AddPayment
 
             $this->writer->addPayments($locked, $allocated, $actor);
             app(RedeemPoints::class)->handle($locked, $allocated);
+            app(ChargeReceivable::class)->handle($locked, $allocated, $actor->id);
 
             if (Money::compare($locked->paid_total, $locked->grand_total) >= 0) {
                 $this->writer->complete($locked, $shift, $actor);
