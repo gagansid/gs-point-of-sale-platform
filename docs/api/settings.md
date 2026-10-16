@@ -60,6 +60,7 @@ pertama yang dipegang user. Outlet lain diubah dari dashboard (Pengaturan → Ou
 | `cash_float` | desimal\|null | Modal laci tetap (ADR 0017, Q90): saat tutup shift, `cash_deposited` bawaan = kas dihitung − modal ini. `null`/`0` = tidak dipakai |
 | `auto_lock_minutes` | int\|null | Kunci layar kasir otomatis setelah X menit tanpa sentuhan, 0–120 (bawaan 5). `null`/`0` = mati. Dipakai aplikasi & kasir web |
 | `cash_out_approval_limit` | desimal\|null | Kas keluar kasir di atas nominal ini butuh PIN approver (bawaan `100000.00`). `null` = tanpa approval, `0` = selalu |
+| `refund_max_days` | integer | Batas hari retur sejak order selesai (bawaan `30`, 0–365). `0` = retur tidak diizinkan di outlet ini (ADR 0018) |
 | `code` | — | **Tidak bisa diubah** (awalan nomor order); diabaikan bila dikirim |
 
 PUT: field yang tidak dikirim tetap memakai nilai lama. Order lama tidak berubah — setiap order
@@ -75,7 +76,7 @@ menyimpan tarif pajak/service/pembulatan saat transaksi.
     "tax_inclusive": false, "rounding": 100, "receipt_header": "Kopi Senja",
     "receipt_footer": "Terima kasih", "receipt_show_rounding": false, "discount_limits": { "cashier": 10, "supervisor": 25 },
     "daily_sales_target": "3000000.00", "monthly_sales_target": null,
-    "cash_float": "500000.00", "auto_lock_minutes": 5, "cash_out_approval_limit": "100000.00"
+    "cash_float": "500000.00", "auto_lock_minutes": 5, "cash_out_approval_limit": "100000.00", "refund_max_days": 30
   },
   "meta": { "request_id": "…" }
 }

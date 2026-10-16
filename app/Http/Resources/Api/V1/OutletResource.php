@@ -38,6 +38,8 @@ final class OutletResource extends JsonResource
             'cash_float' => $this->cash_float,
             'auto_lock_minutes' => $this->auto_lock_minutes,
             'cash_out_approval_limit' => $this->cash_out_approval_limit,
+            // ADR 0018: transaksi bisa diretur sampai sekian hari; 0 = tidak boleh
+            'refund_max_days' => $this->refund_max_days,
         ];
     }
 }

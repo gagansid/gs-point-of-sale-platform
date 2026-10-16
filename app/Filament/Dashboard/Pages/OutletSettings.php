@@ -79,7 +79,7 @@ final class OutletSettings extends Page
         $limits = $outlet->discount_limits ?? config('pos.outlet_defaults.discount_limits');
 
         $this->settingsForm()->fill([
-            ...$outlet->only(['code', 'name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer', 'receipt_show_rounding', 'daily_sales_target', 'monthly_sales_target', 'cash_float', 'auto_lock_minutes', 'cash_out_approval_limit']),
+            ...$outlet->only(['code', 'name', 'address', 'timezone', 'tax_rate', 'tax_inclusive', 'service_charge_rate', 'rounding', 'receipt_header', 'receipt_footer', 'receipt_show_rounding', 'daily_sales_target', 'monthly_sales_target', 'cash_float', 'auto_lock_minutes', 'cash_out_approval_limit', 'refund_max_days']),
             'discount_limits' => ['cashier' => $limits['cashier'] ?? 0, 'supervisor' => $limits['supervisor'] ?? 0],
         ]);
     }
@@ -169,6 +169,10 @@ final class OutletSettings extends Page
                             TextInput::make('cash_out_approval_limit')->label('Kas keluar tanpa PIN maksimal')->prefix('Rp')->numeric()
                                 ->rules($rules['cash_out_approval_limit'])->placeholder('100000')
                                 ->helperText('Kas keluar kasir di atas nominal ini butuh PIN atasan. Kosongkan bila tidak perlu'),
+                            // ADR 0018
+                            TextInput::make('refund_max_days')->label('Batas retur')->suffix('hari')->integer()->required()->default(30)
+                                ->rules($rules['refund_max_days'])
+                                ->helperText('Transaksi bisa diretur sampai sekian hari. 0 = retur tidak diizinkan'),
                         ]),
                 ]),
             ]);

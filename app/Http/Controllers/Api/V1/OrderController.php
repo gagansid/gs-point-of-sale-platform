@@ -194,7 +194,7 @@ final class OrderController extends Controller
     /**
      * Retur sebagian.
      *
-     * Order selesai di outlet device, maks. `pos.refund.max_days` hari (bawaan 30). Butuh shift terbuka di device
+     * Order selesai di outlet device, maks. `refund_max_days` outlet (bawaan 30; 0 = tidak boleh). Butuh shift terbuka di device
      * (uang tunai keluar dari laci). Kasir wajib PIN approver (`order.refund`). Nilai dihitung server (bagian
      * proporsional grand total). `id` dari app = idempotency key (ADR 0018).
      */

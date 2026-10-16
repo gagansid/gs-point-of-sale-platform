@@ -46,6 +46,8 @@ final class OutletSettingsRequest extends FormRequest
             'cash_float' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
             'auto_lock_minutes' => ['nullable', 'integer', 'min:0', 'max:120'],
             'cash_out_approval_limit' => ['nullable', 'decimal:0,2', 'min:0', 'max:9999999999999.99'],
+            // ADR 0018: 0 = retur tidak diizinkan
+            'refund_max_days' => ['integer', 'min:0', 'max:365'],
         ];
     }
 
@@ -77,6 +79,7 @@ final class OutletSettingsRequest extends FormRequest
             'cash_float' => 'modal laci tetap',
             'auto_lock_minutes' => 'kunci layar otomatis',
             'cash_out_approval_limit' => 'batas kas keluar tanpa PIN',
+            'refund_max_days' => 'batas hari retur',
         ];
     }
 }

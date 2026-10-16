@@ -36,6 +36,7 @@ final class UpdateOutletSettings
             'cash_float' => $data->cashFloat,
             'auto_lock_minutes' => $data->autoLockMinutes,
             'cash_out_approval_limit' => $data->cashOutApprovalLimit,
+            'refund_max_days' => $data->refundMaxDays,
         ])->save());
 
         return $outlet->refresh();

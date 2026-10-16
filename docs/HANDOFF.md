@@ -168,7 +168,7 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
 
 ### Retur sebagian (ADR 0018, SPEC Q92–Q94) — selesai 2026-10-14
 - `POST /v1/orders/{id}/refunds` + `GET /v1/refundable-orders/{nomor}`; kasir web **Riwayat → Retur transaksi**
-  (`/cashier/refunds`) dan tombol **Retur** di detail order. Order selesai ≤ 30 hari (`POS_REFUND_MAX_DAYS`), item & qty,
+  (`/cashier/refunds`) dan tombol **Retur** di detail order. Order selesai ≤ `outlets.refund_max_days` hari (bawaan 30, diatur per outlet), item & qty,
   nilai proporsional (`OrderCalculator::refundShare`), tunai = kas keluar alasan **Retur** di shift berjalan / manual,
   restock opsional, poin pembayaran kembali & poin didapat ditarik, belanja & tier member dikurangi.
 - Izin baru `order.refund` (owner, manager, supervisor; kasir PIN). Order yang sudah diretur tidak bisa di-void.

@@ -1,7 +1,7 @@
 # ADR 0018: Retur sebagian per item
 
 - Status: Diterima
-- Tanggal: 2026-10-14
+- Tanggal: 2026-10-14 (revisi 2026-10-16: batas hari retur per outlet)
 - Pengambil keputusan: Gagan Suganda (keputusan bawaan diusulkan Claude, disetujui lewat "lanjut hingga selesai")
 - Terkait: SPEC Q92–Q94, ADR 0017 (kas keluar laci), ADR 0013 (poin member), SPEC *Shift & void*
 
@@ -16,7 +16,7 @@ kasir terpaksa void + input ulang (bila shift masih buka) atau mengeluarkan uang
 | Topik | Opsi | Dipilih |
 |---|---|---|
 | Satuan retur | Seluruh order · **per item & qty** | **Per item & qty** |
-| Kapan | Shift yang sama · **shift mana pun, batas hari** | **Shift berjalan di perangkat pelaku, maks. 30 hari** (`pos.refund.max_days`) |
+| Kapan | Shift yang sama · **shift mana pun, batas hari** | **Shift berjalan di perangkat pelaku, maks. N hari per outlet** (`outlets.refund_max_days`, bawaan 30, 0 = retur tidak diizinkan; revisi 2026-10-16) |
 | Nilai | Harga item · **bagian proporsional dari grand total** | **Proporsional** (`OrderCalculator::refundShare`) |
 | Uang keluar | Selalu tunai · **tunai atau manual** | **Tunai** (kas keluar laci shift berjalan) atau **manual** (transfer/QRIS di luar sistem) |
 | Stok | Selalu kembali · **pilihan** | **Pilihan "Kembalikan ke stok"** (bawaan ya; barang rusak = tidak) |

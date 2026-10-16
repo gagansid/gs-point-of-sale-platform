@@ -6,6 +6,7 @@ namespace App\Actions\Order;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Models\Outlet;
 
 /**
  * Cari transaksi untuk diretur (ADR 0018): nomor order di outlet perangkat, selesai, dalam batas hari retur.
@@ -15,11 +16,18 @@ final class RefundableOrders
 {
     public static function find(string $orderNumber, string $outletId): ?Order
     {
+        $maxDays = self::maxDays($outletId);
+
         return Order::query()
             ->where('outlet_id', $outletId)
             ->where('order_number', mb_strtoupper(trim($orderNumber)))
             ->where('status', OrderStatus::Completed)
-            ->where('completed_at', '>=', now()->subDays((int) config('pos.refund.max_days')))
+            ->where('completed_at', '>=', now()->subDays($maxDays))
             ->first();
+    }
+
+    public static function maxDays(string $outletId): int
+    {
+        return (int) (Outlet::query()->whereKey($outletId)->value('refund_max_days') ?? 30);
     }
 }

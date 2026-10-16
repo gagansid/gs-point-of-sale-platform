@@ -185,5 +185,12 @@ describe('dashboard', function () {
             ->assertJsonPath('data.auto_lock_minutes', 10)
             ->assertJsonPath('data.cash_float', '300000.00')
             ->assertJsonPath('data.cash_out_approval_limit', '100000.00');
+
+        // Batas retur per outlet (ADR 0018): 0–365 hari
+        freshAuth();
+        $this->withToken(userToken($this->owner, $this->pos->device))->putJson('/api/v1/outlet', ['refund_max_days' => 7], apiHeaders())
+            ->assertOk()->assertJsonPath('data.refund_max_days', 7);
+        freshAuth();
+        $this->withToken(userToken($this->owner, $this->pos->device))->putJson('/api/v1/outlet', ['refund_max_days' => 400], apiHeaders())->assertStatus(422);
     });
 });

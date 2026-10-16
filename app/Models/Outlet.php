@@ -37,6 +37,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $monthly_sales_target target omzet bulanan (Q56)
  * @property string|null $cash_float modal laci tetap (ADR 0017), null = tidak dipakai
  * @property int|null $auto_lock_minutes kunci layar kasir otomatis (ADR 0017), null = mati
+ * @property int $refund_max_days batas hari retur (ADR 0018); 0 = retur tidak diizinkan
  * @property string|null $cash_out_approval_limit kas keluar di atas nominal ini butuh PIN (ADR 0017), null = tanpa approval
  * @property bool $is_active
  */
@@ -65,12 +66,13 @@ final class Outlet extends Model
             'cash_float',
             'auto_lock_minutes',
             'cash_out_approval_limit',
+            'refund_max_days',
             'is_active',
         ];
     }
 
     /** Bawaan sama dengan kolom DB (ADR 0017): kunci otomatis 5 menit, kas keluar > Rp100.000 butuh PIN. */
-    protected $attributes = ['auto_lock_minutes' => 5, 'cash_out_approval_limit' => '100000.00'];
+    protected $attributes = ['auto_lock_minutes' => 5, 'cash_out_approval_limit' => '100000.00', 'refund_max_days' => 30];
 
     protected $fillable = [
         'code',
@@ -90,6 +92,7 @@ final class Outlet extends Model
         'cash_float',
         'auto_lock_minutes',
         'cash_out_approval_limit',
+        'refund_max_days',
         'is_active',
     ];
 
@@ -107,6 +110,7 @@ final class Outlet extends Model
             'cash_float' => 'decimal:2',
             'auto_lock_minutes' => 'integer',
             'cash_out_approval_limit' => 'decimal:2',
+            'refund_max_days' => 'integer',
             'is_active' => 'boolean',
         ];
     }

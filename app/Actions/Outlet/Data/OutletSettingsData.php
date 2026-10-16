@@ -35,6 +35,8 @@ final readonly class OutletSettingsData
         public ?string $cashFloat = null,
         public ?int $autoLockMinutes = null,
         public ?string $cashOutApprovalLimit = null,
+        // ADR 0018: batas hari retur, 0 = tidak boleh retur
+        public int $refundMaxDays = 30,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -65,6 +67,7 @@ final readonly class OutletSettingsData
             autoLockMinutes: filled($data['auto_lock_minutes'] ?? null) && (int) $data['auto_lock_minutes'] > 0 ? (int) $data['auto_lock_minutes'] : null,
             // 0 = setiap kas keluar kasir butuh PIN; kosong = tanpa approval
             cashOutApprovalLimit: filled($data['cash_out_approval_limit'] ?? null) ? Money::of((string) $data['cash_out_approval_limit']) : null,
+            refundMaxDays: filled($data['refund_max_days'] ?? null) ? max(0, (int) $data['refund_max_days']) : 30,
         );
     }
 }

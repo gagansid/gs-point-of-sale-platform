@@ -38,13 +38,13 @@ final class RefundController extends Controller
             $order = RefundableOrders::find(mb_substr($number, 0, 40), WebCashier::device()->outlet_id);
 
             if ($order === null) {
-                throw ValidationException::withMessages(['number' => 'Transaksi tidak ditemukan, belum selesai, atau lewat '.config('pos.refund.max_days').' hari.']);
+                throw ValidationException::withMessages(['number' => 'Transaksi tidak ditemukan, belum selesai, atau lewat '.RefundableOrders::maxDays(WebCashier::device()->outlet_id).' hari.']);
             }
 
             return redirect()->route('cashier.refunds.create', $order->id);
         }
 
-        return view('cashier.refunds.search');
+        return view('cashier.refunds.search', ['maxDays' => RefundableOrders::maxDays(WebCashier::device()->outlet_id)]);
     }
 
     public function create(string $order): View

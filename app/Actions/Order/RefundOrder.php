@@ -28,6 +28,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderRefund;
 use App\Models\OrderRefundItem;
+use App\Models\Outlet;
 use App\Models\Shift;
 use App\Models\User;
 use App\Services\Member\PointLedger;
@@ -46,7 +47,7 @@ use Illuminate\Support\Str;
 
 /**
  * Retur sebagian per item (ADR 0018, POST /orders/{id}/refunds):
- * - order selesai di outlet perangkat, maks. pos.refund.max_days hari; alasan wajib;
+ * - order selesai di outlet perangkat, maks. outlets.refund_max_days hari (0 = tidak boleh); alasan wajib;
  * - izin order.refund atau PIN approver (≠ pelaku); shift wajib terbuka di perangkat (uang keluar dari laci itu);
  * - nilai = bagian proporsional grand total (OrderCalculator::refundShare), retur terakhir menghabiskan sisa;
  * - bagian yang dibayar poin kembali sebagai poin, poin hasil belanja ditarik proporsional, belanja member dikurangi;
@@ -293,7 +294,11 @@ final class RefundOrder
             throw self::invalid('order', 'Semua item transaksi ini sudah diretur.');
         }
 
-        $maxDays = (int) config('pos.refund.max_days');
+        // Batas hari per outlet (revisi ADR 0018); 0 = retur tidak diizinkan
+        $maxDays = (int) (Outlet::query()->whereKey($order->outlet_id)->value('refund_max_days') ?? 30);
+        if ($maxDays === 0) {
+            throw self::invalid('order', 'Retur tidak diizinkan di outlet ini.');
+        }
         if ($order->completed_at !== null && $order->completed_at->lt(now()->subDays($maxDays))) {
             throw self::invalid('order', "Retur hanya bisa sampai {$maxDays} hari setelah transaksi.");
         }

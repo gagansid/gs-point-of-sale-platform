@@ -212,3 +212,15 @@ it('member: bagian poin kembali sebagai poin, poin didapat ditarik, belanja berk
     expect($member->points_balance)->toBe($balance + 100 - $earned)
         ->and($member->total_spent)->toBe('0.00');
 });
+
+it('batas retur per outlet: 0 = tidak boleh; 5 hari menolak order 6 hari lalu', function () {
+    $this->pos->outlet->forceFill(['refund_max_days' => 0])->save();
+    assertApiError(postRefund($this), 'VALIDATION_ERROR', 422);
+
+    $this->pos->outlet->forceFill(['refund_max_days' => 5])->save();
+    TenantContext::run($this->pos->tenantId, fn () => $this->order->forceFill(['completed_at' => now()->subDays(6)])->save());
+    assertApiError(postRefund($this), 'VALIDATION_ERROR', 422);
+
+    TenantContext::run($this->pos->tenantId, fn () => $this->order->forceFill(['completed_at' => now()->subDays(4)])->save());
+    postRefund($this)->assertCreated();
+});

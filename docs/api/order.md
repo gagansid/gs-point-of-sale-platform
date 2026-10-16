@@ -202,7 +202,7 @@ Test: `OpenBillTest.php`, `OrderQueryTest.php`, `VoidOrderTest.php` di `tests/Fe
 | `restock` | tidak | bawaan `true`: produk lacak stok kembali ke stok outlet |
 | `approver_user_id`, `approver_pin` | 🔑 | kasir tanpa `order.refund` |
 
-- Order wajib **selesai** di outlet device, maks. 30 hari (`POS_REFUND_MAX_DAYS`); shift wajib terbuka di device
+- Order wajib **selesai** di outlet device, maks. `refund_max_days` hari setelan outlet (bawaan 30; 0 = retur ditolak `VALIDATION_ERROR`); shift wajib terbuka di device
   (`409 SHIFT_NOT_OPEN`). Qty berlebih / order bukan selesai / sudah habis diretur / lewat batas → `422 VALIDATION_ERROR`.
 - Nilai dihitung server: bagian proporsional `grand_total`; retur yang menghabiskan semua item = sisa nilai order.
   Bagian yang dibayar poin kembali sebagai poin (`points_returned`), poin hasil belanja ditarik (`points_reversed`);
