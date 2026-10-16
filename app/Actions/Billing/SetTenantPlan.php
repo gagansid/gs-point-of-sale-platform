@@ -21,6 +21,10 @@ final class SetTenantPlan
             'plan_id' => $plan?->id,
             'billing_cycle' => $plan !== null ? $cycle : null,
             'max_outlets' => $plan !== null ? $plan->max_outlets : $tenant->max_outlets,
+            // Diatur langsung oleh admin: jadwal ganti paket dari tagihan dibatalkan
+            'next_plan_id' => null,
+            'next_billing_cycle' => null,
+            'plan_changes_at' => null,
         ])->save();
 
         Features::flush();

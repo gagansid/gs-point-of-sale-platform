@@ -34,6 +34,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int|null $max_outlets batas outlet aktif (SaaS, diatur admin); null = tanpa batas
  * @property string|null $plan_id paket langganan (ADR 0024); null = semua fitur
  * @property BillingCycle|null $billing_cycle
+ * @property string|null $next_plan_id paket yang dijadwalkan berlaku di plan_changes_at (ADR 0024 revisi)
+ * @property BillingCycle|null $next_billing_cycle
+ * @property CarbonImmutable|null $plan_changes_at
  */
 final class Tenant extends Model
 {
@@ -57,6 +60,8 @@ final class Tenant extends Model
             'subscription_ends_at' => 'immutable_datetime',
             'max_outlets' => 'integer',
             'billing_cycle' => BillingCycle::class,
+            'next_billing_cycle' => BillingCycle::class,
+            'plan_changes_at' => 'immutable_datetime',
         ];
     }
 
@@ -134,6 +139,12 @@ final class Tenant extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    /** @return BelongsTo<Plan, $this> */
+    public function nextPlan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class, 'next_plan_id');
     }
 
     /** @return HasMany<Outlet, $this> */

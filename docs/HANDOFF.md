@@ -210,7 +210,8 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
 - Admin **Pelanggan → Paket** & **Tagihan** (Tandai lunas/Batalkan), detail bisnis → **Atur paket**. Owner
   **Pengaturan → Langganan** (izin baru `billing.manage`): buat tagihan, bayar online (Midtrans vendor) atau transfer.
 - `App\Support\Features::enabled()` membatasi menu & mesin per paket; tanpa paket / jual putus = semua fitur.
-- Webhook `POST /webhooks/billing/midtrans`; jadwal `pos:billing-reminders` 08.00 WIB. Env baru `POS_BILLING_*`
+- Webhook `POST /webhooks/billing/midtrans`; jadwal `pos:billing-reminders` 08.00 WIB. Revisi 2026-10-16: upgrade prorata
+  (`InvoiceQuote`, `subscription_invoices.kind`), downgrade/ganti siklus dijadwalkan (`tenants.next_plan_id`, `pos:apply-plan-changes` tiap jam). Env baru `POS_BILLING_*`
   (lihat `.env.example`). URL notifikasi Midtrans vendor: `{APP_URL}/webhooks/billing/midtrans`.
 
 **Backlog 1–4 selesai** (shift bersama, retur, pecah/gabung bill, resep & paket, PO, promo otomatis, kasbon, langganan).

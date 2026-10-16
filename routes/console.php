@@ -45,3 +45,5 @@ Schedule::command('backup:monitor')->dailyAt('04:00')->timezone('Asia/Jakarta');
 
 // Tagihan langganan SaaS (ADR 0024): kedaluwarsa & pengingat berakhir 7/3/1 hari
 Schedule::command('pos:billing-reminders')->dailyAt('08:00')->timezone('Asia/Jakarta')->withoutOverlapping(30);
+// Paket terjadwal (ADR 0024 revisi): downgrade / ganti siklus berlaku di akhir masa aktif lama
+Schedule::command('pos:apply-plan-changes')->hourlyAt(2)->withoutOverlapping(30);

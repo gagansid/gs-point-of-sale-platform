@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\BillingCycle;
+use App\Enums\InvoiceKind;
 use App\Enums\InvoiceStatus;
 use App\Models\Concerns\BelongsToTenant;
 use Carbon\CarbonImmutable;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $id
  * @property string $tenant_id
  * @property string $number
+ * @property InvoiceKind $kind
  * @property string $plan_id
  * @property string $plan_name
  * @property BillingCycle $billing_cycle
@@ -39,12 +41,13 @@ final class SubscriptionInvoice extends Model
 
     protected $fillable = ['plan_id', 'plan_name', 'billing_cycle', 'amount', 'due_at', 'notes'];
 
-    protected $attributes = ['status' => 'pending'];
+    protected $attributes = ['status' => 'pending', 'kind' => 'renewal'];
 
     protected function casts(): array
     {
         return [
             'billing_cycle' => BillingCycle::class,
+            'kind' => InvoiceKind::class,
             'status' => InvoiceStatus::class,
             'amount' => 'decimal:2',
             'due_at' => 'immutable_datetime',

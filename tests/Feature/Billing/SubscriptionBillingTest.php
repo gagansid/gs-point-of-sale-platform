@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Billing\ApplyScheduledPlanChanges;
 use App\Actions\Billing\CreateInvoice;
 use App\Actions\Billing\MarkInvoicePaid;
 use App\Actions\Billing\SavePlan;
@@ -10,6 +11,7 @@ use App\Actions\Billing\SetTenantPlan;
 use App\Actions\Billing\StartInvoicePayment;
 use App\Actions\Promotion\SavePromotion;
 use App\Enums\BillingCycle;
+use App\Enums\InvoiceKind;
 use App\Enums\InvoiceStatus;
 use App\Enums\TenantStatus;
 use App\Exceptions\BusinessException;
@@ -26,6 +28,7 @@ use App\Services\Payment\MidtransClient;
 use App\Support\CurrentOutlet;
 use App\Support\Features;
 use App\Support\TenantContext;
+use Carbon\CarbonImmutable;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Carbon;
@@ -81,6 +84,76 @@ it('lunas: paket, batas outlet, status aktif, masa aktif ditambah dari akhir lam
     $tenant->forceFill(['subscription_ends_at' => now()->subDays(10)])->save();
     app(MarkInvoicePaid::class)->handle(invoiceFor($this, cycle: BillingCycle::Yearly), 'manual');
     expect($this->tenant->refresh()->subscription_ends_at->toDateString())->toBe('2027-10-16');
+});
+
+/** Langganan berbayar berjalan: paket $plan bulanan, berakhir 15 hari lagi (siklus 30 Sep–31 Okt = 31 hari). */
+function activeOn(object $test, Plan $plan): void
+{
+    $test->tenant->forceFill([
+        'status' => TenantStatus::Active, 'plan_id' => $plan->id, 'billing_cycle' => BillingCycle::Monthly,
+        'max_outlets' => $plan->max_outlets, 'subscription_ends_at' => now()->addDays(15),
+    ])->save();
+}
+
+it('upgrade prorata: selisih × sisa hari ÷ hari siklus; lunas = paket langsung ganti, masa aktif tetap', function () {
+    activeOn($this, $this->basic);
+    $invoice = invoiceFor($this);
+
+    // (199.000 − 99.000) × 15 ÷ 31 = 48.387,09 → 48.387
+    expect($invoice->kind)->toBe(InvoiceKind::Upgrade)->and($invoice->amount)->toBe('48387.00')
+        ->and($invoice->due_at->toDateString())->toBe('2026-10-19');
+
+    app(MarkInvoicePaid::class)->handle($invoice, 'manual');
+    $tenant = $this->tenant->refresh();
+    expect($tenant->plan_id)->toBe($this->pro->id)->and($tenant->max_outlets)->toBe(3)
+        ->and($tenant->subscription_ends_at->toDateString())->toBe('2026-10-31')
+        ->and($tenant->next_plan_id)->toBeNull()
+        ->and($invoice->refresh()->period_end->toDateString())->toBe('2026-10-31');
+
+    // Jatuh tempo upgrade tidak melewati akhir masa aktif
+    activeOn($this, $this->basic);
+    $this->tenant->forceFill(['subscription_ends_at' => now()->addDay()])->save();
+    expect(invoiceFor($this)->due_at->toDateString())->toBe('2026-10-17');
+});
+
+it('downgrade / ganti siklus: perpanjangan harga penuh, paket baru dijadwalkan di akhir masa aktif', function () {
+    activeOn($this, $this->pro);
+    $invoice = invoiceFor($this, $this->basic);
+    expect($invoice->kind)->toBe(InvoiceKind::Renewal)->and($invoice->amount)->toBe('99000.00');
+
+    app(MarkInvoicePaid::class)->handle($invoice, 'manual');
+    $tenant = $this->tenant->refresh();
+    expect($tenant->plan_id)->toBe($this->pro->id)
+        ->and($tenant->next_plan_id)->toBe($this->basic->id)
+        ->and($tenant->plan_changes_at->toDateString())->toBe('2026-10-31')
+        ->and($tenant->subscription_ends_at->toDateString())->toBe('2026-11-30');
+
+    expect(app(ApplyScheduledPlanChanges::class)->handle(CarbonImmutable::parse('2026-10-30 03:00')))->toBe(0)
+        ->and(app(ApplyScheduledPlanChanges::class)->handle(CarbonImmutable::parse('2026-10-31 04:00')))->toBe(1)
+        ->and(app(ApplyScheduledPlanChanges::class)->handle(CarbonImmutable::parse('2026-10-31 05:00')))->toBe(0);
+
+    $tenant = $this->tenant->refresh();
+    expect($tenant->plan_id)->toBe($this->basic->id)->and($tenant->max_outlets)->toBe(1)->and($tenant->next_plan_id)->toBeNull();
+
+    // Paket lebih mahal tapi siklus lain = perpanjangan terjadwal, bukan upgrade
+    activeOn($this, $this->basic);
+    $yearly = invoiceFor($this, cycle: BillingCycle::Yearly);
+    expect($yearly->kind)->toBe(InvoiceKind::Renewal)->and($yearly->amount)->toBe('1990000.00');
+    app(MarkInvoicePaid::class)->handle($yearly, 'manual');
+    expect($this->tenant->refresh()->next_billing_cycle)->toBe(BillingCycle::Yearly)->and($this->tenant->plan_id)->toBe($this->basic->id);
+
+    // Admin mengatur paket langsung: jadwal dibatalkan
+    app(SetTenantPlan::class)->handle($this->tenant, $this->pro, BillingCycle::Monthly);
+    expect($this->tenant->refresh()->next_plan_id)->toBeNull();
+});
+
+it('trial: perpanjangan langsung mengganti paket (tanpa jadwal)', function () {
+    $this->tenant->forceFill(['plan_id' => $this->basic->id, 'billing_cycle' => BillingCycle::Monthly])->save();
+    $invoice = invoiceFor($this);
+    expect($invoice->kind)->toBe(InvoiceKind::Renewal)->and($invoice->amount)->toBe('199000.00');
+
+    app(MarkInvoicePaid::class)->handle($invoice, 'manual');
+    expect($this->tenant->refresh()->plan_id)->toBe($this->pro->id)->and($this->tenant->next_plan_id)->toBeNull();
 });
 
 it('bayar online: Snap vendor sekali per tagihan; tanpa key = belum tersedia', function () {
@@ -163,6 +236,12 @@ it('dashboard: owner membuat tagihan di halaman Langganan; manager tanpa akses; 
     $owner = User::factory()->owner()->create();
     $this->actingAs($owner);
     CurrentOutlet::set($owner);
+
+    activeOn($this, $this->basic);
+    $page = Livewire::test(SubscriptionSettings::class)->instance();
+    expect($page->quoteText($this->pro->id, 'monthly'))->toContain('Upgrade Rp48.387')->toContain('sisa 15 hari')
+        ->and($page->quoteText($this->basic->id, 'yearly'))->toContain('tetap berlaku sampai 31 Okt 2026');
+    $this->tenant->forceFill(['status' => TenantStatus::Trial, 'plan_id' => null, 'billing_cycle' => null, 'max_outlets' => null, 'subscription_ends_at' => now()->addDays(5)])->save();
 
     Livewire::test(SubscriptionSettings::class)
         ->assertSee('Semua fitur (tanpa paket)')

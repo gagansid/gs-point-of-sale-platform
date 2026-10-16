@@ -15,6 +15,9 @@
                 <div><dt>Status</dt><dd>{{ $tenant->status->getLabel() }}{{ $tenant->isReadOnly() ? ' · hanya-baca' : '' }}</dd></div>
                 <div><dt>Aktif sampai</dt><dd>{{ $date($tenant->subscription_ends_at) }}</dd></div>
                 <div><dt>Maks. outlet</dt><dd>{{ $tenant->max_outlets ?? 'Tanpa batas' }}</dd></div>
+                @if ($tenant->nextPlan && $tenant->plan_changes_at)
+                    <div class="is-wide"><dt>Paket berikutnya</dt><dd>{{ $tenant->nextPlan->name }} · {{ $tenant->next_billing_cycle?->getLabel() }}, mulai {{ $date($tenant->plan_changes_at) }}</dd></div>
+                @endif
                 @if ($tenant->plan)
                     <div class="is-wide"><dt>Fitur</dt><dd>{{ collect(\App\Models\Plan::FEATURES)->only($tenant->plan->features)->implode(' · ') ?: 'Fitur dasar kasir & laporan' }}</dd></div>
                 @endif
@@ -30,7 +33,7 @@
             @if ($pending)
                 <dl class="gs-nota-meta gs-nota-meta--single">
                     <div><dt>Nomor</dt><dd>{{ $pending->number }}</dd></div>
-                    <div><dt>Paket</dt><dd>{{ $pending->plan_name }} · {{ $pending->billing_cycle->getLabel() }}</dd></div>
+                    <div><dt>Paket</dt><dd>{{ $pending->kind->getLabel() }} {{ $pending->plan_name }} · {{ $pending->billing_cycle->getLabel() }}</dd></div>
                     <div><dt>Total</dt><dd>{{ $money($pending->amount) }}</dd></div>
                     <div><dt>Jatuh tempo</dt><dd>{{ $date($pending->due_at) }}</dd></div>
                 </dl>
@@ -56,7 +59,7 @@
                     @forelse ($this->invoices() as $invoice)
                         <tr wire:key="inv-{{ $invoice->id }}">
                             <td>{{ $invoice->number }}</td>
-                            <td>{{ $invoice->plan_name }} · {{ $invoice->billing_cycle->getLabel() }}</td>
+                            <td>{{ $invoice->kind->getLabel() }} {{ $invoice->plan_name }} · {{ $invoice->billing_cycle->getLabel() }}</td>
                             <td class="text-right tabular-nums">{{ $money($invoice->amount) }}</td>
                             <td><x-filament::badge :color="$invoice->status->getColor()">{{ $invoice->status->getLabel() }}</x-filament::badge></td>
                             <td>{{ $invoice->period_start ? $date($invoice->period_start).' – '.$date($invoice->period_end) : '—' }}</td>

@@ -7,6 +7,7 @@ namespace App\Filament\Dashboard\Pages;
 use App\Actions\Billing\CreateInvoice;
 use App\Actions\Billing\StartInvoicePayment;
 use App\Enums\BillingCycle;
+use App\Enums\InvoiceKind;
 use App\Enums\InvoiceStatus;
 use App\Exceptions\BusinessException;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
@@ -14,16 +15,20 @@ use App\Models\Plan;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Billing\InvoiceQuote;
 use App\Services\Payment\MidtransClient;
+use App\Support\CurrentOutlet;
 use App\Support\Edition;
 use App\Support\Money;
 use App\Support\TenantContext;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
 use UnitEnum;
@@ -60,7 +65,7 @@ final class SubscriptionSettings extends Page
 
     public function tenant(): Tenant
     {
-        return Tenant::query()->with('plan')->findOrFail(TenantContext::idOrFail());
+        return Tenant::query()->with(['plan', 'nextPlan'])->findOrFail(TenantContext::idOrFail());
     }
 
     /** @return Collection<int, Plan> */
@@ -94,21 +99,23 @@ final class SubscriptionSettings extends Page
         return Action::make('createInvoice')->label('Buat tagihan')->icon(Heroicon::OutlinedDocumentPlus)
             ->visible(fn (): bool => $this->plans()->isNotEmpty())
             ->modalHeading('Buat tagihan langganan')
-            ->modalDescription('Paket baru berlaku setelah tagihan lunas; masa aktif ditambah dari akhir masa aktif sekarang')
+            ->modalDescription('Upgrade ke paket lebih mahal: bayar selisih sisa masa aktif, paket langsung berganti. Lainnya: perpanjangan dari akhir masa aktif sekarang')
             ->fillForm(fn (): array => [
                 'plan_id' => $this->tenant()->plan_id ?? $this->plans()->first()?->id,
                 'billing_cycle' => ($this->tenant()->billing_cycle ?? BillingCycle::Monthly)->value,
             ])
             ->schema([
-                Radio::make('plan_id')->label('Paket')->required()
+                Radio::make('plan_id')->label('Paket')->required()->live()
                     ->options(fn (): array => $this->plans()->mapWithKeys(fn (Plan $p): array => [$p->id => $p->name])->all())
                     ->descriptions(fn (): array => $this->plans()->mapWithKeys(fn (Plan $p): array => [$p->id => Money::format($p->price_monthly).'/bulan · '.Money::format($p->price_yearly).'/tahun'.($p->max_outlets !== null ? ' · maks. '.$p->max_outlets.' outlet' : '')])->all()),
-                ToggleButtons::make('billing_cycle')->label('Siklus')->required()->inline()->options(BillingCycle::class),
+                ToggleButtons::make('billing_cycle')->label('Siklus')->required()->inline()->options(BillingCycle::class)->live(),
+                Placeholder::make('quote')->label('Tagihan')
+                    ->content(fn (Get $get): string => $this->quoteText($get('plan_id'), $get('billing_cycle'))),
             ])
             ->action(function (array $data): void {
                 abort_unless(self::canAccess(), 403);
                 $plan = $this->plans()->firstWhere('id', $data['plan_id']) ?? abort(404);
-                $cycle = $data['billing_cycle'] instanceof BillingCycle ? $data['billing_cycle'] : BillingCycle::from((string) $data['billing_cycle']);
+                $cycle = self::cycle($data['billing_cycle']) ?? abort(422);
 
                 try {
                     $invoice = app(CreateInvoice::class)->handle($this->tenant(), $plan, $cycle);
@@ -120,6 +127,31 @@ final class SubscriptionSettings extends Page
 
                 Notification::make()->success()->title('Tagihan '.$invoice->number.' dibuat')->send();
             });
+    }
+
+    /** Pratinjau nominal & efek tagihan di modal (sama dengan CreateInvoice, lewat InvoiceQuote). */
+    public function quoteText(mixed $planId, mixed $cycle): string
+    {
+        $plan = $this->plans()->firstWhere('id', $planId);
+        $cycle = self::cycle($cycle);
+
+        if ($plan === null || $cycle === null) {
+            return 'Pilih paket & siklus';
+        }
+
+        $quote = InvoiceQuote::for($this->tenant(), $plan, $cycle);
+        $date = $quote->startsAt->setTimezone(CurrentOutlet::timezone())->locale('id')->translatedFormat('j M Y');
+
+        return match (true) {
+            $quote->kind === InvoiceKind::Upgrade => 'Upgrade '.Money::format($quote->amount).' (selisih harga untuk sisa '.$quote->remainingDays.' hari). Paket langsung berganti setelah lunas; masa aktif tetap',
+            $quote->scheduled => 'Perpanjangan '.Money::format($quote->amount).'. Paket saat ini tetap berlaku sampai '.$date.', lalu berganti ke '.$plan->name,
+            default => 'Perpanjangan '.Money::format($quote->amount).', periode mulai '.$date,
+        };
+    }
+
+    private static function cycle(mixed $value): ?BillingCycle
+    {
+        return $value instanceof BillingCycle ? $value : BillingCycle::tryFrom((string) $value);
     }
 
     public function payOnlineAction(): Action
