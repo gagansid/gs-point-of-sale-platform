@@ -218,7 +218,7 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
 
 **Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5 owner & billing
 vendor) menunggu key; integrasi Flutter F9–F13. Belum: utang supplier, cetak PO, laporan per produk dikurangi retur,
-prorata ganti paket, WhatsApp ringkasan harian. Flutter **F12**: tampilkan promo (`/catalog`, `/orders/quote`).
+WhatsApp ringkasan harian. Revisi bawaan 2026-10-16 selesai: batas retur per outlet, pecah/gabung dengan diskon, upgrade prorata. Flutter **F12**: tampilkan promo (`/catalog`, `/orders/quote`).
 Flutter **F10**: retur (`docs/api/order.md`); **F11**: pecah/gabung bill, status order `merged`.
 
 Catatan untuk tim Flutter — **F9** shift bersama (ADR 0017, `docs/api/shift.md`): tombol Kunci + kunci otomatis
