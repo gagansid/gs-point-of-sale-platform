@@ -197,13 +197,21 @@ it('produk habis & produk tenant lain tidak bisa masuk keranjang', function () {
         ->assertDispatched('cashier-toast', message: 'Produk tidak tersedia', tone: 'warning');
 });
 
-it('toggle habis: kasir ditolak, supervisor boleh', function () {
-    Livewire::test(PointOfSale::class)->call('toggleAvailability', $this->pos->croissant->id)->assertForbidden();
-
-    actAsWebCashier($this, $this->pos, $this->pos->supervisor);
-    Livewire::test(PointOfSale::class)->call('toggleAvailability', $this->pos->croissant->id);
-
+it('toggle habis: kasir boleh (Q115) dan melihat tombolnya; tersedia lagi', function () {
+    $page = Livewire::test(PointOfSale::class)->assertSeeHtml('aria-label="Tandai Croissant habis"')
+        ->call('toggleAvailability', $this->pos->croissant->id);
     expect(Product::query()->atOutlet($this->pos->outlet->id)->findOrFail($this->pos->croissant->id)->is_available)->toBeFalse();
+
+    $page->assertSeeHtml('aria-label="Tandai Croissant tersedia"')->call('toggleAvailability', $this->pos->croissant->id);
+    expect(Product::query()->atOutlet($this->pos->outlet->id)->findOrFail($this->pos->croissant->id)->is_available)->toBeTrue();
+});
+
+it('toggle habis ditolak saat bisnis hanya-baca', function () {
+    $this->pos->outlet->tenant->forceFill(['subscription_ends_at' => now()->subDay()])->save();
+    TenantContext::set($this->pos->tenantId, readOnly: true);
+
+    Livewire::test(PointOfSale::class)->call('toggleAvailability', $this->pos->croissant->id)->assertForbidden();
+    expect(Product::query()->atOutlet($this->pos->outlet->id)->findOrFail($this->pos->croissant->id)->is_available)->toBeTrue();
 });
 
 it('struk order tenant lain 404', function () {

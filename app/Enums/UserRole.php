@@ -122,6 +122,8 @@ enum UserRole: string implements HasColor, HasLabel
             self::Cashier => [
                 'order.create', 'order.view_own', 'order.reprint',
                 'order.discount', 'shift.operate',
+                // Tandai menu habis/tersedia di outlet sendiri (Q115)
+                'product.toggle_available',
                 // Rekap shift sendiri (X/Z-report), Q49
                 'report.view_own',
                 'member.view', 'member.create', 'self_order.handle',

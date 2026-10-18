@@ -53,7 +53,7 @@ Sumber resmi: tabel permission di `docs/SPEC.md` dan `App\Enums\UserRole::permis
 | Owner | email + kata sandi | `*` (termasuk `outlet.manage`, `outlet.access_all`, `user.manage`) |
 | Manager | email + kata sandi | `order.*`, `shift.*`, `product.*`, `stock.*`, `report.*` |
 | Supervisor | PIN (tablet), username + kata sandi (kasir web, nanti) | `order.*` kecuali `order.discount_over_limit` (diskon sampai batas supervisor), `shift.*`, `product.toggle_available` |
-| Kasir | PIN (tablet), username + kata sandi (kasir web, nanti) | buat order, lihat order sendiri, cetak ulang, diskon dalam batas, shift sendiri |
+| Kasir | PIN (tablet), username + kata sandi (kasir web, nanti) | buat order, lihat order sendiri, cetak ulang, diskon dalam batas, shift sendiri, tandai menu habis/tersedia (`product.toggle_available`, Q115) |
 
 ## Skenario uji yang disarankan
 

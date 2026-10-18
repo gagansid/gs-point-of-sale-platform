@@ -111,10 +111,20 @@ describe('tandai habis / tersedia', function () {
         assertApiError($this->withToken($this->token)->patchJson("/api/v1/products/{$this->product->id}/availability", ['is_available' => 'mungkin'], apiHeaders()), 'VALIDATION_ERROR', 422);
     });
 
-    it('kasir tidak boleh', function () {
+    it('kasir boleh menandai habis (Q115)', function () {
         $cashier = User::factory()->cashier()->forOutlet($this->outlet)->create();
 
-        assertApiError($this->withToken(userToken($cashier))->patchJson("/api/v1/products/{$this->product->id}/availability", ['is_available' => false], apiHeaders()), 'FORBIDDEN', 403);
+        $this->withToken(userToken($cashier))->patchJson("/api/v1/products/{$this->product->id}/availability", ['is_available' => false], apiHeaders())
+            ->assertOk()->assertJsonPath('data.is_available', false);
+    });
+
+    it('bisnis hanya-baca (langganan habis): kasir ditolak', function () {
+        $cashier = User::factory()->cashier()->forOutlet($this->outlet)->create();
+        Tenant::query()->findOrFail($this->outlet->tenant_id)->forceFill(['subscription_ends_at' => now()->subDay()])->save();
+
+        $this->withToken(userToken($cashier))->patchJson("/api/v1/products/{$this->product->id}/availability", ['is_available' => false], apiHeaders())
+            ->assertStatus(403);
+        expect(stockOf($this->product->id)->is_available)->toBeTrue();
     });
 
     it('isolasi: produk tenant lain → 404', function () {
