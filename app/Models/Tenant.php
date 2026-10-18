@@ -165,6 +165,12 @@ final class Tenant extends Model
         return $this->hasMany(Device::class)->withoutGlobalScope(TenantScope::class);
     }
 
+    /** @return HasMany<SubscriptionInvoice, $this> */
+    public function subscriptionInvoices(): HasMany
+    {
+        return $this->hasMany(SubscriptionInvoice::class)->withoutGlobalScope(TenantScope::class);
+    }
+
     /**
      * Data platform: pembuat/pengubah = super admin (RecordsAuthor).
      *

@@ -9,7 +9,9 @@ use App\Filament\Admin\Resources\Tenants\Actions\TenantStatusActions;
 use App\Filament\Admin\Resources\Tenants\TenantResource;
 use App\Filament\Shared\Columns\AuditColumns;
 use App\Filament\Shared\Tables\TableEmptyState;
+use App\Models\Plan;
 use App\Models\Tenant;
+use App\Support\Edition;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -27,7 +29,7 @@ final class TenantsTable
     public static function configure(Table $table): Table
     {
         $table = $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->withCount('users'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->withCount('users')->with('plan:id,name'))
             ->columns([
                 TextColumn::make('name')
                     ->label('Nama bisnis')
@@ -45,6 +47,12 @@ final class TenantsTable
                     ->label('Status')
                     ->badge()
                     ->sortable(),
+                TextColumn::make('plan.name')
+                    ->label('Paket')
+                    ->placeholder('Tanpa paket')
+                    ->description(fn (Tenant $record): ?string => $record->billing_cycle?->getLabel())
+                    ->visible(fn (): bool => Edition::isSaas())
+                    ->toggleable(),
                 TextColumn::make('subscription_ends_at')
                     ->label('Langganan berakhir')
                     ->date('j M Y')
@@ -72,6 +80,15 @@ final class TenantsTable
             ])
             ->filters([
                 SelectFilter::make('business_type')->label('Jenis usaha')->options(BusinessType::class),
+                // "none" = tenant tanpa paket (semua fitur, ADR 0024)
+                SelectFilter::make('plan_id')->label('Paket')
+                    ->visible(fn (): bool => Edition::isSaas())
+                    ->options(fn (): array => ['none' => 'Tanpa paket'] + Plan::query()->orderBy('sort_order')->pluck('name', 'id')->all())
+                    ->query(fn (Builder $query, array $data): Builder => match ($data['value'] ?? null) {
+                        null, '' => $query,
+                        'none' => $query->whereNull('plan_id'),
+                        default => $query->where('plan_id', $data['value']),
+                    }),
             ])
             ->recordActions([
                 EditAction::make()->iconButton()->tooltip('Ubah'),

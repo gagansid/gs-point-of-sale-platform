@@ -90,6 +90,8 @@ final class SubscriptionInvoiceResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status')->label('Status')->options(InvoiceStatus::class),
+                // Dipakai juga oleh tautan "Semua tagihan" di detail bisnis
+                SelectFilter::make('tenant_id')->label('Bisnis')->relationship('tenant', 'name')->searchable(),
             ])
             ->recordActions([
                 ActionGroup::make([
