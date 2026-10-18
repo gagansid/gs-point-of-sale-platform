@@ -60,6 +60,10 @@ server, bisa bertambah — abaikan key yang tidak dikenal app). Tenant tanpa pak
 key. Sembunyikan menu fitur yang tidak ada di daftar; server tetap menolak dengan `403 FEATURE_NOT_AVAILABLE`. Juga
 dikirim di `GET /v1/auth/me`.
 
+`tenant.limits` (ADR 0025): kuota paket per key master data (`outlets`, `users`, `devices`, `products`, `members`, bisa
+bertambah) → `{ limit, used }`; `limit: null` = tanpa batas. `used > limit` bisa terjadi setelah downgrade (data lama tetap
+jalan); tambah data ditolak `409 PLAN_LIMIT_REACHED` / `OUTLET_LIMIT_REACHED`. Tampilkan sisa kuota sebelum form tambah.
+
 `announcements`: pengumuman tayang dari panel admin → Pengumuman, maks. 3 terbaru, cache server ±60 detik.
 Teks polos; tampilkan sebagai banner (boleh disembunyikan per `id` yang sudah ditutup pengguna).
 
@@ -102,7 +106,8 @@ Login owner/manager dengan email + kata sandi.
     "user": { "id": "…", "name": "Rina", "email": "rina@kopi.test", "role": "owner", "role_label": "Owner",
               "permissions": ["order.create", "…"], "outlet_ids": ["…"], "last_login_at": "…Z" },
     "tenant": { "id": "…", "name": "Kopi Senja", "business_type": "cafe", "status": "active", "subscription_ends_at": "…Z",
-                "features": ["member", "self_order"] },
+                "features": ["member", "self_order"],
+                "limits": { "outlets": { "limit": 1, "used": 1 }, "users": { "limit": 10, "used": 4 }, "devices": { "limit": null, "used": 2 } } },
     "outlet": { "id": "…", "code": "JKT01", "name": "…", "timezone": "Asia/Jakarta", "tax_rate": "11.00",
                 "service_charge_rate": "5.00", "tax_inclusive": false, "rounding": 100,
                 "receipt_header": null, "receipt_footer": "Terima kasih", "discount_limits": { "cashier": 10, "supervisor": 25 } },

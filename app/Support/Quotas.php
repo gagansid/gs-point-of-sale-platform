@@ -110,6 +110,37 @@ final class Quotas
         return $result;
     }
 
+    /**
+     * Batas & pemakaian per kuota master data (halaman Langganan, detail bisnis admin, auth/me). $limitedOnly: hanya
+     * kuota yang punya batas (tanpa query hitung untuk yang tanpa batas) — dipakai banner tiap halaman.
+     *
+     * @return list<array{key: string, name: string, limit: int|null, used: int}>
+     */
+    public static function usage(Tenant $tenant, bool $limitedOnly = false): array
+    {
+        $rows = [];
+        foreach (Quota::options() as $key => $name) {
+            $limit = $tenant->limit($key);
+            if ($limitedOnly && $limit === null) {
+                continue;
+            }
+
+            $rows[] = ['key' => $key, 'name' => $name, 'limit' => $limit, 'used' => self::used($tenant->id, $key)];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Kuota yang pemakaiannya MELEBIHI batas (mis. setelah downgrade): data lama tetap jalan, tambah ditolak.
+     *
+     * @return list<array{key: string, name: string, limit: int|null, used: int}>
+     */
+    public static function exceeded(Tenant $tenant): array
+    {
+        return array_values(array_filter(self::usage($tenant, limitedOnly: true), fn (array $row): bool => $row['used'] > (int) $row['limit']));
+    }
+
     /** Produk ini ikut dihitung kuota "products": aktif dan bukan bahan baku. */
     public static function countsAsProduct(Product $product): bool
     {

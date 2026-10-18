@@ -2,6 +2,7 @@
     Banner status langganan di panel pelanggan (ADR 0009):
     - hanya-baca (trial/langganan habis): peringatan, perubahan data dinonaktifkan
     - trial berjalan: sisa hari
+    - pemakaian melebihi kuota paket (ADR 0025, mis. setelah downgrade): hanya untuk yang bisa mengatur langganan
 --}}
 @props(['tenant'])
 
@@ -47,4 +48,20 @@
         </div>
         <a class="gs-banner-action" href="{{ route('landing') }}#contact" target="_blank" rel="noopener">Berlangganan</a>
     </div>
+@endif
+
+@php($me = filament()->auth()->user())
+@if ($tenant !== null && \App\Support\Edition::isSaas() && $me instanceof \App\Models\User && $me->can('billing.manage'))
+    @php($exceeded = \App\Support\Quotas::exceeded($tenant))
+    @if ($exceeded !== [])
+        <div class="gs-banner gs-banner-warning" role="status">
+            <x-filament::icon icon="heroicon-o-exclamation-triangle" class="gs-banner-icon" />
+            <div>
+                <strong>Pemakaian melebihi batas{{ $tenant->plan ? ' paket '.$tenant->plan->name : '' }}:</strong>
+                {{ collect($exceeded)->map(fn (array $r): string => $r['name'].' '.$r['used'].' dari '.$r['limit'])->implode(', ') }}.
+                Data yang ada tetap berjalan, tetapi tidak bisa menambah data baru.
+            </div>
+            <a class="gs-banner-action" href="{{ \App\Filament\Dashboard\Pages\SubscriptionSettings::getUrl() }}">Upgrade paket</a>
+        </div>
+    @endif
 @endif

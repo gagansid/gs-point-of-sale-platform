@@ -14,7 +14,6 @@
                 <div><dt>Siklus</dt><dd>{{ $tenant->billing_cycle?->getLabel() ?? '—' }}</dd></div>
                 <div><dt>Status</dt><dd>{{ $tenant->status->getLabel() }}{{ $tenant->isReadOnly() ? ' · hanya-baca' : '' }}</dd></div>
                 <div><dt>Aktif sampai</dt><dd>{{ $date($tenant->subscription_ends_at) }}</dd></div>
-                <div class="is-wide"><dt>Kuota</dt><dd>{{ \App\Models\Quota::summary($tenant->limits()) }}</dd></div>
                 @if ($tenant->nextPlan && $tenant->plan_changes_at)
                     <div class="is-wide"><dt>Paket berikutnya</dt><dd>{{ $tenant->nextPlan->name }} · {{ $tenant->next_billing_cycle?->getLabel() }}, mulai {{ $date($tenant->plan_changes_at) }}</dd></div>
                 @endif
@@ -50,6 +49,11 @@
             @endif
         </x-filament::section>
     </div>
+
+    {{-- Pemakaian vs batas paket (ADR 0025) --}}
+    <x-filament::section heading="Pemakaian kuota" description="Data yang sudah ada tetap berjalan walau melebihi batas; menambah data baru ditolak sampai di bawah batas">
+        @include('filament.shared.quota-usage', ['rows' => \App\Support\Quotas::usage($tenant)])
+    </x-filament::section>
 
     <x-filament::section heading="Riwayat tagihan">
         <div class="pos-dash-table-wrap">
