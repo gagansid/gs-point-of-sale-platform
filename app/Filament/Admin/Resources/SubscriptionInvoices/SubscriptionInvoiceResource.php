@@ -80,7 +80,7 @@ final class SubscriptionInvoiceResource extends Resource
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('tenant:id,name'))
             ->columns([
                 TextColumn::make('number')->label('Nomor')->weight('medium')->searchable()
-                    ->description(fn (SubscriptionInvoice $record): string => (string) $record->tenant?->name),
+                    ->description(fn (SubscriptionInvoice $record): string => $record->tenant?->name.($record->created_by_admin_id !== null ? ' · dibuat admin' : '')),
                 TextColumn::make('plan_name')->label('Paket')->description(fn (SubscriptionInvoice $record): string => $record->kind->getLabel().' · '.$record->billing_cycle->getLabel()),
                 TextColumn::make('amount')->label('Total')->alignEnd()->sortable()->formatStateUsing(fn (string $state): string => Money::format($state)),
                 TextColumn::make('due_at')->label('Jatuh tempo')->date('j M Y')->sortable(),

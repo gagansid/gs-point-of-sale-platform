@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Admin\Resources\Tenants\Pages;
 
+use App\Filament\Admin\Resources\Tenants\Actions\TenantInvoiceAction;
 use App\Filament\Admin\Resources\Tenants\Actions\TenantPlanAction;
 use App\Filament\Admin\Resources\Tenants\Actions\TenantStatusActions;
 use App\Filament\Admin\Resources\Tenants\TenantResource;
@@ -20,6 +21,7 @@ final class ViewTenant extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            TenantInvoiceAction::make(),
             TenantPlanAction::make(),
             TenantStatusActions::suspend(),
             TenantStatusActions::activate(),

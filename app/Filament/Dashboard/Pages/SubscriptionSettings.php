@@ -7,7 +7,6 @@ namespace App\Filament\Dashboard\Pages;
 use App\Actions\Billing\CreateInvoice;
 use App\Actions\Billing\StartInvoicePayment;
 use App\Enums\BillingCycle;
-use App\Enums\InvoiceKind;
 use App\Enums\InvoiceStatus;
 use App\Exceptions\BusinessException;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
@@ -139,14 +138,7 @@ final class SubscriptionSettings extends Page
             return 'Pilih paket & siklus';
         }
 
-        $quote = InvoiceQuote::for($this->tenant(), $plan, $cycle);
-        $date = $quote->startsAt->setTimezone(CurrentOutlet::timezone())->locale('id')->translatedFormat('j M Y');
-
-        return match (true) {
-            $quote->kind === InvoiceKind::Upgrade => 'Upgrade '.Money::format($quote->amount).' (selisih harga untuk sisa '.$quote->remainingDays.' hari). Paket langsung berganti setelah lunas; masa aktif tetap',
-            $quote->scheduled => 'Perpanjangan '.Money::format($quote->amount).'. Paket saat ini tetap berlaku sampai '.$date.', lalu berganti ke '.$plan->name,
-            default => 'Perpanjangan '.Money::format($quote->amount).', periode mulai '.$date,
-        };
+        return InvoiceQuote::for($this->tenant(), $plan, $cycle)->summary($plan, CurrentOutlet::timezone());
     }
 
     private static function cycle(mixed $value): ?BillingCycle

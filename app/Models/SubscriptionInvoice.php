@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $gateway_order_id
  * @property string|null $snap_url
  * @property string|null $paid_by_admin_id
+ * @property string|null $created_by_admin_id dibuat super admin (null = dibuat owner)
  * @property string|null $notes
  */
 final class SubscriptionInvoice extends Model
@@ -67,5 +68,11 @@ final class SubscriptionInvoice extends Model
     public function plan(): BelongsTo
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    /** @return BelongsTo<Admin, $this> */
+    public function createdByAdmin(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'created_by_admin_id');
     }
 }

@@ -60,6 +60,18 @@ final readonly class InvoiceQuote
         );
     }
 
+    /** Pratinjau nominal & efek tagihan (modal Buat tagihan owner & admin). */
+    public function summary(Plan $plan, string $timezone): string
+    {
+        $date = $this->startsAt->setTimezone($timezone)->locale('id')->translatedFormat('j M Y');
+
+        return match (true) {
+            $this->kind === InvoiceKind::Upgrade => 'Upgrade '.Money::format($this->amount).' (selisih harga untuk sisa '.$this->remainingDays.' hari). Paket langsung berganti setelah lunas; masa aktif tetap',
+            $this->scheduled => 'Perpanjangan '.Money::format($this->amount).'. Paket saat ini tetap berlaku sampai '.$date.', lalu berganti ke '.$plan->name,
+            default => 'Perpanjangan '.Money::format($this->amount).', periode mulai '.$date,
+        };
+    }
+
     /** Paket berbayar yang sedang berjalan (status aktif, masa aktif belum habis); trial/habis = null. */
     private static function paidPlan(Tenant $tenant, CarbonImmutable $now): ?Plan
     {
