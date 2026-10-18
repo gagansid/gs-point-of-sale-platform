@@ -53,7 +53,7 @@ it('layani pelanggan kedua lalu lanjutkan yang pertama; ID order ikut kembali', 
     $page->call('hold');
 
     // Pelanggan kedua dibayar dulu
-    $page->call('addProduct', $this->pos->croissant->id)->call('openPayment')->call('pay')->assertSet('payError', null);
+    $page->call('addProduct', $this->pos->croissant->id)->call('openPayment')->call('setTendered', 0, 'exact')->call('pay')->assertSet('payError', null);
     expect(Order::query()->count())->toBe(1);
 
     $page->call('newOrder')->call('resume', $page->instance()->heldCarts()[0]['id'])
@@ -61,7 +61,7 @@ it('layani pelanggan kedua lalu lanjutkan yang pertama; ID order ikut kembali', 
         ->assertSet('orderId', $firstOrderId);
     expect($page->instance()->heldCarts())->toBe([]);
 
-    $page->call('openPayment')->call('pay')->assertSet('payError', null);
+    $page->call('openPayment')->call('setTendered', 0, 'exact')->call('pay')->assertSet('payError', null);
     expect(Order::query()->find($firstOrderId))->not->toBeNull();
 });
 

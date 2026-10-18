@@ -54,7 +54,7 @@ it('PIN approver tidak tersisa di state setelah bayar gagal validasi', function 
 it('penghitung PIN approval kasir web per pelaku: browser baru tidak mereset', function () {
     $page = Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)
         ->set('discountType', 'percent')->set('discountValue', '20');
-    $page->call('openPayment')->call('pay');
+    $page->call('openPayment')->call('setTendered', 0, 'exact')->call('pay');
     $page->set('approverId', $this->pos->supervisor->id)->set('approverPin', '000000')->call('pay');
 
     // "Browser baru": device lain dengan shift sendiri, pelaku sama (didaftarkan user lain: shift kasir ini
@@ -88,12 +88,12 @@ it('toggle habis hanya produk di katalog outlet (produk nonaktif / outlet lain 4
     Livewire::test(PointOfSale::class)->call('toggleAvailability', $inactive->id)->assertNotFound();
 });
 
-it('nominal cepat hanya kata kunci/pecahan yang dikenal', function () {
+it('nominal cepat hanya kata kunci/saran server yang dikenal', function () {
     $page = Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)->call('openPayment');
     $amount = $page->get('payments.0.amount');
 
-    $page->call('setTendered', 0, '50000')->assertSet('payments.0.tendered', '50000')
-        ->call('setTendered', 0, '999999')->assertSet('payments.0.tendered', '50000')
+    $page->call('setTendered', 0, '50000.00')->assertSet('payments.0.tendered', '50000.00')
+        ->call('setTendered', 0, '999999')->assertSet('payments.0.tendered', '50000.00')
         ->call('setTendered', 0, 'exact')->assertSet('payments.0.tendered', $amount);
 });
 

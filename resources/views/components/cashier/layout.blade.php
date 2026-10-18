@@ -67,6 +67,46 @@
     <div class="cashier-toasts" data-toasts aria-live="polite"></div>
 
     <script>
+        // Input nominal Rupiah (x-modelable + wire:model): tampil "113.100,5", nilai Livewire "113100.5".
+        // Titik = ribuan, koma = desimal (maks. 2 digit), sama dengan format Rp di layar & struk.
+        document.addEventListener('alpine:init', () => {
+            const group = (digits) => digits.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+            // "113100.00" → "113.100"; "113100.5" → "113.100,5"
+            const fromRaw = (raw) => {
+                if (raw === null || raw === undefined || raw === '' || isNaN(Number(raw))) return '';
+                const [int, dec = ''] = String(raw).split('.');
+                const cents = dec.replace(/0+$/, '');
+                return group(int) + (cents ? ',' + cents : '');
+            };
+
+            window.Alpine.data('posMoney', () => ({
+                raw: '',
+                display: '',
+                typed: null,
+                init() {
+                    this.display = fromRaw(this.raw);
+                    // Nilai dari server (Uang pas, nominal cepat, reset): perbarui teks; ketikan sendiri tidak ditimpa
+                    this.$watch('raw', (value) => {
+                        if (value !== this.typed) this.display = fromRaw(value);
+                    });
+                },
+                type(event) {
+                    const cleaned = event.target.value.replace(/[^\d,]/g, '');
+                    const [int, ...rest] = cleaned.split(',');
+                    const hasComma = cleaned.includes(',');
+                    const dec = rest.join('').slice(0, 2);
+                    const intDigits = int.replace(/^0+(?=\d)/, '');
+                    const empty = intDigits === '' && ! hasComma;
+
+                    this.typed = empty ? '' : (intDigits || '0') + (dec ? '.' + dec : '');
+                    this.display = empty ? '' : group(intDigits || '0') + (hasComma ? ',' + dec : '');
+                    event.target.value = this.display;
+                    this.raw = this.typed;
+                },
+            }));
+        });
+
         (() => {
             const container = document.querySelector('[data-toasts]');
             const icons = {

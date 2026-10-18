@@ -52,9 +52,9 @@ it('produk tanpa opsi: klik dua kali = satu baris qty 2; total dari server', fun
         ->assertSet('cart.0.qty', 2)
         ->assertCount('cart', 1);
 
-    // 48.000 + service 5% (2.400) + pajak 11% (5.544) = 55.944 → pembulatan 100 = 55.900
-    expect($page->instance()->quote['totals']?->grandTotal)->toBe('55900.00');
-    $page->assertSee('Rp55.900');
+    // 48.000 + service 5% (2.400) + pajak 11% (5.544) = 55.944 → pembulatan ke atas 100 = 56.000
+    expect($page->instance()->quote['totals']?->grandTotal)->toBe('56000.00');
+    $page->assertSee('Rp56.000');
 });
 
 it('produk dengan opsi wajib: dialog opsi, opsi pertama terpilih, harga opsi ikut', function () {
@@ -149,7 +149,7 @@ it('split tunai + QRIS dengan referensi', function () {
     $grand = $page->get('payments.0.amount');
 
     $page->set('payments', [
-        cashRow($this->pos, '10000'),
+        cashRow($this->pos, '10000', '10000'),
         ['id' => uuid(), 'payment_method_id' => $this->pos->methods['qris']->id, 'amount' => bcsub($grand, '10000', 2), 'tendered' => '', 'reference' => 'QR123'],
     ])->call('pay')->assertSet('payError', null);
 
@@ -160,12 +160,12 @@ it('split tunai + QRIS dengan referensi', function () {
 
 it('pembayaran kurang / tanpa shift ditolak dengan pesan, tanpa order', function () {
     Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)
-        ->call('openPayment')->set('payments', [cashRow($this->pos, '1000')])->call('pay')
-        ->assertSet('payError', fn (?string $e): bool => str_contains((string) $e, 'Pembayaran kurang'));
+        ->call('openPayment')->set('payments', [cashRow($this->pos, '1000', '1000')])->call('pay')
+        ->assertSet('payError', fn (?string $e): bool => str_starts_with((string) $e, 'Sisa Rp'));
 
     $this->pos->webShift->forceFill(['status' => ShiftStatus::Closed, 'open_device_key' => null, 'closed_at' => now()])->save();
     Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)
-        ->call('openPayment')->call('pay')
+        ->call('openPayment')->call('setTendered', 0, 'exact')->call('pay')
         ->assertSet('payError', fn (?string $e): bool => $e !== null);
 
     expect(Order::query()->count())->toBe(0);
@@ -174,7 +174,7 @@ it('pembayaran kurang / tanpa shift ditolak dengan pesan, tanpa order', function
 it('diskon di atas batas kasir (10%) ditolak saat bayar', function () {
     Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)
         ->set('discountType', 'percent')->set('discountValue', '50')
-        ->call('openPayment')->call('pay')
+        ->call('openPayment')->call('setTendered', 0, 'exact')->call('pay')
         ->assertSet('payError', fn (?string $e): bool => $e !== null);
 
     expect(Order::query()->count())->toBe(0);

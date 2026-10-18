@@ -31,9 +31,10 @@ beforeEach(function () {
     $this->pos->supervisor->forceFill(['pin' => '481920'])->save();
 });
 
+/** Bayar tunai uang pas (Selesaikan butuh uang diterima). */
 function payCash(object $page): object
 {
-    return $page->call('openPayment')->call('pay');
+    return $page->call('openPayment')->call('setTendered', 0, 'exact')->call('pay');
 }
 
 it('simpan open bill → buka lagi → tambah item → lunasi', function () {

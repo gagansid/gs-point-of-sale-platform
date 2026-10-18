@@ -70,7 +70,8 @@ use Livewire\Component;
 final class PointOfSale extends Component
 {
     /** Nominal cepat uang tunai */
-    public const QUICK_CASH = ['20000', '50000', '100000'];
+    /** Pecahan uang untuk saran nominal cepat (kelipatan berikutnya di atas tagihan). */
+    private const CASH_STEPS = [5000, 10000, 20000, 50000, 100000];
 
     public string $search = '';
 
@@ -545,6 +546,11 @@ final class PointOfSale extends Component
     {
         unset($this->payments[$index]);
         $this->payments = array_values($this->payments);
+
+        // Kembali satu metode: nominal = seluruh sisa tagihan (field nominal disembunyikan)
+        if (count($this->payments) === 1 && ($totals = $this->quote['totals']) !== null) {
+            $this->payments[0]['amount'] = Money::sub($totals->grandTotal, $this->billPaid);
+        }
     }
 
     /** Pilih metode bayar lewat kartu; hanya metode aktif di outlet ini. */
@@ -555,24 +561,105 @@ final class PointOfSale extends Component
         }
     }
 
-    /** Tombol uang pas ('exact') / nominal cepat (pecahan tetap) untuk baris tunai. */
+    /** Tombol uang pas ('exact') / saran nominal cepat untuk baris tunai; nilai dari browser hanya dicocokkan ke saran server. */
     public function setTendered(int $index, string $preset): void
     {
         if (! isset($this->payments[$index])) {
             return;
         }
 
+        $amount = $this->payments[$index]['amount'];
+
         $this->payments[$index]['tendered'] = match (true) {
-            $preset === 'exact' => $this->payments[$index]['amount'],
-            in_array($preset, self::QUICK_CASH, true) => $preset,
+            $preset === 'exact' => $amount,
+            in_array($preset, self::cashSuggestions($amount), true) => $preset,
             default => $this->payments[$index]['tendered'],
         };
+    }
+
+    /**
+     * Saran uang diterima di atas tagihan: kelipatan Rp5.000/10.000/20.000/50.000/100.000 berikutnya
+     * (unik, urut, maks. 4), mis. 113.100 → 115.000, 120.000, 150.000, 200.000.
+     *
+     * @return list<string>
+     */
+    public static function cashSuggestions(string $amount): array
+    {
+        if (! is_numeric(trim($amount)) || ! Money::isPositive(Money::of(trim($amount)))) {
+            return [];
+        }
+
+        $amount = Money::of(trim($amount));
+        $suggestions = [];
+
+        foreach (self::CASH_STEPS as $step) {
+            $next = Money::roundUpTo($amount, $step);
+            // Tagihan tepat kelipatan: saran berikutnya satu pecahan di atasnya (uang pas sudah ada tombolnya)
+            $next = Money::compare($next, $amount) === 0 ? Money::add($next, Money::of($step)) : $next;
+            $suggestions[$next] = true;
+        }
+
+        $values = array_map('strval', array_keys($suggestions));
+        usort($values, fn (string $a, string $b): int => Money::compare($a, $b));
+
+        return array_slice($values, 0, 4);
+    }
+
+    /**
+     * Status dialog bayar (ADR kasir web): siap diselesaikan bila nominal menutup tagihan dan setiap baris
+     * tunai sudah diisi uang diterima ≥ nominal. Metode lain cukup nominalnya.
+     *
+     * @return array{ready: bool, tone: 'muted'|'warning'|'danger'|'success', message: string, change: string}
+     */
+    public function paymentState(): array
+    {
+        $remaining = $this->remaining();
+        $change = '0.00';
+
+        if (Money::isPositive($remaining)) {
+            return ['ready' => false, 'tone' => 'warning', 'message' => 'Sisa '.Money::format($remaining), 'change' => $change];
+        }
+
+        if (Money::compare($remaining, '0') < 0) {
+            return ['ready' => false, 'tone' => 'danger', 'message' => 'Nominal melebihi tagihan '.Money::format(Money::sub('0.00', $remaining)), 'change' => $change];
+        }
+
+        foreach ($this->payments as $p) {
+            if (! $this->isCash($p['payment_method_id'])) {
+                continue;
+            }
+
+            $amount = is_numeric(trim($p['amount'])) ? Money::of(trim($p['amount'])) : '0.00';
+
+            if (! is_numeric(trim($p['tendered']))) {
+                return ['ready' => false, 'tone' => 'muted', 'message' => 'Masukkan uang diterima', 'change' => $change];
+            }
+
+            $tendered = Money::of(trim($p['tendered']));
+
+            if (Money::compare($tendered, $amount) < 0) {
+                return ['ready' => false, 'tone' => 'danger', 'message' => 'Uang diterima kurang '.Money::format(Money::sub($amount, $tendered)), 'change' => $change];
+            }
+
+            $change = Money::add($change, Money::sub($tendered, $amount));
+        }
+
+        return ['ready' => true, 'tone' => 'success', 'message' => 'Lunas', 'change' => $change];
     }
 
     public function pay(): void
     {
         abort_unless($this->user()->can('order.create'), 403);
         $this->payError = null;
+
+        // Tombol Selesaikan nonaktif bila belum siap; tetap dicek di server (Enter / request manual)
+        $state = $this->paymentState();
+
+        if (! $state['ready']) {
+            $this->payError = $state['message'];
+
+            return;
+        }
 
         $data = [
             'id' => $this->orderId,

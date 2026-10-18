@@ -119,31 +119,34 @@
                                 @endif
                             </span>
                         </span>
-                        <button type="button" wire:click="clearMember" aria-label="Lepas member">&times;</button>
+                        <button type="button" class="pos-member-clear" wire:click="clearMember" aria-label="Lepas member">&times;</button>
+                        {{-- Kartu stempel (M6) & voucher pribadi (M7): pil kecil di dalam kartu member, satu baris yang digeser --}}
+                        @if ($this->stampCards !== [] || $this->memberVouchers !== [])
+                            <div class="pos-stamps" role="group" aria-label="Kartu stempel & voucher member">
+                                @foreach ($this->stampCards as $card)
+                                    @php($used = in_array($card['id'], $stampProgramIds, true))
+                                    @php($ready = $card['rewards_available'] > 0)
+                                    <button type="button" wire:key="stamp-{{ $card['id'] }}" wire:click="toggleStamp('{{ $card['id'] }}')"
+                                        @class(['pos-stamp', 'is-ready' => $ready, 'is-active' => $used]) aria-pressed="{{ $used ? 'true' : 'false' }}"
+                                        @disabled(! $used && ! $ready)
+                                        title="{{ $card['name'] }}: {{ $card['balance'] }}/{{ $card['stamps_required'] }} stempel">
+                                        @svg('heroicon-o-gift', ['aria-hidden' => 'true'])
+                                        <span class="pos-stamp-name">{{ $card['name'] }}</span>
+                                        <span class="pos-stamp-count">{{ $used ? 'dipakai' : ($ready ? 'pakai gratis' : $card['balance'].'/'.$card['stamps_required']) }}</span>
+                                    </button>
+                                @endforeach
+                                @foreach ($this->memberVouchers as $voucher)
+                                    @php($used = $voucherId === $voucher['id'] && $appliedVoucherCode === null)
+                                    <button type="button" wire:key="mv-{{ $voucher['id'] }}" wire:click="togglePersonalVoucher('{{ $voucher['id'] }}')"
+                                        @class(['pos-stamp', 'is-ready', 'is-active' => $used]) aria-pressed="{{ $used ? 'true' : 'false' }}">
+                                        @svg('heroicon-o-ticket', ['aria-hidden' => 'true'])
+                                        <span class="pos-stamp-name">{{ $voucher['label'] }}</span>
+                                        <span class="pos-stamp-count">{{ $used ? 'dipakai' : 'pakai' }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
-                    {{-- Kartu stempel (M6): pakai 1 gratis per kartu; item termurah yang memenuhi dihitung server --}}
-                    @if ($this->stampCards !== [] || $this->memberVouchers !== [])
-                        <div class="pos-stamps" role="group" aria-label="Kartu stempel & voucher member">
-                            @foreach ($this->stampCards as $card)
-                                @php($used = in_array($card['id'], $stampProgramIds, true))
-                                <button type="button" wire:key="stamp-{{ $card['id'] }}" wire:click="toggleStamp('{{ $card['id'] }}')"
-                                    @class(['pos-stamp', 'is-active' => $used]) aria-pressed="{{ $used ? 'true' : 'false' }}"
-                                    @disabled(! $used && $card['rewards_available'] < 1)>
-                                    <span class="pos-stamp-name">{{ $card['name'] }}</span>
-                                    <span class="pos-stamp-count">{{ $card['balance'] }}/{{ $card['stamps_required'] }}{{ $used ? ' · dipakai' : ($card['rewards_available'] > 0 ? ' · pakai gratis' : '') }}</span>
-                                </button>
-                            @endforeach
-                            {{-- Voucher pribadi member (ulang tahun, M7) --}}
-                            @foreach ($this->memberVouchers as $voucher)
-                                @php($used = $voucherId === $voucher['id'] && $appliedVoucherCode === null)
-                                <button type="button" wire:key="mv-{{ $voucher['id'] }}" wire:click="togglePersonalVoucher('{{ $voucher['id'] }}')"
-                                    @class(['pos-stamp', 'is-active' => $used]) aria-pressed="{{ $used ? 'true' : 'false' }}">
-                                    <span class="pos-stamp-name">{{ $voucher['label'] }}</span>
-                                    <span class="pos-stamp-count">{{ $used ? 'dipakai' : 'pakai voucher' }}</span>
-                                </button>
-                            @endforeach
-                        </div>
-                    @endif
                 @else
                     {{-- Kode member / nomor HP: Enter (atau scanner barcode) langsung memasang bila cocok persis --}}
                     <div class="pos-member-field">
@@ -189,6 +192,11 @@
             <ul class="pos-lines">
                 @forelse ($cart as $i => $line)
                     <li wire:key="l-{{ $i }}-{{ $line['product_id'] }}">
+                        <div class="pos-qty">
+                            <button type="button" wire:click="decrement({{ $i }})" aria-label="Kurangi {{ $line['name'] }}">@svg('heroicon-o-minus', ['aria-hidden' => 'true'])</button>
+                            <span>{{ $line['qty'] }}</span>
+                            <button type="button" wire:click="increment({{ $i }})" aria-label="Tambah {{ $line['name'] }}">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
+                        </div>
                         <button type="button" class="pos-line-main" wire:click="editLine({{ $i }})" title="Ubah {{ $line['name'] }}">
                             <span class="pos-line-name">{{ $line['name'] }}</span>
                             @if ($line['option_names'] !== [] || $line['notes'] || $line['discount'] !== '0.00')
@@ -200,11 +208,6 @@
                             @endif
                         </button>
                         <span class="pos-line-total">{{ $money($totals?->lines[$i]['line_total'] ?? null) }}</span>
-                        <div class="pos-qty">
-                            <button type="button" wire:click="decrement({{ $i }})" aria-label="Kurangi {{ $line['name'] }}">@svg('heroicon-o-minus', ['aria-hidden' => 'true'])</button>
-                            <span>{{ $line['qty'] }}</span>
-                            <button type="button" wire:click="increment({{ $i }})" aria-label="Tambah {{ $line['name'] }}">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
-                        </div>
                     </li>
                 @empty
                     <li class="pos-empty">
@@ -272,7 +275,8 @@
 
         <div class="pos-cart-foot">
             @if ($totals)
-                <dl class="pos-totals">
+                {{-- Rincian terlipat di layar pendek (tablet landscape) agar detail pesanan lebih lega; Total selalu tampil --}}
+                <dl class="pos-totals" x-data="{ open: window.innerHeight > 860 }" x-bind:class="open && 'is-open'">
                     <dt>Subtotal</dt><dd>{{ $money($totals->grossTotal) }}</dd>
                     @if (\App\Support\Money::isPositive($totals->manualDiscount))
                         <dt>Diskon</dt><dd class="is-minus">−{{ $money($totals->manualDiscount) }}</dd>
@@ -299,7 +303,12 @@
                     @if (\App\Support\Money::compare($totals->rounding, '0') !== 0)
                         <dt>Pembulatan</dt><dd>{{ $money($totals->rounding) }}</dd>
                     @endif
-                    <dt class="pos-grand">Total</dt><dd class="pos-grand">{{ $money($totals->grandTotal) }}</dd>
+                    <dt class="pos-grand">
+                        <button type="button" class="pos-totals-toggle" x-on:click="open = ! open" x-bind:aria-expanded="open">
+                            Total @svg('heroicon-o-chevron-down', ['aria-hidden' => 'true'])
+                        </button>
+                    </dt>
+                    <dd class="pos-grand">{{ $money($totals->grandTotal) }}</dd>
                     @if (\App\Support\Money::isPositive($billPaid))
                         <dt>Sudah dibayar</dt><dd>{{ $money($billPaid) }}</dd>
                     @endif
@@ -311,7 +320,7 @@
                 <button type="button" class="site-btn site-btn-outline" x-on:click="confirming = false">Batal</button>
                 <button type="button" class="site-btn pos-btn-danger" wire:click="clearCart" x-on:click="confirming = false">{{ $billId ? 'Tutup' : 'Kosongkan' }}</button>
             </div>
-            {{-- Aksi ikon + label kecil sebaris dengan tombol Bayar --}}
+            {{-- Aksi sekunder sebaris (ikon + label), tombol Bayar selebar panel di bawahnya --}}
             <div class="pos-actions">
                 <button type="button" class="pos-action" x-on:click="$dispatch('pos-confirm-clear')" @disabled($cart === [])>
                     @svg($billId ? 'heroicon-o-x-mark' : 'heroicon-o-trash', ['aria-hidden' => 'true'])
@@ -330,11 +339,14 @@
                         <span>Simpan bill</span>
                     </button>
                 @endunless
-                <button type="button" class="site-btn site-btn-primary pos-pay-btn" wire:click="openPayment" @disabled($totals === null)>
-                    @svg('heroicon-o-banknotes', ['aria-hidden' => 'true'])
-                    <span class="pos-pay-label">Bayar @if ($totals)<strong>{{ $money(\App\Support\Money::sub($totals->grandTotal, $billPaid)) }}</strong>@endif</span>
-                </button>
             </div>
+            <button type="button" class="site-btn site-btn-primary pos-pay-btn" wire:click="openPayment" @disabled($totals === null)>
+                @svg('heroicon-o-banknotes', ['aria-hidden' => 'true'])
+                <span>Bayar</span>
+                @if ($totals)
+                    <strong>{{ $money(\App\Support\Money::sub($totals->grandTotal, $billPaid)) }}</strong>
+                @endif
+            </button>
         </div>
     </aside>
 
@@ -393,14 +405,27 @@
 
     {{-- Dialog pembayaran --}}
     @if ($paying && $totals)
-        @php($remaining = $this->remaining())
+        @php($state = $this->paymentState())
+        @php($split = count($payments) > 1)
         <div class="pos-modal" role="dialog" aria-modal="true" aria-labelledby="pay-title" wire:keydown.escape="$set('paying', false)">
             <form class="pos-modal-card pos-pay" wire:submit="pay">
-                <h2 id="pay-title">Bayar {{ $money(\App\Support\Money::sub($totals->grandTotal, $billPaid)) }}</h2>
+                <header class="pos-pay-head">
+                    <span>Total tagihan</span>
+                    <h2 id="pay-title">{{ $money(\App\Support\Money::sub($totals->grandTotal, $billPaid)) }}</h2>
+                    @if ($memberId)
+                        <span class="pos-pay-member">@svg('heroicon-o-user', ['aria-hidden' => 'true']) {{ $memberName }}</span>
+                    @endif
+                </header>
 
                 @foreach ($payments as $i => $payment)
                     @php($isCash = $this->isCash($payment['payment_method_id']))
-                    <div class="pos-pay-row" wire:key="pay-{{ $payment['id'] }}">
+                    <div @class(['pos-pay-row', 'is-split' => $split]) wire:key="pay-{{ $payment['id'] }}">
+                        @if ($split)
+                            <div class="pos-pay-row-head">
+                                <span>Pembayaran {{ $i + 1 }}</span>
+                                <button type="button" class="site-link-button" wire:click="removePaymentRow({{ $i }})">Hapus</button>
+                            </div>
+                        @endif
                         <div class="pos-methods" role="radiogroup" aria-label="Metode bayar">
                             @foreach ($this->paymentMethods as $method)
                                 @php($active = $payment['payment_method_id'] === $method->id)
@@ -410,39 +435,60 @@
                                         'cash' => 'heroicon-o-banknotes',
                                         'qris' => 'heroicon-o-qr-code',
                                         'transfer' => 'heroicon-o-building-library',
+                                        'points' => 'heroicon-o-star',
                                         default => 'heroicon-o-credit-card',
                                     })
                                     <span>{{ $method->name }}</span>
                                 </button>
                             @endforeach
                         </div>
-                        <label>Nominal <input type="number" min="0" step="any" inputmode="decimal" wire:model.live.debounce.400ms="payments.{{ $i }}.amount"></label>
+
+                        {{-- Satu metode: nominal = seluruh tagihan (tidak perlu diketik); split: nominal per metode --}}
+                        @if ($split)
+                            <label class="pos-money-field">
+                                <span>Nominal</span>
+                                <span class="pos-money" x-data="posMoney" x-modelable="raw" wire:model.live.debounce.400ms="payments.{{ $i }}.amount">
+                                    <span class="pos-money-prefix">Rp</span>
+                                    <input type="text" inputmode="decimal" autocomplete="off" placeholder="0" x-bind:value="display" x-on:input.stop="type($event)" x-on:change.stop>
+                                </span>
+                            </label>
+                        @endif
+
                         @if ($isCash)
-                            <label>Uang diterima <input type="number" min="0" step="any" inputmode="decimal" wire:model.live.debounce.400ms="payments.{{ $i }}.tendered" placeholder="{{ $payment['amount'] }}"></label>
-                            <div class="pos-quick">
-                                {{-- Hanya indeks & kata kunci tetap di ekspresi wire:click (nilai dari browser tidak disisipkan) --}}
+                            <label class="pos-money-field is-large">
+                                <span>Uang diterima</span>
+                                <span class="pos-money" x-data="posMoney" x-modelable="raw" wire:model.live.debounce.400ms="payments.{{ $i }}.tendered">
+                                    <span class="pos-money-prefix">Rp</span>
+                                    <input type="text" inputmode="decimal" autocomplete="off" placeholder="0" x-bind:value="display" x-on:input.stop="type($event)" x-on:change.stop
+                                        @if ($i === 0) x-init="$nextTick(() => $el.focus())" @endif>
+                                </span>
+                            </label>
+                            <div class="pos-quick" aria-label="Nominal cepat">
+                                {{-- Hanya indeks & nilai saran server di ekspresi wire:click (dicocokkan ulang di setTendered) --}}
                                 <button type="button" wire:click="setTendered({{ (int) $i }}, 'exact')">Uang pas</button>
-                                @foreach (\App\Livewire\Cashier\PointOfSale::QUICK_CASH as $note)
-                                    @if (is_numeric($payment['amount']) && (float) $note >= (float) $payment['amount'])
-                                        <button type="button" wire:click="setTendered({{ (int) $i }}, '{{ $note }}')">{{ $money($note) }}</button>
-                                    @endif
+                                @foreach (\App\Livewire\Cashier\PointOfSale::cashSuggestions($payment['amount']) as $note)
+                                    <button type="button" wire:click="setTendered({{ (int) $i }}, '{{ $note }}')">{{ $money($note) }}</button>
                                 @endforeach
                             </div>
-                            @if (is_numeric($payment['tendered']) && is_numeric($payment['amount']) && (float) $payment['tendered'] > (float) $payment['amount'])
-                                <p class="pos-change">Kembalian {{ $money(\App\Support\Money::sub(\App\Support\Money::of($payment['tendered']), \App\Support\Money::of($payment['amount']))) }}</p>
-                            @endif
                         @else
-                            <label>No. referensi <input type="text" maxlength="50" wire:model="payments.{{ $i }}.reference" placeholder="opsional"></label>
-                        @endif
-                        @if (count($payments) > 1)
-                            <button type="button" class="site-link-button" wire:click="removePaymentRow({{ $i }})">Hapus</button>
+                            <label class="pos-money-field">
+                                <span>No. referensi <small>(opsional)</small></span>
+                                <input type="text" maxlength="50" wire:model="payments.{{ $i }}.reference" placeholder="mis. 4 digit terakhir / ID transaksi">
+                            </label>
                         @endif
                     </div>
                 @endforeach
 
-                <p @class(['pos-remaining', 'is-done' => ! \App\Support\Money::isPositive($remaining)])>
-                    {{ \App\Support\Money::isPositive($remaining) ? 'Sisa '.$money($remaining) : 'Lunas' }}
-                </p>
+                {{-- Ringkasan: kembalian besar bila siap; selain itu langkah berikutnya --}}
+                <div @class(['pos-pay-status', 'is-'.$state['tone']]) role="status" aria-live="polite">
+                    @if ($state['ready'] && \App\Support\Money::isPositive($state['change']))
+                        <span>Kembalian</span>
+                        <strong>{{ $money($state['change']) }}</strong>
+                    @else
+                        <span>{{ $state['ready'] ? 'Pembayaran' : 'Belum bisa diselesaikan' }}</span>
+                        <strong>{{ $state['message'] }}</strong>
+                    @endif
+                </div>
 
                 {{-- Bayar dengan poin (ADR 0013) / kasbon (ADR 0023): bukti pemilik dari halaman member atau PIN member --}}
                 @if ($this->usesPoints())
@@ -459,10 +505,12 @@
                     @include('livewire.cashier.partials.approval')
                 @endif
 
-                <div class="pos-actions">
-                    <button type="button" class="site-btn site-btn-outline" wire:click="addPaymentRow">+ Split</button>
+                <div class="pos-pay-actions">
+                    <button type="button" class="site-btn site-btn-outline" wire:click="addPaymentRow">@svg('heroicon-o-plus', ['aria-hidden' => 'true']) Split</button>
                     <button type="button" class="site-btn site-btn-outline" wire:click="$set('paying', false)">Batal</button>
-                    <button type="submit" class="site-btn site-btn-primary site-btn-lg" wire:loading.attr="disabled" wire:target="pay">Selesaikan</button>
+                    <button type="submit" class="site-btn site-btn-primary site-btn-lg" wire:loading.attr="disabled" wire:target="pay" @disabled(! $state['ready'])>
+                        @svg('heroicon-o-check', ['aria-hidden' => 'true']) Selesaikan
+                    </button>
                 </div>
             </form>
         </div>
