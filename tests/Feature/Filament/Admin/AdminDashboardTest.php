@@ -3,26 +3,39 @@
 declare(strict_types=1);
 
 use App\Actions\Billing\SavePlan;
+use App\Actions\Order\CheckoutOrder;
+use App\Actions\Order\Data\CheckoutData;
+use App\Enums\AppPlatform;
 use App\Enums\BillingCycle;
 use App\Enums\BusinessType;
 use App\Enums\InvoiceStatus;
 use App\Enums\TenantStatus;
 use App\Filament\Admin\Pages\Dashboard;
+use App\Filament\Admin\Widgets\AppVersionsChartWidget;
+use App\Filament\Admin\Widgets\AtRiskTenantsWidget;
 use App\Filament\Admin\Widgets\ExpiringTenantsWidget;
 use App\Filament\Admin\Widgets\NewLeadsWidget;
 use App\Filament\Admin\Widgets\PendingInvoicesWidget;
+use App\Filament\Admin\Widgets\PlatformActivityStatsWidget;
 use App\Filament\Admin\Widgets\PlatformStatsWidget;
 use App\Filament\Admin\Widgets\RecentTenantsWidget;
 use App\Filament\Admin\Widgets\SignupsChartWidget;
 use App\Filament\Admin\Widgets\SubscriptionRevenueChartWidget;
 use App\Filament\Admin\Widgets\TenantsPerBusinessTypeChartWidget;
 use App\Filament\Admin\Widgets\TenantsPerPlanChartWidget;
+use App\Filament\Admin\Widgets\TopTenantsWidget;
+use App\Filament\Admin\Widgets\TransactionsChartWidget;
 use App\Models\Admin;
+use App\Models\AppVersion;
+use App\Models\Device;
 use App\Models\SalesLead;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
 use App\Services\Admin\DashboardCache;
+use App\Services\Admin\PlatformActivity;
 use App\Services\Admin\PlatformMetrics;
+use App\Support\Money;
+use App\Support\TenantContext;
 use Filament\Facades\Filament;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
@@ -150,5 +163,87 @@ describe('D2: komposisi & daftar kerja', function () {
         Livewire::test(NewLeadsWidget::class)
             ->assertCanSeeTableRecords([$old, $new], inOrder: true)
             ->assertCanNotSeeTableRecords([$done]);
+    });
+});
+
+/** Transaksi selesai pada waktu UTC tertentu (lewat CheckoutOrder, sama dengan kasir). */
+function dashboardSale(stdClass $pos, string $utc, int $qty = 1): void
+{
+    Carbon::setTestNow($utc);
+    TenantContext::run($pos->tenantId, fn () => app(CheckoutOrder::class)->handle($pos->cashier, $pos->device, CheckoutData::fromArray([
+        'id' => uuid(), 'order_type' => 'takeaway',
+        'items' => [['product_id' => $pos->croissant->id, 'qty' => $qty]],
+        'payments' => [['id' => uuid(), 'payment_method_id' => $pos->methods['cash']->id, 'amount' => 500000]],
+    ])));
+    TenantContext::forget();
+}
+
+describe('D3: aktivitas platform', function () {
+    beforeEach(function () {
+        $this->a = posSetup();
+        $this->b = posSetup();
+        // 18 Okt 00.30 WIB = 17 Okt 17.30 UTC → masuk tanggal 18 (zona bisnis)
+        dashboardSale($this->a, '2026-10-17 17:30:00', 2);
+        dashboardSale($this->a, '2026-10-10 05:00:00');
+        dashboardSale($this->b, '2026-10-16 05:00:00');
+        // 40 hari lalu: periode pembanding
+        dashboardSale($this->b, '2026-09-08 05:00:00');
+        Carbon::setTestNow('2026-10-18 03:00:00');
+        DashboardCache::flush();
+    });
+
+    it('transaksi per hari lokal, total vs periode sebelumnya, bisnis bertransaksi', function () {
+        $activity = app(PlatformActivity::class);
+        $perDay = $activity->perDay(30);
+        $totals = $activity->totals(30);
+
+        expect($perDay)->toHaveCount(30)
+            ->and($perDay['2026-10-18']['count'])->toBe(1)
+            ->and($perDay['2026-10-17']['count'])->toBe(0)
+            ->and($perDay['2026-10-16']['count'])->toBe(1)
+            ->and($totals['count'])->toBe(3)
+            ->and($totals['tenants'])->toBe(2)
+            ->and($totals['previous_count'])->toBe(1)
+            ->and($totals['gmv'])->toBe(Money::add($perDay['2026-10-18']['gmv'], $perDay['2026-10-10']['gmv'], $perDay['2026-10-16']['gmv']));
+    });
+
+    it('bisnis paling aktif berurutan & bisnis tanpa transaksi 14 hari', function () {
+        $idle = Tenant::factory()->create(['name' => 'Kopi Diam', 'status' => TenantStatus::Active, 'subscription_ends_at' => now()->addMonth(), 'created_at' => now()->subDays(30)]);
+        Tenant::factory()->create(['name' => 'Kopi Baru', 'status' => TenantStatus::Trial, 'subscription_ends_at' => now()->addDays(10), 'created_at' => now()->subDays(3)]);
+        Tenant::factory()->create(['name' => 'Kopi Blokir', 'status' => TenantStatus::Suspended, 'created_at' => now()->subDays(30)]);
+        $activity = app(PlatformActivity::class);
+
+        expect(array_column($activity->topTenants(30), 'tenant_id'))->toBe([$this->a->tenantId, $this->b->tenantId]);
+
+        $risk = $activity->atRiskTenants(14);
+        expect(array_column($risk['rows'], 'name'))->toBe(['Kopi Diam'])
+            ->and($risk['rows'][0]['last_order_at'])->toBeNull()
+            ->and($risk['count'])->toBe(1);
+    });
+
+    it('perangkat aktif & versi Android di bawah minimum', function () {
+        AppVersion::query()->create(['platform' => AppPlatform::Android, 'min_version' => '1.2.0', 'latest_version' => '1.3.0']);
+        Device::allTenants()->update(['platform' => AppPlatform::Android, 'app_version' => '1.1.0', 'last_seen_at' => now()->subDay()]);
+        TenantContext::run($this->a->tenantId, fn () => Device::factory()->forOutlet($this->a->outlet)->create(['platform' => AppPlatform::Android, 'app_version' => '1.3.0', 'last_seen_at' => now()]));
+        TenantContext::forget();
+
+        $versions = app(PlatformActivity::class)->androidVersions();
+        Livewire::test(AppVersionsChartWidget::class)->assertOk()->assertSee('2 perangkat wajib update');
+        expect(array_keys($versions['versions']))->toBe(['1.3.0', '1.1.0'])
+            ->and($versions['below_min'])->toBe(2)
+            ->and(app(PlatformActivity::class)->devices()['active'])->toBe(3);
+    });
+
+    it('widget aktivitas tampil', function () {
+        Livewire::test(PlatformActivityStatsWidget::class)->assertOk()->assertSee('Aktivitas platform (30 hari)')->assertSee('Bisnis bertransaksi');
+        Livewire::test(TransactionsChartWidget::class)->assertOk()->assertSee('3 transaksi');
+        Livewire::test(TopTenantsWidget::class)->assertOk()->assertSee('Bisnis paling aktif');
+        Livewire::test(AtRiskTenantsWidget::class)->assertOk()->assertSee('Tidak bertransaksi 14 hari');
+        expect(AppVersionsChartWidget::canView())->toBeTrue();
+
+        // Tanpa perangkat Android aktif: chart versi (hanya sumbu kosong) disembunyikan
+        Device::allTenants()->update(['revoked_at' => now()]);
+        DashboardCache::flush();
+        expect(AppVersionsChartWidget::canView())->toBeFalse();
     });
 });
