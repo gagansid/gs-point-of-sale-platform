@@ -204,6 +204,12 @@ final class Tenant extends Model
         return $this->hasMany(Device::class)->withoutGlobalScope(TenantScope::class);
     }
 
+    /** @return HasMany<Shift, $this> */
+    public function shifts(): HasMany
+    {
+        return $this->hasMany(Shift::class)->withoutGlobalScope(TenantScope::class);
+    }
+
     /**
      * Add-on bisnis (ADR 0025): `active` & `cancelling` sama-sama masih berlaku sampai dilepas.
      *
