@@ -6,10 +6,13 @@ namespace App\Services\Admin;
 
 use App\Enums\AppPlatform;
 use App\Enums\OrderStatus;
+use App\Enums\ShiftStatus;
 use App\Enums\TenantStatus;
 use App\Models\AppVersion;
 use App\Models\Device;
 use App\Models\Order;
+use App\Models\Outlet;
+use App\Models\Shift;
 use App\Models\Tenant;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
@@ -23,6 +26,9 @@ use Illuminate\Support\Facades\DB;
  */
 final class PlatformActivity
 {
+    /** Shift terbuka lebih lama dari ini ditandai merah (Q116): kemungkinan tertinggal, bukan shift berjalan. */
+    public const STALE_SHIFT_HOURS = 24;
+
     /**
      * Transaksi & nilai per hari lokal (pos.default_timezone), terlama → terbaru; hari kosong = 0.
      *
@@ -174,6 +180,38 @@ final class PlatformActivity
                     'plan' => $t->plan?->name,
                     'last_order_at' => $t->getAttribute('last_order_at') !== null ? CarbonImmutable::parse((string) $t->getAttribute('last_order_at'), 'UTC')->toIso8601String() : null,
                 ])->all(),
+            ];
+        });
+    }
+
+    /**
+     * Shift terbuka lebih dari $hours jam di bisnis yang belum dihapus, terlama dulu (Q116). Isi cache hanya skalar.
+     *
+     * @return array{count: int, rows: list<array{shift_id: string, tenant_id: string, tenant_name: string, outlet_name: string|null, device_name: string|null, opened_at: string}>}
+     */
+    public function staleShifts(int $hours = self::STALE_SHIFT_HOURS, int $limit = 6): array
+    {
+        return DashboardCache::remember("stale-shifts-{$hours}-{$limit}", function () use ($hours, $limit): array {
+            $query = Shift::allTenants()->where('status', ShiftStatus::Open)
+                ->where('opened_at', '<=', now()->subHours($hours))
+                ->whereIn('tenant_id', Tenant::query()->select('id'));
+
+            $rows = (clone $query)->select(['id', 'tenant_id', 'opened_at'])->addSelect([
+                'tenant_name' => Tenant::query()->select('name')->whereColumn('tenants.id', 'shifts.tenant_id'),
+                'outlet_name' => Outlet::query()->withoutGlobalScopes()->select('name')->whereColumn('outlets.id', 'shifts.outlet_id'),
+                'device_name' => Device::query()->withoutGlobalScopes()->select('name')->whereColumn('devices.id', 'shifts.device_id'),
+            ])->orderBy('opened_at')->limit($limit)->get();
+
+            return [
+                'count' => $query->count(),
+                'rows' => $rows->map(fn (Shift $s): array => [
+                    'shift_id' => $s->id,
+                    'tenant_id' => $s->tenant_id,
+                    'tenant_name' => (string) $s->getAttribute('tenant_name'),
+                    'outlet_name' => $s->getAttribute('outlet_name'),
+                    'device_name' => $s->getAttribute('device_name'),
+                    'opened_at' => $s->opened_at->toIso8601String(),
+                ])->values()->all(),
             ];
         });
     }

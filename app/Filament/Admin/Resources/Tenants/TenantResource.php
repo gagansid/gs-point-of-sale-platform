@@ -8,6 +8,8 @@ use App\Filament\Admin\Resources\Tenants\Pages\CreateTenant;
 use App\Filament\Admin\Resources\Tenants\Pages\EditTenant;
 use App\Filament\Admin\Resources\Tenants\Pages\ListTenants;
 use App\Filament\Admin\Resources\Tenants\Pages\ViewTenant;
+use App\Filament\Admin\Resources\Tenants\RelationManagers\DevicesRelationManager;
+use App\Filament\Admin\Resources\Tenants\RelationManagers\OpenShiftsRelationManager;
 use App\Filament\Admin\Resources\Tenants\Schemas\TenantForm;
 use App\Filament\Admin\Resources\Tenants\Schemas\TenantInfolist;
 use App\Filament\Admin\Resources\Tenants\Tables\TenantsTable;
@@ -59,6 +61,15 @@ final class TenantResource extends Resource
     public static function table(Table $table): Table
     {
         return TenantsTable::configure($table);
+    }
+
+    /** Perangkat & shift terbuka untuk support (Q116), hanya baca di halaman detail. */
+    public static function getRelations(): array
+    {
+        return [
+            DevicesRelationManager::class,
+            OpenShiftsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
