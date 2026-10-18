@@ -12,6 +12,7 @@ use App\Models\Plan;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
 use App\Services\Billing\InvoiceQuote;
+use App\Services\Billing\TenantAddons;
 use App\Support\Features;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Log;
  * ditambah dari max(sekarang, akhir lama). Dari webhook Midtrans atau admin (manual). Lunas ulang = hasil sama.
  * Revisi 2026-10-16: tagihan upgrade mengganti paket tanpa menambah masa aktif; perpanjangan dengan paket/siklus lain
  * selagi langganan berbayar berjalan dijadwalkan (next_plan_id) dan diterapkan ApplyScheduledPlanChanges.
+ * ADR 0025 C2: tagihan add-on memasang add-on tanpa mengubah paket/masa aktif.
  */
 final class MarkInvoicePaid
 {
@@ -38,7 +40,12 @@ final class MarkInvoicePaid
             $plan = Plan::query()->findOrFail($locked->plan_id);
             $now = CarbonImmutable::now();
 
-            if ($locked->kind === InvoiceKind::Upgrade) {
+            if ($locked->kind === InvoiceKind::Addon) {
+                // Tambah add-on (ADR 0025 C2): paket & masa aktif tetap; add-on aktif sampai akhir masa aktif
+                $from = $now;
+                $until = $tenant->subscription_ends_at !== null && $tenant->subscription_ends_at->isAfter($now) ? $tenant->subscription_ends_at : $now;
+                TenantAddons::attachFromInvoice($locked);
+            } elseif ($locked->kind === InvoiceKind::Upgrade) {
                 // Upgrade prorata: paket langsung berganti, masa aktif tetap
                 $from = $now;
                 $until = $tenant->subscription_ends_at !== null && $tenant->subscription_ends_at->isAfter($now) ? $tenant->subscription_ends_at : $now;
@@ -65,6 +72,8 @@ final class MarkInvoicePaid
             }
 
             $tenant->save();
+            // Paket baru mungkin sudah memuat fitur add-on: add-on itu berhenti di akhir masa aktif
+            TenantAddons::cancelRedundant($tenant, $now);
 
             $locked->forceFill([
                 'status' => InvoiceStatus::Paid,

@@ -35,7 +35,8 @@ final class InvoiceCreated extends Notification implements ShouldQueue
     {
         $this->number = $invoice->number;
         $this->businessName = $tenant->name;
-        $this->description = $invoice->kind->getLabel().' paket '.$invoice->plan_name.' ('.$invoice->billing_cycle->getLabel().')';
+        // Paket + add-on (ADR 0025 C2)
+        $this->description = $invoice->description();
         $this->amount = Money::format($invoice->amount);
         $this->dueDate = $invoice->due_at->setTimezone((string) config('pos.default_timezone'))->locale('id')->translatedFormat('j F Y');
     }

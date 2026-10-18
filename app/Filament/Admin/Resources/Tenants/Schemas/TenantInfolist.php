@@ -107,11 +107,11 @@ final class TenantInfolist
                     ))
                     ->placeholder('—'),
                 RepeatableEntry::make('latest_invoices')->label('Tagihan terbaru')->columnSpanFull()
-                    ->state(fn (Tenant $record) => $record->subscriptionInvoices()->latest()->limit(5)->get())
+                    ->state(fn (Tenant $record) => $record->subscriptionInvoices()->with('items')->latest()->limit(5)->get())
                     ->placeholder('Belum ada tagihan')
                     ->table([
                         TableColumn::make('Nomor'),
-                        TableColumn::make('Paket'),
+                        TableColumn::make('Rincian'),
                         TableColumn::make('Total')->alignEnd(),
                         TableColumn::make('Jatuh tempo'),
                         TableColumn::make('Status'),
@@ -119,7 +119,7 @@ final class TenantInfolist
                     ->schema([
                         TextEntry::make('number'),
                         TextEntry::make('plan_name')
-                            ->formatStateUsing(fn (string $state, SubscriptionInvoice $record): string => $state.' · '.$record->kind->getLabel().' · '.$record->billing_cycle->getLabel()),
+                            ->formatStateUsing(fn (string $state, SubscriptionInvoice $record): string => $record->description()),
                         TextEntry::make('amount')->alignEnd()->formatStateUsing(fn (string $state): string => Money::format($state)),
                         TextEntry::make('due_at')->date('j M Y'),
                         TextEntry::make('status')->badge(),

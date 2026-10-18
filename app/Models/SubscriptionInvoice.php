@@ -12,6 +12,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Tagihan langganan tenant (ADR 0024). Ditulis lewat App\Actions\Billing\*.
@@ -74,5 +75,26 @@ final class SubscriptionInvoice extends Model
     public function createdByAdmin(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'created_by_admin_id');
+    }
+
+    /** @return HasMany<SubscriptionInvoiceItem, $this> */
+    public function items(): HasMany
+    {
+        return $this->hasMany(SubscriptionInvoiceItem::class, 'invoice_id')->orderBy('sort_order');
+    }
+
+    /**
+     * Uraian singkat untuk tabel & email: "Perpanjangan Pro · Bulanan + Outlet tambahan ×2" / "Add-on: Self-order QR".
+     */
+    public function description(): string
+    {
+        $addons = $this->items->where('type', SubscriptionInvoiceItem::ADDON)
+            ->map(fn (SubscriptionInvoiceItem $i): string => $i->name.($i->quantity > 1 ? ' ×'.$i->quantity : ''))->implode(', ');
+
+        if ($this->kind === InvoiceKind::Addon) {
+            return 'Add-on: '.$addons;
+        }
+
+        return $this->kind->getLabel().' '.$this->plan_name.' · '.$this->billing_cycle->getLabel().($addons !== '' ? ' + '.$addons : '');
     }
 }

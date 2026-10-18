@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Admin\Resources\Tenants\Pages;
 
+use App\Filament\Admin\Resources\Tenants\Actions\TenantAddonInvoiceAction;
 use App\Filament\Admin\Resources\Tenants\Actions\TenantAddonsAction;
 use App\Filament\Admin\Resources\Tenants\Actions\TenantInvoiceAction;
 use App\Filament\Admin\Resources\Tenants\Actions\TenantPlanAction;
@@ -23,6 +24,7 @@ final class ViewTenant extends ViewRecord
     {
         return [
             TenantInvoiceAction::make(),
+            TenantAddonInvoiceAction::make(),
             TenantPlanAction::make(),
             TenantAddonsAction::make(),
             TenantStatusActions::suspend(),

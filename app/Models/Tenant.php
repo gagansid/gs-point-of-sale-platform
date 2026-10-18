@@ -222,8 +222,10 @@ final class Tenant extends Model
     public function activeAddons(): Collection
     {
         if (! $this->relationLoaded('addons')) {
-            $this->load(['addons' => fn ($q) => $q->with('addon')]);
+            $this->load('addons');
         }
+        // refresh() memuat ulang relasi tingkat atas saja: pastikan data add-on ikut dimuat
+        $this->addons->loadMissing('addon');
 
         return $this->addons->filter(fn (TenantAddon $a): bool => $a->addon !== null)->values();
     }

@@ -7,6 +7,7 @@ namespace App\Actions\Billing;
 use App\Enums\BillingCycle;
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Services\Billing\TenantAddons;
 use App\Support\Features;
 
 /**
@@ -27,6 +28,7 @@ final class SetTenantPlan
             'next_billing_cycle' => null,
             'plan_changes_at' => null,
         ])->save();
+        TenantAddons::cancelRedundant($tenant);
 
         Features::flush();
 

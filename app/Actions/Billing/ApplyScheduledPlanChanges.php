@@ -6,6 +6,7 @@ namespace App\Actions\Billing;
 
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Services\Billing\TenantAddons;
 use App\Support\Features;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 /**
  * Paket terjadwal (ADR 0024 revisi): perpanjangan dengan paket/siklus lain yang dibayar selagi langganan berjalan
  * berlaku saat plan_changes_at tercapai. Dijalankan tiap jam (pos:apply-plan-changes). Jalan ulang = hasil sama.
+ * ADR 0025 C2: juga melepas add-on yang dihentikan setelah akhir masa aktifnya.
  */
 final class ApplyScheduledPlanChanges
 {
@@ -41,13 +43,20 @@ final class ApplyScheduledPlanChanges
                     'next_billing_cycle' => null,
                     'plan_changes_at' => null,
                 ])->save();
+                TenantAddons::cancelRedundant($tenant, $now);
                 $applied++;
 
                 Log::info('Paket terjadwal diterapkan', ['tenant_id' => $tenant->id, 'plan_id' => $tenant->plan_id]);
             });
         }
 
-        if ($applied > 0) {
+        // Add-on yang dihentikan & sudah lewat akhir masa aktif dilepas (ADR 0025 C2)
+        $released = TenantAddons::releaseEnded($now);
+        if ($released > 0) {
+            Log::info('Add-on berhenti dilepas', ['count' => $released]);
+        }
+
+        if ($applied > 0 || $released > 0) {
             Features::flush();
         }
 

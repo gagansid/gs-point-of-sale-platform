@@ -18,13 +18,14 @@ use App\Models\User;
 use App\Notifications\InvoiceCreated;
 use App\Services\Billing\InvoiceQuote;
 use App\Support\Edition;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
  * Buat tagihan langganan (ADR 0024, Q109): paket aktif & publik (atau paket tenant saat ini), siklus bulanan/tahunan,
  * nominal snapshot, jatuh tempo pos.billing.due_days. Tagihan menunggu yang lama dibatalkan (satu per tenant).
- * Jenis & nominal (perpanjangan / upgrade prorata) dari InvoiceQuote.
+ * Jenis, baris (paket + add-on aktif, ADR 0025 C2) & nominal dari InvoiceQuote.
  *
  * Dibuat super admin ($admin): boleh paket aktif non-publik (penawaran khusus), pembuat tercatat, dan owner aktif
  * bisa diberi tahu lewat email ($notifyOwners).
@@ -34,18 +35,32 @@ final class CreateInvoice
     /** @throws BusinessException */
     public function handle(Tenant $tenant, Plan $plan, BillingCycle $cycle, ?Admin $admin = null, bool $notifyOwners = false): SubscriptionInvoice
     {
-        if (! Edition::isSaas()) {
-            throw BusinessException::of(ErrorCode::Forbidden, 'Edisi jual putus tidak memakai tagihan langganan');
-        }
+        self::ensureSaas();
 
         if (! $plan->is_active || (! $plan->is_public && $admin === null && $tenant->plan_id !== $plan->id)) {
             throw BusinessException::of(ErrorCode::ValidationError, 'Paket tidak tersedia', ['plan_id' => ['Paket tidak tersedia']]);
         }
 
-        $quote = InvoiceQuote::for($tenant, $plan, $cycle);
-        $dueAt = now()->addDays((int) config('pos.billing.due_days'));
-        // Upgrade membayar sisa masa aktif: lewat akhir masa aktif sudah tidak ada yang di-upgrade
-        if ($quote->kind === InvoiceKind::Upgrade && $tenant->subscription_ends_at !== null && $tenant->subscription_ends_at->isBefore($dueAt)) {
+        return self::persist($tenant, $plan, $cycle, InvoiceQuote::for($tenant, $plan, $cycle), $admin, $notifyOwners);
+    }
+
+    /** @throws BusinessException */
+    public static function ensureSaas(): void
+    {
+        if (! Edition::isSaas()) {
+            throw BusinessException::of(ErrorCode::Forbidden, 'Edisi jual putus tidak memakai tagihan langganan');
+        }
+    }
+
+    /**
+     * Simpan tagihan + baris dari quote; tagihan menunggu lama dibatalkan. $plan = paket konteks tagihan (untuk
+     * tagihan add-on: paket tenant saat ini).
+     */
+    public static function persist(Tenant $tenant, Plan $plan, BillingCycle $cycle, InvoiceQuote $quote, ?Admin $admin, bool $notifyOwners): SubscriptionInvoice
+    {
+        $dueAt = CarbonImmutable::now()->addDays((int) config('pos.billing.due_days'));
+        // Upgrade/add-on membayar sisa masa aktif: lewat akhir masa aktif sudah tidak ada yang dibayar
+        if (in_array($quote->kind, [InvoiceKind::Upgrade, InvoiceKind::Addon], true) && $tenant->subscription_ends_at !== null && $tenant->subscription_ends_at->isBefore($dueAt)) {
             $dueAt = $tenant->subscription_ends_at;
         }
 
@@ -68,7 +83,11 @@ final class CreateInvoice
                 'created_by_admin_id' => $admin?->id,
             ])->save();
 
-            return $invoice;
+            foreach ($quote->lines as $index => $line) {
+                $invoice->items()->create([...$line, 'sort_order' => $index]);
+            }
+
+            return $invoice->load('items');
         });
 
         // Setelah commit: email gagal tidak membatalkan tagihan

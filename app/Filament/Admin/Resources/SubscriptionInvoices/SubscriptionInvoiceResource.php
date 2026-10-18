@@ -77,11 +77,12 @@ final class SubscriptionInvoiceResource extends Resource
     {
         $table = $table
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('tenant:id,name'))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['tenant:id,name', 'items']))
             ->columns([
                 TextColumn::make('number')->label('Nomor')->weight('medium')->searchable()
                     ->description(fn (SubscriptionInvoice $record): string => $record->tenant?->name.($record->created_by_admin_id !== null ? ' · dibuat admin' : '')),
-                TextColumn::make('plan_name')->label('Paket')->description(fn (SubscriptionInvoice $record): string => $record->kind->getLabel().' · '.$record->billing_cycle->getLabel()),
+                // Paket + add-on (ADR 0025 C2)
+                TextColumn::make('plan_name')->label('Rincian')->state(fn (SubscriptionInvoice $record): string => $record->description())->wrap(),
                 TextColumn::make('amount')->label('Total')->alignEnd()->sortable()->formatStateUsing(fn (string $state): string => Money::format($state)),
                 TextColumn::make('due_at')->label('Jatuh tempo')->date('j M Y')->sortable(),
                 TextColumn::make('paid_at')->label('Lunas')->dateTime('j M Y, H.i')->placeholder('—')

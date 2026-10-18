@@ -35,7 +35,7 @@
             @if ($pending)
                 <dl class="gs-nota-meta gs-nota-meta--single">
                     <div><dt>Nomor</dt><dd>{{ $pending->number }}</dd></div>
-                    <div><dt>Paket</dt><dd>{{ $pending->kind->getLabel() }} {{ $pending->plan_name }} · {{ $pending->billing_cycle->getLabel() }}</dd></div>
+                    <div><dt>Rincian</dt><dd>{{ $pending->description() }}</dd></div>
                     <div><dt>Total</dt><dd>{{ $money($pending->amount) }}</dd></div>
                     <div><dt>Jatuh tempo</dt><dd>{{ $date($pending->due_at) }}</dd></div>
                 </dl>
@@ -53,6 +53,46 @@
         </x-filament::section>
     </div>
 
+    {{-- Add-on (ADR 0025 C2) --}}
+    @php($owned = $tenant->activeAddons())
+    @if ($owned->isNotEmpty() || $this->canBuyAddons())
+        <x-filament::section heading="Add-on" description="Fitur atau kuota tambahan di atas paket; masa aktif mengikuti paket">
+            @if ($owned->isNotEmpty())
+                <div class="pos-dash-table-wrap">
+                    <table class="pos-dash-table">
+                        <thead><tr><th>Add-on</th><th>Manfaat</th><th class="text-right">Harga per siklus</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach ($owned as $row)
+                                <tr wire:key="addon-{{ $row->id }}">
+                                    <td>{{ $row->addon->name }}{{ $row->addon->isQuota() ? ' ×'.$row->quantity : '' }}</td>
+                                    <td>{{ $row->addon->benefit() }}</td>
+                                    <td class="text-right tabular-nums">{{ $tenant->billing_cycle ? $money(\App\Support\Money::mul($row->addon->price($tenant->billing_cycle), $row->quantity)) : '—' }}</td>
+                                    <td>
+                                        @if ($row->status === \App\Models\TenantAddon::CANCELLING)
+                                            <x-filament::badge color="warning">Berhenti {{ $date($row->cancel_at) }}</x-filament::badge>
+                                        @else
+                                            <x-filament::badge color="success">Aktif</x-filament::badge>
+                                        @endif
+                                    </td>
+                                    <td class="text-right">
+                                        @if ($row->status === \App\Models\TenantAddon::CANCELLING)
+                                            {{ ($this->resumeAddonAction)(['id' => $row->id]) }}
+                                        @else
+                                            {{ ($this->stopAddonAction)(['id' => $row->id]) }}
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+            @if ($this->canBuyAddons())
+                <div class="mt-4">{{ $this->addAddonAction }}</div>
+            @endif
+        </x-filament::section>
+    @endif
+
     {{-- Pemakaian vs batas paket (ADR 0025) --}}
     <x-filament::section heading="Pemakaian kuota" description="Data yang sudah ada tetap berjalan walau melebihi batas; menambah data baru ditolak sampai di bawah batas">
         @include('filament.shared.quota-usage', ['rows' => \App\Support\Quotas::usage($tenant)])
@@ -61,12 +101,12 @@
     <x-filament::section heading="Riwayat tagihan">
         <div class="pos-dash-table-wrap">
             <table class="pos-dash-table">
-                <thead><tr><th>Nomor</th><th>Paket</th><th class="text-right">Total</th><th>Status</th><th>Periode</th></tr></thead>
+                <thead><tr><th>Nomor</th><th>Rincian</th><th class="text-right">Total</th><th>Status</th><th>Periode</th></tr></thead>
                 <tbody>
                     @forelse ($this->invoices() as $invoice)
                         <tr wire:key="inv-{{ $invoice->id }}">
                             <td>{{ $invoice->number }}</td>
-                            <td>{{ $invoice->kind->getLabel() }} {{ $invoice->plan_name }} · {{ $invoice->billing_cycle->getLabel() }}</td>
+                            <td>{{ $invoice->description() }}</td>
                             <td class="text-right tabular-nums">{{ $money($invoice->amount) }}</td>
                             <td><x-filament::badge :color="$invoice->status->getColor()">{{ $invoice->status->getLabel() }}</x-filament::badge></td>
                             <td>{{ $invoice->period_start ? $date($invoice->period_start).' – '.$date($invoice->period_end) : '—' }}</td>
