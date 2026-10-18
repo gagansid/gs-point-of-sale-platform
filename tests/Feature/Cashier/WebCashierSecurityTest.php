@@ -57,8 +57,9 @@ it('penghitung PIN approval kasir web per pelaku: browser baru tidak mereset', f
     $page->call('openPayment')->call('pay');
     $page->set('approverId', $this->pos->supervisor->id)->set('approverPin', '000000')->call('pay');
 
-    // "Browser baru" (cookie dihapus): device lain dengan shift sendiri, pelaku sama
-    $newDevice = TenantContext::run($this->pos->tenantId, fn () => app(RegisterWebDevice::class)->handle($this->pos->cashier, $this->pos->outlet->fresh(), (string) Str::uuid()));
+    // "Browser baru": device lain dengan shift sendiri, pelaku sama (didaftarkan user lain: shift kasir ini
+    // yang masih terbuka akan dilanjutkan bila didaftarkan atas namanya)
+    $newDevice = TenantContext::run($this->pos->tenantId, fn () => app(RegisterWebDevice::class)->handle($this->pos->supervisor, $this->pos->outlet->fresh(), (string) Str::uuid()));
     Shift::factory()->forDevice($newDevice, $this->pos->cashier)->create();
     WebCashier::setDevice($newDevice);
     $page->set('approverId', $this->pos->supervisor->id)->set('approverPin', '000000')->call('pay');
@@ -70,9 +71,9 @@ it('penghitung PIN approval kasir web per pelaku: browser baru tidak mereset', f
 it('batas device kasir web per outlet', function () {
     config(['pos.web_cashier.max_devices_per_outlet' => 2]);
     // Sudah ada 1 dari beforeEach
-    TenantContext::run($this->pos->tenantId, fn () => app(RegisterWebDevice::class)->handle($this->pos->cashier, $this->pos->outlet->fresh(), (string) Str::uuid()));
+    TenantContext::run($this->pos->tenantId, fn () => app(RegisterWebDevice::class)->handle($this->pos->supervisor, $this->pos->outlet->fresh(), (string) Str::uuid()));
 
-    expect(fn () => TenantContext::run($this->pos->tenantId, fn () => app(RegisterWebDevice::class)->handle($this->pos->cashier, $this->pos->outlet->fresh(), (string) Str::uuid())))
+    expect(fn () => TenantContext::run($this->pos->tenantId, fn () => app(RegisterWebDevice::class)->handle($this->pos->supervisor, $this->pos->outlet->fresh(), (string) Str::uuid())))
         ->toThrow(BusinessException::class);
     expect(Device::query()->where('platform', 'web')->count())->toBe(2);
 });

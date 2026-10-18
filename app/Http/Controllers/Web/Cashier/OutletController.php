@@ -49,8 +49,7 @@ final class OutletController extends Controller
 
         if (! is_string($browserId) || ! Str::isUuid($browserId)) {
             $browserId = (string) Str::uuid();
-            // 5 tahun: browser yang sama tetap device yang sama (shift tidak tertinggal)
-            Cookie::queue(WebCashier::BROWSER_COOKIE, $browserId, 60 * 24 * 365 * 5);
+            self::rememberBrowser($browserId);
         }
 
         try {
@@ -59,11 +58,24 @@ final class OutletController extends Controller
             return redirect()->route('cashier.outlet')->withErrors(['outlet_id' => $e->getMessage()]);
         }
 
+        // Melanjutkan shift web user ini dari browser lain/cookie hilang: browser ini memakai device shift itu
+        $resumedBrowserId = RegisterWebDevice::browserIdOf($device);
+
+        if ($resumedBrowserId !== null && $resumedBrowserId !== $browserId) {
+            self::rememberBrowser($resumedBrowserId);
+        }
+
         $request->session()->put(WebCashier::SESSION_DEVICE, $device->id);
         // Masuk dengan kata sandi di browser yang shift-nya berjalan = ganti kasir (ADR 0017)
         app(RecordShiftOperator::class)->handle($device, self::user());
 
         return redirect()->route('cashier.home');
+    }
+
+    /** 5 tahun: browser yang sama tetap device yang sama (shift tidak tertinggal). */
+    private static function rememberBrowser(string $browserId): void
+    {
+        Cookie::queue(WebCashier::BROWSER_COOKIE, $browserId, 60 * 24 * 365 * 5);
     }
 
     /** @return Collection<int, Outlet> */

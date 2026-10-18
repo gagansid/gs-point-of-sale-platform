@@ -100,7 +100,7 @@ it('keranjang ditahan per browser (device), tidak terlihat di browser lain', fun
     Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)->call('hold');
 
     $other = TenantContext::run($this->pos->tenantId, fn () => app(RegisterWebDevice::class)
-        ->handle($this->pos->cashier, $this->pos->outlet->fresh(), (string) Str::uuid()));
+        ->handle($this->pos->supervisor, $this->pos->outlet->fresh(), (string) Str::uuid()));
     WebCashier::setDevice($other);
 
     expect(Livewire::test(PointOfSale::class)->instance()->heldCarts())->toBe([]);

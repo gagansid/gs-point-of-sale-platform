@@ -6,6 +6,7 @@ use App\Enums\AppPlatform;
 use App\Enums\TenantStatus;
 use App\Models\Device;
 use App\Models\Outlet;
+use App\Models\Shift;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\TenantContext;
@@ -77,6 +78,39 @@ it('browser yang sama login lagi memakai device yang sama', function () {
     $this->get(route('cashier.outlet'))->assertRedirect(route('cashier.home'));
 
     expect(webDevices())->toHaveCount(1);
+});
+
+it('cookie browser hilang (browser ditutup/privat): login lagi melanjutkan shift web yang masih terbuka', function () {
+    cashierLogin($this, []);
+    $this->get(route('cashier.outlet'));
+    $this->post(route('cashier.shift.store'), ['opening_cash' => '150000'])->assertRedirect(route('cashier.home'));
+    $device = webDevices()->sole();
+
+    // Browser ditutup: sesi & cookie browser hilang (request uji tidak membawa cookie respons sebelumnya)
+    $this->flushSession();
+    cashierLogin($this, []);
+    $this->get(route('cashier.outlet'))->assertRedirect(route('cashier.home'))
+        // Browser ini memakai device shift tadi; login berikutnya tidak perlu pencarian ulang
+        ->assertCookie(WebCashier::BROWSER_COOKIE, explode(':', $device->device_uid)[1]);
+    $this->get(route('cashier.home'))->assertOk();
+
+    expect(webDevices())->toHaveCount(1)
+        ->and(Shift::allTenants()->whereNotNull('open_device_key')->count())->toBe(1);
+});
+
+it('shift web yang dipegang kasir lain tidak dilanjutkan dari browser baru', function () {
+    $sari = TenantContext::run($this->tenant->id, fn () => User::factory()->supervisor()->forOutlet($this->outlet)
+        ->create(['username' => 'sari', 'password' => 'rahasia-123', 'web_cashier_access' => true]));
+    cashierLogin($this, ['login' => 'sari']);
+    $this->get(route('cashier.outlet'));
+    $this->post(route('cashier.shift.store'), ['opening_cash' => '150000'])->assertRedirect(route('cashier.home'));
+
+    $this->flushSession();
+    cashierLogin($this, []);
+    $this->get(route('cashier.outlet'))->assertRedirect(route('cashier.home'));
+    $this->get(route('cashier.home'))->assertRedirect(route('cashier.shift'));
+
+    expect(webDevices())->toHaveCount(2);
 });
 
 it('owner login dengan email; boleh walau kolom akses nonaktif', function () {
