@@ -39,6 +39,9 @@ Schedule::command('pos:expire-self-orders')->everyMinute()->withoutOverlapping(5
 // Voucher ulang tahun (ADR 0013, Q66): harian, member yang berulang tahun bulan ini (sekali per bulan)
 Schedule::command('pos:issue-birthday-vouchers')->dailyAt('00:15')->timezone('Asia/Jakarta')->withoutOverlapping(30);
 
+// Device kasir web menganggur (Q116): tanpa shift terbuka & tidak aktif > pos.web_cashier.idle_days dicabut
+Schedule::command('pos:prune-web-devices')->dailyAt('03:15')->timezone('Asia/Jakarta')->withoutOverlapping(30);
+
 // Audit log (Q58): hapus catatan lebih dari 365 hari (config activitylog.delete_records_older_than_days)
 Schedule::command('activitylog:clean --force')->dailyAt('03:30')->timezone('Asia/Jakarta');
 
