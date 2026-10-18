@@ -5441,3 +5441,74 @@
     border-color: #fda29b;
     background: #fef3f2;
 }
+
+/* =====================================================================
+ * Detail pesanan v3: daftar datar tanpa kartu — garis tipis solid antarbaris, stepper qty ringkas
+ * (28px, tanpa bingkai). Lebih banyak item terlihat; menimpa gaya kartu sebelumnya.
+ * ===================================================================== */
+.pos-lines {
+    gap: 0;
+}
+
+.cashier-body .pos-lines li {
+    gap: 10px;
+    padding: 9px 0;
+    border: 0;
+    border-bottom: 1px solid #eef0f4;
+    border-radius: 0;
+    background: none;
+}
+
+.cashier-body .pos-lines li:last-child {
+    border-bottom: 0;
+}
+
+.cashier-body .pos-lines li:hover {
+    border-color: #eef0f4;
+}
+
+.pos-lines li:hover .pos-line-name {
+    color: var(--site-primary);
+}
+
+.cashier-body .pos-qty {
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--pos-radius);
+    background: var(--site-bg);
+}
+
+.cashier-body .pos-qty button {
+    width: 28px;
+    height: 28px;
+    border-radius: calc(var(--pos-radius) - 2px);
+    background: transparent;
+}
+
+.cashier-body .pos-qty button:hover {
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgb(27 42 85 / 0.12);
+}
+
+.cashier-body .pos-qty button svg {
+    width: 14px;
+    height: 14px;
+}
+
+.cashier-body .pos-qty span {
+    min-width: 22px;
+    font-size: 13.5px;
+}
+
+.pos-line-name {
+    font-size: 14px;
+}
+
+.pos-line-meta {
+    font-size: 12px;
+}
+
+.pos-line-total {
+    font-size: 14px;
+}
