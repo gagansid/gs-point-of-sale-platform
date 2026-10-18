@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\OutletMemberProgram;
 use App\Models\Voucher;
 use App\Models\VoucherRedemption;
+use App\Support\Features;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
@@ -35,13 +36,16 @@ final class Vouchers
      *
      * @param  list<ResolvedLine>  $lines
      *
-     * @throws BusinessException VOUCHER_INVALID
+     * @throws BusinessException VOUCHER_INVALID, FEATURE_NOT_AVAILABLE
      */
     public function resolve(?string $code, ?string $voucherId, ?Member $member, string $outletId, array $lines, ?CarbonImmutable $now = null): ?Voucher
     {
         if ($code === null && $voucherId === null) {
             return null;
         }
+
+        // Voucher bagian dari fitur paket "member" (ADR 0025)
+        Features::ensure('member');
 
         $voucher = $voucherId !== null
             ? Voucher::query()->find($voucherId)

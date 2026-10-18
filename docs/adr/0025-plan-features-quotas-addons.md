@@ -1,7 +1,7 @@
 # ADR 0025: Katalog fitur, kuota, dan add-on paket langganan
 
 - Status: Diterima
-- Tanggal: 2026-10-18
+- Tanggal: 2026-10-18 (revisi 2026-10-18: katalog fitur = tabel master, bukan enum)
 - Pengambil keputusan: Gagan Suganda (usulan Claude, semua opsi disetujui 2026-10-18)
 - Terkait: ADR 0024 (paket & tagihan), ADR 0010 (`max_outlets`), ADR 0009 (edisi, hanya-baca), SPEC Q108–Q112
 
@@ -28,10 +28,10 @@ Temuan saat survei kode (2026-10-18):
 
 | Topik | Keputusan |
 |---|---|
-| Sumber katalog | Enum `App\Enums\Feature` (value = key, label, keterangan, grup) menggantikan `Plan::FEATURES`. **Tetap di kode**: fitur tanpa pengecekan di kode tidak berarti apa-apa, jadi admin tidak bisa membuat fitur dari UI. Key lama dipertahankan (data `plans.features` tidak diubah) |
+| Sumber katalog | **Master data tabel `features`** (`key` unik, nama, keterangan, urutan), **dikelola langsung di database tanpa CRUD** (revisi 2026-10-18 atas permintaan Gagan; usulan awal enum ditolak). Baris awal diisi migration agar production langsung punya datanya; fitur baru (A2) juga lewat migration. `plans.features` tetap JSON berisi key, divalidasi `exists:features,key`. `key` dipakai kode (`Features::enabled('member')`, `feature:member`), jadi mengganti key = perubahan kode. Menghapus baris = fitur tidak bisa dicentang lagi dan hilang dari `tenant.features` (tenant berpaket kehilangan akses) |
 | Fitur baru | `advanced_reports`: tab Laporan **Laba, Opsi, Karyawan, Waktu, Diskon, Outlet** + endpoint `/reports/{profit,options,employees,heatmap,trend,channels}`. `report_export`: export Excel/PDF laporan & member (dashboard + API PDF rekap shift tetap bebas karena operasional). `web_cashier`: kasir web `/cashier` (aplikasi Flutter tetap). `online_payment`: pembayaran online pelanggan via Midtrans owner (ADR 0014), dipisah dari `self_order` |
 | Selalu tersedia | Kasir (Flutter), shift, kas masuk/keluar, retur, pecah/gabung bill, laporan dasar (Ringkasan, Produk, Kategori, Metode bayar, Shift, Jenis order, Stok sederhana), karyawan & role, perangkat |
-| Pengecekan | Satu pintu `Features::enabled(Feature)`. Dashboard: `canAccess()`/`shouldRegisterNavigation()` resource & tab. **API: middleware `feature:{key}`** pada grup route (menutup temuan 1). Mesin/Action tetap mengecek (pertahanan berlapis) |
+| Pengecekan | Satu pintu `Features::enabled('key')` / `Features::ensure('key')`. Dashboard: `canAccess()`/`shouldRegisterNavigation()` resource & tab. **API: middleware `feature:{key}`** pada grup route (menutup temuan 1). Mesin/Action tetap mengecek (pertahanan berlapis) |
 | Error API | Kode baru **`FEATURE_NOT_AVAILABLE`** (403), `details.feature` = key. Dibedakan dari `FORBIDDEN` agar Flutter bisa menampilkan "Fitur tidak termasuk paket Anda" alih-alih "Tidak punya akses" |
 | Flutter | `auth/me` → `data.tenant.features` (list key yang aktif; tenant tanpa paket/jual putus = semua key). Perlu rilis Flutter untuk menyembunyikan menu; sebelum itu server tetap menolak dengan kode di atas |
 | Data lama | Fitur yang mati menyembunyikan menu & menolak tulis/baca lewat API; data tidak dihapus (sama ADR 0024) |
@@ -67,7 +67,7 @@ Temuan saat survei kode (2026-10-18):
 
 | Langkah | Isi |
 |---|---|
-| **A1** | Enum `Feature`, refactor `Plan::FEATURES`/`Features`, middleware API `feature:*` untuk 6 fitur lama (**menutup celah API member/voucher/kasbon**), `FEATURE_NOT_AVAILABLE`, `auth/me` `tenant.features` |
+| **A1** | Tabel master `features`, refactor `Plan::FEATURES`/`Features`, middleware API `feature:*` untuk 6 fitur lama (**menutup celah API member/voucher/kasbon**), `FEATURE_NOT_AVAILABLE`, `auth/me` `tenant.features` |
 | **A2** | Fitur baru `advanced_reports`, `report_export`, `web_cashier`, `online_payment` (dashboard + API + kasir web) |
 | **B1** | `Quota`, `plans.limits`, `tenants.limit_overrides`, migrasi `max_outlets`, `Quotas::ensureAvailable` + `PLAN_LIMIT_REACHED` di Action |
 | **B2** | Tampilan pemakaian (owner, admin, `auth/me` `tenant.limits`), banner lewat batas, form paket admin |
@@ -79,7 +79,8 @@ Temuan saat survei kode (2026-10-18):
 - Positif: celah API ditutup di A1; paket bertingkat & fitur satuan bisa dijual tanpa ubah kode per tenant.
 - Positif: Flutter mendapat daftar fitur & kuota dari server; server tetap sumber kebenaran.
 - Negatif: dua kode error baru → aplikasi Flutter perlu rilis untuk pesan yang ramah (sebelum itu tampil pesan
-  server). Tambah fitur ke katalog tetap butuh rilis server.
+  server). Baris fitur baru di tabel tanpa pengecekan di kode tidak membatasi apa pun (hanya label); fitur yang benar-benar
+  membatasi tetap butuh rilis server.
 - Negatif: query hitung pemakaian di setiap tambah data (ringan: `COUNT` berindeks `tenant_id`), `lockForUpdate`
   baris tenant menyerialkan penambahan data per tenant (jarang & singkat).
 - Negatif: add-on mengikuti masa aktif paket, jadi tidak bisa punya tanggal perpanjangan sendiri (sengaja, agar satu

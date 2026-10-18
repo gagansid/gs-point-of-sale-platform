@@ -16,10 +16,12 @@ Di kode, daftar tersebut dicerminkan oleh enum `App\Enums\ErrorCode` (value = ko
 | 403 | `EMAIL_NOT_VERIFIED` | Checkout/pembayaran sebelum email owner diverifikasi — ADR 0009 |
 | 403 | `APPROVAL_REQUIRED` | Action (void/diskon tanpa permission & tanpa PIN approver) |
 | 403 | `SELF_APPROVAL_NOT_ALLOWED` | Action `VerifyApproval` |
+| 403 | `FEATURE_NOT_AVAILABLE` | Middleware `feature:{key}` (`EnsureFeatureEnabled`) & `Features::ensure()` di mesin (`ResolveOrderMember`, `Vouchers`) — ADR 0025 |
 | 404 | `NOT_FOUND` | Framework (`ModelNotFoundException`) — termasuk data tenant lain |
 | 409 | `SHIFT_NOT_OPEN` | Action order & shift |
 | 409 | `ORDER_ALREADY_CLOSED` | Action `SaveOpenBill`, `AddPayment`, `VoidOrder` |
 | 409 | `LAST_OWNER_REQUIRED` | Action `UpdateUser`, `DeactivateUser` |
+| 409 | `PLAN_LIMIT_REACHED` | Kuota paket (ADR 0025 tahap B1; kode sudah terdaftar, belum dilempar) |
 | 422 | `VALIDATION_ERROR` | Framework (`ValidationException`) — dari FormRequest |
 | 422 | `PAYMENT_EXCEEDS_BALANCE` | Action `CheckoutOrder`, `AddPayment` |
 | 422 | `DISCOUNT_OVER_LIMIT` | Action `CheckoutOrder`, `SaveOpenBill` |

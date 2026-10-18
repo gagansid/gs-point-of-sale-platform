@@ -8,6 +8,7 @@ use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Member;
 use App\Models\MemberSetting;
+use App\Support\Features;
 
 /**
  * Member yang dipasang ke order (checkout & open bill, ADR 0013). Program harus aktif di bisnis; outlet yang
@@ -16,12 +17,15 @@ use App\Models\MemberSetting;
  */
 final class ResolveOrderMember
 {
-    /** @throws BusinessException MEMBER_PROGRAM_DISABLED, MEMBER_NOT_FOUND */
+    /** @throws BusinessException FEATURE_NOT_AVAILABLE, MEMBER_PROGRAM_DISABLED, MEMBER_NOT_FOUND */
     public function handle(?string $memberId): ?Member
     {
         if ($memberId === null) {
             return null;
         }
+
+        // Paket tanpa program member (ADR 0025): transaksi bermember ditolak, bukan diam-diam tanpa poin
+        Features::ensure('member');
 
         if (! MemberSetting::current()->enabled) {
             throw BusinessException::of(ErrorCode::MemberProgramDisabled, 'Program member belum diaktifkan');

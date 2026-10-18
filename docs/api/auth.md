@@ -54,6 +54,11 @@ Status sistem, versi minimal app, dan pengumuman aktif. Dipanggil saat app dibuk
 }
 ```
 
+`tenant.features` (ADR 0025): key fitur paket langganan yang aktif (`member`, `self_order`, `stock`, `recipes`,
+`promotions`, `credit`, …; daftar dari master data server, bisa bertambah). Tenant tanpa paket & edisi jual putus = semua
+key. Sembunyikan menu fitur yang tidak ada di daftar; server tetap menolak dengan `403 FEATURE_NOT_AVAILABLE`. Juga
+dikirim di `GET /v1/auth/me`.
+
 `announcements`: pengumuman tayang dari panel admin → Pengumuman, maks. 3 terbaru, cache server ±60 detik.
 Teks polos; tampilkan sebagai banner (boleh disembunyikan per `id` yang sudah ditutup pengguna).
 
@@ -95,7 +100,8 @@ Login owner/manager dengan email + kata sandi.
     "expires_at": "2026-11-07T07:02:11Z",
     "user": { "id": "…", "name": "Rina", "email": "rina@kopi.test", "role": "owner", "role_label": "Owner",
               "permissions": ["order.create", "…"], "outlet_ids": ["…"], "last_login_at": "…Z" },
-    "tenant": { "id": "…", "name": "Kopi Senja", "business_type": "cafe", "status": "active", "subscription_ends_at": "…Z" },
+    "tenant": { "id": "…", "name": "Kopi Senja", "business_type": "cafe", "status": "active", "subscription_ends_at": "…Z",
+                "features": ["member", "self_order"] },
     "outlet": { "id": "…", "code": "JKT01", "name": "…", "timezone": "Asia/Jakarta", "tax_rate": "11.00",
                 "service_charge_rate": "5.00", "tax_inclusive": false, "rounding": 100,
                 "receipt_header": null, "receipt_footer": "Terima kasih", "discount_limits": { "cashier": 10, "supervisor": 25 } },

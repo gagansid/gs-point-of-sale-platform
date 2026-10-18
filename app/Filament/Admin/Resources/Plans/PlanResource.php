@@ -9,6 +9,7 @@ use App\Filament\Admin\Resources\Plans\Pages\ManagePlans;
 use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Filament\Shared\Tables\TableEmptyState;
+use App\Models\Feature;
 use App\Models\Plan;
 use App\Support\Money;
 use BackedEnum;
@@ -55,8 +56,8 @@ final class PlanResource extends Resource
             MoneyInput::make('price_yearly')->label('Harga tahunan')->required(),
             TextInput::make('max_outlets')->label('Maks. outlet aktif')->integer()->minValue(1)->placeholder('Tanpa batas'),
             TextInput::make('sort_order')->label('Urutan')->integer()->default(0),
-            CheckboxList::make('features')->label('Fitur')->options(Plan::FEATURES)->columns(2)->columnSpanFull()
-                ->helperText('Kasir, laporan, retur, pecah bill, kas masuk/keluar selalu tersedia'),
+            CheckboxList::make('features')->label('Fitur')->options(fn (): array => Feature::options())->columns(2)->columnSpanFull()
+                ->helperText('Kasir, laporan, retur, pecah bill, kas masuk/keluar selalu tersedia. Daftar fitur dikelola di database (tabel features)'),
             Toggle::make('is_active')->label('Aktif')->default(true),
             Toggle::make('is_public')->label('Tampil di halaman Langganan owner')->default(true),
         ]);
@@ -71,7 +72,11 @@ final class PlanResource extends Resource
                 TextColumn::make('price_monthly')->label('Bulanan')->alignEnd()->formatStateUsing(fn (string $state): string => Money::format($state)),
                 TextColumn::make('price_yearly')->label('Tahunan')->alignEnd()->formatStateUsing(fn (string $state): string => Money::format($state)),
                 TextColumn::make('max_outlets')->label('Outlet')->alignEnd()->placeholder('Tanpa batas'),
-                TextColumn::make('features')->label('Fitur')->state(fn (Plan $record): string => count($record->features).' dari '.count(Plan::FEATURES)),
+                TextColumn::make('features')->label('Fitur')->state(function (Plan $record): string {
+                    $all = once(fn (): array => array_keys(Feature::options()));
+
+                    return count(array_intersect($record->features, $all)).' dari '.count($all);
+                }),
                 TextColumn::make('tenants_count')->label('Bisnis')->counts('tenants')->alignEnd(),
                 TextColumn::make('status')->label('Status')->badge()
                     ->state(fn (Plan $record): string => ! $record->is_active ? 'Nonaktif' : ($record->is_public ? 'Publik' : 'Khusus'))

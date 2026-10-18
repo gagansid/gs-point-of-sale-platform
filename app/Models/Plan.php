@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $price_monthly
  * @property string $price_yearly
  * @property int|null $max_outlets
- * @property list<string> $features
+ * @property list<string> $features key dari master data features (ADR 0025)
  * @property bool $is_active
  * @property bool $is_public
  * @property int $sort_order
@@ -28,16 +28,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 final class Plan extends Model
 {
     use HasUuids, RecordsAuthor;
-
-    /** Fitur yang bisa dibatasi paket (ADR 0024). */
-    public const FEATURES = [
-        'member' => 'Program member (poin, tier, stempel, voucher)',
-        'self_order' => 'Self-order QR meja',
-        'stock' => 'Stok masuk, opname, transfer, purchase order',
-        'recipes' => 'Bahan baku, resep, paket',
-        'promotions' => 'Promo otomatis',
-        'credit' => 'Kasbon member',
-    ];
 
     protected $fillable = ['code', 'name', 'description', 'price_monthly', 'price_yearly', 'max_outlets', 'features', 'is_active', 'is_public', 'sort_order'];
 

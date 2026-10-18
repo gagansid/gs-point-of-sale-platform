@@ -8,6 +8,7 @@ use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\Cashier\SetCashierContext;
 use App\Http\Middleware\CheckAppVersion;
 use App\Http\Middleware\EnsureDeviceToken;
+use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureInstalled;
 use App\Http\Middleware\EnsureTenantActive;
 use App\Http\Middleware\EnsureUserToken;
@@ -59,6 +60,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'token.user' => EnsureUserToken::class,
             'token.device' => EnsureDeviceToken::class,
             'app.version' => CheckAppVersion::class,
+            'feature' => EnsureFeatureEnabled::class,
         ]);
 
         // Wajib sebelum route model binding: binding menjalankan query yang dibatasi TenantScope

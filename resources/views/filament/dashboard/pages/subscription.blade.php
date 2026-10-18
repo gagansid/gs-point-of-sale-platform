@@ -19,7 +19,7 @@
                     <div class="is-wide"><dt>Paket berikutnya</dt><dd>{{ $tenant->nextPlan->name }} · {{ $tenant->next_billing_cycle?->getLabel() }}, mulai {{ $date($tenant->plan_changes_at) }}</dd></div>
                 @endif
                 @if ($tenant->plan)
-                    <div class="is-wide"><dt>Fitur</dt><dd>{{ collect(\App\Models\Plan::FEATURES)->only($tenant->plan->features)->implode(' · ') ?: 'Fitur dasar kasir & laporan' }}</dd></div>
+                    <div class="is-wide"><dt>Fitur</dt><dd>{{ collect(\App\Models\Feature::options())->only($tenant->plan->features)->implode(' · ') ?: 'Fitur dasar kasir & laporan' }}</dd></div>
                 @endif
             </dl>
             @if ($this->plans()->isNotEmpty())

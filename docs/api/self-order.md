@@ -12,7 +12,8 @@ Keputusan: [ADR 0014](../adr/0014-table-qr-self-order-and-midtrans.md), SPEC Q68
 | GET | `/v1/orders?status=awaiting_payment&channel=self_order` | `order.view_own` / `order.view_all` | baca | `VisibleOrders` |
 | POST | `/v1/orders/{id}/payments` | `order.create` | `payments[].id` | `AddPayment` |
 
-Error umum: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `403 DEVICE_NOT_REGISTERED`, `404 NOT_FOUND` (pesanan bisnis/outlet
+Error umum: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `403 DEVICE_NOT_REGISTERED`, `403 FEATURE_NOT_AVAILABLE` (paket tanpa fitur
+`self_order`, ADR 0025), `404 NOT_FOUND` (pesanan bisnis/outlet
 lain), `409 SHIFT_NOT_OPEN`, `409 ORDER_NOT_PENDING`, `409 ORDER_EXPIRED`, `422 VALIDATION_ERROR` (item/opsi tidak
 tersedia saat diterima), `422 VOUCHER_INVALID`.
 

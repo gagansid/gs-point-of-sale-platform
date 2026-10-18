@@ -108,19 +108,22 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
         Route::get('refundable-orders/{number}', [OrderController::class, 'refundable'])->where('number', '[A-Za-z0-9-]{1,40}')->name('refundable-orders.show');
 
         // ---------- Member (ADR 0013) ----------
-        Route::controller(MemberController::class)->prefix('members')->name('members.')->group(function (): void {
+        // Fitur paket (ADR 0025): 403 FEATURE_NOT_AVAILABLE bila paket tidak memuat fitur
+        Route::controller(MemberController::class)->prefix('members')->name('members.')->middleware('feature:member')->group(function (): void {
             Route::get('/', 'index')->name('index');
             Route::post('/', 'store')->name('store');
             Route::get('{memberId}', 'show')->whereUuid('memberId')->name('show');
             Route::get('{memberId}/points', 'points')->whereUuid('memberId')->name('points');
             // Kasbon (ADR 0023)
-            Route::get('{memberId}/receivables', 'receivables')->whereUuid('memberId')->name('receivables');
-            Route::post('{memberId}/receivable-payments', 'payReceivable')->whereUuid('memberId')->name('receivable-payments.store');
+            Route::middleware('feature:credit')->group(function (): void {
+                Route::get('{memberId}/receivables', 'receivables')->whereUuid('memberId')->name('receivables');
+                Route::post('{memberId}/receivable-payments', 'payReceivable')->whereUuid('memberId')->name('receivable-payments.store');
+            });
         });
-        Route::get('vouchers/check', [VoucherController::class, 'check'])->name('vouchers.check');
+        Route::get('vouchers/check', [VoucherController::class, 'check'])->middleware('feature:member')->name('vouchers.check');
 
         // ---------- Self-order QR meja (ADR 0014) ----------
-        Route::controller(SelfOrderController::class)->prefix('self-orders')->name('self-orders.')->group(function (): void {
+        Route::controller(SelfOrderController::class)->prefix('self-orders')->name('self-orders.')->middleware('feature:self_order')->group(function (): void {
             Route::get('/', 'index')->name('index');
             Route::post('{selfOrderId}/accept', 'accept')->whereUuid('selfOrderId')->name('accept');
             Route::post('{selfOrderId}/reject', 'reject')->whereUuid('selfOrderId')->name('reject');
@@ -137,7 +140,7 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('trend', 'trend')->name('trend');
             Route::get('categories', 'categories')->name('categories');
             Route::get('profit', 'profit')->name('profit');
-            Route::get('members', 'members')->name('members');
+            Route::get('members', 'members')->middleware('feature:member')->name('members');
             Route::get('channels', 'channels')->name('channels');
             Route::get('purchases', 'purchases')->name('purchases');
             Route::get('options', 'options')->name('options');

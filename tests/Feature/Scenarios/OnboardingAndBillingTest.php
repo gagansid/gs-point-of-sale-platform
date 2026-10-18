@@ -18,6 +18,7 @@ use App\Filament\Dashboard\Resources\Members\MemberResource;
 use App\Filament\Dashboard\Resources\Promotions\PromotionResource;
 use App\Models\Admin;
 use App\Models\Device;
+use App\Models\Feature;
 use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\PaymentMethod;
@@ -57,7 +58,7 @@ beforeEach(function () {
 
     // Paket dibuat super admin sebelum ada pelanggan
     $this->basic = app(SavePlan::class)->handle(null, ['code' => 'basic', 'name' => 'Basic', 'price_monthly' => '99000', 'price_yearly' => '990000', 'max_outlets' => 1, 'features' => ['member'], 'sort_order' => 1]);
-    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'max_outlets' => 3, 'features' => array_keys(Plan::FEATURES), 'sort_order' => 2]);
+    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'max_outlets' => 3, 'features' => array_keys(Feature::options()), 'sort_order' => 2]);
 
     // Midtrans vendor palsu: Snap selalu sukses; cek status membaca $this->obSettled[order_id] (nominal yang lunas)
     $this->obSettled = [];

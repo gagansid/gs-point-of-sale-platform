@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
-/** Buat/ubah paket langganan dari panel /admin (ADR 0024, Q108). Fitur disaring ke daftar Plan::FEATURES. */
+/** Buat/ubah paket langganan dari panel /admin (ADR 0024, Q108). Fitur harus ada di master data features (ADR 0025). */
 final class SavePlan
 {
     /**
@@ -29,7 +29,7 @@ final class SavePlan
             'price_yearly' => ['required', 'decimal:0,2', 'min:0', 'max:'.Money::MAX_PRICE],
             'max_outlets' => ['nullable', 'integer', 'min:1', 'max:1000'],
             'features' => ['nullable', 'array'],
-            'features.*' => [Rule::in(array_keys(Plan::FEATURES))],
+            'features.*' => ['string', Rule::exists('features', 'key')],
             'is_active' => ['nullable', 'boolean'],
             'is_public' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],

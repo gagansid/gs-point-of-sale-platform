@@ -19,6 +19,7 @@ use App\Filament\Admin\Resources\SubscriptionInvoices\Pages\ListSubscriptionInvo
 use App\Filament\Dashboard\Pages\SubscriptionSettings;
 use App\Filament\Dashboard\Resources\Promotions\PromotionResource;
 use App\Models\Admin;
+use App\Models\Feature;
 use App\Models\Plan;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
@@ -43,7 +44,7 @@ beforeEach(function () {
     $this->tenant = Tenant::query()->findOrFail($this->pos->tenantId);
     $this->tenant->forceFill(['status' => TenantStatus::Trial, 'subscription_ends_at' => now()->addDays(5)])->save();
     $this->basic = app(SavePlan::class)->handle(null, ['code' => 'basic', 'name' => 'Basic', 'price_monthly' => '99000', 'price_yearly' => '990000', 'max_outlets' => 1, 'features' => ['member']]);
-    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'max_outlets' => 3, 'features' => array_keys(Plan::FEATURES)]);
+    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'max_outlets' => 3, 'features' => array_keys(Feature::options())]);
 });
 
 afterEach(fn () => Carbon::setTestNow());

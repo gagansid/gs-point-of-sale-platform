@@ -7,6 +7,7 @@ namespace App\Enums;
 use App\Models\MemberSetting;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 
 /**
  * Jenis laporan (tab halaman Laporan, sheet Excel, bagian PDF). Satu sumber untuk label, ikon,
@@ -96,9 +97,9 @@ enum ReportTab: string
             return CurrentOutlet::selectedId() === null && count($user->outletIds()) > 1;
         }
 
-        // Program member (ADR 0013) belum pernah diaktifkan: tab tidak relevan
+        // Program member (ADR 0013) belum pernah diaktifkan atau tidak termasuk paket (ADR 0025): tab tidak relevan
         if ($this === self::Members) {
-            return MemberSetting::query()->exists();
+            return Features::enabled('member') && MemberSetting::query()->exists();
         }
 
         return true;

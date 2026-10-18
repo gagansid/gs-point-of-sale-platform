@@ -21,11 +21,13 @@ enum ErrorCode: string
     case EmailNotVerified = 'EMAIL_NOT_VERIFIED';
     case ApprovalRequired = 'APPROVAL_REQUIRED';
     case SelfApprovalNotAllowed = 'SELF_APPROVAL_NOT_ALLOWED';
+    case FeatureNotAvailable = 'FEATURE_NOT_AVAILABLE';
     case NotFound = 'NOT_FOUND';
     case ShiftNotOpen = 'SHIFT_NOT_OPEN';
     case OrderAlreadyClosed = 'ORDER_ALREADY_CLOSED';
     case LastOwnerRequired = 'LAST_OWNER_REQUIRED';
     case OutletLimitReached = 'OUTLET_LIMIT_REACHED';
+    case PlanLimitReached = 'PLAN_LIMIT_REACHED';
     case ValidationError = 'VALIDATION_ERROR';
     case MemberNotFound = 'MEMBER_NOT_FOUND';
     case MemberProgramDisabled = 'MEMBER_PROGRAM_DISABLED';
@@ -54,9 +56,9 @@ enum ErrorCode: string
             self::Unauthenticated, self::InvalidPin => 401,
             self::Forbidden, self::DeviceNotRegistered, self::TenantSuspended,
             self::SubscriptionExpired, self::EmailNotVerified,
-            self::ApprovalRequired, self::SelfApprovalNotAllowed => 403,
+            self::ApprovalRequired, self::SelfApprovalNotAllowed, self::FeatureNotAvailable => 403,
             self::NotFound, self::MemberNotFound, self::TableNotFound => 404,
-            self::ShiftNotOpen, self::OrderAlreadyClosed, self::LastOwnerRequired, self::OutletLimitReached,
+            self::ShiftNotOpen, self::OrderAlreadyClosed, self::LastOwnerRequired, self::OutletLimitReached, self::PlanLimitReached,
             self::OrderNotPending, self::OrderExpired => 409,
             self::ValidationError, self::PaymentExceedsBalance, self::DiscountOverLimit, self::MemberProgramDisabled,
             self::InsufficientPoints, self::InvalidMemberProof, self::VoucherInvalid, self::SelfOrderDisabled,
@@ -83,6 +85,7 @@ enum ErrorCode: string
             self::EmailNotVerified => 'Verifikasi email owner terlebih dahulu sebelum bertransaksi',
             self::ApprovalRequired => 'Aksi ini membutuhkan PIN atasan',
             self::SelfApprovalNotAllowed => 'Approval tidak boleh oleh diri sendiri',
+            self::FeatureNotAvailable => 'Fitur ini tidak termasuk paket langganan bisnis Anda',
             self::NotFound => 'Data tidak ditemukan',
             self::MemberNotFound => 'Member tidak ditemukan atau tidak aktif',
             self::MemberProgramDisabled => 'Program member tidak aktif di outlet ini',
@@ -100,6 +103,7 @@ enum ErrorCode: string
             self::OrderAlreadyClosed => 'Transaksi sudah selesai atau dibatalkan',
             self::LastOwnerRequired => 'Bisnis wajib memiliki minimal satu owner aktif',
             self::OutletLimitReached => 'Jumlah outlet aktif sudah mencapai batas paket. Hubungi tim gs.POS untuk menambah outlet',
+            self::PlanLimitReached => 'Kuota paket langganan sudah habis. Upgrade paket atau tambah add-on untuk menambah kuota',
             self::ValidationError => 'Data tidak valid',
             self::PaymentExceedsBalance => 'Pembayaran melebihi sisa tagihan',
             self::DiscountOverLimit => 'Diskon melebihi batas yang diizinkan',

@@ -14,6 +14,7 @@ use App\Filament\Admin\Resources\Plans\Pages\ManagePlans;
 use App\Filament\Admin\Resources\SubscriptionInvoices\Pages\ListSubscriptionInvoices;
 use App\Filament\Admin\Resources\Tenants\Pages\ViewTenant;
 use App\Models\Admin;
+use App\Models\Feature;
 use App\Models\Plan;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
@@ -34,7 +35,7 @@ beforeEach(function () {
     Filament::setCurrentPanel('admin');
     $this->actingAs(Admin::factory()->withTwoFactor()->create(), 'admin');
     $this->basic = app(SavePlan::class)->handle(null, ['code' => 'basic', 'name' => 'Basic', 'price_monthly' => '99000', 'price_yearly' => '990000', 'max_outlets' => 1, 'features' => ['member'], 'sort_order' => 1]);
-    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'max_outlets' => 3, 'features' => array_keys(Plan::FEATURES), 'sort_order' => 2]);
+    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'max_outlets' => 3, 'features' => array_keys(Feature::options()), 'sort_order' => 2]);
 });
 
 afterEach(fn () => Carbon::setTestNow());
@@ -64,7 +65,7 @@ describe('PlanResource (ManagePlans)', function () {
             ->assertCanSeeTableRecords([$hidden, $this->basic, $this->pro], inOrder: true)
             ->assertTableColumnStateSet('status', 'Khusus', $hidden)
             ->assertTableColumnStateSet('status', 'Publik', $this->basic)
-            ->assertTableColumnStateSet('features', '1 dari '.count(Plan::FEATURES), $this->basic);
+            ->assertTableColumnStateSet('features', '1 dari '.count(Feature::options()), $this->basic);
     });
 
     it('membuat paket baru dengan harga, batas outlet, dan fitur', function () {
