@@ -93,6 +93,8 @@ return [
     // Kasir web (Q54): maks. browser aktif per outlet (cookie bisa dihapus untuk membuat device baru)
     'web_cashier' => [
         'max_devices_per_outlet' => (int) env('POS_WEB_CASHIER_MAX_DEVICES', 10),
+        // Device web tanpa shift terbuka & tanpa aktivitas selama ini dicabut otomatis / dipakai ulang (Q117)
+        'idle_days' => (int) env('POS_WEB_CASHIER_IDLE_DAYS', 30),
     ],
 
     // Tagihan langganan SaaS (ADR 0024): Midtrans milik vendor; tanpa key = transfer manual (instruksi di bank_info)

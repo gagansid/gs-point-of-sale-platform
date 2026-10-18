@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Actions\Cashier;
 
+use App\Actions\Device\PruneIdleWebDevices;
 use App\Enums\AppPlatform;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
@@ -14,6 +15,8 @@ use App\Models\Shift;
 use App\Models\ShiftOperator;
 use App\Models\User;
 use App\Support\Quotas;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -25,6 +28,9 @@ use Illuminate\Support\Facades\DB;
  * Cookie browser hilang (browser ditutup di mode privat, cookie dihapus, browser/perangkat lain):
  * shift web yang masih terbuka dan sedang dipegang user ini di outlet yang sama dilanjutkan, bukan
  * membuat device baru tanpa shift. Pemanggil menulis ulang cookie ke browser ID device itu.
+ *
+ * Device yatim (cookie hilang tanpa shift terbuka) dipangkas `pos:prune-web-devices` setelah menganggur, atau slotnya
+ * dipakai ulang di sini saat batas/kuota penuh (Q117).
  */
 final class RegisterWebDevice
 {
@@ -47,27 +53,8 @@ final class RegisterWebDevice
         }
 
         if ($device === null) {
-            // Cookie browser bisa dihapus untuk membuat device baru: batasi jumlah device web aktif per outlet
-            $max = (int) config('pos.web_cashier.max_devices_per_outlet');
-            $active = Device::forTenant($outlet->tenant_id)->where('outlet_id', $outlet->id)
-                ->where('platform', AppPlatform::Web)->whereNull('revoked_at')->count();
-
-            if ($active >= $max) {
-                throw BusinessException::of(ErrorCode::Forbidden, "Batas {$max} perangkat kasir web di outlet ini tercapai. Minta owner mencabut perangkat lama di menu Perangkat.");
-            }
-
             try {
-                $device = DB::transaction(function () use ($outlet, $browserId, $uid): Device {
-                    // Kuota perangkat paket (ADR 0025), dihitung bersama perangkat aplikasi Android
-                    Quotas::ensureAvailable($outlet->tenant_id, Quotas::DEVICES);
-
-                    return Device::query()->create([
-                        'outlet_id' => $outlet->id,
-                        'name' => 'Kasir web '.mb_substr($browserId, 0, 4),
-                        'device_uid' => $uid,
-                        'platform' => AppPlatform::Web,
-                    ]);
-                });
+                $device = DB::transaction(fn (): Device => self::create($outlet, $browserId, $uid));
             } catch (UniqueConstraintViolationException) {
                 // Dua tab membuat bersamaan: pakai yang sudah ada
                 $device = Device::forTenant($outlet->tenant_id)->where('device_uid', $uid)->firstOrFail();
@@ -81,6 +68,52 @@ final class RegisterWebDevice
         $device->forceFill(['last_seen_at' => now()])->saveQuietly();
 
         return $device;
+    }
+
+    /**
+     * Batas device web per outlet & kuota perangkat paket (ADR 0025, dihitung bersama aplikasi Android). Penuh: device
+     * web menganggur tertua (Q117) dicabut & dilepas untuk memberi tempat — di outlet ini untuk batas outlet, di
+     * seluruh bisnis untuk kuota paket. Tidak ada yang menganggur: ditolak seperti biasa.
+     *
+     * @throws BusinessException
+     */
+    private static function create(Outlet $outlet, string $browserId, string $uid): Device
+    {
+        $cutoff = Device::idleCutoff();
+
+        // Cookie browser bisa dihapus untuk membuat device baru: batasi jumlah device web aktif per outlet
+        $max = (int) config('pos.web_cashier.max_devices_per_outlet');
+        $webDevices = fn () => Device::forTenant($outlet->tenant_id)->where('outlet_id', $outlet->id)->where('platform', AppPlatform::Web);
+
+        if ($webDevices()->whereNull('revoked_at')->count() >= $max && ! self::releaseOldestIdle($webDevices(), $cutoff)) {
+            throw BusinessException::of(ErrorCode::Forbidden, "Batas {$max} perangkat kasir web di outlet ini tercapai. Minta owner mencabut perangkat lama di menu Perangkat.");
+        }
+
+        try {
+            Quotas::ensureAvailable($outlet->tenant_id, Quotas::DEVICES);
+        } catch (BusinessException $e) {
+            if ($e->errorCode !== ErrorCode::PlanLimitReached->value || ! self::releaseOldestIdle(Device::forTenant($outlet->tenant_id), $cutoff)) {
+                throw $e;
+            }
+
+            // Masih lewat batas (mis. setelah downgrade): tolak, pelepasan di atas ikut dibatalkan transaksi
+            Quotas::ensureAvailable($outlet->tenant_id, Quotas::DEVICES);
+        }
+
+        return Device::query()->create([
+            'outlet_id' => $outlet->id,
+            'name' => 'Kasir web '.mb_substr($browserId, 0, 4),
+            'device_uid' => $uid,
+            'platform' => AppPlatform::Web,
+        ]);
+    }
+
+    /** @param  Builder<Device>  $devices */
+    private static function releaseOldestIdle(Builder $devices, CarbonImmutable $cutoff): bool
+    {
+        $oldest = $devices->idleWeb($cutoff)->orderByRaw('COALESCE(last_seen_at, created_at)')->value('id');
+
+        return is_string($oldest) && PruneIdleWebDevices::release($oldest, $cutoff);
     }
 
     /** Browser ID (cookie) dari device_uid "web:{browser}:{outlet}". */

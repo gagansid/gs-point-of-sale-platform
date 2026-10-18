@@ -99,3 +99,55 @@ it('kasir web dari browser yang dicabut diarahkan ke pilih outlet', function () 
 
     $this->get(route('cashier.home'))->assertRedirect(route('cashier.outlet'));
 });
+
+it('kasir web menganggur ditandai & bisa difilter; shift terbuka tidak dianggap menganggur (Q117)', function () {
+    config(['pos.web_cashier.idle_days' => 30]);
+    $this->web->forceFill(['last_seen_at' => now()->subDays(31)])->saveQuietly();
+    $busy = Device::factory()->forOutlet($this->pos->outlet)->create(['name' => 'Kasir web sibuk', 'platform' => AppPlatform::Web, 'device_uid' => 'web:busy:y', 'last_seen_at' => now()->subDays(60)]);
+    Shift::factory()->forDevice($busy, $this->pos->cashier)->create();
+
+    Livewire::test(ManageDevices::class)
+        ->assertTableColumnStateSet('status', 'Menganggur', $this->web)
+        ->assertTableColumnStateSet('status', 'Aktif', $busy)
+        ->assertTableColumnStateSet('status', 'Aktif', $this->pos->device)
+        ->filterTable('idle', true)
+        ->assertCanSeeTableRecords([$this->web])
+        ->assertCanNotSeeTableRecords([$busy, $this->pos->device]);
+});
+
+it('cabut massal: shift terbuka dilewati, sisanya dicabut', function () {
+    $busy = Device::factory()->forOutlet($this->pos->outlet)->create(['platform' => AppPlatform::Web, 'device_uid' => 'web:busy:y']);
+    Shift::factory()->forDevice($busy, $this->pos->cashier)->create();
+
+    Livewire::test(ManageDevices::class)
+        ->selectTableRecords([$this->web, $this->pos->device, $busy])
+        ->callAction(TestAction::make('bulkRevoke')->table()->bulk())
+        ->assertNotified('2 perangkat dicabut');
+
+    expect($this->web->fresh()?->isRevoked())->toBeTrue()
+        ->and($this->pos->device->fresh()?->isRevoked())->toBeTrue()
+        ->and($busy->fresh()?->isRevoked())->toBeFalse();
+});
+
+it('cabut massal: perangkat tenant lain tidak tersentuh; tanpa device.manage halaman ditolak', function () {
+    $foreign = posSetup(openShift: false);
+    TenantContext::set($this->pos->tenantId);
+
+    Livewire::test(ManageDevices::class)
+        ->selectTableRecords([$this->web->id, $foreign->device->id])
+        ->callAction(TestAction::make('bulkRevoke')->table()->bulk());
+    expect($foreign->device->fresh()?->isRevoked())->toBeFalse()
+        ->and($this->web->fresh()?->isRevoked())->toBeTrue();
+
+    $this->actingAs(User::factory()->manager()->forOutlet($this->pos->outlet)->create());
+    $this->get(DeviceResource::getUrl())->assertForbidden();
+});
+
+it('perangkat yang dilepas otomatis tidak punya aksi aktifkan lagi', function () {
+    $this->web->forceFill(['revoked_at' => now(), 'device_uid' => Device::RELEASED_UID_PREFIX.$this->web->id])->save();
+    $this->pos->device->forceFill(['revoked_at' => now()])->save();
+
+    Livewire::test(ManageDevices::class)
+        ->assertActionHidden(TestAction::make('restore')->table($this->web))
+        ->assertActionVisible(TestAction::make('restore')->table($this->pos->device));
+});

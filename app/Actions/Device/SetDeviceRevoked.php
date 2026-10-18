@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Cabut / aktifkan lagi perangkat (tablet atau browser kasir web, Q54). Dicabut: semua token
  * perangkat & token user yang terikat perangkat itu langsung tidak berlaku; sesi kasir web
- * diarahkan ke pilih outlet. Perangkat dengan shift terbuka harus ditutup shift-nya dulu.
+ * diarahkan ke pilih outlet. Perangkat dengan shift terbuka harus ditutup shift-nya dulu. Device web yang dilepas
+ * otomatis karena menganggur (Q117) tidak bisa diaktifkan lagi: tidak ada browser yang memakainya.
  */
 final class SetDeviceRevoked
 {
@@ -26,6 +27,10 @@ final class SetDeviceRevoked
             $locked = Device::query()->lockForUpdate()->findOrFail($device->id);
 
             if (! $revoked) {
+                if ($locked->isReleasedWeb()) {
+                    throw BusinessException::of(ErrorCode::ValidationError, 'Browser ini dilepas otomatis karena lama tidak dipakai. Buka kasir web lagi di browser itu untuk mendaftarkannya sebagai perangkat baru.');
+                }
+
                 // Aktif lagi = menambah pemakaian kuota perangkat (ADR 0025)
                 if ($locked->revoked_at !== null) {
                     Quotas::ensureAvailable($locked->tenant_id, Quotas::DEVICES);
