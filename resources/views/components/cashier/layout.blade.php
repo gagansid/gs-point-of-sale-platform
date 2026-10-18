@@ -4,18 +4,18 @@
     $user = \App\Support\WebCashier::user();
     $outlet = \App\Support\CurrentOutlet::get();
     $links = [
-        'pos' => ['Transaksi', route('cashier.home')],
-        'orders' => ['Riwayat', route('cashier.orders')],
-        'shift' => ['Shift', route('cashier.shift')],
+        'pos' => ['Transaksi', route('cashier.home'), 'heroicon-o-squares-2x2'],
+        'orders' => ['Riwayat', route('cashier.orders'), 'heroicon-o-clock'],
+        'shift' => ['Shift', route('cashier.shift'), 'heroicon-o-calculator'],
     ];
     // Pesanan meja (ADR 0014): hanya bila self-order aktif di outlet ini
     $selfOrder = $outlet !== null && ($user?->can('self_order.handle') ?? false) && \App\Models\SelfOrderSetting::forOutlet($outlet->id)->enabled;
     // Kasbon (ADR 0023): bila aktif atau masih ada saldo
     if (($user?->can('member.view') ?? false) && \App\Models\MemberSetting::current()->credit_enabled) {
-        $links['receivables'] = ['Kasbon', route('cashier.receivables')];
+        $links['receivables'] = ['Kasbon', route('cashier.receivables'), 'heroicon-o-credit-card'];
     }
     if ($selfOrder) {
-        $links = ['pos' => $links['pos'], 'self-orders' => ['Pesanan meja', route('cashier.self-orders')], ...$links];
+        $links = ['pos' => $links['pos'], 'self-orders' => ['Pesanan meja', route('cashier.self-orders'), 'heroicon-o-qr-code'], ...$links];
     }
 @endphp
 <!DOCTYPE html>
@@ -29,7 +29,8 @@
     <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800|nunito:800" rel="stylesheet">
     @vite(['resources/css/app.css'])
 </head>
-<body class="site-body cashier-body">
+{{-- Layar lebar (transaksi): body setinggi layar, konten mengisi sisa di bawah header & pengumuman --}}
+<body @class(['site-body', 'cashier-body', 'cashier-body-fill' => $wide])>
     <header class="cashier-header">
         <a href="{{ route('cashier.home') }}" class="cashier-brand" aria-label="Kasir web"><x-site.logo /></a>
         <div class="cashier-context">
@@ -37,18 +38,18 @@
             <span>{{ $user?->name }}</span>
         </div>
         <nav class="cashier-nav" aria-label="Menu kasir">
-            @foreach ($links as $key => [$label, $url])
-                <a href="{{ $url }}" @class(['is-active' => $active === $key]) @if ($active === $key) aria-current="page" @endif>{{ $label }}@if ($key === 'self-orders')<livewire:cashier.self-order-badge />@endif</a>
+            @foreach ($links as $key => [$label, $url, $icon])
+                <a href="{{ $url }}" @class(['is-active' => $active === $key]) @if ($active === $key) aria-current="page" @endif>@svg($icon, ['aria-hidden' => 'true'])<span>{{ $label }}</span>@if ($key === 'self-orders')<livewire:cashier.self-order-badge />@endif</a>
             @endforeach
         </nav>
         {{-- Kunci layar → kasir lain masuk dengan PIN, shift berlanjut tanpa hitung uang (ADR 0017) --}}
         <form method="POST" action="{{ route('cashier.lock') }}" class="cashier-logout" data-lock-form>
             @csrf
-            <button type="submit" class="site-link-button" title="Kunci layar untuk ganti kasir">Kunci</button>
+            <button type="submit" class="site-link-button" title="Kunci layar untuk ganti kasir">@svg('heroicon-o-lock-closed', ['aria-hidden' => 'true'])<span>Kunci</span></button>
         </form>
         <form method="POST" action="{{ route('cashier.logout') }}" class="cashier-logout">
             @csrf
-            <button type="submit" class="site-link-button">Keluar</button>
+            <button type="submit" class="site-link-button" title="Keluar">@svg('heroicon-o-arrow-right-start-on-rectangle', ['aria-hidden' => 'true'])<span>Keluar</span></button>
         </form>
     </header>
 
