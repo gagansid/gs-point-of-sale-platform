@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 use App\Actions\Billing\SavePlan;
 use App\Enums\BillingCycle;
+use App\Enums\BusinessType;
 use App\Enums\InvoiceStatus;
 use App\Enums\TenantStatus;
 use App\Filament\Admin\Pages\Dashboard;
+use App\Filament\Admin\Widgets\ExpiringTenantsWidget;
+use App\Filament\Admin\Widgets\NewLeadsWidget;
+use App\Filament\Admin\Widgets\PendingInvoicesWidget;
 use App\Filament\Admin\Widgets\PlatformStatsWidget;
+use App\Filament\Admin\Widgets\RecentTenantsWidget;
 use App\Filament\Admin\Widgets\SignupsChartWidget;
 use App\Filament\Admin\Widgets\SubscriptionRevenueChartWidget;
+use App\Filament\Admin\Widgets\TenantsPerBusinessTypeChartWidget;
+use App\Filament\Admin\Widgets\TenantsPerPlanChartWidget;
 use App\Models\Admin;
 use App\Models\SalesLead;
 use App\Models\SubscriptionInvoice;
@@ -95,4 +102,53 @@ it('widget langganan & pertumbuhan tersembunyi di edisi jual putus', function ()
     expect(PlatformStatsWidget::canView())->toBeFalse()
         ->and(SubscriptionRevenueChartWidget::canView())->toBeFalse()
         ->and(SignupsChartWidget::canView())->toBeFalse();
+});
+
+describe('D2: komposisi & daftar kerja', function () {
+    it('bisnis per paket (tanpa yang ditangguhkan) & per jenis usaha, terbanyak dulu', function () {
+        Tenant::factory()->count(2)->create(['plan_id' => $this->plan->id, 'business_type' => BusinessType::Retail]);
+        Tenant::factory()->create(['plan_id' => null, 'business_type' => BusinessType::Cafe]);
+        Tenant::factory()->create(['plan_id' => $this->plan->id, 'status' => TenantStatus::Suspended, 'business_type' => BusinessType::Cafe]);
+
+        $metrics = app(PlatformMetrics::class);
+        expect($metrics->tenantsPerPlan())->toBe(['Basic' => 2, 'Tanpa paket' => 1])
+            // Jenis usaha menghitung semua bisnis (termasuk ditangguhkan); jumlah sama → urutan bebas
+            ->and($metrics->tenantsPerBusinessType())->toEqual(['Kafe / resto' => 2, 'Retail' => 2]);
+
+        Livewire::test(TenantsPerPlanChartWidget::class)->assertOk()->assertSee('Bisnis per paket');
+        Livewire::test(TenantsPerBusinessTypeChartWidget::class)->assertOk()->assertSee('Bisnis per jenis usaha');
+    });
+
+    it('segera berakhir: 14 hari ke depan, tanpa yang ditangguhkan, terdekat dulu', function () {
+        $soon = Tenant::factory()->create(['name' => 'Kopi Dekat', 'status' => TenantStatus::Trial, 'subscription_ends_at' => now()->addDays(2)]);
+        $later = Tenant::factory()->create(['name' => 'Kopi Nanti', 'status' => TenantStatus::Active, 'subscription_ends_at' => now()->addDays(10)]);
+        $far = Tenant::factory()->create(['name' => 'Kopi Jauh', 'subscription_ends_at' => now()->addDays(30)]);
+        $suspended = Tenant::factory()->create(['name' => 'Kopi Blokir', 'status' => TenantStatus::Suspended, 'subscription_ends_at' => now()->addDays(3)]);
+
+        Livewire::test(ExpiringTenantsWidget::class)
+            ->assertCanSeeTableRecords([$soon, $later], inOrder: true)
+            ->assertCanNotSeeTableRecords([$far, $suspended])
+            ->assertSee('2 hari lagi');
+    });
+
+    it('tagihan menunggu lintas bisnis, jatuh tempo terdekat dulu; pendaftaran terbaru; calon pelanggan baru terlama dulu', function () {
+        $a = Tenant::factory()->create(['name' => 'Bisnis A', 'created_at' => now()->subDays(3)]);
+        $b = Tenant::factory()->create(['name' => 'Bisnis B', 'created_at' => now()->subDay()]);
+        foreach ([[$a, 3], [$b, 1]] as [$tenant, $days]) {
+            $invoice = new SubscriptionInvoice(['plan_id' => $this->plan->id, 'plan_name' => 'Basic', 'billing_cycle' => BillingCycle::Monthly, 'amount' => '99000', 'due_at' => now()->addDays($days)]);
+            $invoice->tenant_id = $tenant->id;
+            $invoice->forceFill(['number' => 'INV-'.$tenant->name, 'status' => InvoiceStatus::Pending])->save();
+        }
+        $old = SalesLead::query()->forceCreate(['name' => 'Andi', 'business_name' => 'Lead Lama', 'phone' => '0812', 'status' => 'new', 'created_at' => now()->subDays(5)]);
+        $new = SalesLead::query()->forceCreate(['name' => 'Budi', 'business_name' => 'Lead Baru', 'phone' => '0813', 'status' => 'new']);
+        $done = SalesLead::query()->forceCreate(['name' => 'Cici', 'business_name' => 'Lead Selesai', 'phone' => '0814', 'status' => 'contacted']);
+
+        Livewire::test(PendingInvoicesWidget::class)
+            ->assertCanSeeTableRecords(SubscriptionInvoice::allTenants()->orderBy('due_at')->get(), inOrder: true)
+            ->assertSee('Bisnis B');
+        Livewire::test(RecentTenantsWidget::class)->assertCanSeeTableRecords([$b, $a], inOrder: true);
+        Livewire::test(NewLeadsWidget::class)
+            ->assertCanSeeTableRecords([$old, $new], inOrder: true)
+            ->assertCanNotSeeTableRecords([$done]);
+    });
 });

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Admin;
 
+use App\Enums\BusinessType;
 use App\Enums\InvoiceStatus;
 use App\Enums\TenantStatus;
+use App\Models\Plan;
 use App\Models\SalesLead;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
@@ -87,6 +89,45 @@ final class PlatformMetrics
                 'cohort' => (clone $cohort)->count(),
                 'converted' => (clone $cohort)->whereIn('id', SubscriptionInvoice::allTenants()->where('status', InvoiceStatus::Paid)->select('tenant_id'))->count(),
             ];
+        });
+    }
+
+    /**
+     * Bisnis (tidak ditangguhkan) per paket, terbanyak dulu; tanpa paket = "Tanpa paket".
+     *
+     * @return array<string, int> nama paket => jumlah
+     */
+    public function tenantsPerPlan(): array
+    {
+        return DashboardCache::remember('per-plan', function (): array {
+            $counts = Tenant::query()->where('status', '!=', TenantStatus::Suspended)
+                ->selectRaw('plan_id, COUNT(*) as aggregate_count')->groupBy('plan_id')->toBase()->get();
+            $names = Plan::query()->whereIn('id', $counts->pluck('plan_id')->filter())->pluck('name', 'id');
+            $result = [];
+            foreach ($counts as $row) {
+                $result[$row->plan_id === null ? 'Tanpa paket' : (string) ($names[$row->plan_id] ?? 'Paket terhapus')] = (int) $row->aggregate_count;
+            }
+            arsort($result);
+
+            return $result;
+        });
+    }
+
+    /**
+     * Bisnis per jenis usaha, terbanyak dulu.
+     *
+     * @return array<string, int> label jenis => jumlah
+     */
+    public function tenantsPerBusinessType(): array
+    {
+        return DashboardCache::remember('per-business-type', function (): array {
+            $result = [];
+            foreach (Tenant::query()->selectRaw('business_type, COUNT(*) as aggregate_count')->groupBy('business_type')->toBase()->get() as $row) {
+                $result[BusinessType::tryFrom((string) $row->business_type)?->getLabel() ?? (string) $row->business_type] = (int) $row->aggregate_count;
+            }
+            arsort($result);
+
+            return $result;
         });
     }
 

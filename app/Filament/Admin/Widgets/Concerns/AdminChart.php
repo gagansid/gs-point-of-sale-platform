@@ -84,4 +84,26 @@ trait AdminChart
             }
         JS);
     }
+
+    /** Bar horizontal (kategori di sumbu Y, nama panjang terbaca), sumbu X bilangan bulat. */
+    private static function horizontalCountOptions(string $unit): RawJs
+    {
+        // Opsi dirender di atribut HTML berkutip ganda: pakai kutip tunggal, satuan hanya huruf/spasi
+        $unit = preg_replace('/[^\pL ]/u', '', $unit);
+
+        return RawJs::make(<<<JS
+            {
+                indexAxis: 'y',
+                animation: { duration: 0 },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: (ctx) => Math.round(ctx.parsed.x).toLocaleString('id-ID') + ' {$unit}' } },
+                },
+                scales: {
+                    x: { beginAtZero: true, suggestedMax: 5, border: { display: false }, ticks: { precision: 0, maxTicksLimit: 6 } },
+                    y: { grid: { display: false } },
+                },
+            }
+        JS);
+    }
 }
