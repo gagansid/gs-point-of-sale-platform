@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Resources\ActivityLogs;
 
+use App\Actions\Product\SetProductAvailability;
 use App\Enums\PaymentCategory;
 use App\Enums\UserRole;
 use App\Filament\Dashboard\Resources\ActivityLogs\Pages\ListActivityLogs;
@@ -17,6 +18,7 @@ use App\Models\OptionGroup;
 use App\Models\Outlet;
 use App\Models\PaymentMethod;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\User;
 use App\Support\Money;
 use BackedEnum;
@@ -58,6 +60,8 @@ final class ActivityLogResource extends Resource
     /** Jenis data → [label, permission pengelola] */
     private const SUBJECTS = [
         Product::class => ['Produk', 'product.manage'],
+        // Menu habis/tersedia per outlet (Q115): kasir pun boleh menandai, owner perlu jejaknya
+        ProductStock::class => ['Ketersediaan menu', 'product.toggle_available'],
         Category::class => ['Kategori', 'product.manage'],
         OptionGroup::class => ['Grup opsi', 'product.manage'],
         Option::class => ['Opsi', 'product.manage'],
@@ -76,6 +80,7 @@ final class ActivityLogResource extends Resource
         'discount_limits' => 'Batas diskon', 'daily_sales_target' => 'Target harian', 'monthly_sales_target' => 'Target bulanan',
         'cash_float' => 'Modal laci tetap', 'auto_lock_minutes' => 'Kunci layar otomatis (menit)', 'cash_out_approval_limit' => 'Batas kas keluar tanpa PIN', 'refund_max_days' => 'Batas retur (hari)',
         'email' => 'Email', 'username' => 'Username', 'role' => 'Role', 'web_cashier_access' => 'Akses kasir web',
+        'is_available' => 'Tersedia',
     ];
 
     private const MONEY_FIELDS = ['price', 'cost_price', 'price_delta', 'daily_sales_target', 'monthly_sales_target', 'cash_float', 'cash_out_approval_limit'];
@@ -122,14 +127,15 @@ final class ActivityLogResource extends Resource
                 TextColumn::make('event')->label('Aksi')->badge()
                     ->state(fn (ActivityLog $record): string => match (true) {
                         $record->description === 'credentials' => 'Kredensial',
+                        $record->event === SetProductAvailability::LOG_EVENT => ($record->properties['attributes']['is_available'] ?? false) ? 'Tersedia' : 'Habis',
                         $record->event === 'created' => 'Dibuat',
                         $record->event === 'deleted' => 'Dihapus',
                         default => 'Diubah',
                     })
                     ->color(fn (string $state): string => match ($state) {
-                        'Dibuat' => 'success',
+                        'Dibuat', 'Tersedia' => 'success',
                         'Dihapus' => 'danger',
-                        'Kredensial' => 'warning',
+                        'Kredensial', 'Habis' => 'warning',
                         default => 'gray',
                     }),
                 TextColumn::make('changes_summary')->label('Perubahan')->wrap()
@@ -149,7 +155,7 @@ final class ActivityLogResource extends Resource
             ->persistFiltersInSession();
 
         return TableEmptyState::apply($table, Heroicon::OutlinedClipboardDocumentList, 'riwayat perubahan',
-            'Perubahan harga, produk, setelan outlet, dan karyawan tercatat otomatis di sini');
+            'Perubahan harga, produk, menu habis/tersedia, setelan outlet, dan karyawan tercatat otomatis di sini');
     }
 
     /**
@@ -165,9 +171,13 @@ final class ActivityLogResource extends Resource
 
         return $query
             ->whereIn('subject_type', $types)
-            ->when(! $user->hasPermission('outlet.access_all'), fn (Builder $q) => $q->where(fn (Builder $w) => $w
-                ->where('subject_type', '!=', Outlet::class)
-                ->orWhereIn('subject_id', $user->outletIds())));
+            ->when(! $user->hasPermission('outlet.access_all'), fn (Builder $q) => $q
+                ->where(fn (Builder $w) => $w
+                    ->where('subject_type', '!=', Outlet::class)
+                    ->orWhereIn('subject_id', $user->outletIds()))
+                ->where(fn (Builder $w) => $w
+                    ->where('subject_type', '!=', ProductStock::class)
+                    ->orWhereIn('subject_id', ProductStock::query()->whereIn('outlet_id', $user->outletIds())->select('id'))));
     }
 
     /**
@@ -187,7 +197,8 @@ final class ActivityLogResource extends Resource
                 ->when($types !== [], fn (Builder $w) => $w->orWhereIn('subject_type', $types));
 
             // Nama data saat ini (log perubahan hanya menyimpan kolom yang berubah); tetap dalam tenant aktif
-            foreach (array_keys(self::SUBJECTS) as $type) {
+            // (ProductStock tidak punya kolom name; nama produk & outlet sudah ada di properties)
+            foreach (array_diff(array_keys(self::SUBJECTS), [ProductStock::class]) as $type) {
                 $q->orWhere(fn (Builder $w) => $w->where('subject_type', $type)
                     ->whereIn('subject_id', $type::query()->withoutGlobalScope(SoftDeletingScope::class)
                         ->whereRaw('LOWER(name) LIKE ?', [$term])->select('id')));
@@ -205,6 +216,11 @@ final class ActivityLogResource extends Resource
     private static function subjectName(ActivityLog $record): string
     {
         $properties = $record->properties;
+
+        if ($record->subject_type === ProductStock::class) {
+            return ($properties['product'] ?? '—').' · '.($properties['outlet'] ?? '—');
+        }
+
         $name = $properties['attributes']['name'] ?? $properties['old']['name'] ?? null;
 
         if (! is_string($name) && $record->subject_type !== null && $record->subject_id !== null) {
@@ -225,6 +241,11 @@ final class ActivityLogResource extends Resource
             $secrets = (array) ($properties['secrets'] ?? []);
 
             return implode(' & ', array_map(fn (string $s): string => $s === 'pin' ? 'PIN' : 'Kata sandi', $secrets)).' diganti';
+        }
+
+        // "Croissant ditandai habis di Kemang oleh Budi"
+        if ($record->event === SetProductAvailability::LOG_EVENT) {
+            return (string) $record->description;
         }
 
         $new = (array) ($properties['attributes'] ?? []);
