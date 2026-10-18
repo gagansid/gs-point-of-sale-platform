@@ -60,7 +60,7 @@ Temuan saat survei kode (2026-10-18):
 | Berhenti | Owner/admin **Berhenti** = `cancelling`, tetap aktif sampai akhir masa aktif lalu dilepas oleh `pos:apply-plan-changes`; tanpa pengembalian dana. Mengurangi unit kuota = sama (berlaku akhir masa aktif) |
 | Downgrade paket | Add-on tetap; add-on fitur yang ternyata termasuk paket baru otomatis `cancelling` |
 | Pemakaian | `Features::enabled` = fitur paket ∪ fitur add-on aktif. Batas kuota = limit paket + Σ(`quota_amount` × qty) add-on kuota aktif (paket tanpa batas tetap tanpa batas) |
-| Admin | Pelanggan → **Add-on** (CRUD); detail bisnis: daftar add-on + **Atur add-on** tanpa tagihan (seperti Atur paket); Buat tagihan admin bisa menyertakan add-on |
+| Admin | Pelanggan → **Add-on** (CRUD admin, `SaveAddon`; berbeda dengan master data fitur/kuota karena harga add-on keputusan bisnis yang sering berubah; jenis & manfaat terkunci setelah dipakai bisnis, tidak ada hapus — nonaktifkan); detail bisnis: daftar add-on + **Atur add-on** tanpa tagihan (`SetTenantAddons`: keadaan akhir `{addon_id: unit}`, 0 = lepas langsung, bisnis harus berpaket, fitur yang sudah di paket ditolak, add-on nonaktif hanya boleh dipertahankan); Buat tagihan admin bisa menyertakan add-on (C2) |
 | Owner | Langganan: section Add-on (aktif, harga, tombol **Tambah** → tagihan prorata, **Berhenti**) |
 
 ### Tahapan implementasi (satu langkah per giliran, masing-masing dengan test & docs)

@@ -44,7 +44,7 @@ final class SubscriptionInvoiceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'tagihan';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
 
     protected static bool $isGloballySearchable = false;
 

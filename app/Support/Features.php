@@ -9,9 +9,10 @@ use App\Exceptions\BusinessException;
 use App\Models\Feature;
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Models\TenantAddon;
 
 /**
- * Fitur yang boleh dipakai tenant aktif menurut paket langganan (ADR 0024, ADR 0025). Katalog = master data `features`
+ * Fitur yang boleh dipakai tenant aktif menurut paket langganan + add-on fitur (ADR 0024, ADR 0025). Katalog = master data `features`
  * (key). Jual putus, tanpa konteks tenant, atau tenant tanpa paket = semua fitur. Dipakai menu dashboard, middleware
  * API feature:{key}, dan mesin (promo, kasbon, self-order, member, voucher).
  */
@@ -69,9 +70,13 @@ final class Features
         }
 
         if (! array_key_exists($tenantId, self::$cache)) {
-            $planId = $tenant !== null ? $tenant->plan_id : Tenant::query()->whereKey($tenantId)->value('plan_id');
-            $plan = $planId !== null ? Plan::query()->find($planId) : null;
-            self::$cache[$tenantId] = $planId === null ? null : ($plan instanceof Plan ? $plan->features : []);
+            $tenant ??= Tenant::query()->find($tenantId);
+            $plan = $tenant?->plan_id !== null ? Plan::query()->find($tenant->plan_id) : null;
+            self::$cache[$tenantId] = $tenant?->plan_id === null ? null : array_values(array_unique([
+                ...($plan instanceof Plan ? $plan->features : []),
+                // Add-on fitur (ADR 0025 C1)
+                ...$tenant->activeAddons()->reject(fn (TenantAddon $a): bool => $a->addon->isQuota())->map(fn (TenantAddon $a): string => (string) $a->addon->feature_key)->all(),
+            ]));
         }
 
         return self::$cache[$tenantId];

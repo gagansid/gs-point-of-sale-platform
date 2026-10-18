@@ -9,6 +9,7 @@ use App\Filament\Admin\Resources\SubscriptionInvoices\SubscriptionInvoiceResourc
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
+use App\Models\TenantAddon;
 use App\Support\Edition;
 use App\Support\Money;
 use Filament\Actions\Action;
@@ -89,6 +90,13 @@ final class TenantInfolist
                 ViewEntry::make('quota_usage')->label('Kuota')->columnSpanFull()
                     ->view('filament.shared.quota-usage-entry')
                     ->helperText(fn (Tenant $record): ?string => $record->limit_overrides ? 'Termasuk batas khusus (form Ubah)' : null),
+                // Add-on (ADR 0025 C1): fitur atau tambahan kuota di atas paket
+                TextEntry::make('addons_list')->label('Add-on')->columnSpan(2)
+                    ->state(fn (Tenant $record): array => $record->activeAddons()
+                        ->map(fn (TenantAddon $a): string => $a->addon->name.($a->addon->isQuota() ? ' ×'.$a->quantity : '')
+                            .($a->status === TenantAddon::CANCELLING ? ' (berhenti '.$a->cancel_at?->translatedFormat('j M Y').')' : ''))
+                        ->all())
+                    ->listWithLineBreaks()->placeholder('—'),
                 // Downgrade / ganti siklus yang menunggu akhir masa aktif (pos:apply-plan-changes)
                 TextEntry::make('scheduled_change')->label('Perubahan terjadwal')->color('warning')
                     ->state(fn (Tenant $record): ?string => $record->plan_changes_at === null ? null : sprintf(

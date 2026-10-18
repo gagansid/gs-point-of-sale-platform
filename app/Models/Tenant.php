@@ -14,6 +14,7 @@ use App\Models\Scopes\TenantScope;
 use App\Support\Edition;
 use Carbon\CarbonImmutable;
 use Database\Factories\TenantFactory;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -97,7 +98,19 @@ final class Tenant extends Model
             return (int) $override;
         }
 
-        return $this->plan_id !== null ? $this->plan?->limit($quota) : null;
+        if ($this->plan_id === null) {
+            return null;
+        }
+
+        $base = $this->plan?->limit($quota);
+        if ($base === null) {
+            return null;
+        }
+
+        // Add-on kuota menambah batas paket (paket tanpa batas tetap tanpa batas)
+        return $base + (int) $this->activeAddons()
+            ->filter(fn (TenantAddon $a): bool => $a->addon->isQuota() && $a->addon->quota_key === $quota)
+            ->sum(fn (TenantAddon $a): int => $a->quantity * (int) $a->addon->quota_amount);
     }
 
     /**
@@ -189,6 +202,30 @@ final class Tenant extends Model
     public function devices(): HasMany
     {
         return $this->hasMany(Device::class)->withoutGlobalScope(TenantScope::class);
+    }
+
+    /**
+     * Add-on bisnis (ADR 0025): `active` & `cancelling` sama-sama masih berlaku sampai dilepas.
+     *
+     * @return HasMany<TenantAddon, $this>
+     */
+    public function addons(): HasMany
+    {
+        return $this->hasMany(TenantAddon::class)->withoutGlobalScope(TenantScope::class);
+    }
+
+    /**
+     * Add-on yang berlaku beserta data add-on (dimuat sekali per objek tenant).
+     *
+     * @return Collection<int, TenantAddon>
+     */
+    public function activeAddons(): Collection
+    {
+        if (! $this->relationLoaded('addons')) {
+            $this->load(['addons' => fn ($q) => $q->with('addon')]);
+        }
+
+        return $this->addons->filter(fn (TenantAddon $a): bool => $a->addon !== null)->values();
     }
 
     /** @return HasMany<SubscriptionInvoice, $this> */
