@@ -1,6 +1,6 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-14 · Branch: `feature/pos`
+> Diperbarui: 2026-10-18 · Branch: `feature/pos`
 > Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I4 (ADR 0015), installer (ADR 0016), **shift bersama per perangkat C1–C4 (ADR 0017)** selesai. Deploy ditunda atas keputusan pemilik.
 > Kualitas: 1412 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
 > Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
@@ -213,6 +213,18 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
 - Webhook `POST /webhooks/billing/midtrans`; jadwal `pos:billing-reminders` 08.00 WIB. Revisi 2026-10-16: upgrade prorata
   (`InvoiceQuote`, `subscription_invoices.kind`), downgrade/ganti siklus dijadwalkan (`tenants.next_plan_id`, `pos:apply-plan-changes` tiap jam). Env baru `POS_BILLING_*`
   (lihat `.env.example`). URL notifikasi Midtrans vendor: `{APP_URL}/webhooks/billing/midtrans`.
+
+### Paket fitur, kuota, add-on (ADR 0025, SPEC Q112–Q113) — selesai 2026-10-18 (belum di-push)
+- Admin: detail bisnis (paket, jadwal, tagihan, kuota, add-on), filter Paket, **Buat tagihan** / **Tagih add-on** (termasuk
+  paket/add-on khusus, email `InvoiceCreated`), **Atur add-on**, menu **Add-on**, widget *Langganan* di Dasbor (lunas, MRR).
+- Fitur & kuota = **master data tabel** `features` / `quotas` (tanpa CRUD, isi lewat migration). `key` dipakai kode.
+  Gerbang fitur API `feature:{key}` → `403 FEATURE_NOT_AVAILABLE`; fitur berbayar baru `advanced_reports`, `report_export`,
+  `web_cashier`, `online_payment` (paket lama otomatis diberi). Kuota → `409 PLAN_LIMIT_REACHED`; kolom `max_outlets` dihapus
+  (`plans.limits`, `tenants.limit_overrides`). `auth/me` → `tenant.features`, `tenant.limits`.
+- Paket bawaan: `php artisan db:seed --class=PlanSeeder --force` (sekali di hosting). Tagihan berbaris
+  (`subscription_invoice_items`), jenis tagihan `addon`; `pos:apply-plan-changes` juga melepas add-on yang berhenti.
+- Flutter: tangani `FEATURE_NOT_AVAILABLE` & `PLAN_LIMIT_REACHED`, sembunyikan menu sesuai `tenant.features`, tampilkan sisa
+  kuota dari `tenant.limits`; checkout dengan `member_id`/voucher ditolak bila paket tanpa `member`.
 
 **Backlog 1–4 selesai** (shift bersama, retur, pecah/gabung bill, resep & paket, PO, promo otomatis, kasbon, langganan).
 
