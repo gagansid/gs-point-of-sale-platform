@@ -35,7 +35,9 @@ branch kerja ──PR──▶ review + approve ──merge──▶ master
 2. Instal aplikasi pertama kali lewat form web ([`install.md`](install.md)) atau manual sesuai SPEC → *Deploy ke cPanel*.
    Workflow menolak deploy bila `.env` belum ada.
 3. Cari path PHP 8.2+ CLI: `ls /opt/cpanel/ea-php8*/root/usr/bin/php` (isi ke variable `PHP_BIN`).
-4. Pastikan `mysqldump` tersedia (backup sebelum migrasi). Bila tidak, set variable `DEPLOY_BACKUP=false`
+4. (SaaS) Buat paket langganan bawaan sekali: `php artisan db:seed --class=PlanSeeder --force` — Basic, Pro, Bisnis
+   (publik) dan Enterprise (khusus). Paket yang sudah ada tidak diubah; ubah harga/fitur/kuota di admin **Pelanggan → Paket**.
+5. Pastikan `mysqldump` tersedia (backup sebelum migrasi). Bila tidak, set variable `DEPLOY_BACKUP=false`
    (tidak disarankan) atau isi `dump.dump_binary_path` di `config/database.php`.
 
 ### 2. Kunci SSH khusus deploy
