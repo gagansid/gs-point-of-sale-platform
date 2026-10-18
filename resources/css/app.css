@@ -5161,3 +5161,283 @@
     height: 44px;
     border-radius: var(--pos-radius);
 }
+
+/* Header: Kunci & Keluar berdampingan (6px), terpisah dari menu */
+.cashier-header-actions {
+    display: flex;
+    flex: none;
+    gap: 6px;
+}
+
+/* =====================================================================
+ * Kasir web: dialog item (opsi, jumlah, diskon, catatan) — kartu opsi yang diketuk, stepper qty.
+ * ===================================================================== */
+.pos-pick {
+    gap: 18px;
+    max-width: 560px;
+}
+
+.pos-pick-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pos-pick-head > div {
+    flex: 1;
+    min-width: 0;
+}
+
+.pos-pick-head span {
+    color: var(--site-primary);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pos-pick-image {
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--pos-radius);
+    background: var(--site-bg);
+    object-fit: cover;
+}
+
+.pos-pick-close {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-start;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: var(--pos-radius);
+    background: var(--site-bg);
+    color: var(--site-muted);
+    cursor: pointer;
+}
+
+.pos-pick-close:hover {
+    color: var(--site-text);
+}
+
+.pos-pick-close svg {
+    width: 20px;
+    height: 20px;
+}
+
+.pos-pick .pos-options legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+.pos-options-badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--site-bg);
+    color: var(--site-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.pos-options-badge.is-required {
+    background: #fffaeb;
+    color: #b54708;
+}
+
+.pos-option-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+}
+
+/* Kartu opsi: nama + harga tambahan; terpilih = garis & latar primer + centang */
+.pos-choice {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+    min-height: 56px;
+    padding: 8px 32px 8px 12px;
+    border: 1.5px solid var(--site-border);
+    border-radius: var(--pos-radius);
+    background: #ffffff;
+    color: var(--site-navy);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 120ms, background-color 120ms;
+}
+
+.pos-choice:hover:not(:disabled) {
+    border-color: var(--site-mist);
+}
+
+.pos-choice-name {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.pos-choice-price {
+    color: var(--site-muted);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-choice-check {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid var(--site-border);
+    border-radius: 999px;
+    background: #ffffff;
+    color: transparent;
+    transform: translateY(-50%);
+}
+
+.pos-choice-check svg {
+    width: 12px;
+    height: 12px;
+}
+
+.pos-choice.is-selected {
+    border-color: var(--site-primary);
+    background: var(--site-primary-lt);
+}
+
+.pos-choice.is-selected .pos-choice-check {
+    border-color: var(--site-primary);
+    background: var(--site-primary);
+    color: #ffffff;
+}
+
+.pos-choice.is-selected .pos-choice-price {
+    color: var(--site-primary);
+}
+
+.pos-choice.is-unavailable {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pos-pick-row {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px;
+    align-items: end;
+}
+
+/* Stepper qty: − [n] + seperti detail pesanan, ukuran sentuh 44px */
+.pos-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px;
+    border: 1px solid var(--site-border);
+    border-radius: var(--pos-radius);
+    background: #ffffff;
+}
+
+.pos-stepper button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: calc(var(--pos-radius) - 2px);
+    background: var(--site-bg);
+    color: var(--site-navy);
+    cursor: pointer;
+}
+
+.pos-stepper button:hover:not(:disabled) {
+    background: var(--site-primary-lt);
+}
+
+.pos-stepper button:disabled {
+    color: var(--site-mist);
+    cursor: not-allowed;
+}
+
+.pos-stepper button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.cashier-body .pos-modal .pos-stepper input[type='number'] {
+    width: 56px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    color: var(--site-navy);
+    font-size: 17px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.pos-stepper input::-webkit-outer-spin-button,
+.pos-stepper input::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+.pos-money.is-compact {
+    height: 48px;
+}
+
+.cashier-body .pos-modal .pos-money.is-compact input[type='number'] {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0 0 0 8px;
+    border: 0;
+    font-size: 16px;
+    font-weight: 600;
+    text-align: right;
+    box-shadow: none;
+}
+
+.pos-pick-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.cashier-body .pos-pick-actions .site-btn {
+    gap: 6px;
+    height: 48px;
+    border-radius: var(--pos-radius);
+}
+
+.cashier-body .pos-pick-actions .site-btn-primary {
+    flex: 1;
+}
+
+.pos-pick-actions .site-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.cashier-body .pos-btn-ghost-danger {
+    color: #b42318;
+}
+
+.cashier-body .pos-btn-ghost-danger:hover {
+    border-color: #fda29b;
+    background: #fef3f2;
+}

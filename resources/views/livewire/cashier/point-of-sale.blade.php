@@ -359,54 +359,86 @@
         </div>
     </aside>
 
-    {{-- Dialog opsi / ubah item --}}
+    {{-- Dialog opsi / ubah item: kartu opsi (ketuk untuk memilih), stepper qty seperti detail pesanan --}}
     @if ($pickProductId)
         @php($pickProduct = $catalog['products']->firstWhere('id', $pickProductId))
         <div class="pos-modal" role="dialog" aria-modal="true" aria-labelledby="pick-title" wire:keydown.escape="closePicker">
-            <form class="pos-modal-card" wire:submit="savePick">
-                <h2 id="pick-title">{{ $pickProduct?->name }}</h2>
+            <form class="pos-modal-card pos-pick" wire:submit="savePick">
+                <header class="pos-pick-head">
+                    @if ($pickProduct && ($image = $pickProduct->imageUrl()))
+                        <img src="{{ $image }}" alt="" class="pos-pick-image" width="56" height="56">
+                    @endif
+                    <div>
+                        <h2 id="pick-title">{{ $pickProduct?->name }}</h2>
+                        @if ($pickProduct)
+                            <span>{{ $money($pickProduct->price) }}</span>
+                        @endif
+                    </div>
+                    <button type="button" class="pos-pick-close" wire:click="closePicker" aria-label="Tutup">@svg('heroicon-o-x-mark', ['aria-hidden' => 'true'])</button>
+                </header>
 
                 @foreach ($this->pickerGroups() as $group)
+                    @php($chosen = (array) ($pickOptions[$group->id] ?? []))
                     <fieldset class="pos-options" wire:key="g-{{ $group->id }}">
-                        <legend>{{ $group->name }} <small>{{ $group->min_select > 0 ? 'wajib' : 'opsional' }}{{ $group->max_select > 1 ? ', maks. '.$group->max_select : '' }}</small></legend>
-                        @if ($group->max_select === 1 && $group->min_select === 0)
-                            <label class="pos-option">
-                                <input type="radio" wire:model="pickOptions.{{ $group->id }}" value="">
-                                <span>Tidak dipilih</span>
-                            </label>
-                        @endif
-                        @foreach ($group->options as $option)
-                            <label @class(['pos-option', 'is-unavailable' => ! $option->is_available])>
-                                @if ($group->max_select === 1)
-                                    <input type="radio" wire:model="pickOptions.{{ $group->id }}" value="{{ $option->id }}" @disabled(! $option->is_available)>
-                                @else
-                                    <input type="checkbox" wire:model="pickOptions.{{ $group->id }}" value="{{ $option->id }}" @disabled(! $option->is_available)>
-                                @endif
-                                <span>{{ $option->name }}</span>
-                                <span class="pos-option-price">{{ \App\Support\Money::isPositive($option->price_delta) ? '+'.$money($option->price_delta) : '' }}{{ $option->is_available ? '' : ' (habis)' }}</span>
-                            </label>
-                        @endforeach
+                        <legend>
+                            {{ $group->name }}
+                            <span @class(['pos-options-badge', 'is-required' => $group->min_select > 0])>
+                                {{ $group->min_select > 0 ? 'Wajib' : 'Opsional' }}{{ $group->max_select > 1 ? ' · maks. '.$group->max_select : '' }}
+                            </span>
+                        </legend>
+                        <div class="pos-option-grid" role="{{ $group->max_select === 1 ? 'radiogroup' : 'group' }}" aria-label="{{ $group->name }}">
+                            @foreach ($group->options as $option)
+                                @php($on = in_array($option->id, $chosen, true))
+                                <button type="button" wire:key="o-{{ $option->id }}" wire:click="pickOption('{{ $group->id }}', '{{ $option->id }}')"
+                                    role="{{ $group->max_select === 1 ? 'radio' : 'checkbox' }}" aria-checked="{{ $on ? 'true' : 'false' }}"
+                                    @class(['pos-choice', 'is-selected' => $on, 'is-unavailable' => ! $option->is_available]) @disabled(! $option->is_available)>
+                                    <span class="pos-choice-name">{{ $option->name }}</span>
+                                    <span class="pos-choice-price">
+                                        @if (! $option->is_available)
+                                            Habis
+                                        @elseif (\App\Support\Money::isPositive($option->price_delta))
+                                            +{{ $money($option->price_delta) }}
+                                        @else
+                                            Gratis
+                                        @endif
+                                    </span>
+                                    <span class="pos-choice-check" aria-hidden="true">@svg('heroicon-s-check', ['aria-hidden' => 'true'])</span>
+                                </button>
+                            @endforeach
+                        </div>
                     </fieldset>
                 @endforeach
 
-                <div class="pos-modal-row">
-                    <label>Qty <input type="number" min="1" max="999" wire:model="pickQty"></label>
+                <div class="pos-pick-row">
+                    <div class="pos-modal-field">
+                        <span>Jumlah</span>
+                        <div class="pos-stepper">
+                            <button type="button" wire:click="stepPickQty(-1)" @disabled($pickQty <= 1) aria-label="Kurangi jumlah">@svg('heroicon-o-minus', ['aria-hidden' => 'true'])</button>
+                            <input type="number" min="1" max="999" inputmode="numeric" wire:model.live.debounce.300ms="pickQty" aria-label="Jumlah">
+                            <button type="button" wire:click="stepPickQty(1)" @disabled($pickQty >= 999) aria-label="Tambah jumlah">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
+                        </div>
+                    </div>
                     @can('order.discount')
-                        <label>Diskon item (Rp) <input type="number" min="0" step="any" inputmode="decimal" wire:model="pickDiscount"></label>
+                        <label class="pos-modal-field">Diskon item
+                            <span class="pos-money is-compact">
+                                <span class="pos-money-prefix">Rp</span>
+                                <input type="number" min="0" step="any" inputmode="decimal" wire:model="pickDiscount" placeholder="0">
+                            </span>
+                        </label>
                     @endcan
                 </div>
-                <label class="pos-modal-field">Catatan <input type="text" maxlength="255" wire:model="pickNotes" placeholder="mis. less ice"></label>
+                <label class="pos-modal-field">Catatan <input type="text" maxlength="255" wire:model="pickNotes" placeholder="mis. less ice, tanpa sedotan"></label>
 
                 @if ($pickError)
                     <p class="site-error" role="alert">{{ $pickError }}</p>
                 @endif
 
-                <div class="pos-actions">
+                <div class="pos-pick-actions">
                     @if ($pickIndex !== null)
-                        <button type="button" class="site-btn site-btn-outline" wire:click="remove({{ $pickIndex }}); closePicker()">Hapus item</button>
+                        <button type="button" class="site-btn site-btn-outline pos-btn-ghost-danger" wire:click="remove({{ $pickIndex }}); closePicker()">@svg('heroicon-o-trash', ['aria-hidden' => 'true']) Hapus</button>
                     @endif
                     <button type="button" class="site-btn site-btn-outline" wire:click="closePicker">Batal</button>
-                    <button type="submit" class="site-btn site-btn-primary">{{ $pickIndex !== null ? 'Simpan' : 'Tambah' }}</button>
+                    <button type="submit" class="site-btn site-btn-primary">@svg($pickIndex !== null ? 'heroicon-o-check' : 'heroicon-o-plus', ['aria-hidden' => 'true']) {{ $pickIndex !== null ? 'Simpan' : 'Tambah ke pesanan' }}</button>
                 </div>
             </form>
         </div>

@@ -42,19 +42,21 @@
                 <a href="{{ $url }}" @class(['is-active' => $active === $key]) @if ($active === $key) aria-current="page" @endif>@svg($icon, ['aria-hidden' => 'true'])<span>{{ $label }}</span>@if ($key === 'self-orders')<livewire:cashier.self-order-badge />@endif</a>
             @endforeach
         </nav>
-        {{-- Kunci layar → kasir lain masuk dengan PIN, shift berlanjut tanpa hitung uang (ADR 0017) --}}
-        <form method="POST" action="{{ route('cashier.lock') }}" class="cashier-logout" data-lock-form
-            data-confirm-title="Kunci layar?" data-confirm-ok="Kunci layar" data-confirm-icon="lock"
-            data-confirm-text="Shift tetap berjalan. Kasir berikutnya cukup memilih nama dan memasukkan PIN untuk melanjutkan.">
-            @csrf
-            <button type="submit" class="site-link-button" title="Kunci layar untuk ganti kasir">@svg('heroicon-o-lock-closed', ['aria-hidden' => 'true'])<span>Kunci</span></button>
-        </form>
-        <form method="POST" action="{{ route('cashier.logout') }}" class="cashier-logout"
-            data-confirm-title="Keluar dari kasir web?" data-confirm-ok="Keluar" data-confirm-icon="logout" data-confirm-tone="danger"
-            data-confirm-text="Shift di browser ini tetap terbuka. Bila sudah selesai bertugas, tutup shift dulu dari menu Shift.">
-            @csrf
-            <button type="submit" class="site-link-button" title="Keluar">@svg('heroicon-o-arrow-right-start-on-rectangle', ['aria-hidden' => 'true'])<span>Keluar</span></button>
-        </form>
+        <div class="cashier-header-actions">
+            {{-- Kunci layar → kasir lain masuk dengan PIN, shift berlanjut tanpa hitung uang (ADR 0017) --}}
+            <form method="POST" action="{{ route('cashier.lock') }}" class="cashier-logout" data-lock-form
+                data-confirm-title="Kunci layar?" data-confirm-ok="Kunci layar" data-confirm-icon="lock"
+                data-confirm-text="Shift tetap berjalan. Kasir berikutnya cukup memilih nama dan memasukkan PIN untuk melanjutkan.">
+                @csrf
+                <button type="submit" class="site-link-button" title="Kunci layar untuk ganti kasir">@svg('heroicon-o-lock-closed', ['aria-hidden' => 'true'])<span>Kunci</span></button>
+            </form>
+            <form method="POST" action="{{ route('cashier.logout') }}" class="cashier-logout"
+                data-confirm-title="Keluar dari kasir web?" data-confirm-ok="Keluar" data-confirm-icon="logout" data-confirm-tone="danger"
+                data-confirm-text="Shift di browser ini tetap terbuka. Bila sudah selesai bertugas, tutup shift dulu dari menu Shift.">
+                @csrf
+                <button type="submit" class="site-link-button" title="Keluar">@svg('heroicon-o-arrow-right-start-on-rectangle', ['aria-hidden' => 'true'])<span>Keluar</span></button>
+            </form>
+        </div>
     </header>
 
     @foreach (\App\Models\Announcement::current() as $announcement)

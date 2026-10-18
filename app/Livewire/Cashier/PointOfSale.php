@@ -443,6 +443,41 @@ final class PointOfSale extends Component
         }
     }
 
+    /**
+     * Ketuk kartu opsi: pilih satu (ketuk lagi pada grup opsional = lepas) atau centang banyak (maks. max_select).
+     * Grup & opsi dicocokkan ke katalog server; opsi habis diabaikan.
+     */
+    public function pickOption(string $groupId, string $optionId): void
+    {
+        $group = $this->pickerGroups()->firstWhere('id', $groupId);
+        $option = $group?->options->firstWhere('id', $optionId);
+
+        if ($group === null || $option === null || ! $option->getAttribute('is_available')) {
+            return;
+        }
+
+        if ($group->max_select === 1) {
+            $selected = ($this->pickOptions[$groupId] ?? '') === $optionId;
+            $this->pickOptions[$groupId] = $selected && $group->min_select === 0 ? '' : $optionId;
+
+            return;
+        }
+
+        $chosen = array_values(array_filter((array) ($this->pickOptions[$groupId] ?? []), 'is_string'));
+
+        if (in_array($optionId, $chosen, true)) {
+            $this->pickOptions[$groupId] = array_values(array_diff($chosen, [$optionId]));
+        } elseif (count($chosen) < $group->max_select) {
+            $this->pickOptions[$groupId] = [...$chosen, $optionId];
+        }
+    }
+
+    /** Tombol − / + qty di dialog item (1–999). */
+    public function stepPickQty(int $delta): void
+    {
+        $this->pickQty = max(1, min(999, $this->pickQty + ($delta > 0 ? 1 : -1)));
+    }
+
     public function savePick(): void
     {
         $product = $this->pickProductId !== null ? $this->product($this->pickProductId) : null;
@@ -1255,11 +1290,14 @@ final class PointOfSale extends Component
         $this->pickProductId = $product->id;
 
         foreach ($this->pickerGroups() as $group) {
-            // Grup wajib pilih satu: opsi pertama yang tersedia langsung terpilih
-            $first = $group->options->first(fn ($o): bool => (bool) $o->getAttribute('is_available'))?->id;
-            $this->pickOptions[$group->id] = $group->max_select === 1
-                ? ($group->min_select >= 1 && $first !== null ? $first : '')
-                : [];
+            $available = $group->options->filter(fn ($o): bool => (bool) $o->getAttribute('is_available'));
+            // Wajib pilih satu: opsi tersedia pertama. Opsional pilih satu (mis. Gula): opsi gratis pertama
+            // ("Normal") sebagai bawaan; opsi berbayar tidak pernah terpilih otomatis.
+            $default = $group->min_select >= 1
+                ? $available->first()?->id
+                : $available->first(fn ($o): bool => ! Money::isPositive((string) $o->price_delta))?->id;
+
+            $this->pickOptions[$group->id] = $group->max_select === 1 ? ($default ?? '') : [];
         }
     }
 
