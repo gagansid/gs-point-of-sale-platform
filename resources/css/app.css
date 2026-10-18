@@ -5471,36 +5471,6 @@
     color: var(--site-primary);
 }
 
-.cashier-body .pos-qty {
-    gap: 0;
-    padding: 0;
-    border: 0;
-    border-radius: var(--pos-radius);
-    background: var(--site-bg);
-}
-
-.cashier-body .pos-qty button {
-    width: 28px;
-    height: 28px;
-    border-radius: calc(var(--pos-radius) - 2px);
-    background: transparent;
-}
-
-.cashier-body .pos-qty button:hover {
-    background: #ffffff;
-    box-shadow: 0 1px 2px rgb(27 42 85 / 0.12);
-}
-
-.cashier-body .pos-qty button svg {
-    width: 14px;
-    height: 14px;
-}
-
-.cashier-body .pos-qty span {
-    min-width: 22px;
-    font-size: 13.5px;
-}
-
 .pos-line-name {
     font-size: 14px;
 }
