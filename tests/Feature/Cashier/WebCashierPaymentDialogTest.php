@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Product\SetProductAvailability;
 use App\Livewire\Cashier\PointOfSale;
 use App\Models\Order;
 use App\Models\Product;
@@ -106,4 +107,16 @@ it('struk tanpa desimal: service & pajak dibulatkan ke Rupiah, total tetap', fun
         // Pembulatan tampil = 28.100 − bulat(28.030,28) = 70
         ->assertSee('Rp70')
         ->assertDontSee('2.777,78')->assertDontSee('1.202,50');
+});
+
+it('Kunci & Keluar memakai dialog konfirmasi; produk habis tampil dengan badge', function () {
+    TenantContext::run($this->pos->tenantId, fn () => app(SetProductAvailability::class)
+        ->handle($this->pos->croissant, $this->pos->outlet, false));
+
+    $this->get(route('cashier.home'))->assertOk()
+        ->assertSee('data-confirm-dialog', false)
+        ->assertSee('data-confirm-title="Kunci layar?"', false)
+        ->assertSee('data-confirm-title="Keluar dari kasir web?"', false);
+
+    Livewire::test(PointOfSale::class)->assertSeeHtml('<span class="pos-tile-soldout">Habis</span>')->assertSee('Stok habis');
 });

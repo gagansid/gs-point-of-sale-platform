@@ -43,11 +43,15 @@
             @endforeach
         </nav>
         {{-- Kunci layar → kasir lain masuk dengan PIN, shift berlanjut tanpa hitung uang (ADR 0017) --}}
-        <form method="POST" action="{{ route('cashier.lock') }}" class="cashier-logout" data-lock-form>
+        <form method="POST" action="{{ route('cashier.lock') }}" class="cashier-logout" data-lock-form
+            data-confirm-title="Kunci layar?" data-confirm-ok="Kunci layar" data-confirm-icon="lock"
+            data-confirm-text="Shift tetap berjalan. Kasir berikutnya cukup memilih nama dan memasukkan PIN untuk melanjutkan.">
             @csrf
             <button type="submit" class="site-link-button" title="Kunci layar untuk ganti kasir">@svg('heroicon-o-lock-closed', ['aria-hidden' => 'true'])<span>Kunci</span></button>
         </form>
-        <form method="POST" action="{{ route('cashier.logout') }}" class="cashier-logout">
+        <form method="POST" action="{{ route('cashier.logout') }}" class="cashier-logout"
+            data-confirm-title="Keluar dari kasir web?" data-confirm-ok="Keluar" data-confirm-icon="logout" data-confirm-tone="danger"
+            data-confirm-text="Shift di browser ini tetap terbuka. Bila sudah selesai bertugas, tutup shift dulu dari menu Shift.">
             @csrf
             <button type="submit" class="site-link-button" title="Keluar">@svg('heroicon-o-arrow-right-start-on-rectangle', ['aria-hidden' => 'true'])<span>Keluar</span></button>
         </form>
@@ -62,6 +66,20 @@
     <main @class(['cashier-main', 'cashier-main-wide' => $wide])>
         {{ $slot }}
     </main>
+
+    {{-- Konfirmasi Kunci & Keluar: <dialog> bawaan (tanpa Alpine; kunci otomatis memanggil form.submit() tanpa dialog) --}}
+    <dialog class="cashier-confirm" data-confirm-dialog aria-labelledby="cashier-confirm-title">
+        <form method="dialog">
+            <span class="cashier-confirm-icon" data-confirm-icon-slot="lock" aria-hidden="true">@svg('heroicon-o-lock-closed')</span>
+            <span class="cashier-confirm-icon is-danger" data-confirm-icon-slot="logout" aria-hidden="true">@svg('heroicon-o-arrow-right-start-on-rectangle')</span>
+            <h2 id="cashier-confirm-title" data-confirm-title></h2>
+            <p data-confirm-text></p>
+            <div class="cashier-confirm-actions">
+                <button type="submit" value="cancel" class="site-btn site-btn-outline" autofocus>Batal</button>
+                <button type="submit" value="ok" class="site-btn site-btn-primary" data-confirm-ok></button>
+            </div>
+        </form>
+    </dialog>
 
     {{-- Toast kanan atas (seperti notifikasi dashboard): flash server & event Livewire "cashier-toast" --}}
     <div class="cashier-toasts" data-toasts aria-live="polite"></div>
@@ -169,6 +187,39 @@
             };
             ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach((name) => document.addEventListener(name, reset, { passive: true }));
             reset();
+        })();
+
+        // Kunci & Keluar: tampilkan dialog konfirmasi; "ok" baru mengirim form
+        (() => {
+            const dialog = document.querySelector('[data-confirm-dialog]');
+            if (! dialog || typeof dialog.showModal !== 'function') return;
+            let pending = null;
+
+            document.querySelectorAll('form[data-confirm-title]').forEach((form) => {
+                form.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    pending = form;
+                    dialog.querySelector('[data-confirm-title]').textContent = form.dataset.confirmTitle;
+                    dialog.querySelector('[data-confirm-text]').textContent = form.dataset.confirmText ?? '';
+                    const ok = dialog.querySelector('[data-confirm-ok]');
+                    ok.textContent = form.dataset.confirmOk ?? 'Lanjut';
+                    ok.classList.toggle('pos-btn-danger', form.dataset.confirmTone === 'danger');
+                    dialog.querySelectorAll('[data-confirm-icon-slot]').forEach((icon) => {
+                        icon.hidden = icon.dataset.confirmIconSlot !== form.dataset.confirmIcon;
+                    });
+                    dialog.returnValue = '';
+                    dialog.showModal();
+                });
+            });
+
+            // Klik di luar kartu = batal
+            dialog.addEventListener('click', (event) => {
+                if (event.target === dialog) dialog.close('cancel');
+            });
+            dialog.addEventListener('close', () => {
+                if (dialog.returnValue === 'ok' && pending) pending.submit();
+                pending = null;
+            });
         })();
 
         // Konfirmasi dua langkah tanpa dialog bawaan browser (bisa diblokir browser tertanam):

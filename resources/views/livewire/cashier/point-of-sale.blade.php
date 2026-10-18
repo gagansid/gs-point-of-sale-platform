@@ -27,15 +27,21 @@
             @forelse ($this->visibleProducts as $product)
                 <div @class(['pos-tile', 'is-unavailable' => ! $product->is_available]) wire:key="p-{{ $product->id }}">
                     <button type="button" class="pos-tile-main" wire:click="addProduct('{{ $product->id }}')" @disabled(! $product->is_available)>
-                        @if ($image = $product->imageUrl())
-                            <img src="{{ $image }}" alt="" class="pos-tile-image" loading="lazy" decoding="async" width="400" height="400">
-                        @else
-                            <span class="pos-tile-image pos-tile-image--empty" aria-hidden="true">{{ mb_strtoupper(mb_substr($product->name, 0, 1)) }}</span>
-                        @endif
+                        <span class="pos-tile-media">
+                            @if ($image = $product->imageUrl())
+                                <img src="{{ $image }}" alt="" class="pos-tile-image" loading="lazy" decoding="async" width="400" height="400">
+                            @else
+                                <span class="pos-tile-image pos-tile-image--empty" aria-hidden="true">{{ mb_strtoupper(mb_substr($product->name, 0, 1)) }}</span>
+                            @endif
+                            {{-- Habis: badge di atas gambar (gambar diabukan), tile tidak bisa diklik --}}
+                            @if (! $product->is_available)
+                                <span class="pos-tile-soldout">Habis</span>
+                            @endif
+                        </span>
                         <span class="pos-tile-name">{{ $product->name }}</span>
                         <span class="pos-tile-price">{{ $money($product->price) }}</span>
                         @if (! $product->is_available)
-                            <span class="pos-tile-flag">Habis</span>
+                            <span class="pos-tile-flag">Stok habis</span>
                         @elseif ($product->track_stock)
                             <span @class(['pos-tile-stock', 'is-low' => $product->isLowStock()])>Stok {{ $product->stock_qty }}</span>
                         @else
@@ -43,10 +49,13 @@
                             <span class="pos-tile-meta" aria-hidden="true"></span>
                         @endif
                     </button>
+                    {{-- Tandai habis/tersedia (izin product.toggle_available: supervisor ke atas) --}}
                     @if ($canToggle)
-                        <button type="button" class="pos-tile-toggle" wire:click="toggleAvailability('{{ $product->id }}')"
-                            title="{{ $product->is_available ? 'Tandai habis' : 'Tandai tersedia' }}">
-                            {{ $product->is_available ? 'Habis?' : 'Tersedia' }}
+                        <button type="button" @class(['pos-tile-toggle', 'is-restore' => ! $product->is_available])
+                            wire:click="toggleAvailability('{{ $product->id }}')"
+                            aria-label="{{ $product->is_available ? 'Tandai '.$product->name.' habis' : 'Tandai '.$product->name.' tersedia' }}">
+                            @svg($product->is_available ? 'heroicon-o-no-symbol' : 'heroicon-o-arrow-path', ['aria-hidden' => 'true'])
+                            <span>{{ $product->is_available ? 'Habis' : 'Tersedia lagi' }}</span>
                         </button>
                     @endif
                 </div>
