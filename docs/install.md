@@ -42,7 +42,8 @@
 6. **Cron** (cPanel → Cron Jobs, setiap menit):
    `cd /home/USER/gs-point-of-sale-platform && php artisan schedule:run >> /dev/null 2>&1`
    (ganti `php` dengan path PHP 8.2+, mis. `/opt/cpanel/ea-php82/root/usr/bin/php`). Wajib untuk email, pesanan meja
-   kedaluwarsa, ringkasan harian, dan backup.
+   kedaluwarsa, ringkasan harian, dan backup. Cek di admin **Dasbor → Kesehatan sistem**: kartu *Cron / scheduler*
+   harus "Berjalan" dalam 1–2 menit setelah cron dipasang.
 
 ## Bila ada masalah
 

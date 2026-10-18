@@ -2,12 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Services\Admin\SystemHealth;
 use Illuminate\Support\Facades\Schedule;
 
 /*
  * Jadwal (SPEC → Deploy). Shared hosting: satu cron `php artisan schedule:run` tiap menit, tanpa
  * proses yang berjalan terus. Backup ditambahkan bersama spatie/laravel-backup.
  */
+
+// Detak scheduler: Dasbor admin memperingatkan bila cron cPanel berhenti (> 3 menit tanpa detak)
+Schedule::call(fn () => SystemHealth::beat())->everyMinute()->name('scheduler-heartbeat');
 
 // Antrean database: proses sampai kosong, maks. 50 detik agar tidak bertumpuk dengan menit berikutnya
 Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')

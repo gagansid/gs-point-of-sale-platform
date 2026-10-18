@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Pages;
 
 use App\Actions\Admin\ManageFailedJobs;
+use App\Filament\Admin\Widgets\QueuedJobsWidget;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\FailedJob;
 use BackedEnum;
@@ -26,8 +27,8 @@ use Illuminate\Support\Facades\DB;
 use UnitEnum;
 
 /**
- * Sistem → Queue: antrean (driver database, dijalankan cron `queue:work --stop-when-empty` tiap menit)
- * dan job gagal: lihat error, ulangi, hapus.
+ * Sistem → Queue: antrean (driver database, dijalankan cron `queue:work --stop-when-empty` tiap menit), tabel job
+ * yang sedang diproses/menunggu (QueuedJobsWidget), dan job gagal: lihat error, ulangi, hapus.
  */
 final class QueueMonitor extends Page implements HasActions, HasSchemas, HasTable
 {
@@ -107,6 +108,17 @@ final class QueueMonitor extends Page implements HasActions, HasSchemas, HasTabl
             ])
             ->emptyStateHeading('Tidak ada job gagal')
             ->emptyStateIcon(Heroicon::OutlinedCheckCircle);
+    }
+
+    /** Job yang sedang diproses / menunggu (nama job saja), di atas daftar job gagal. */
+    protected function getHeaderWidgets(): array
+    {
+        return [QueuedJobsWidget::make(['showQueueLink' => false])];
+    }
+
+    public function getHeaderWidgetsColumns(): int
+    {
+        return 1;
     }
 
     protected function getHeaderActions(): array
