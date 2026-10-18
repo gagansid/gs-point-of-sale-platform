@@ -139,16 +139,16 @@ Route::name('api.v1.')->middleware('app.version')->group(function (): void {
             Route::get('audit', 'audit')->name('audit');
             Route::get('trend', 'trend')->name('trend');
             Route::get('categories', 'categories')->name('categories');
-            Route::get('profit', 'profit')->name('profit');
+            Route::get('profit', 'profit')->middleware('feature:advanced_reports')->name('profit');
             Route::get('members', 'members')->middleware('feature:member')->name('members');
             Route::get('channels', 'channels')->name('channels');
-            Route::get('purchases', 'purchases')->name('purchases');
-            Route::get('options', 'options')->name('options');
-            Route::get('employees', 'employees')->name('employees');
+            Route::get('purchases', 'purchases')->middleware('feature:stock')->name('purchases');
+            Route::get('options', 'options')->middleware('feature:advanced_reports')->name('options');
+            Route::get('employees', 'employees')->middleware('feature:advanced_reports')->name('employees');
             Route::get('shifts', 'shifts')->name('shifts');
             Route::get('shifts/{shift}', 'shiftRecap')->whereUuid('shift')->name('shifts.show');
             Route::get('shifts/{shift}/pdf', 'shiftRecapPdf')->whereUuid('shift')->name('shifts.pdf');
-            Route::get('heatmap', 'heatmap')->name('heatmap');
+            Route::get('heatmap', 'heatmap')->middleware('feature:advanced_reports')->name('heatmap');
             Route::get('stock', 'stock')->name('stock');
         });
 

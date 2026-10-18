@@ -12,6 +12,7 @@ use App\Models\GatewayTransaction;
 use App\Models\Order;
 use App\Models\PaymentGatewaySetting;
 use App\Services\Payment\MidtransClient;
+use App\Support\Features;
 use App\Support\Money;
 use Illuminate\Support\Str;
 
@@ -30,7 +31,8 @@ final class StartOnlinePayment
     {
         $setting = PaymentGatewaySetting::current();
 
-        if (! $setting->isReady()) {
+        // Tanpa fitur paket online_payment (ADR 0025) = belum diaktifkan, pesan ramah untuk pelanggan
+        if (! $setting->isReady() || ! Features::enabled('online_payment')) {
             throw BusinessException::of(ErrorCode::PaymentGatewayNotConfigured);
         }
 

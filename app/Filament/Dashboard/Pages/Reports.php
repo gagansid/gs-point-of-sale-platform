@@ -48,6 +48,7 @@ use App\Models\User;
 use App\Services\Report\ReportExporter;
 use App\Support\CurrentOutlet;
 use App\Support\ExportThrottle;
+use App\Support\Features;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -225,7 +226,10 @@ final class Reports extends Page
             ReportTab::OrderTypes => [OrderTypesWidget::class, ChannelsTableWidget::class],
             ReportTab::Outlets => [OutletComparisonWidget::class],
             ReportTab::Discounts => [VoidsTableWidget::class, DiscountsTableWidget::class, ShiftDifferencesTableWidget::class],
-            ReportTab::Stock => [StockTableWidget::class, PurchasesBySupplierTableWidget::class, PurchasesByProductTableWidget::class],
+            // Pembelian dari stok masuk = fitur paket "stock" (ADR 0025)
+            ReportTab::Stock => Features::enabled('stock')
+                ? [StockTableWidget::class, PurchasesBySupplierTableWidget::class, PurchasesByProductTableWidget::class]
+                : [StockTableWidget::class],
         };
     }
 
@@ -245,7 +249,7 @@ final class Reports extends Page
                 ->icon(Heroicon::OutlinedArrowDownTray)
                 ->color('gray')
                 ->button()
-                ->visible(fn (): bool => self::user()?->can('report.export') ?? false),
+                ->visible(fn (): bool => (self::user()?->can('report.export') ?? false) && Features::enabled('report_export')),
         ];
     }
 

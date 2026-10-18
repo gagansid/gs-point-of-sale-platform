@@ -55,7 +55,8 @@ Status sistem, versi minimal app, dan pengumuman aktif. Dipanggil saat app dibuk
 ```
 
 `tenant.features` (ADR 0025): key fitur paket langganan yang aktif (`member`, `self_order`, `stock`, `recipes`,
-`promotions`, `credit`, …; daftar dari master data server, bisa bertambah). Tenant tanpa paket & edisi jual putus = semua
+`promotions`, `credit`, `advanced_reports`, `report_export`, `web_cashier`, `online_payment`; daftar dari master data
+server, bisa bertambah — abaikan key yang tidak dikenal app). Tenant tanpa paket & edisi jual putus = semua
 key. Sembunyikan menu fitur yang tidak ada di daftar; server tetap menolak dengan `403 FEATURE_NOT_AVAILABLE`. Juga
 dikirim di `GET /v1/auth/me`.
 

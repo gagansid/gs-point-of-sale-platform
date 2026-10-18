@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Services\Report;
 
 use App\Enums\ReportTab;
+use App\Exceptions\BusinessException;
 use App\Exceptions\ReportTooLargeException;
 use App\Exports\ReportSectionBuilder;
 use App\Exports\ReportWorkbookExport;
 use App\Models\Shift;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\Money;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
@@ -57,9 +59,10 @@ final class ReportExporter
         return "laporan-{$name}-{$period->from}-{$period->to}.{$extension}";
     }
 
-    /** @throws ReportTooLargeException */
+    /** @throws ReportTooLargeException|BusinessException FEATURE_NOT_AVAILABLE (ADR 0025) */
     public function excel(User $user, ReportContext $context, ?ReportTab $tab): Response
     {
+        Features::ensure('report_export');
         $tabs = self::tabsFor($user, $tab);
         abort_if($tabs === [], 403);
 
@@ -68,9 +71,10 @@ final class ReportExporter
         return Excel::download(new ReportWorkbookExport($this->info($user, $context, $tab), $sections), self::filename($tab, $context->period, 'xlsx'));
     }
 
-    /** @throws ReportTooLargeException */
+    /** @throws ReportTooLargeException|BusinessException FEATURE_NOT_AVAILABLE (ADR 0025) */
     public function pdf(User $user, ReportContext $context, ?ReportTab $tab): Response
     {
+        Features::ensure('report_export');
         $tabs = self::tabsFor($user, $tab);
         abort_if($tabs === [], 403);
 

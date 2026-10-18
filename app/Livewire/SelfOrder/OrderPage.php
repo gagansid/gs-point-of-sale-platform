@@ -21,6 +21,7 @@ use App\Models\PaymentGatewaySetting;
 use App\Models\Product;
 use App\Models\SelfOrder;
 use App\Services\Order\CalculationResult;
+use App\Support\Features;
 use App\Support\SelfOrderContext;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -345,7 +346,8 @@ final class OrderPage extends Component
     #[Computed]
     public function onlineReady(): bool
     {
-        return PaymentGatewaySetting::current()->isReady();
+        // Fitur paket (ADR 0025): tanpa online_payment pelanggan bayar di kasir
+        return Features::enabled('online_payment') && PaymentGatewaySetting::current()->isReady();
     }
 
     public function render(): View

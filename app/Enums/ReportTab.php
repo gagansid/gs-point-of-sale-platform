@@ -71,6 +71,19 @@ enum ReportTab: string
         };
     }
 
+    /**
+     * Fitur paket yang dibutuhkan tab (ADR 0025): null = laporan dasar, selalu ada. Diskon & void tetap dasar karena
+     * kontrol kecurangan tidak boleh tergantung paket.
+     */
+    public function feature(): ?string
+    {
+        return match ($this) {
+            self::Profit, self::Options, self::Employees, self::Time, self::Outlets => 'advanced_reports',
+            self::Members => 'member',
+            default => null,
+        };
+    }
+
     /** Tab operasional (report.view_shift), Q49. */
     public function isOperational(): bool
     {
@@ -93,13 +106,17 @@ enum ReportTab: string
             return false;
         }
 
+        if ($this->feature() !== null && ! Features::enabled($this->feature())) {
+            return false;
+        }
+
         if ($this === self::Outlets) {
             return CurrentOutlet::selectedId() === null && count($user->outletIds()) > 1;
         }
 
-        // Program member (ADR 0013) belum pernah diaktifkan atau tidak termasuk paket (ADR 0025): tab tidak relevan
+        // Program member (ADR 0013) belum pernah diaktifkan: tab tidak relevan
         if ($this === self::Members) {
-            return Features::enabled('member') && MemberSetting::query()->exists();
+            return MemberSetting::query()->exists();
         }
 
         return true;

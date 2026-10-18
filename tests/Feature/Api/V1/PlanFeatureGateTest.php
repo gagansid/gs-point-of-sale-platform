@@ -46,8 +46,11 @@ function gatePlan(Tenant $tenant, ?Plan $plan): void
 }
 
 describe('master data features', function () {
-    it('berisi 6 fitur awal berurutan', function () {
-        expect(array_keys(Feature::options()))->toBe(['member', 'self_order', 'stock', 'recipes', 'promotions', 'credit']);
+    it('berisi 6 fitur ADR 0024 + 4 fitur A2 berurutan', function () {
+        expect(array_keys(Feature::options()))->toBe([
+            'member', 'self_order', 'stock', 'recipes', 'promotions', 'credit',
+            'advanced_reports', 'report_export', 'web_cashier', 'online_payment',
+        ]);
     });
 
     it('fitur yang ditambah langsung di database bisa dipilih di paket; key tak dikenal ditolak', function () {

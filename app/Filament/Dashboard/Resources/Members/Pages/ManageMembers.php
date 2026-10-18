@@ -21,6 +21,7 @@ use App\Models\MemberSetting;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\ExportThrottle;
+use App\Support\Features;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Checkbox;
@@ -83,10 +84,10 @@ final class ManageMembers extends ManageRecords
     public function exportAction(): Action
     {
         return Action::make('export')->label('Export')->icon(Heroicon::OutlinedArrowDownTray)->color('gray')
-            ->visible(fn (): bool => self::canManage())
+            ->visible(fn (): bool => self::canManage() && Features::enabled('report_export'))
             ->action(function (): ?BinaryFileResponse {
                 $user = auth()->user();
-                abort_unless($user instanceof User && self::canManage(), 403);
+                abort_unless($user instanceof User && self::canManage() && Features::enabled('report_export'), 403);
 
                 if (($wait = ExportThrottle::attempt($user)) !== null) {
                     Notification::make()->danger()->title(ExportThrottle::message($wait))->send();

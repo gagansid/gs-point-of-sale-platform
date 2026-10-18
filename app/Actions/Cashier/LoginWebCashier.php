@@ -7,6 +7,7 @@ namespace App\Actions\Cashier;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\DummyPasswordHash;
+use App\Support\Features;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -55,6 +56,11 @@ final class LoginWebCashier
 
         if (! $user->tenant->isActive()) {
             throw ValidationException::withMessages(['login' => 'Langganan bisnis Anda tidak aktif. Hubungi tim gs.POS.']);
+        }
+
+        // Fitur paket (ADR 0025); aplikasi kasir Android tetap bisa dipakai
+        if (! Features::enabled('web_cashier', $user->tenant)) {
+            throw ValidationException::withMessages(['login' => 'Kasir web tidak termasuk paket langganan bisnis Anda. Gunakan aplikasi kasir.']);
         }
 
         if ($user->accessibleOutlets()->where('is_active', true)->doesntExist()) {

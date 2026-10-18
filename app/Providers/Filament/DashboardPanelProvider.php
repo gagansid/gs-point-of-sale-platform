@@ -17,6 +17,7 @@ use App\Http\Middleware\Filament\SetDashboardTenant;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Domains;
+use App\Support\Features;
 use App\Support\Support;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
@@ -90,7 +91,7 @@ final class DashboardPanelProvider extends PanelProvider
                     ->visible(function (): bool {
                         $user = Filament::auth()->user();
 
-                        return $user instanceof User && $user->canUseWebCashier();
+                        return $user instanceof User && $user->canUseWebCashier() && Features::enabled('web_cashier');
                     }),
             ])
             ->discoverResources(in: app_path('Filament/Dashboard/Resources'), for: 'App\Filament\Dashboard\Resources')

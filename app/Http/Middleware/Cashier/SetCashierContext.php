@@ -6,6 +6,7 @@ namespace App\Http\Middleware\Cashier;
 
 use App\Models\Device;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\TenantContext;
 use App\Support\WebCashier;
 use Closure;
@@ -33,6 +34,8 @@ final class SetCashierContext
             ! hash_equals((string) $request->session()->get(WebCashier::SESSION_PASSWORD), WebCashier::passwordFingerprint($user)) => 'Kata sandi diganti. Silakan masuk lagi.',
             ! $user->canUseWebCashier() => 'Akses kasir web Anda dicabut.',
             ! $user->tenant->isActive() => 'Langganan bisnis Anda tidak aktif.',
+            // Paket diturunkan saat kasir web terbuka (ADR 0025)
+            ! Features::enabled('web_cashier', $user->tenant) => 'Kasir web tidak termasuk paket langganan bisnis Anda. Gunakan aplikasi kasir.',
             default => null,
         };
 

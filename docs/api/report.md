@@ -5,6 +5,10 @@ beranda dashboard, halaman Laporan, dan file Excel/PDF.
 
 ## Akses (SPEC Q49)
 
+Fitur paket (ADR 0025): `profit`, `options`, `employees`, `heatmap` butuh fitur `advanced_reports`; `members` butuh
+`member`; `purchases` butuh `stock` → tanpa fitur `403 FEATURE_NOT_AVAILABLE` (`error.details.feature`). Lihat
+`tenant.features` di `auth/me`. Endpoint lain (termasuk `shifts/{id}/pdf`) tidak dibatasi paket.
+
 | Permission | Role | Endpoint |
 |---|---|---|
 | `report.view` | owner, manager | Semua, periode maks. 366 hari per query |
