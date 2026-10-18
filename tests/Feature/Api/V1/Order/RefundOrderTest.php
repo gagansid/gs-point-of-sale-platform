@@ -27,7 +27,7 @@ use Illuminate\Testing\TestResponse;
 
 /**
  * Retur sebagian (ADR 0018, Q92–Q94). 2 Croissant (24.000) → subtotal 48.000 + service 5% + pajak 11%,
- * dibulatkan 100 = 55.900; retur 1 = 27.950.
+ * dibulatkan ke atas 100 = 56.000; retur 1 = 28.000.
  */
 beforeEach(function () {
     $this->pos = posSetup();
@@ -63,38 +63,38 @@ function postRefund(object $test, array $body = [], ?string $token = null, ?stri
 it('retur 1 item tunai: nilai proporsional, kas keluar Retur, stok kembali, order & item diperbarui', function () {
     postRefund($this)->assertCreated()
         ->assertJsonPath('message', 'Retur berhasil dicatat')
-        ->assertJsonPath('data.amount', '27950.00')
-        ->assertJsonPath('data.payout_amount', '27950.00')
+        ->assertJsonPath('data.amount', '28000.00')
+        ->assertJsonPath('data.payout_amount', '28000.00')
         ->assertJsonPath('data.items.0.qty', 1)
         ->assertJsonPath('data.approved_by', null);
 
     $order = $this->order->refresh();
-    expect($order->refunded_total)->toBe('27950.00')
+    expect($order->refunded_total)->toBe('28000.00')
         ->and($order->items()->value('refunded_qty'))->toBe(1)
         ->and(stockOf($this->pos->croissant)->stock_qty)->toBe(9);
 
     $movement = CashMovement::allTenants()->sole();
-    expect($movement->reason)->toBe(CashMovementReason::Refund)->and($movement->amount)->toBe('27950.00');
+    expect($movement->reason)->toBe(CashMovementReason::Refund)->and($movement->amount)->toBe('28000.00');
     expect(StockMovement::allTenants()->where('type', StockMovementType::Refund)->sole()->qty_change)->toBe(1);
 
-    // Kas seharusnya: 200.000 + 55.900 − 27.950
+    // Kas seharusnya: 200.000 + 56.000 − 28.000
     freshAuth();
     $this->withToken($this->pos->token)->getJson("/api/v1/shifts/{$this->pos->shift->id}/summary", apiHeaders())
-        ->assertJsonPath('data.summary.expected_cash', '227950.00');
+        ->assertJsonPath('data.summary.expected_cash', '228000.00');
 
     // Detail order memuat riwayat retur
     freshAuth();
     $this->withToken($this->pos->token)->getJson("/api/v1/orders/{$order->id}", apiHeaders())
-        ->assertJsonPath('data.refunded_total', '27950.00')
+        ->assertJsonPath('data.refunded_total', '28000.00')
         ->assertJsonPath('data.items.0.refunded_qty', 1)
         ->assertJsonCount(1, 'data.refunds');
 });
 
 it('retur terakhir memakai sisa nilai order; setelah habis ditolak', function () {
     postRefund($this)->assertCreated();
-    postRefund($this)->assertCreated()->assertJsonPath('data.amount', '27950.00');
+    postRefund($this)->assertCreated()->assertJsonPath('data.amount', '28000.00');
 
-    expect($this->order->refresh()->refunded_total)->toBe('55900.00')->and($this->order->isFullyRefunded())->toBeTrue();
+    expect($this->order->refresh()->refunded_total)->toBe('56000.00')->and($this->order->isFullyRefunded())->toBeTrue();
     assertApiError(postRefund($this), 'VALIDATION_ERROR', 422);
 });
 

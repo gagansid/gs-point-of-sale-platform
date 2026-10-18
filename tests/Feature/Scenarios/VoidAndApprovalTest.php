@@ -76,11 +76,11 @@ describe('void order lunas', function () {
         $pos = $this->pos;
 
         // ---- Langkah 1: penjualan pagi ----
-        // A (member, tunai): 3 Croissant = 72.000; S 3.600; T 11% × 75.600 = 8.316; 83.916 → 83.900; poin ⌊72.000 / 10.000⌋ = 7
+        // A (member, tunai): 3 Croissant = 72.000; S 3.600; T 11% × 75.600 = 8.316; 83.916 → 84.000; poin ⌊72.000 / 10.000⌋ = 7
         $voidId = vatCheckout($this, 3, 'cash', 100000, ['member_id' => $this->member->id])
             ->assertCreated()
-            ->assertJsonPath('data.grand_total', '83900.00')
-            ->assertJsonPath('data.change_total', '16100.00')
+            ->assertJsonPath('data.grand_total', '84000.00')
+            ->assertJsonPath('data.change_total', '16000.00')
             ->json('data.id');
         // B (QRIS): 1 Croissant = 24.000; S 1.200; T 11% × 25.200 = 2.772; 27.972 → 28.000
         vatCheckout($this, 1, 'qris', 28000)->assertCreated()->assertJsonPath('data.grand_total', '28000.00');
@@ -137,7 +137,7 @@ describe('void order lunas', function () {
             ->assertJsonPath('data.revenue', '28000.00')
             ->assertJsonPath('data.items_sold', 1)
             ->assertJsonPath('data.void_count', 1)
-            ->assertJsonPath('data.void_total', '83900.00');
+            ->assertJsonPath('data.void_total', '84000.00');
         vatReport($this, 'payment-methods')
             ->assertJsonCount(1, 'data.payment_methods')
             ->assertJsonPath('data.payment_methods.0.category', 'qris')
@@ -228,10 +228,10 @@ describe('rantai approval diskon', function () {
     });
 
     it('kasir dalam batas 10% tidak butuh PIN', function () {
-        // 10% × 48.000 = 4.800 → dasar 43.200 × 1,1655 = 50.349,60 → 50.300
+        // 10% × 48.000 = 4.800 → dasar 43.200 × 1,1655 = 50.349,60 → 50.400
         vatCheckout($this, 2, 'cash', 100000, vatDiscount(10))
             ->assertCreated()
             ->assertJsonPath('data.approved_by', null)
-            ->assertJsonPath('data.grand_total', '50300.00');
+            ->assertJsonPath('data.grand_total', '50400.00');
     });
 });

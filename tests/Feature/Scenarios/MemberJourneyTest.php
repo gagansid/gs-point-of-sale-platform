@@ -31,7 +31,7 @@ use Illuminate\Testing\TestResponse;
 /**
  * Skenario Phase 3 — satu hari member Rina di outlet JKT01 (ADR 0013 member, ADR 0023 kasbon).
  *
- * Outlet: service 5%, pajak 11% (exclusive), pembulatan Rp100 half-up. Croissant 24.000 (stok 10), Donat 12.000.
+ * Outlet: service 5%, pajak 11% (exclusive), pembulatan ke atas ke kelipatan Rp100. Croissant 24.000 (stok 10), Donat 12.000.
  * Aturan poin bawaan: Rp10.000 dasar = 1 poin × pengali tier; dasar = subtotal − semua diskon order − bagian dibayar poin.
  * Tukar: 1 poin = Rp100, maks. 50% tagihan, min. 50 poin. Tier Silver ≥ 50.000 belanja 12 bln (poin ×2, diskon 5%),
  * Gold ≥ 200.000 (poin ×3, diskon 10%). Kartu stempel "Roti" 3 stempel = 1 gratis (Croissant & Donat).
@@ -99,11 +99,11 @@ it('hari member: daftar, poin, naik tier, tukar poin, stempel, voucher, kasbon &
     app(SetMemberPin::class)->handle($rina, '4821');
 
     // ── 2. Order A: 2 Croissant tunai, belum ada tier ─────────────────────────────────────────────────────────
-    // 48.000 → service 2.400 → pajak 11% × 50.400 = 5.544 → 55.944 → 55.900
-    $a = mjCheckout($this, $rina->id, [['product_id' => $this->pos->croissant->id, 'qty' => 2]], [['cash', 55900]])
-        ->assertCreated()->assertJsonPath('data.grand_total', '55900.00')->json('data.id');
+    // 48.000 → service 2.400 → pajak 11% × 50.400 = 5.544 → 55.944 → 56.000
+    $a = mjCheckout($this, $rina->id, [['product_id' => $this->pos->croissant->id, 'qty' => 2]], [['cash', 56000]])
+        ->assertCreated()->assertJsonPath('data.grand_total', '56000.00')->json('data.id');
     $rina->refresh();
-    // Poin floor(48.000 / 10.000) × 1 = 4; belanja 12 bln 55.900 ≥ 50.000 → Silver (berlaku transaksi berikutnya)
+    // Poin floor(48.000 / 10.000) × 1 = 4; belanja 12 bln 56.000 ≥ 50.000 → Silver (berlaku transaksi berikutnya)
     expect(Order::query()->findOrFail($a)->points_earned)->toBe(4)
         ->and($rina->points_balance)->toBe(4)
         ->and($rina->tier?->name)->toBe('Silver')
@@ -137,9 +137,9 @@ it('hari member: daftar, poin, naik tier, tukar poin, stempel, voucher, kasbon &
 
     // ── 5. Order D: voucher HEMAT5 ──────────────────────────────────────────────────────────────────────────
     // 24.000 − voucher 5.000 = 19.000 − tier 5% (950) = 18.050 → service 902,50 → 18.952,50
-    // → pajak 2.084,775 → 2.084,78 → 21.037,28 → 21.000
-    $d = mjCheckout($this, $rina->id, [['product_id' => $this->pos->croissant->id, 'qty' => 1]], [['cash', 21000]], ['voucher_code' => 'hemat5'])
-        ->assertCreated()->assertJsonPath('data.voucher_discount', '5000.00')->assertJsonPath('data.grand_total', '21000.00')->json('data.id');
+    // → pajak 2.084,775 → 2.084,78 → 21.037,28 → 21.100
+    $d = mjCheckout($this, $rina->id, [['product_id' => $this->pos->croissant->id, 'qty' => 1]], [['cash', 21100]], ['voucher_code' => 'hemat5'])
+        ->assertCreated()->assertJsonPath('data.voucher_discount', '5000.00')->assertJsonPath('data.grand_total', '21100.00')->json('data.id');
     // Poin floor(18.050 / 10.000) × 2 = 2 → 12; stempel 1 + 1 = 2
     expect(Order::query()->findOrFail($d)->points_earned)->toBe(2)
         ->and($rina->refresh()->points_balance)->toBe(12)
@@ -163,18 +163,18 @@ it('hari member: daftar, poin, naik tier, tukar poin, stempel, voucher, kasbon &
     expect($rina->refresh()->receivable_balance)->toBe('8300.00');
 
     // ── 8. Order F: kasbon 2 Croissant + 1 Donat → naik Gold ────────────────────────────────────────────────
-    // 60.000 − tier 5% (3.000) = 57.000 → service 2.850 → pajak 11% × 59.850 = 6.583,50 → 66.433,50 → 66.400
-    // Kasbon 8.300 + 66.400 = 74.700 ≤ batas 100.000
+    // 60.000 − tier 5% (3.000) = 57.000 → service 2.850 → pajak 11% × 59.850 = 6.583,50 → 66.433,50 → 66.500
+    // Kasbon 8.300 + 66.500 = 74.800 ≤ batas 100.000
     $f = mjCheckout($this, $rina->id, [
         ['product_id' => $this->pos->croissant->id, 'qty' => 2], ['product_id' => $this->donut->id, 'qty' => 1],
-    ], [['receivable', 66400]], ['member_pin' => '4821'])->assertCreated()->assertJsonPath('data.grand_total', '66400.00')->json('data.id');
+    ], [['receivable', 66500]], ['member_pin' => '4821'])->assertCreated()->assertJsonPath('data.grand_total', '66500.00')->json('data.id');
     $rina->refresh();
-    // Belanja 12 bln 55.900 + 26.600 + 26.600 + 21.000 + 13.300 + 66.400 = 209.800 ≥ 200.000 → Gold
+    // Belanja 12 bln 56.000 + 26.600 + 26.600 + 21.100 + 13.300 + 66.500 = 210.100 ≥ 200.000 → Gold
     // Poin floor(57.000 / 10.000) × 2 (tier Silver sebelum order) = 10 → 24; stempel 3 + 3 = 6
     expect(Order::query()->findOrFail($f)->points_earned)->toBe(10)
         ->and($rina->points_balance)->toBe(24)
-        ->and($rina->receivable_balance)->toBe('74700.00')
-        ->and($rina->spend_12m)->toBe('209800.00')
+        ->and($rina->receivable_balance)->toBe('74800.00')
+        ->and($rina->spend_12m)->toBe('210100.00')
         ->and($rina->tier?->name)->toBe('Gold')
         ->and(mjStamps($this, $rina))->toBe(6)
         // Stok Croissant: 10 − 2 (A) − 1 (B) − 1 (C) − 1 (D) − 2 (F) = 3
@@ -192,12 +192,12 @@ it('hari member: daftar, poin, naik tier, tukar poin, stempel, voucher, kasbon &
 
     // ── 10. Saldo akhir ─────────────────────────────────────────────────────────────────────────────────────
     $rina->refresh();
-    // Poin 24 − 10 = 14; stempel 6 − 3 = 3; kasbon 74.700 − 66.400 = 8.300; belanja 209.800 − 66.400 = 143.400 → Silver
+    // Poin 24 − 10 = 14; stempel 6 − 3 = 3; kasbon 74.800 − 66.500 = 8.300; belanja 210.100 − 66.500 = 143.600 → Silver
     expect($rina->points_balance)->toBe(14)
         ->and(mjStamps($this, $rina))->toBe(3)
         ->and($rina->receivable_balance)->toBe('8300.00')
-        ->and($rina->spend_12m)->toBe('143400.00')
-        ->and($rina->total_spent)->toBe('143400.00')
+        ->and($rina->spend_12m)->toBe('143600.00')
+        ->and($rina->total_spent)->toBe('143600.00')
         ->and($rina->visit_count)->toBe(5)
         ->and($rina->tier?->name)->toBe('Silver');
 
@@ -208,17 +208,17 @@ it('hari member: daftar, poin, naik tier, tukar poin, stempel, voucher, kasbon &
         ->assertJsonPath('data.stamp_cards.0.rewards_available', 1);
     mjApi($this, 'GET', "/members/{$rina->id}/points")->assertOk()->assertJsonPath('data.balance', 14);
 
-    // Kas shift: 200.000 + tunai 55.900 + 16.600 + 26.600 + 21.000 = 320.100 + pelunasan 5.000 = 325.100
+    // Kas shift: 200.000 + tunai 56.000 + 16.600 + 26.600 + 21.100 = 320.300 + pelunasan 5.000 = 325.300
     mjApi($this, 'GET', "/shifts/{$this->pos->shift->id}/summary")->assertOk()
-        ->assertJsonPath('data.summary.cash_sales', '120100.00')
+        ->assertJsonPath('data.summary.cash_sales', '120300.00')
         ->assertJsonPath('data.summary.cash_in', '5000.00')
-        ->assertJsonPath('data.summary.expected_cash', '325100.00');
+        ->assertJsonPath('data.summary.expected_cash', '325300.00');
 
     // ── 11. Laporan member hari ini (owner) ─────────────────────────────────────────────────────────────────
     mjApi($this, 'GET', '/reports/members?from=2026-10-08&to=2026-10-08', token: userToken($this->owner))->assertOk()
-        // Order selesai A–E (F di-void): 55.900 + 26.600 + 26.600 + 21.000 + 13.300 = 143.400
+        // Order selesai A–E (F di-void): 56.000 + 26.600 + 26.600 + 21.100 + 13.300 = 143.600
         ->assertJsonPath('data.summary.member_orders', 5)
-        ->assertJsonPath('data.summary.member_revenue', '143400.00')
+        ->assertJsonPath('data.summary.member_revenue', '143600.00')
         ->assertJsonPath('data.summary.guest_orders', 0)
         ->assertJsonPath('data.summary.active_members', 1)
         ->assertJsonPath('data.summary.repeat_members', 1)
@@ -240,7 +240,7 @@ it('hari member: daftar, poin, naik tier, tukar poin, stempel, voucher, kasbon &
         ->assertJsonPath('data.top_members.0.member_name', 'Rina')
         ->assertJsonPath('data.top_members.0.tier', 'Silver')
         ->assertJsonPath('data.top_members.0.order_count', 5)
-        ->assertJsonPath('data.top_members.0.revenue', '143400.00')
+        ->assertJsonPath('data.top_members.0.revenue', '143600.00')
         ->assertJsonPath('data.top_members.0.points_earned', 14);
 });
 

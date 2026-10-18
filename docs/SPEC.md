@@ -319,7 +319,7 @@ untuk pratinjau.
 3. Dasar = subtotal − gratis stempel − promo otomatis (ADR 0022) − diskon order − voucher − diskon member/tier (ADR 0013, Q63)
 4. Service charge = dasar × tarif service outlet
 5. Pajak = (dasar + service charge) × tarif pajak outlet (atau diekstrak dari harga jika `tax_inclusive`)
-6. Pembulatan sesuai setelan outlet (misal ke Rp100 terdekat)
+6. Pembulatan ke atas sesuai setelan outlet (misal ke kelipatan Rp100 berikutnya; tidak pernah minus)
 7. Grand total = dasar + service charge + pajak + pembulatan
 
 ### Pembayaran

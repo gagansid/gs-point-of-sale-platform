@@ -24,7 +24,7 @@ it('menghitung harga item = (harga + opsi) × qty − diskon item', function () 
 it('mengikuti urutan SPEC: diskon order → service → pajak exclusive → pembulatan', function () {
     // subtotal 70.000 − diskon 5.000 = dasar 65.000
     // service 5% = 3.250 → 68.250; pajak 11% × 68.250 = 7.507,50 → 75.757,50
-    // dibulatkan ke 100 = 75.800 → pembulatan +42,50
+    // dibulatkan ke atas ke kelipatan 100 = 75.800 → pembulatan +42,50
     $r = calc(
         [new CalculatorLine('22000.00', '0.00', 2), new CalculatorLine('26000.00', '0.00', 1)],
         DiscountType::Fixed, '5000', service: '5', tax: '11', rounding: 100,
@@ -56,14 +56,17 @@ it('diskon persen dihitung dari subtotal setelah diskon item', function () {
         ->and($r->discountPercent())->toBe('19.00');
 });
 
-it('pembulatan half-up ke kelipatan', function (string $price, int $rounding, string $grand, string $roundingAmount) {
+it('pembulatan selalu ke atas ke kelipatan (tidak pernah minus)', function (string $price, int $rounding, string $grand, string $roundingAmount) {
     $r = calc([new CalculatorLine($price, '0.00', 1)], rounding: $rounding);
 
     expect([$r->grandTotal, $r->rounding])->toBe([$grand, $roundingAmount]);
 })->with([
     'tepat 50 naik' => ['12350.00', 100, '12400.00', '50.00'],
-    'di bawah 50 turun' => ['12349.99', 100, '12300.00', '-49.99'],
+    'di bawah 50 tetap naik' => ['12349.99', 100, '12400.00', '50.01'],
+    'sedikit di atas kelipatan naik' => ['12300.01', 100, '12400.00', '99.99'],
+    'tepat kelipatan tidak berubah' => ['12300.00', 100, '12300.00', '0.00'],
     'kelipatan 500' => ['12250.00', 500, '12500.00', '250.00'],
+    'kelipatan 500 sisa kecil' => ['12000.50', 500, '12500.00', '499.50'],
     'tanpa pembulatan' => ['12345.67', 0, '12345.67', '0.00'],
 ]);
 

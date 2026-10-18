@@ -17,7 +17,7 @@ use App\Support\Money;
  *   3. Dasar        = subtotal − gratis stempel − promo otomatis (ADR 0022) − diskon order − voucher − diskon member/tier (ADR 0013, Q63)
  *   4. Service      = dasar × tarif service
  *   5. Pajak        = (dasar + service) × tarif pajak   (inclusive: diekstrak dari dasar + service)
- *   6. Pembulatan   = ke kelipatan Rp {rounding} terdekat (half-up)
+ *   6. Pembulatan   = ke atas ke kelipatan Rp {rounding} (tidak pernah minus)
  *   7. Grand total  = dasar + service + pajak (exclusive) + pembulatan
  *
  * Setiap hasil antara dibulatkan half-up ke 2 desimal.
@@ -88,7 +88,7 @@ final class OrderCalculator
             $beforeRounding = Money::add($beforeTax, $tax);
         }
 
-        $grandTotal = Money::roundToNearest($beforeRounding, $rounding);
+        $grandTotal = Money::roundUpTo($beforeRounding, $rounding);
 
         return new CalculationResult(
             lines: $resultLines,

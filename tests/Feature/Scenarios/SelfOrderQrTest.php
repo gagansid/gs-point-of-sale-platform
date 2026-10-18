@@ -33,7 +33,7 @@ use Livewire\Livewire;
  * Skenario Phase 3 — satu siang self-order QR meja di outlet JKT01 (ADR 0014).
  *
  * Croissant 24.000 (stok 10): 1 pcs → 24.000 + service 1.200 + pajak 11% × 25.200 = 2.772 → 27.972 → 28.000;
- * 2 pcs → 48.000 + 2.400 + 5.544 = 55.944 → 55.900. Batas waktu bayar/tangani 15 menit.
+ * 2 pcs → 48.000 + 2.400 + 5.544 = 55.944 → 56.000. Batas waktu bayar/tangani 15 menit.
  * Midtrans Snap & status API di-fake (tanpa jaringan); server key sandbox milik owner.
  */
 beforeEach(function () {
@@ -115,7 +115,7 @@ it('siang self-order: QR → bayar di kasir, bayar online (webhook sah/palsu/gan
     // ── 2a. Andi (Meja 5) pesan 2 Croissant → menunggu kasir; stok belum dipotong ─────────────────────────────
     $andi = sqPhoneOrder($this, $this->meja5, 'Andi', 2);
     expect($andi->status)->toBe(SelfOrderStatus::Pending)
-        ->and($andi->estimated_total)->toBe('55900.00') // 2 × 24.000 → 55.900
+        ->and($andi->estimated_total)->toBe('56000.00') // 2 × 24.000 → 56.000
         ->and(stockOf($this->pos->croissant)->stock_qty)->toBe(10);
 
     sqApi($this, 'GET', '/self-orders')->assertOk()->assertJsonPath('meta.pending_count', 1)->assertJsonPath('data.0.id', $andi->id);
@@ -123,14 +123,14 @@ it('siang self-order: QR → bayar di kasir, bayar online (webhook sah/palsu/gan
     // Kasir menerima lewat API; diterima dua kali = 409
     $andiOrderId = sqApi($this, 'POST', "/self-orders/{$andi->id}/accept")->assertCreated()
         ->assertJsonPath('data.status', 'awaiting_payment')->assertJsonPath('data.table_label', 'Meja 5')
-        ->assertJsonPath('data.grand_total', '55900.00')->json('data.id');
+        ->assertJsonPath('data.grand_total', '56000.00')->json('data.id');
     assertApiError(sqApi($this, 'POST', "/self-orders/{$andi->id}/accept"), 'ORDER_NOT_PENDING', 409);
     expect(stockOf($this->pos->croissant)->stock_qty)->toBe(10);
 
-    // Andi bayar tunai di kasir: 60.000 untuk 55.900 → kembali 4.100; stok 10 − 2 = 8
+    // Andi bayar tunai di kasir: 60.000 untuk 56.000 → kembali 4.000; stok 10 − 2 = 8
     $payBody = ['payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['cash']->id, 'amount' => 60000]]];
     sqApi($this, 'POST', "/orders/{$andiOrderId}/payments", $payBody)->assertCreated()
-        ->assertJsonPath('data.status', 'completed')->assertJsonPath('data.change_total', '4100.00');
+        ->assertJsonPath('data.status', 'completed')->assertJsonPath('data.change_total', '4000.00');
     expect(stockOf($this->pos->croissant)->stock_qty)->toBe(8);
 
     // ── 2b. Budi (Meja 6) pesan 1 Croissant, diterima kasir, bayar online ─────────────────────────────────────
@@ -195,9 +195,9 @@ it('siang self-order: QR → bayar di kasir, bayar online (webhook sah/palsu/gan
     // ── 6. Laporan kanal hari ini (owner) ───────────────────────────────────────────────────────────────────
     $channels = collect(sqApi($this, 'GET', '/reports/channels?from=2026-10-08&to=2026-10-08', token: userToken(User::factory()->owner()->create()))
         ->assertOk()->json('data.channels'))->keyBy('channel');
-    // Kasir: 1 order 28.000. QR meja: Andi 55.900 + Budi 28.000 = 83.900 (online 28.000); Dewi kedaluwarsa tidak dihitung
+    // Kasir: 1 order 28.000. QR meja: Andi 56.000 + Budi 28.000 = 84.000 (online 28.000); Dewi kedaluwarsa tidak dihitung
     expect($channels['pos'])->toMatchArray(['order_count' => 1, 'revenue' => '28000.00', 'online_total' => '0.00'])
-        ->and($channels['self_order'])->toMatchArray(['order_count' => 2, 'revenue' => '83900.00', 'online_total' => '28000.00']);
+        ->and($channels['self_order'])->toMatchArray(['order_count' => 2, 'revenue' => '84000.00', 'online_total' => '28000.00']);
 });
 
 it('webhook tenant lain dengan transaksi tenant ini ditolak dan tidak membayar order', function () {

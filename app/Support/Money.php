@@ -90,16 +90,25 @@ final class Money
         return self::round(bcdiv(bcmul($gross, $rate, 6), bcadd('100', $rate, 6), 6));
     }
 
-    /** Membulatkan ke kelipatan $step terdekat (half-up), mis. 75757.50 → 75800 untuk step 100. */
-    public static function roundToNearest(string $value, int $step): string
+    /**
+     * Membulatkan KE ATAS ke kelipatan $step, mis. 75712.50 → 75800 untuk step 100 (pembulatan
+     * tidak pernah mengurangi tagihan). Nilai yang sudah kelipatan $step tidak berubah.
+     */
+    public static function roundUpTo(string $value, int $step): string
     {
         if ($step <= 0) {
             return self::of($value);
         }
 
-        $multiplier = self::round(bcdiv($value, (string) $step, 6), 0);
+        $step = (string) $step;
+        // bcdiv skala 0 memotong ke arah nol: untuk nilai positif bersisa, naik satu kelipatan
+        $multiplier = bcdiv($value, $step, 0);
 
-        return bcmul($multiplier, (string) $step, self::SCALE);
+        if (bccomp($value, '0', self::SCALE) > 0 && bccomp(bcmul($multiplier, $step, self::SCALE), $value, self::SCALE) < 0) {
+            $multiplier = bcadd($multiplier, '1', 0);
+        }
+
+        return bcmul($multiplier, $step, self::SCALE);
     }
 
     public static function min(string $a, string $b): string
@@ -133,5 +142,14 @@ final class Money
         $text = 'Rp'.$grouped.($dec !== '00' ? ','.$dec : '');
 
         return $negative ? '-'.$text : $text;
+    }
+
+    /**
+     * Rupiah bulat tanpa desimal untuk struk, mis. "11203.50" → "Rp11.204" (half-up). Perhitungan & data
+     * tetap 2 desimal; hanya tampilan.
+     */
+    public static function formatWhole(string $value): string
+    {
+        return self::format(self::round($value, 0));
     }
 }

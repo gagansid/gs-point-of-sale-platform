@@ -5,7 +5,8 @@
 @php
     use App\Support\Money;
 
-    $rp = fn (string $value): string => Money::format($value);
+    // Struk tanpa desimal (Rp bulat); detail order di kasir/dashboard tetap 2 desimal
+    $rp = fn (string $value): string => Money::formatWhole($value);
     $rate = fn (string $value): string => rtrim(rtrim($value, '0'), '.');
     $t = $receipt['totals'];
 @endphp
@@ -116,7 +117,9 @@
         @endif
         {{-- Q48: bawaan pembulatan digabung ke total (tanpa baris) --}}
         @if ($receipt['outlet']['show_rounding'] && Money::compare($t['rounding'], '0') !== 0)
-            <div class="row"><span>Pembulatan</span><span>{{ $rp($t['rounding']) }}</span></div>
+            {{-- Selisih total bulat dengan total sebelum pembulatan yang dibulatkan, agar sesuai angka tampil --}}
+            @php($roundingShown = Money::sub(Money::round($t['grand_total'], 0), Money::round(Money::sub($t['grand_total'], $t['rounding']), 0)))
+            <div class="row"><span>Pembulatan</span><span>{{ $rp($roundingShown) }}</span></div>
         @endif
         <div class="row bold big"><span>TOTAL</span><span>{{ $rp($t['grand_total']) }}</span></div>
 

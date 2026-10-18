@@ -72,9 +72,9 @@ it('ringkasan member vs non-member, member aktif/berulang/baru, voucher, stempel
     $report = memberReport();
     $s = $report['summary'];
 
-    // 28.000 (Rina) + 22.100 (voucher) + 28.000 (Budi) + 28.000 (Rina, 1 gratis dari 2) = 106.100; non-member 28.000
+    // 28.000 (Rina) + 22.200 (voucher) + 28.000 (Budi) + 28.000 (Rina, 1 gratis dari 2) = 106.200; non-member 28.000
     expect($s['member_orders'])->toBe(4)
-        ->and($s['member_revenue'])->toBe('106100.00')
+        ->and($s['member_revenue'])->toBe('106200.00')
         ->and($s['guest_orders'])->toBe(1)
         ->and($s['guest_revenue'])->toBe('28000.00')
         ->and($s['member_share'])->toBe('79.1')
@@ -91,7 +91,7 @@ it('ringkasan member vs non-member, member aktif/berulang/baru, voucher, stempel
         ->and($s['points_liability'])->toBe(37)
         ->and($s['points_liability_value'])->toBe('3700.00');
 
-    expect($report['top_members'][0])->toMatchArray(['member_name' => 'Rina', 'order_count' => 3, 'revenue' => '78100.00', 'tier' => 'Gold'])
+    expect($report['top_members'][0])->toMatchArray(['member_name' => 'Rina', 'order_count' => 3, 'revenue' => '78200.00', 'tier' => 'Gold'])
         ->and($report['vouchers'])->toBe([['voucher_code' => 'HEMAT5', 'uses' => 1, 'discount' => '5000.00']])
         ->and(collect($report['tiers'])->pluck('member_count', 'tier')->all())->toBe(['Gold' => 1, 'Tanpa tier' => 1]);
 });
@@ -137,7 +137,7 @@ it('dashboard: tab Member tampil & widget render; supervisor tidak; export memua
 it('ringkasan harian memuat baris member bila program aktif', function () {
     $summary = app(DailySummaryBuilder::class)->build($this->owner, '2026-10-08');
 
-    expect($summary['members'])->toBe(['member_orders' => 4, 'member_revenue' => '106100.00', 'new_members' => 1, 'points_redeemed' => 0]);
+    expect($summary['members'])->toBe(['member_orders' => 4, 'member_revenue' => '106200.00', 'new_members' => 1, 'points_redeemed' => 0]);
 
     app(UpdateMemberProgram::class)->handle(false, []);
     expect(app(DailySummaryBuilder::class)->build($this->owner, '2026-10-08')['members'])->toBeNull();

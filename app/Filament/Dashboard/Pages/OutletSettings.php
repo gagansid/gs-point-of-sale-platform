@@ -119,7 +119,7 @@ final class OutletSettings extends Page
                                 ->helperText('Aktif: pajak dihitung dari dalam harga. Nonaktif: pajak ditambahkan di atas total'),
                             Select::make('rounding')->label('Pembulatan total')->native(false)->required()
                                 ->options(collect(UpdateOutletSettings::ROUNDING_OPTIONS)->mapWithKeys(fn (int $value): array => [
-                                    $value => $value === 0 ? 'Tanpa pembulatan' : 'Ke Rp'.number_format($value, 0, ',', '.').' terdekat',
+                                    $value => $value === 0 ? 'Tanpa pembulatan' : 'Ke atas, kelipatan Rp'.number_format($value, 0, ',', '.'),
                                 ])->all()),
                         ]),
 

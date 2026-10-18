@@ -23,7 +23,7 @@ use Livewire\Livewire;
 
 /**
  * Tier member M5 (ADR 0013, Q64). Croissant 24.000 → total 28.000 (service 5%, pajak 11%, pembulatan Rp100);
- * 2 × croissant = 55.900. Silver ≥ 50.000 (poin ×2, diskon 5%), Gold ≥ 200.000 (poin ×3, diskon 10%).
+ * 2 × croissant = 56.000. Silver ≥ 50.000 (poin ×2, diskon 5%), Gold ≥ 200.000 (poin ×3, diskon 10%).
  */
 beforeEach(function () {
     $this->pos = posSetup();
@@ -55,7 +55,7 @@ it('naik tier saat order selesai; pengali poin & diskon tier berlaku mulai trans
     expect($first->points_earned)->toBe(4)
         ->and($first->member_tier)->toBeNull()
         ->and($first->member_discount)->toBe('0.00')
-        ->and($member->spend_12m)->toBe('55900.00')
+        ->and($member->spend_12m)->toBe('56000.00')
         ->and($member->tier?->name)->toBe('Silver');
 
     // Order kedua sebagai Silver: diskon 5% (1.200), poin floor(22.800 / 10.000) × 1 × 2 = 4
@@ -108,7 +108,7 @@ it('jadwal harian: belanja lebih dari 12 bulan keluar dari hitungan sehingga tie
     $member = $this->member->refresh();
     expect($member->tier_id)->toBeNull()->and($member->spend_12m)->toBe('0.00')
         // Total belanja seumur hidup tidak berubah
-        ->and($member->total_spent)->toBe('55900.00');
+        ->and($member->total_spent)->toBe('56000.00');
 
     // Aman diulang
     expect(app(EvaluateMemberTiers::class)->handle())->toBe(0);
@@ -118,7 +118,7 @@ it('simpan tier: ubah, hapus (member jatuh ke tier lain), validasi gagal', funct
     tierSale($this, 2);
     $silver = MemberTier::query()->where('name', 'Silver')->sole();
 
-    // Silver dinaikkan ke 60.000 → member (55.900) tanpa tier; Gold dihapus
+    // Silver dinaikkan ke 60.000 → member (56.000) tanpa tier; Gold dihapus
     app(SaveMemberTiers::class)->handle([
         ['id' => $silver->id, 'name' => 'Silver', 'min_spend_12m' => '60000', 'point_multiplier' => '2', 'discount_percent' => '5'],
     ]);

@@ -44,3 +44,15 @@ it('membulatkan half-up', function (string $value, int $scale, string $expected)
     ['-0.005', 2, '-0.01'],
     ['757.5', 0, '758'],
 ]);
+
+it('membulatkan ke atas ke kelipatan step', function (string $value, int $step, string $expected) {
+    expect(Money::roundUpTo($value, $step))->toBe($expected);
+})->with([
+    'tepat kelipatan tetap' => ['12300.00', 100, '12300.00'],
+    'sedikit di atas kelipatan naik' => ['12300.01', 100, '12400.00'],
+    'di bawah setengah tetap naik' => ['12349.99', 100, '12400.00'],
+    'step 500' => ['75712.50', 500, '76000.00'],
+    'nol tetap nol' => ['0.00', 100, '0.00'],
+    'step 0 tanpa pembulatan' => ['12345.67', 0, '12345.67'],
+    'step negatif tanpa pembulatan' => ['12345.67', -100, '12345.67'],
+]);

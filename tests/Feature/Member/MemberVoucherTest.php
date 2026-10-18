@@ -75,13 +75,13 @@ function voucherFails(Closure $sale, string $reason): void
 
 it('kode promo nominal tanpa member: potongan, pemakaian tercatat, kode tidak peka huruf besar', function () {
     $voucher = promo();
-    // 24.000 − 5.000 = 19.000 → service 950 → pajak 2.194,5 → 22.144,5 → 22.100
+    // 24.000 − 5.000 = 19.000 → service 950 → pajak 2.194,5 → 22.144,5 → 22.200
     $order = voucherSale($this, ['member_id' => null, 'voucher_code' => 'hemat5']);
 
     expect($order->voucher_discount)->toBe('5000.00')
         ->and($order->voucher_code)->toBe('HEMAT5')
         ->and($order->discount_total)->toBe('5000.00')
-        ->and($order->grand_total)->toBe('22100.00')
+        ->and($order->grand_total)->toBe('22200.00')
         ->and($voucher->refresh()->used_count)->toBe(1)
         ->and(VoucherRedemption::query()->sole()->amount)->toBe('5000.00');
 });

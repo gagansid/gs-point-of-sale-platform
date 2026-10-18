@@ -19,7 +19,7 @@ function sellAt(stdClass $pos, string $utc, string $method = 'cash', int $qty = 
     return TenantContext::run($pos->tenantId, fn () => app(CheckoutOrder::class)->handle($pos->cashier, $pos->device, CheckoutData::fromArray([
         'id' => uuid(), 'order_type' => 'takeaway',
         'items' => [['product_id' => $pos->croissant->id, 'qty' => $qty]],
-        // 1 Croissant: 24.000 + service 1.200 + pajak 2.772 = 27.972 → 28.000; 2 Croissant: 55.944 → 55.900
+        // 1 Croissant: 24.000 + service 1.200 + pajak 2.772 = 27.972 → 28.000; 2 Croissant: 55.944 → 56.000 (pembulatan ke atas)
         'payments' => [['id' => uuid(), 'payment_method_id' => $pos->methods[$method]->id, 'amount' => $method === 'cash' ? 1000000 : 28000 * $qty]],
     ]))['order']);
 }
@@ -50,19 +50,19 @@ it('ringkasan hari ini memakai tanggal lokal outlet; void dipisah', function () 
         ->assertOk()
         ->assertJsonPath('data.period', ['from' => '2026-10-08', 'to' => '2026-10-08', 'timezone' => 'Asia/Jakarta', 'outlet_id' => null])
         ->assertJsonPath('data.order_count', 2)
-        ->assertJsonPath('data.revenue', '83900.00')
-        ->assertJsonPath('data.average', '41950.00')
+        ->assertJsonPath('data.revenue', '84000.00')
+        ->assertJsonPath('data.average', '42000.00')
         ->assertJsonPath('data.items_sold', 3)
         ->assertJsonPath('data.void_count', 1)
         ->assertJsonPath('data.void_total', '28000.00')
-        ->assertJsonPath('data.daily.0', ['date' => '2026-10-08', 'revenue' => '83900.00', 'order_count' => 2]);
+        ->assertJsonPath('data.daily.0', ['date' => '2026-10-08', 'revenue' => '84000.00', 'order_count' => 2]);
 });
 
 it('rentang beberapa hari dengan seri harian', function () {
     fetchReport($this, 'summary?from=2026-10-07&to=2026-10-08')
         ->assertJsonPath('data.order_count', 3)
-        ->assertJsonPath('data.revenue', '111900.00')
-        ->assertJsonPath('data.daily.*.revenue', ['28000.00', '83900.00']);
+        ->assertJsonPath('data.revenue', '112000.00')
+        ->assertJsonPath('data.daily.*.revenue', ['28000.00', '84000.00']);
 });
 
 it('per produk dan per metode bayar', function () {
@@ -73,7 +73,7 @@ it('per produk dan per metode bayar', function () {
 
     fetchReport($this, 'payment-methods')
         ->assertJsonPath('data.payment_methods.0.name', 'Tunai')
-        ->assertJsonPath('data.payment_methods.0.amount', '55900.00')
+        ->assertJsonPath('data.payment_methods.0.amount', '56000.00')
         ->assertJsonPath('data.payment_methods.1.name', 'QRIS')
         ->assertJsonPath('data.payment_methods.1.amount', '28000.00');
 });
@@ -93,7 +93,7 @@ it('isolasi: laporan tidak memuat transaksi tenant lain', function () {
     TenantContext::forget();
     Carbon::setTestNow('2026-10-08 10:00:00');
 
-    fetchReport($this, 'summary')->assertJsonPath('data.order_count', 2)->assertJsonPath('data.revenue', '83900.00');
+    fetchReport($this, 'summary')->assertJsonPath('data.order_count', 2)->assertJsonPath('data.revenue', '84000.00');
 });
 
 // ---------- Beranda: /reports/dashboard, /reports/hourly, /reports/audit ----------
@@ -103,24 +103,24 @@ it('dashboard: KPI dibanding periode sebelumnya, tren per jam untuk 1 hari', fun
         ->assertOk()
         ->assertJsonPath('data.period.granularity', 'hour')
         ->assertJsonPath('data.comparison', ['from' => '2026-10-07', 'to' => '2026-10-07'])
-        ->assertJsonPath('data.summary.revenue', '83900.00')
+        ->assertJsonPath('data.summary.revenue', '84000.00')
         ->assertJsonPath('data.previous_summary.revenue', '28000.00')
-        // (83.900 − 28.000) ÷ 28.000 = 199,64%
-        ->assertJsonPath('data.changes.revenue', '199.6')
+        // (84.000 − 28.000) ÷ 28.000 = 200%
+        ->assertJsonPath('data.changes.revenue', '200.0')
         ->assertJsonPath('data.changes.order_count', '100.0')
         ->assertJsonPath('data.trend.0', ['hour' => 0, 'revenue' => '28000.00', 'order_count' => 1])
-        ->assertJsonPath('data.trend.12', ['hour' => 12, 'revenue' => '55900.00', 'order_count' => 1])
+        ->assertJsonPath('data.trend.12', ['hour' => 12, 'revenue' => '56000.00', 'order_count' => 1])
         ->assertJsonPath('data.previous_trend.23.revenue', '28000.00')
-        ->assertJsonPath('data.order_types.0', ['order_type' => 'takeaway', 'label' => 'Bawa pulang', 'order_count' => 2, 'revenue' => '83900.00'])
+        ->assertJsonPath('data.order_types.0', ['order_type' => 'takeaway', 'label' => 'Bawa pulang', 'order_count' => 2, 'revenue' => '84000.00'])
         ->assertJsonPath('data.order_types.1.order_count', 0)
         ->assertJsonPath('data.top_products.0.product_name', 'Croissant')
-        ->assertJsonPath('data.outlets.0.revenue', '83900.00');
+        ->assertJsonPath('data.outlets.0.revenue', '84000.00');
 });
 
 it('dashboard: rentang beberapa hari = tren harian; compare none / tahun lalu', function () {
     fetchReport($this, 'dashboard?from=2026-10-07&to=2026-10-08&compare=none')
         ->assertJsonPath('data.period.granularity', 'day')
-        ->assertJsonPath('data.trend.*.revenue', ['28000.00', '83900.00'])
+        ->assertJsonPath('data.trend.*.revenue', ['28000.00', '84000.00'])
         ->assertJsonPath('data.comparison', null)
         ->assertJsonPath('data.previous_summary', null)
         ->assertJsonPath('data.changes.revenue', null);
@@ -150,7 +150,7 @@ it('jam ramai per jam lokal outlet', function () {
         ->assertOk()
         ->assertJsonCount(24, 'data.hours')
         ->assertJsonPath('data.hours.0.order_count', 1)
-        ->assertJsonPath('data.hours.12.revenue', '55900.00')
+        ->assertJsonPath('data.hours.12.revenue', '56000.00')
         ->assertJsonPath('data.hours.23.order_count', 1);
 });
 
@@ -197,7 +197,7 @@ it('isolasi: dashboard & audit tidak memuat data tenant lain; filter ID asing ti
     Carbon::setTestNow('2026-10-08 10:00:00');
 
     fetchReport($this, 'dashboard')
-        ->assertJsonPath('data.summary.revenue', '83900.00')
+        ->assertJsonPath('data.summary.revenue', '84000.00')
         ->assertJsonCount(1, 'data.outlets');
     fetchReport($this, 'audit')->assertJsonPath('data.void_count', 1)->assertJsonMissing(['reason' => 'Asing']);
     fetchReport($this, 'dashboard?payment_method_ids[]='.$other->methods['cash']->id.'&user_ids[]='.$foreign->user_id)

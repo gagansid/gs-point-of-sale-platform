@@ -66,8 +66,8 @@ describe('pecah', function () {
 
         expect(billItems($source))->toBe(['Es Kopi Susu' => 1, 'Croissant' => 1])
             ->and(billItems($newId))->toBe(['Es Kopi Susu' => 1])
-            // 22.000 + 5% + 11% → 25.641 → 25.600
-            ->and($response->json('data.target.grand_total'))->toBe('25600.00');
+            // 22.000 + 5% + 11% → 25.641 → 25.700
+            ->and($response->json('data.target.grand_total'))->toBe('25700.00');
 
         billApi($this, 'POST', "/orders/{$source}/split", $body)->assertOk()->assertJsonPath('meta.idempotent_replay', true);
         expect(Order::allTenants()->where('status', OrderStatus::Open)->count())->toBe(2);

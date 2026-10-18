@@ -18,7 +18,7 @@ beforeEach(function () {
     $this->pos = posSetup();
 });
 
-/** 2× Es Kopi Large + 1 Croissant = 78.000 → service 3.900 → pajak 9.009 → 90.909 → bulat 90.900. */
+/** 2× Es Kopi Large + 1 Croissant = 78.000 → service 3.900 → pajak 9.009 → 90.909 → bulat ke atas 91.000 (pembulatan +91). */
 function cart(stdClass $pos, array $override = []): array
 {
     return [
@@ -53,17 +53,17 @@ describe('sukses', function () {
             ->assertJsonPath('data.subtotal', '78000.00')
             ->assertJsonPath('data.service_total', '3900.00')
             ->assertJsonPath('data.tax_total', '9009.00')
-            ->assertJsonPath('data.rounding', '-9.00')
-            ->assertJsonPath('data.grand_total', '90900.00')
-            ->assertJsonPath('data.paid_total', '90900.00')
-            ->assertJsonPath('data.change_total', '9100.00')
+            ->assertJsonPath('data.rounding', '91.00')
+            ->assertJsonPath('data.grand_total', '91000.00')
+            ->assertJsonPath('data.paid_total', '91000.00')
+            ->assertJsonPath('data.change_total', '9000.00')
             ->assertJsonPath('data.items.0.product_name', 'Es Kopi Susu')
             ->assertJsonPath('data.items.0.unit_price', '22000.00')
             ->assertJsonPath('data.items.0.options_total', '5000.00')
             ->assertJsonPath('data.items.0.line_total', '54000.00')
             ->assertJsonPath('data.items.0.options.0.name', 'Large')
             ->assertJsonPath('data.payments.0.tendered', '100000.00')
-            ->assertJsonPath('data.payments.0.change', '9100.00')
+            ->assertJsonPath('data.payments.0.change', '9000.00')
             ->assertJsonPath('meta.idempotent_replay', false);
 
         expect(stockOf($this->pos->croissant->id)->stock_qty)->toBe(9);
@@ -79,7 +79,7 @@ describe('sukses', function () {
         $body['grand_total'] = 1;
         $body['items'][0]['price'] = 1;
 
-        checkout($this, $body)->assertCreated()->assertJsonPath('data.grand_total', '90900.00');
+        checkout($this, $body)->assertCreated()->assertJsonPath('data.grand_total', '91000.00');
     });
 
     it('snapshot harga tetap walau harga produk berubah kemudian', function () {
@@ -105,7 +105,7 @@ describe('sukses', function () {
     it('split payment debit + tunai: non-tunai pas, tunai menutup sisa dengan kembalian', function () {
         $body = cart($this->pos, ['payments' => [
             ['id' => uuid(), 'payment_method_id' => $this->pos->methods['cash']->id, 'amount' => 50000, 'tendered' => 50000],
-            ['id' => uuid(), 'payment_method_id' => $this->pos->methods['debit']->id, 'amount' => 40900, 'reference' => 'A12345'],
+            ['id' => uuid(), 'payment_method_id' => $this->pos->methods['debit']->id, 'amount' => 41000, 'reference' => 'A12345'],
         ]]);
 
         checkout($this, $body)->assertCreated()
@@ -221,7 +221,7 @@ describe('validasi & aturan bisnis', function () {
     });
 
     it('debit/kredit wajib kode approval', function () {
-        $body = cart($this->pos, ['payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['credit']->id, 'amount' => 90900]]]);
+        $body = cart($this->pos, ['payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['credit']->id, 'amount' => 91000]]]);
 
         $response = checkout($this, $body);
         assertApiError($response, 'VALIDATION_ERROR', 422);
@@ -233,7 +233,7 @@ describe('validasi & aturan bisnis', function () {
 
         $response = checkout($this, $body);
         assertApiError($response, 'PAYMENT_EXCEEDS_BALANCE', 422);
-        $response->assertJsonPath('error.details.remaining', '90900.00');
+        $response->assertJsonPath('error.details.remaining', '91000.00');
     });
 
     it('pembayaran kurang ditolak tanpa menyimpan apa pun', function () {
@@ -366,15 +366,15 @@ describe('diskon & PIN approval', function () {
 
 it('ringkasan shift memuat penjualan & kas seharusnya setelah checkout', function () {
     checkout($this, cart($this->pos))->assertCreated();
-    checkout($this, cart($this->pos, ['payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['qris']->id, 'amount' => 90900]]]))->assertCreated();
+    checkout($this, cart($this->pos, ['payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['qris']->id, 'amount' => 91000]]]))->assertCreated();
 
     freshAuth();
     $this->withToken($this->pos->token)->getJson("/api/v1/shifts/{$this->pos->shift->id}/summary", apiHeaders())
         ->assertOk()
         ->assertJsonPath('data.summary.order_count', 2)
-        ->assertJsonPath('data.summary.sales_total', '181800.00')
-        ->assertJsonPath('data.summary.cash_sales', '90900.00')
-        ->assertJsonPath('data.summary.expected_cash', '290900.00');
+        ->assertJsonPath('data.summary.sales_total', '182000.00')
+        ->assertJsonPath('data.summary.cash_sales', '91000.00')
+        ->assertJsonPath('data.summary.expected_cash', '291000.00');
 });
 
 it('regresi: opsi yang sama di dua item berbeda tidak dianggap ganda', function () {

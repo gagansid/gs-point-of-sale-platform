@@ -85,7 +85,7 @@ describe('cashier.refunds.store', function () {
             'approver_user_id' => $this->pos->supervisor->id, 'approver_pin' => '123456',
         ];
 
-        $this->post(route('cashier.refunds.store', $order->id), $body)->assertSessionHas('status', 'Retur Rp27.950 dicatat');
+        $this->post(route('cashier.refunds.store', $order->id), $body)->assertSessionHas('status', 'Retur Rp28.000 dicatat');
         $this->post(route('cashier.refunds.store', $order->id), $body)
             ->assertRedirect(route('cashier.refunds.create', $order->id))
             ->assertSessionHas('status', 'Retur sudah tercatat');

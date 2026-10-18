@@ -15,7 +15,7 @@ use App\Support\TenantContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Str;
 
-/** Retur sebagian di kasir web + laporan (ADR 0018, Q92–Q94). 2 Croissant = 55.900; retur 1 = 27.950. */
+/** Retur sebagian di kasir web + laporan (ADR 0018, Q92–Q94). 2 Croissant = 56.000; retur 1 = 28.000. */
 beforeEach(function () {
     $this->pos = posSetup(openShift: false);
     webCashierLogin($this, $this->pos, $this->pos->cashier);
@@ -51,12 +51,12 @@ it('cari nomor → form retur → catat dengan PIN supervisor; riwayat retur tam
 
     $this->post(route('cashier.refunds.store', $this->order->id), webRefundBody($this))
         ->assertRedirect(route('cashier.refunds.create', $this->order->id))
-        ->assertSessionHas('status', 'Retur Rp27.950 dicatat');
+        ->assertSessionHas('status', 'Retur Rp28.000 dicatat');
 
     $refund = OrderRefund::allTenants()->sole();
     expect($refund->shift_id)->not->toBe($this->order->shift_id)
         ->and($refund->device_id)->toBe($this->pos->webDevice->id);
-    $this->get(route('cashier.refunds.create', $this->order->id))->assertOk()->assertSee('1 sudah diretur')->assertSee('Rp27.950');
+    $this->get(route('cashier.refunds.create', $this->order->id))->assertOk()->assertSee('1 sudah diretur')->assertSee('Rp28.000');
 });
 
 it('nomor tidak ditemukan / tanpa PIN / qty berlebih ditolak', function () {
@@ -91,8 +91,8 @@ it('laporan: ringkasan omzet setelah retur, panel Audit, ringkasan harian', func
 
     $summary = app(ReportService::class)->summary($start, $end);
     expect($summary['refund_count'])->toBe(1)
-        ->and($summary['refund_total'])->toBe('27950.00')
-        ->and($summary['net_revenue'])->toBe('27950.00');
+        ->and($summary['refund_total'])->toBe('28000.00')
+        ->and($summary['net_revenue'])->toBe('28000.00');
 
     $audit = app(ReportService::class)->audit($start, $end);
     expect($audit['refund_count'])->toBe(1)
@@ -102,5 +102,5 @@ it('laporan: ringkasan omzet setelah retur, panel Audit, ringkasan harian', func
         ->and($audit['cash_out_count'])->toBe(0);
 
     $daily = app(DailySummaryBuilder::class)->build($owner, $this->pos->outlet->localDate());
-    expect($daily['totals']['refund_total'])->toBe('27950.00');
+    expect($daily['totals']['refund_total'])->toBe('28000.00');
 });

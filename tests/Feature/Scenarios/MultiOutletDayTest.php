@@ -118,7 +118,7 @@ it('hari kerja dua outlet: menu per outlet, kasir terikat outlet, laporan semua 
     // --- Langkah 3: menu outlet B ditegakkan saat checkout
     assertApiError(modtCheckout($this, $this->tokenB, [['product_id' => $coffee, 'qty' => 1, 'option_ids' => [$this->pos->regular->id]]], modtCash($this, 50000)), 'VALIDATION_ERROR', 422);
     assertApiError(modtCheckout($this, $this->tokenB, [['product_id' => $croissant, 'qty' => 1]], [
-        ['id' => uuid(), 'payment_method_id' => $qris, 'amount' => '26600', 'reference' => 'QR-B1'],
+        ['id' => uuid(), 'payment_method_id' => $qris, 'amount' => '26700', 'reference' => 'QR-B1'],
     ]), 'VALIDATION_ERROR', 422);
 
     // --- Langkah 4: penjualan outlet A (service 5%, pajak 11%)
@@ -131,12 +131,12 @@ it('hari kerja dua outlet: menu per outlet, kasir terikat outlet, laporan semua 
     ])->assertCreated()->assertJsonPath('data.grand_total', '28000.00');
 
     // --- Langkah 5: penjualan outlet B (tanpa service, pajak 11%)
-    // B1: 3 × 24.000 = 72.000; pajak 7.920; 79.920 → 79.900 (pembulatan −20)
+    // B1: 3 × 24.000 = 72.000; pajak 7.920; 79.920 → 80.000 (pembulatan +80)
     modtCheckout($this, $this->tokenB, [['product_id' => $croissant, 'qty' => 3]], modtCash($this, 100000))
-        ->assertCreated()->assertJsonPath('data.grand_total', '79900.00');
-    // B2: 1 × 24.000; pajak 2.640; 26.640 → 26.600 (pembulatan −40)
+        ->assertCreated()->assertJsonPath('data.grand_total', '80000.00');
+    // B2: 1 × 24.000; pajak 2.640; 26.640 → 26.700 (pembulatan +60)
     modtCheckout($this, $this->tokenB, [['product_id' => $croissant, 'qty' => 1]], modtCash($this, 30000))
-        ->assertCreated()->assertJsonPath('data.grand_total', '26600.00');
+        ->assertCreated()->assertJsonPath('data.grand_total', '26700.00');
 
     // Stok croissant per outlet (ADR 0010): A 10 − 1 = 9; B 0 − 4 = −4 (stok boleh minus)
     expect(stockOf($this->pos->croissant, $this->pos->outlet->id)->stock_qty)->toBe(9)
@@ -153,17 +153,17 @@ it('hari kerja dua outlet: menu per outlet, kasir terikat outlet, laporan semua 
         'order_count' => 2, 'revenue' => '79300.00', 'subtotal_total' => '68000.00', 'service_total' => '3400.00',
         'tax_total' => '7854.00', 'rounding_total' => '46.00', 'net_sales' => '68000.00', 'items_sold' => 3, 'average' => '39650.00',
     ]);
-    // B: 79.900 + 26.600 = 106.500; subtotal 96.000; service 0; pajak 7.920 + 2.640 = 10.560; pembulatan −60;
-    //    net = 106.500 − 10.560 − 0 + 60 = 96.000; item 3 + 1 = 4
+    // B: 80.000 + 26.700 = 106.700; subtotal 96.000; service 0; pajak 7.920 + 2.640 = 10.560; pembulatan +140;
+    //    net = 106.700 − 10.560 − 0 − 140 = 96.000; item 3 + 1 = 4
     expect($b)->toMatchArray([
-        'order_count' => 2, 'revenue' => '106500.00', 'subtotal_total' => '96000.00', 'service_total' => '0.00',
-        'tax_total' => '10560.00', 'rounding_total' => '-60.00', 'net_sales' => '96000.00', 'items_sold' => 4, 'average' => '53250.00',
+        'order_count' => 2, 'revenue' => '106700.00', 'subtotal_total' => '96000.00', 'service_total' => '0.00',
+        'tax_total' => '10560.00', 'rounding_total' => '140.00', 'net_sales' => '96000.00', 'items_sold' => 4, 'average' => '53350.00',
     ]);
-    // Semua: 79.300 + 106.500 = 185.800; subtotal 164.000; service 3.400; pajak 18.414; pembulatan 46 − 60 = −14;
-    //        net 164.000; item 7; rata-rata 185.800 ÷ 4 = 46.450
+    // Semua: 79.300 + 106.700 = 186.000; subtotal 164.000; service 3.400; pajak 18.414; pembulatan 46 + 140 = 186;
+    //        net 164.000; item 7; rata-rata 186.000 ÷ 4 = 46.500
     expect($all)->toMatchArray([
-        'order_count' => 4, 'revenue' => '185800.00', 'subtotal_total' => '164000.00', 'service_total' => '3400.00',
-        'tax_total' => '18414.00', 'rounding_total' => '-14.00', 'net_sales' => '164000.00', 'items_sold' => 7, 'average' => '46450.00',
+        'order_count' => 4, 'revenue' => '186000.00', 'subtotal_total' => '164000.00', 'service_total' => '3400.00',
+        'tax_total' => '18414.00', 'rounding_total' => '186.00', 'net_sales' => '164000.00', 'items_sold' => 7, 'average' => '46500.00',
     ]);
 
     // all = A + B tepat untuk setiap angka penjumlahan
@@ -183,8 +183,8 @@ it('request checkout ganda di outlet B tidak menggandakan angka laporan semua ou
     modtCheckout($this, $this->tokenB, $items, $payments, $id)->assertCreated();
     modtCheckout($this, $this->tokenB, $items, $payments, $id)->assertOk()->assertJsonPath('meta.idempotent_replay', true);
 
-    // Satu order 26.600 (24.000 + pajak 2.640 = 26.640 → 26.600); stok B −1, bukan −2
-    expect(modtSummary($this, 'all'))->toMatchArray(['order_count' => 1, 'revenue' => '26600.00'])
+    // Satu order 26.700 (24.000 + pajak 2.640 = 26.640 → 26.700); stok B −1, bukan −2
+    expect(modtSummary($this, 'all'))->toMatchArray(['order_count' => 1, 'revenue' => '26700.00'])
         ->and(stockOf($this->pos->croissant, $this->outletB->id)->stock_qty)->toBe(-1);
 });
 

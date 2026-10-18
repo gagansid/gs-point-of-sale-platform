@@ -97,27 +97,27 @@ describe('G10 aksi aktif/nonaktif', function () {
         Livewire::test(ManagePromotions::class)->callAction(TestAction::make('deactivate')->table($promotion));
         expect($promotion->refresh()->is_active)->toBeFalse();
 
-        // Tanpa promo: 22.000 + 5% 1.100 = 23.100 + 11% 2.541 = 25.641 → 25.600
+        // Tanpa promo: 22.000 + 5% 1.100 = 23.100 + 11% 2.541 = 25.641 → 25.700
         tacApi($this, 'POST', '/orders/quote', ['items' => [$coffee]])->assertOk()
             ->assertJsonPath('data.promo_discount', '0.00')
             ->assertJsonPath('data.promotions', [])
-            ->assertJsonPath('data.grand_total', '25600.00');
+            ->assertJsonPath('data.grand_total', '25700.00');
         tacApi($this, 'POST', '/checkout', tacCheckoutBody($this, $coffee))->assertCreated()
             ->assertJsonPath('data.promo_discount', '0.00')
-            ->assertJsonPath('data.grand_total', '25600.00');
+            ->assertJsonPath('data.grand_total', '25700.00');
         tacApi($this, 'GET', '/catalog')->assertOk()->assertJsonCount(0, 'data.promotions');
 
         tacAsOwner($this);
         Livewire::test(ManagePromotions::class)->callAction(TestAction::make('activate')->table($promotion));
         expect($promotion->refresh()->is_active)->toBeTrue();
 
-        // 20% × 22.000 = 4.400 → 17.600 + 5% 880 = 18.480 + 11% 2.032,8 = 20.512,8 → 20.500
+        // 20% × 22.000 = 4.400 → 17.600 + 5% 880 = 18.480 + 11% 2.032,8 = 20.512,8 → 20.600
         tacApi($this, 'POST', '/orders/quote', ['items' => [$coffee]])->assertOk()
             ->assertJsonPath('data.promo_discount', '4400.00')
-            ->assertJsonPath('data.grand_total', '20500.00');
+            ->assertJsonPath('data.grand_total', '20600.00');
         tacApi($this, 'POST', '/checkout', tacCheckoutBody($this, $coffee))->assertCreated()
             ->assertJsonPath('data.promo_discount', '4400.00')
-            ->assertJsonPath('data.grand_total', '20500.00');
+            ->assertJsonPath('data.grand_total', '20600.00');
         tacApi($this, 'GET', '/catalog')->assertOk()->assertJsonPath('data.promotions.0.name', 'Kopi 20%');
     });
 
@@ -142,10 +142,10 @@ describe('G10 aksi aktif/nonaktif', function () {
         expect($voucher->refresh()->is_active)->toBeTrue();
 
         tacApi($this, 'GET', '/vouchers/check?code=HEMAT5')->assertOk()->assertJsonPath('data.code', 'HEMAT5');
-        // 24.000 − 5.000 = 19.000 + 5% 950 = 19.950 + 11% 2.194,5 = 22.144,5 → 22.100
+        // 24.000 − 5.000 = 19.000 + 5% 950 = 19.950 + 11% 2.194,5 = 22.144,5 → 22.200
         tacApi($this, 'POST', '/checkout', tacCheckoutBody($this, $croissant, ['voucher_code' => 'HEMAT5']))->assertCreated()
             ->assertJsonPath('data.voucher_discount', '5000.00')
-            ->assertJsonPath('data.grand_total', '22100.00');
+            ->assertJsonPath('data.grand_total', '22200.00');
         expect($voucher->refresh()->used_count)->toBe(1);
     });
 
@@ -205,7 +205,7 @@ describe('G10 aksi aktif/nonaktif', function () {
             'VALIDATION_ERROR', 422,
         );
         tacApi($this, 'POST', '/orders/quote', ['items' => [['product_id' => $this->pos->coffee->id, 'qty' => 1]]])->assertOk()
-            ->assertJsonPath('data.grand_total', '25600.00');
+            ->assertJsonPath('data.grand_total', '25700.00');
 
         tacAsOwner($this);
         Livewire::test(ListOptionGroups::class)->callAction(TestAction::make('activate')->table($group));

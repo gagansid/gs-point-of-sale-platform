@@ -71,7 +71,7 @@ it('kirim dari HP: menunggu kasir, perkiraan total, stok belum dipotong; kirim g
     $again = submitSelf($this, ['id' => $id]);
 
     expect($first->status)->toBe(SelfOrderStatus::Pending)
-        ->and($first->estimated_total)->toBe('55900.00')
+        ->and($first->estimated_total)->toBe('56000.00')
         ->and($again->id)->toBe($first->id)
         ->and(SelfOrder::query()->count())->toBe(1)
         ->and(Order::query()->count())->toBe(0)
@@ -111,7 +111,7 @@ it('kasir menerima: order menunggu bayar di shift kasir, kanal self_order, meja;
         ->and($order->table_label)->toBe('Meja 5')
         ->and($order->dining_table_id)->toBe($this->table->id)
         ->and($order->notes)->toBe('Atas nama Andi · tanpa gula')
-        ->and($order->grand_total)->toBe('55900.00')
+        ->and($order->grand_total)->toBe('56000.00')
         ->and($order->order_number)->not->toBeEmpty()
         ->and($selfOrder->refresh()->status)->toBe(SelfOrderStatus::Accepted)
         ->and($selfOrder->order_id)->toBe($order->id)
@@ -123,7 +123,7 @@ it('kasir menerima: order menunggu bayar di shift kasir, kanal self_order, meja;
         ['id' => uuid(), 'payment_method_id' => $this->pos->methods['cash']->id, 'amount' => '60000', 'tendered' => null, 'reference' => null],
     ])['order'];
 
-    expect($paid->status)->toBe(OrderStatus::Completed)->and($paid->change_total)->toBe('4100.00')
+    expect($paid->status)->toBe(OrderStatus::Completed)->and($paid->change_total)->toBe('4000.00')
         ->and(stockOf($this->pos->croissant)->stock_qty)->toBe(8);
 });
 
