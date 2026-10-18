@@ -6,6 +6,7 @@ namespace App\Http\Middleware\Member;
 
 use App\Models\MemberSetting;
 use App\Models\Tenant;
+use App\Support\Features;
 use App\Support\MemberPortal;
 use App\Support\TenantContext;
 use Closure;
@@ -27,7 +28,8 @@ final class SetMemberPortal
         abort_if($tenant === null || ! $tenant->isActive(), 404);
 
         TenantContext::set($tenant->id, readOnly: $tenant->isReadOnly());
-        abort_unless(MemberSetting::current()->enabled, 404);
+        // Program member nonaktif atau tidak termasuk paket (ADR 0025): halaman tidak ada
+        abort_unless(MemberSetting::current()->enabled && Features::enabled('member', $tenant), 404);
         MemberPortal::setTenant($tenant);
         view()->share('business', $tenant);
 

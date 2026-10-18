@@ -11,6 +11,8 @@ use App\Models\Member;
 use App\Models\Outlet;
 use App\Support\Idempotency;
 use App\Support\Phone;
+use App\Support\Quotas;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -54,6 +56,9 @@ final class SaveMember
             $member ??= new Member;
 
             if ($isNew) {
+                // Kuota member aktif (ADR 0025); juga daftar mandiri pelanggan & import
+                Quotas::ensureAvailable(TenantContext::idOrFail(), Quotas::MEMBERS);
+
                 if ($data->id !== null) {
                     $member->id = $data->id;
                 }

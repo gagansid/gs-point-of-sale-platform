@@ -17,7 +17,8 @@ Semua endpoint memakai **token user** + header `X-App-Version`. Base URL: [READM
 | PUT | `/v1/payment-methods/{id}` | `payment_method.manage` | ya | `UpdatePaymentMethod` |
 
 Error umum: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `403 SUBSCRIPTION_EXPIRED` (PUT saat trial/langganan
-habis), `403 TENANT_SUSPENDED`, `422 VALIDATION_ERROR`, `426 APP_UPDATE_REQUIRED`.
+habis), `403 TENANT_SUSPENDED`, `409 PLAN_LIMIT_REACHED` (tambah/aktifkan karyawan melebihi kuota paket,
+`error.details` `{quota, limit, used}`, ADR 0025), `422 VALIDATION_ERROR`, `426 APP_UPDATE_REQUIRED`.
 
 ---
 

@@ -1,7 +1,7 @@
 # ADR 0025: Katalog fitur, kuota, dan add-on paket langganan
 
 - Status: Diterima
-- Tanggal: 2026-10-18 (revisi 2026-10-18: katalog fitur = tabel master, bukan enum)
+- Tanggal: 2026-10-18 (revisi 2026-10-18: katalog fitur & kuota = tabel master, bukan enum)
 - Pengambil keputusan: Gagan Suganda (usulan Claude, semua opsi disetujui 2026-10-18)
 - Terkait: ADR 0024 (paket & tagihan), ADR 0010 (`max_outlets`), ADR 0009 (edisi, hanya-baca), SPEC Q108–Q112
 
@@ -40,11 +40,11 @@ Temuan saat survei kode (2026-10-18):
 
 | Topik | Keputusan |
 |---|---|
-| Jenis | Enum `App\Enums\Quota`: `outlets` (outlet aktif), `users` (karyawan aktif, owner dihitung), `devices` (perangkat kasir tidak dicabut, Flutter + kasir web), `products` (produk aktif, tidak terhapus), `members` (member terdaftar). **Tidak** ada kuota transaksi/bulan: memblokir checkout di tengah jam ramai merugikan kasir |
-| Penyimpanan | `plans.limits` JSON `{quota: int|null}`, null/tidak ada = tanpa batas. `tenants.limit_overrides` JSON untuk batas khusus dari admin (menggantikan arti "manual" `tenants.max_outlets`). Migrasi: `plans.max_outlets` → `limits.outlets`, `tenants.max_outlets` → `limit_overrides.outlets`; kolom lama dihapus setelah semua pemakai pindah ke `Tenant::limit(Quota)` |
-| Batas efektif | `override ?? (limit paket + tambahan add-on)`; tenant tanpa paket = tanpa batas kecuali override; jual putus = tanpa batas |
-| Pengecekan | Satu pintu `Quotas::ensureAvailable(Tenant, Quota, int $adding = 1)` di Action yang **membuat atau mengaktifkan** data (`CreateOutlet`/aktifkan, `SaveEmployee`/`SetEmployeeActive`, registrasi perangkat API & `RegisterWebDevice`, simpan/aktifkan produk API & dashboard, daftar member API & dashboard), di dalam transaksi dengan `lockForUpdate` baris tenant agar dua request bersamaan tidak sama-sama lolos |
-| Error API | Kode baru **`PLAN_LIMIT_REACHED`** (409), `details: {quota, limit, used}`. `OUTLET_LIMIT_REACHED` tetap dipakai untuk outlet (kompatibel Flutter versi lama) |
+| Jenis | **Master data tabel `quotas`** (revisi B1: bukan enum, dikelola langsung di database tanpa CRUD, baris awal lewat migration): `outlets` (outlet aktif), `users` (karyawan aktif, owner dihitung), `devices` (perangkat tidak dicabut, Flutter + kasir web), `products` (produk & paket aktif belum dihapus; **bahan baku tidak dihitung**), `members` (member aktif). Cara menghitung per key ada di `App\Support\Quotas` (key tanpa penghitung = hanya label). **Tidak** ada kuota transaksi/bulan: memblokir checkout di tengah jam ramai merugikan kasir |
+| Penyimpanan | `plans.limits` JSON `{key: int}` (tidak ada = tanpa batas) dan `tenants.limit_overrides` JSON (batas khusus admin, form Ubah bisnis). Migrasi: `plans.max_outlets` → `limits.outlets`; `tenants.max_outlets` yang sama dengan paketnya dibuang (dulu salinan), selain itu jadi `limit_overrides.outlets`; kedua kolom lama **dihapus**. Trial baru: `limit_overrides.outlets` = `POS_DEFAULT_MAX_OUTLETS` (sama dengan sebelumnya) |
+| Batas efektif | `limit_overrides[key] ?? limit paket (+ tambahan add-on, C1)`; tanpa keduanya = tanpa batas; jual putus = tanpa batas. **Menerapkan paket** (tagihan lunas, Atur paket admin, perubahan terjadwal) **menghapus batas khusus**, sama seperti dulu `max_outlets` ditimpa paket; melepas paket mempertahankannya |
+| Pengecekan | Satu pintu `Quotas::ensureAvailable(tenantId, key)` di dalam transaksi Action, mengunci baris tenant (`lockForUpdate`) agar dua request bersamaan tidak sama-sama lolos: `CreateOutlet`/`SetOutletActive`, `SaveEmployee` (baru) & `SetEmployeeActive` (aktif lagi), `RegisterDevice` (baru / dicabut lalu didaftarkan lagi; daftar ulang perangkat aktif tidak dihitung) & `RegisterWebDevice` & `SetDeviceRevoked` (aktif lagi), `SaveProduct` (baru, aktif lagi, bahan baku jadi produk; termasuk import & template menu — import ditolak utuh), `SaveMember` (dashboard, API, kasir web, import, daftar mandiri) & `SetMemberActive`. Idempotent replay tidak dihitung |
+| Error API | Kode baru **`PLAN_LIMIT_REACHED`** (409), `details: {quota, limit, used}`, pesan menyebut nama kuota. `OUTLET_LIMIT_REACHED` tetap dipakai untuk outlet (kompatibel Flutter versi lama), `details` = `{max_outlets, quota, limit, used}`. Daftar mandiri member publik menampilkan pesan umum (angka kuota tidak dibuka ke publik) |
 | Lewat batas setelah downgrade | Data lama **tetap jalan** (produk tetap dijual, karyawan tetap login, perangkat tetap dipakai); hanya **tambah/aktifkan** yang ditolak sampai pemakaian di bawah batas. Dashboard menampilkan banner "Pemakaian melebihi paket" + pemakaian vs batas di Langganan |
 | Tampilan | Owner: Pengaturan → Langganan menampilkan pemakaian/batas per kuota. Admin: detail bisnis section Langganan + form paket. `auth/me` → `data.tenant.limits` `{quota: {limit, used}}` |
 
@@ -69,7 +69,7 @@ Temuan saat survei kode (2026-10-18):
 |---|---|
 | **A1** | Tabel master `features`, refactor `Plan::FEATURES`/`Features`, middleware API `feature:*` untuk 6 fitur lama (**menutup celah API member/voucher/kasbon**), `FEATURE_NOT_AVAILABLE`, `auth/me` `tenant.features` |
 | **A2** | Fitur baru `advanced_reports`, `report_export`, `web_cashier`, `online_payment` (dashboard + API + kasir web) |
-| **B1** | `Quota`, `plans.limits`, `tenants.limit_overrides`, migrasi `max_outlets`, `Quotas::ensureAvailable` + `PLAN_LIMIT_REACHED` di Action |
+| **B1** | Tabel master `quotas`, `plans.limits`, `tenants.limit_overrides`, migrasi & hapus `max_outlets`, `Quotas::ensureAvailable` + `PLAN_LIMIT_REACHED` di Action |
 | **B2** | Tampilan pemakaian (owner, admin, `auth/me` `tenant.limits`), banner lewat batas, form paket admin |
 | **C1** | `addons`, `tenant_addons`, resource admin, Atur add-on, union fitur & kuota |
 | **C2** | `subscription_invoice_items`, perpanjangan dengan add-on, tagihan `addon` prorata, Berhenti, halaman Langganan owner, email |

@@ -57,8 +57,8 @@ beforeEach(function () {
     config(['pos.billing.midtrans_server_key' => OB_VENDOR_KEY]);
 
     // Paket dibuat super admin sebelum ada pelanggan
-    $this->basic = app(SavePlan::class)->handle(null, ['code' => 'basic', 'name' => 'Basic', 'price_monthly' => '99000', 'price_yearly' => '990000', 'max_outlets' => 1, 'features' => ['member'], 'sort_order' => 1]);
-    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'max_outlets' => 3, 'features' => array_keys(Feature::options()), 'sort_order' => 2]);
+    $this->basic = app(SavePlan::class)->handle(null, ['code' => 'basic', 'name' => 'Basic', 'price_monthly' => '99000', 'price_yearly' => '990000', 'limits' => ['outlets' => 1], 'features' => ['member'], 'sort_order' => 1]);
+    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'limits' => ['outlets' => 3], 'features' => array_keys(Feature::options()), 'sort_order' => 2]);
 
     // Midtrans vendor palsu: Snap selalu sukses; cek status membaca $this->obSettled[order_id] (nominal yang lunas)
     $this->obSettled = [];
@@ -222,7 +222,7 @@ it('daftar → trial → verifikasi → habis (hanya-baca) → langganan via web
         ->and($tenant->status)->toBe(TenantStatus::Active)
         ->and($tenant->plan_id)->toBe($this->basic->id)
         ->and($tenant->billing_cycle)->toBe(BillingCycle::Monthly)
-        ->and($tenant->max_outlets)->toBe(1)
+        ->and($tenant->outletLimit())->toBe(1)
         ->and($tenant->subscription_ends_at->toDateTimeString())->toBe('2026-11-16 03:00:00')
         ->and($tenant->access())->toBe(TenantAccess::Full);
     $paidAt = $invoice->paid_at->toDateTimeString();
@@ -264,7 +264,7 @@ it('daftar → trial → verifikasi → habis (hanya-baca) → langganan via web
     $tenant->refresh();
     expect($upgrade->refresh()->status)->toBe(InvoiceStatus::Paid)
         ->and($tenant->plan_id)->toBe($this->pro->id)
-        ->and($tenant->max_outlets)->toBe(3)
+        ->and($tenant->outletLimit())->toBe(3)
         ->and($tenant->subscription_ends_at->toDateTimeString())->toBe('2026-11-16 03:00:00')
         ->and($upgrade->period_end->toDateTimeString())->toBe('2026-11-16 03:00:00');
     obOwnerDashboard($this, $owner);
@@ -294,7 +294,7 @@ it('daftar → trial → verifikasi → habis (hanya-baca) → langganan via web
 
     $tenant->refresh();
     expect($tenant->plan_id)->toBe($this->basic->id)
-        ->and($tenant->max_outlets)->toBe(1)
+        ->and($tenant->outletLimit())->toBe(1)
         ->and($tenant->next_plan_id)->toBeNull()
         ->and($tenant->plan_changes_at)->toBeNull()
         ->and($tenant->subscription_ends_at->toDateTimeString())->toBe('2026-12-16 03:00:00');

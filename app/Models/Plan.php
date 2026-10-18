@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $description
  * @property string $price_monthly
  * @property string $price_yearly
- * @property int|null $max_outlets
+ * @property array<string, int>|null $limits batas per kuota (key master data quotas); tidak ada = tanpa batas
  * @property list<string> $features key dari master data features (ADR 0025)
  * @property bool $is_active
  * @property bool $is_public
@@ -29,7 +29,7 @@ final class Plan extends Model
 {
     use HasUuids, RecordsAuthor;
 
-    protected $fillable = ['code', 'name', 'description', 'price_monthly', 'price_yearly', 'max_outlets', 'features', 'is_active', 'is_public', 'sort_order'];
+    protected $fillable = ['code', 'name', 'description', 'price_monthly', 'price_yearly', 'limits', 'features', 'is_active', 'is_public', 'sort_order'];
 
     protected $attributes = ['features' => '[]', 'is_active' => true, 'is_public' => true, 'sort_order' => 0];
 
@@ -43,7 +43,7 @@ final class Plan extends Model
         return [
             'price_monthly' => 'decimal:2',
             'price_yearly' => 'decimal:2',
-            'max_outlets' => 'integer',
+            'limits' => 'array',
             'features' => 'array',
             'is_active' => 'boolean',
             'is_public' => 'boolean',
@@ -54,6 +54,19 @@ final class Plan extends Model
     public function price(BillingCycle $cycle): string
     {
         return $cycle === BillingCycle::Monthly ? $this->price_monthly : $this->price_yearly;
+    }
+
+    public function limit(string $quota): ?int
+    {
+        $limit = $this->limits[$quota] ?? null;
+
+        return $limit !== null ? (int) $limit : null;
+    }
+
+    /** Ringkasan batas, mis. "Outlet aktif 3 · Karyawan aktif 10"; kosong = tanpa batas. */
+    public function limitsSummary(): string
+    {
+        return Quota::summary($this->limits ?? []);
     }
 
     public function hasFeature(string $feature): bool

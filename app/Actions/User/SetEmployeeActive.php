@@ -8,6 +8,7 @@ use App\Enums\ErrorCode;
 use App\Enums\UserRole;
 use App\Exceptions\BusinessException;
 use App\Models\User;
+use App\Support\Quotas;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -28,6 +29,11 @@ final class SetEmployeeActive
         }
 
         DB::transaction(function () use ($employee, $active): void {
+            // Mengaktifkan lagi = menambah pemakaian kuota karyawan (ADR 0025)
+            if ($active && ! $employee->is_active) {
+                Quotas::ensureAvailable($employee->tenant_id, Quotas::USERS);
+            }
+
             if (! $active && $employee->role === UserRole::Owner && $employee->is_active) {
                 SaveEmployee::ensureAnotherActiveOwner($employee);
             }

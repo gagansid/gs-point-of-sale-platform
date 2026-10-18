@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web\Member;
 
 use App\Actions\Member\Data\MemberData;
 use App\Actions\Member\RegisterMemberAccount;
+use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
 use App\Models\Member;
@@ -108,6 +109,11 @@ final class AuthController extends Controller
         try {
             $member = $register->handle(MemberData::fromArray([...$data, 'consent' => true]), $data['password']);
         } catch (BusinessException $e) {
+            // Kuota member penuh (ADR 0025): jangan buka angka kuota/pemakaian bisnis ke publik
+            if ($e->errorCode === ErrorCode::PlanLimitReached->value) {
+                throw ValidationException::withMessages(['phone' => 'Pendaftaran member online sedang tidak tersedia. Silakan daftar lewat kasir.']);
+            }
+
             throw ValidationException::withMessages(is_array($e->details) ? $e->details : ['phone' => $e->getMessage()]);
         }
 

@@ -28,8 +28,8 @@ Semua endpoint memakai **token user** + header `X-App-Version`.
 | PUT, DELETE | `/option-groups/{id}` | `product.manage` | ya | `SaveOptionGroup`, `DeleteOptionGroup` |
 
 Error umum semua endpoint: `401 UNAUTHENTICATED`, `403 FORBIDDEN` (permission),
-`403 TENANT_SUSPENDED`, `404 NOT_FOUND` (termasuk data tenant lain), `422 VALIDATION_ERROR`,
-`426 APP_UPDATE_REQUIRED`.
+`403 TENANT_SUSPENDED`, `404 NOT_FOUND` (termasuk data tenant lain), `409 PLAN_LIMIT_REACHED` (tambah/aktifkan produk
+melebihi kuota paket; bahan baku tidak dihitung, ADR 0025), `422 VALIDATION_ERROR`, `426 APP_UPDATE_REQUIRED`.
 
 ---
 

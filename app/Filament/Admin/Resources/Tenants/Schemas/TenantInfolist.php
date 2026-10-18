@@ -7,6 +7,7 @@ namespace App\Filament\Admin\Resources\Tenants\Schemas;
 use App\Enums\UserRole;
 use App\Filament\Admin\Resources\SubscriptionInvoices\SubscriptionInvoiceResource;
 use App\Filament\Shared\Schemas\AuditInfo;
+use App\Models\Quota;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
 use App\Support\Edition;
@@ -84,8 +85,9 @@ final class TenantInfolist
                 TextEntry::make('plan.name')->label('Paket')->weight('semibold')
                     ->placeholder('Tanpa paket (semua fitur)'),
                 TextEntry::make('billing_cycle')->label('Siklus')->placeholder('—'),
-                TextEntry::make('outlet_limit')->label('Maks. outlet aktif')
-                    ->state(fn (Tenant $record): ?int => $record->outletLimit())->placeholder('Tanpa batas'),
+                TextEntry::make('limits_summary')->label('Kuota')
+                    ->state(fn (Tenant $record): string => Quota::summary($record->limits()))
+                    ->helperText(fn (Tenant $record): ?string => $record->limit_overrides ? 'Termasuk batas khusus' : null),
                 // Downgrade / ganti siklus yang menunggu akhir masa aktif (pos:apply-plan-changes)
                 TextEntry::make('scheduled_change')->label('Perubahan terjadwal')->color('warning')
                     ->state(fn (Tenant $record): ?string => $record->plan_changes_at === null ? null : sprintf(

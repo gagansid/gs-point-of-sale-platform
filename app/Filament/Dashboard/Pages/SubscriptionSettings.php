@@ -106,7 +106,7 @@ final class SubscriptionSettings extends Page
             ->schema([
                 Radio::make('plan_id')->label('Paket')->required()->live()
                     ->options(fn (): array => $this->plans()->mapWithKeys(fn (Plan $p): array => [$p->id => $p->name])->all())
-                    ->descriptions(fn (): array => $this->plans()->mapWithKeys(fn (Plan $p): array => [$p->id => Money::format($p->price_monthly).'/bulan · '.Money::format($p->price_yearly).'/tahun'.($p->max_outlets !== null ? ' · maks. '.$p->max_outlets.' outlet' : '')])->all()),
+                    ->descriptions(fn (): array => $this->plans()->mapWithKeys(fn (Plan $p): array => [$p->id => Money::format($p->price_monthly).'/bulan · '.Money::format($p->price_yearly).'/tahun'.($p->limits ? ' · '.$p->limitsSummary() : '')])->all()),
                 ToggleButtons::make('billing_cycle')->label('Siklus')->required()->inline()->options(BillingCycle::class)->live(),
                 Placeholder::make('quote')->label('Tagihan')
                     ->content(fn (Get $get): string => $this->quoteText($get('plan_id'), $get('billing_cycle'))),

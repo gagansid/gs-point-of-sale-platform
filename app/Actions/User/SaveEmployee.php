@@ -13,6 +13,8 @@ use App\Models\Outlet;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Idempotency;
+use App\Support\Quotas;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -45,6 +47,11 @@ final class SaveEmployee
         $outletIds = self::resolveOutlets($employee, $data, $by);
 
         $user = DB::transaction(function () use ($employee, $data, $isNew, $outletIds): User {
+            // Kuota karyawan aktif (ADR 0025): karyawan baru langsung aktif
+            if ($isNew) {
+                Quotas::ensureAvailable(TenantContext::idOrFail(), Quotas::USERS);
+            }
+
             $user = $employee ?? new User;
 
             if ($isNew && $data->id !== null) {

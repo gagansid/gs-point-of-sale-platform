@@ -8,7 +8,7 @@ Tiga jenis akses:
 | Akses | Token | Didapat dari |
 |---|---|---|
 | Publik | — | — |
-| Device | Device token (ability `device`, tanpa kedaluwarsa sampai dicabut) | `POST /devices` |
+| Device | Device token (ability `device`, tanpa kedaluwarsa sampai dicabut) | `POST /devices` (perangkat baru / dicabut: `409 PLAN_LIMIT_REACHED` bila kuota `devices` paket penuh, ADR 0025) |
 | User | Token user (owner 30 hari, kasir maks. 16 jam) | `POST /auth/login`, `POST /auth/pin-login` |
 
 Token user tidak bisa memanggil endpoint device dan sebaliknya. Semua endpoint (kecuali

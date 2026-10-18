@@ -43,8 +43,8 @@ beforeEach(function () {
     $this->pos = posSetup();
     $this->tenant = Tenant::query()->findOrFail($this->pos->tenantId);
     $this->tenant->forceFill(['status' => TenantStatus::Trial, 'subscription_ends_at' => now()->addDays(5)])->save();
-    $this->basic = app(SavePlan::class)->handle(null, ['code' => 'basic', 'name' => 'Basic', 'price_monthly' => '99000', 'price_yearly' => '990000', 'max_outlets' => 1, 'features' => ['member']]);
-    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'max_outlets' => 3, 'features' => array_keys(Feature::options())]);
+    $this->basic = app(SavePlan::class)->handle(null, ['code' => 'basic', 'name' => 'Basic', 'price_monthly' => '99000', 'price_yearly' => '990000', 'limits' => ['outlets' => 1], 'features' => ['member']]);
+    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'limits' => ['outlets' => 3], 'features' => array_keys(Feature::options())]);
 });
 
 afterEach(fn () => Carbon::setTestNow());
@@ -75,7 +75,7 @@ it('lunas: paket, batas outlet, status aktif, masa aktif ditambah dari akhir lam
     app(MarkInvoicePaid::class)->handle($invoice, 'manual');
 
     $tenant = $this->tenant->refresh();
-    expect($tenant->plan_id)->toBe($this->pro->id)->and($tenant->max_outlets)->toBe(3)
+    expect($tenant->plan_id)->toBe($this->pro->id)->and($tenant->outletLimit())->toBe(3)
         ->and($tenant->status)->toBe(TenantStatus::Active)
         ->and($tenant->subscription_ends_at->toDateString())->toBe('2026-11-21')
         ->and($invoice->refresh()->status)->toBe(InvoiceStatus::Paid)
@@ -92,7 +92,7 @@ function activeOn(object $test, Plan $plan): void
 {
     $test->tenant->forceFill([
         'status' => TenantStatus::Active, 'plan_id' => $plan->id, 'billing_cycle' => BillingCycle::Monthly,
-        'max_outlets' => $plan->max_outlets, 'subscription_ends_at' => now()->addDays(15),
+        'limit_overrides' => null, 'subscription_ends_at' => now()->addDays(15),
     ])->save();
 }
 
@@ -106,7 +106,7 @@ it('upgrade prorata: selisih × sisa hari ÷ hari siklus; lunas = paket langsung
 
     app(MarkInvoicePaid::class)->handle($invoice, 'manual');
     $tenant = $this->tenant->refresh();
-    expect($tenant->plan_id)->toBe($this->pro->id)->and($tenant->max_outlets)->toBe(3)
+    expect($tenant->plan_id)->toBe($this->pro->id)->and($tenant->outletLimit())->toBe(3)
         ->and($tenant->subscription_ends_at->toDateString())->toBe('2026-10-31')
         ->and($tenant->next_plan_id)->toBeNull()
         ->and($invoice->refresh()->period_end->toDateString())->toBe('2026-10-31');
@@ -134,7 +134,7 @@ it('downgrade / ganti siklus: perpanjangan harga penuh, paket baru dijadwalkan d
         ->and(app(ApplyScheduledPlanChanges::class)->handle(CarbonImmutable::parse('2026-10-31 05:00')))->toBe(0);
 
     $tenant = $this->tenant->refresh();
-    expect($tenant->plan_id)->toBe($this->basic->id)->and($tenant->max_outlets)->toBe(1)->and($tenant->next_plan_id)->toBeNull();
+    expect($tenant->plan_id)->toBe($this->basic->id)->and($tenant->outletLimit())->toBe(1)->and($tenant->next_plan_id)->toBeNull();
 
     // Paket lebih mahal tapi siklus lain = perpanjangan terjadwal, bukan upgrade
     activeOn($this, $this->basic);
@@ -242,7 +242,7 @@ it('dashboard: owner membuat tagihan di halaman Langganan; manager tanpa akses; 
     $page = Livewire::test(SubscriptionSettings::class)->instance();
     expect($page->quoteText($this->pro->id, 'monthly'))->toContain('Upgrade Rp48.387')->toContain('sisa 15 hari')
         ->and($page->quoteText($this->basic->id, 'yearly'))->toContain('tetap berlaku sampai 31 Okt 2026');
-    $this->tenant->forceFill(['status' => TenantStatus::Trial, 'plan_id' => null, 'billing_cycle' => null, 'max_outlets' => null, 'subscription_ends_at' => now()->addDays(5)])->save();
+    $this->tenant->forceFill(['status' => TenantStatus::Trial, 'plan_id' => null, 'billing_cycle' => null, 'limit_overrides' => null, 'subscription_ends_at' => now()->addDays(5)])->save();
 
     Livewire::test(SubscriptionSettings::class)
         ->assertSee('Semua fitur (tanpa paket)')

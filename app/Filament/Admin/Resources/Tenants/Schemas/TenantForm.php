@@ -7,6 +7,7 @@ namespace App\Filament\Admin\Resources\Tenants\Schemas;
 use App\Enums\BusinessType;
 use App\Enums\TenantStatus;
 use App\Filament\Shared\Schemas\AuditInfo;
+use App\Models\Quota;
 use App\Models\Tenant;
 use App\Support\Edition;
 use App\Support\SystemSettings;
@@ -80,13 +81,14 @@ final class TenantForm
                             // Lama trial dari Sistem → Pendaftaran (ADR 0009)
                             ->default(fn () => now()->addDays(app(SystemSettings::class)->trialDays()))
                             ->minDate(fn (string $operation) => $operation === 'create' ? today() : null),
-                        TextInput::make('max_outlets')
-                            ->label('Maksimal outlet aktif')
-                            ->integer()->minValue(1)->maxValue(1000)
-                            ->placeholder('Tanpa batas')
-                            ->helperText('Sesuai paket langganan (ADR 0010). Kosongkan bila tanpa batas')
-                            ->visible(fn (string $operation): bool => $operation === 'edit' && Edition::isSaas()),
                     ]),
+
+                // Batas khusus per kuota (ADR 0025): menimpa batas paket; dihapus saat paket diterapkan
+                Section::make('Batas khusus')
+                    ->description('Kosongkan untuk mengikuti paket. Berlaku sampai paket diganti (paket baru memakai batasnya sendiri). Tanpa paket & tanpa batas khusus = tanpa batas')
+                    ->columns(3)
+                    ->visible(fn (string $operation): bool => $operation === 'edit' && Edition::isSaas())
+                    ->schema(fn (): array => self::limitFields('limit_overrides', 'Ikut paket')),
 
                 Section::make('Outlet pertama')
                     ->description('Outlet berikutnya ditambah owner di Pengaturan → Outlet. Kode outlet menjadi awalan nomor order, mis. JKT01-261008-0042')
@@ -138,5 +140,20 @@ final class TenantForm
                 // Tanggal dibuat & diubah (audit)
                 AuditInfo::make(),
             ]);
+    }
+
+    /**
+     * Satu isian angka per kuota dari master data (ADR 0025), dipakai form paket & batas khusus tenant.
+     *
+     * @return list<TextInput>
+     */
+    public static function limitFields(string $field, string $placeholder): array
+    {
+        return array_map(
+            fn (string $key, string $name): TextInput => TextInput::make("{$field}.{$key}")->label($name)
+                ->integer()->minValue(1)->maxValue(100000)->placeholder($placeholder),
+            array_keys(Quota::options()),
+            Quota::options(),
+        );
     }
 }

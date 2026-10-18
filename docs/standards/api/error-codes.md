@@ -21,7 +21,7 @@ Di kode, daftar tersebut dicerminkan oleh enum `App\Enums\ErrorCode` (value = ko
 | 409 | `SHIFT_NOT_OPEN` | Action order & shift |
 | 409 | `ORDER_ALREADY_CLOSED` | Action `SaveOpenBill`, `AddPayment`, `VoidOrder` |
 | 409 | `LAST_OWNER_REQUIRED` | Action `UpdateUser`, `DeactivateUser` |
-| 409 | `PLAN_LIMIT_REACHED` | Kuota paket (ADR 0025 tahap B1; kode sudah terdaftar, belum dilempar) |
+| 409 | `PLAN_LIMIT_REACHED` | `Quotas::ensureAvailable` di Action `SaveEmployee`, `SetEmployeeActive`, `RegisterDevice`, `RegisterWebDevice`, `SetDeviceRevoked`, `SaveProduct`, `SaveMember`, `SetMemberActive` — ADR 0025 |
 | 422 | `VALIDATION_ERROR` | Framework (`ValidationException`) — dari FormRequest |
 | 422 | `PAYMENT_EXCEEDS_BALANCE` | Action `CheckoutOrder`, `AddPayment` |
 | 422 | `DISCOUNT_OVER_LIMIT` | Action `CheckoutOrder`, `SaveOpenBill` |

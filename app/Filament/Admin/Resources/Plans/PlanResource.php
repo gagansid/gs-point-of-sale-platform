@@ -6,6 +6,7 @@ namespace App\Filament\Admin\Resources\Plans;
 
 use App\Actions\Billing\SavePlan;
 use App\Filament\Admin\Resources\Plans\Pages\ManagePlans;
+use App\Filament\Admin\Resources\Tenants\Schemas\TenantForm;
 use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Filament\Shared\Tables\TableEmptyState;
@@ -19,6 +20,7 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -54,8 +56,10 @@ final class PlanResource extends Resource
             TextInput::make('description')->label('Keterangan')->maxLength(255)->columnSpanFull(),
             MoneyInput::make('price_monthly')->label('Harga bulanan')->required(),
             MoneyInput::make('price_yearly')->label('Harga tahunan')->required(),
-            TextInput::make('max_outlets')->label('Maks. outlet aktif')->integer()->minValue(1)->placeholder('Tanpa batas'),
             TextInput::make('sort_order')->label('Urutan')->integer()->default(0),
+            // Kuota dari master data quotas (ADR 0025); kosong = tanpa batas
+            Section::make('Kuota')->compact()->columns(3)->columnSpanFull()
+                ->schema(fn (): array => TenantForm::limitFields('limits', 'Tanpa batas')),
             CheckboxList::make('features')->label('Fitur')->options(fn (): array => Feature::options())->columns(2)->columnSpanFull()
                 ->helperText('Kasir, laporan, retur, pecah bill, kas masuk/keluar selalu tersedia. Daftar fitur dikelola di database (tabel features)'),
             Toggle::make('is_active')->label('Aktif')->default(true),
@@ -71,7 +75,7 @@ final class PlanResource extends Resource
                 TextColumn::make('name')->label('Paket')->weight('medium')->description(fn (Plan $record): string => $record->code),
                 TextColumn::make('price_monthly')->label('Bulanan')->alignEnd()->formatStateUsing(fn (string $state): string => Money::format($state)),
                 TextColumn::make('price_yearly')->label('Tahunan')->alignEnd()->formatStateUsing(fn (string $state): string => Money::format($state)),
-                TextColumn::make('max_outlets')->label('Outlet')->alignEnd()->placeholder('Tanpa batas'),
+                TextColumn::make('limits')->label('Kuota')->state(fn (Plan $record): string => $record->limitsSummary())->wrap(),
                 TextColumn::make('features')->label('Fitur')->state(function (Plan $record): string {
                     $all = once(fn (): array => array_keys(Feature::options()));
 

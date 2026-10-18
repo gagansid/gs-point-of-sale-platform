@@ -42,7 +42,7 @@ final class MarkInvoicePaid
                 // Upgrade prorata: paket langsung berganti, masa aktif tetap
                 $from = $now;
                 $until = $tenant->subscription_ends_at !== null && $tenant->subscription_ends_at->isAfter($now) ? $tenant->subscription_ends_at : $now;
-                $tenant->forceFill(['plan_id' => $plan->id, 'max_outlets' => $plan->max_outlets]);
+                $tenant->forceFill(['plan_id' => $plan->id, 'limit_overrides' => null]);
             } else {
                 $quote = InvoiceQuote::for($tenant, $plan, $locked->billing_cycle, $now);
                 $from = $quote->startsAt;
@@ -54,7 +54,8 @@ final class MarkInvoicePaid
                     : [
                         'plan_id' => $plan->id,
                         'billing_cycle' => $locked->billing_cycle,
-                        'max_outlets' => $plan->max_outlets,
+                        // Paket diterapkan: batas mengikuti paket (batas khusus admin dihapus, ADR 0025)
+                        'limit_overrides' => null,
                         'next_plan_id' => null, 'next_billing_cycle' => null, 'plan_changes_at' => null,
                     ]);
                 $tenant->forceFill([

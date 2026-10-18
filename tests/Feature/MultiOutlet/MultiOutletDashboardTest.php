@@ -51,7 +51,7 @@ describe('Pengaturan → Outlet', function () {
     });
 
     it('batas paket: outlet aktif tidak boleh melebihi max_outlets', function () {
-        $this->tenant->update(['max_outlets' => 1]);
+        $this->tenant->update(['limit_overrides' => ['outlets' => 1]]);
 
         try {
             app(CreateOutlet::class)->handle('BDG01', 'Bandung', null, 'Asia/Jakarta');
@@ -61,7 +61,7 @@ describe('Pengaturan → Outlet', function () {
         }
 
         // Menonaktifkan satu outlet membuka slot; mengaktifkannya lagi kembali ditolak
-        $this->tenant->update(['max_outlets' => 2]);
+        $this->tenant->update(['limit_overrides' => ['outlets' => 2]]);
         $b = app(CreateOutlet::class)->handle('BDG01', 'Bandung', null, 'Asia/Jakarta');
         app(SetOutletActive::class)->handle($b, false);
         app(CreateOutlet::class)->handle('SBY01', 'Surabaya', null, 'Asia/Jakarta');

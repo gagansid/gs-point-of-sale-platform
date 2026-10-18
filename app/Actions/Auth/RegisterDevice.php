@@ -7,6 +7,7 @@ namespace App\Actions\Auth;
 use App\Enums\AppPlatform;
 use App\Models\Device;
 use App\Models\Outlet;
+use App\Support\Quotas;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -24,6 +25,12 @@ final class RegisterDevice
         return DB::transaction(function () use ($outlet, $name, $deviceUid, $platform, $appVersion): array {
             $device = Device::query()->firstOrNew(['device_uid' => $deviceUid]);
             $wasRevoked = $device->exists && $device->isRevoked();
+
+            // Kuota perangkat (ADR 0025): perangkat baru atau dicabut lalu didaftarkan lagi; daftar ulang perangkat
+            // aktif (pindah outlet, ganti nama) tidak menambah pemakaian
+            if (! $device->exists || $wasRevoked) {
+                Quotas::ensureAvailable($outlet->tenant_id, Quotas::DEVICES);
+            }
 
             $device->fill([
                 'outlet_id' => $outlet->id,

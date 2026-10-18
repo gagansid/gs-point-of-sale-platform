@@ -36,7 +36,7 @@ final class ApplyScheduledPlanChanges
                 $tenant->forceFill([
                     'plan_id' => $plan->id ?? $tenant->plan_id,
                     'billing_cycle' => $tenant->next_billing_cycle ?? $tenant->billing_cycle,
-                    'max_outlets' => $plan !== null ? $plan->max_outlets : $tenant->max_outlets,
+                    'limit_overrides' => $plan !== null ? null : $tenant->limit_overrides,
                     'next_plan_id' => null,
                     'next_billing_cycle' => null,
                     'plan_changes_at' => null,

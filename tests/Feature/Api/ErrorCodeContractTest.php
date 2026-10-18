@@ -192,23 +192,23 @@ describe('PAYMENT_GATEWAY_ERROR (hanya Action/Service)', function () {
 describe('OUTLET_LIMIT_REACHED (tanpa route API; jalur kedua lewat Action)', function () {
     it('mengaktifkan lagi outlet nonaktif melebihi max_outlets → 409 dengan details.max_outlets', function () {
         $tenant = Tenant::query()->findOrFail($this->pos->tenantId);
-        $tenant->update(['max_outlets' => 1]);
+        $tenant->update(['limit_overrides' => ['outlets' => 1]]);
         $inactive = TenantContext::run($tenant->id, fn () => Outlet::factory()->create(['tenant_id' => $tenant->id, 'code' => 'BDG01', 'is_active' => false]));
 
         $e = TenantContext::run($tenant->id, fn () => eccCatch(fn () => app(SetOutletActive::class)->handle($inactive, true)));
 
         expect($e->errorCode)->toBe('OUTLET_LIMIT_REACHED')
             ->and($e->status)->toBe(409)
-            ->and($e->details)->toBe(['max_outlets' => 1])
+            ->and($e->details)->toBe(['max_outlets' => 1, 'quota' => 'outlets', 'limit' => 1, 'used' => 1])
             ->and($inactive->refresh()->is_active)->toBeFalse();
     });
 
     it('CreateOutlet melebihi batas → envelope details sama (max_outlets)', function () {
-        Tenant::query()->whereKey($this->pos->tenantId)->update(['max_outlets' => 1]);
+        Tenant::query()->whereKey($this->pos->tenantId)->update(['limit_overrides' => ['outlets' => 1]]);
 
         $e = TenantContext::run($this->pos->tenantId, fn () => eccCatch(fn () => app(CreateOutlet::class)->handle('SBY01', 'Surabaya', null, 'Asia/Jakarta')));
 
-        expect($e->errorCode)->toBe('OUTLET_LIMIT_REACHED')->and($e->status)->toBe(409)->and($e->details)->toBe(['max_outlets' => 1]);
+        expect($e->errorCode)->toBe('OUTLET_LIMIT_REACHED')->and($e->status)->toBe(409)->and($e->details)->toBe(['max_outlets' => 1, 'quota' => 'outlets', 'limit' => 1, 'used' => 1]);
     });
 });
 

@@ -34,8 +34,8 @@ beforeEach(function () {
     TenantContext::forget();
     Filament::setCurrentPanel('admin');
     $this->actingAs(Admin::factory()->withTwoFactor()->create(), 'admin');
-    $this->basic = app(SavePlan::class)->handle(null, ['code' => 'basic', 'name' => 'Basic', 'price_monthly' => '99000', 'price_yearly' => '990000', 'max_outlets' => 1, 'features' => ['member'], 'sort_order' => 1]);
-    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'max_outlets' => 3, 'features' => array_keys(Feature::options()), 'sort_order' => 2]);
+    $this->basic = app(SavePlan::class)->handle(null, ['code' => 'basic', 'name' => 'Basic', 'price_monthly' => '99000', 'price_yearly' => '990000', 'limits' => ['outlets' => 1], 'features' => ['member'], 'sort_order' => 1]);
+    $this->pro = app(SavePlan::class)->handle(null, ['code' => 'pro', 'name' => 'Pro', 'price_monthly' => '199000', 'price_yearly' => '1990000', 'limits' => ['outlets' => 3], 'features' => array_keys(Feature::options()), 'sort_order' => 2]);
 });
 
 afterEach(fn () => Carbon::setTestNow());
@@ -45,7 +45,7 @@ function planAdminForm(array $override = []): array
 {
     return [
         'name' => 'Bisnis', 'code' => 'bisnis', 'description' => 'Untuk kafe 2 cabang',
-        'price_monthly' => '149000', 'price_yearly' => '1490000', 'max_outlets' => 2, 'sort_order' => 3,
+        'price_monthly' => '149000', 'price_yearly' => '1490000', 'limits' => ['outlets' => 2], 'sort_order' => 3,
         'features' => ['member', 'stock'], 'is_active' => true, 'is_public' => true,
         ...$override,
     ];
@@ -77,7 +77,7 @@ describe('PlanResource (ManagePlans)', function () {
         expect($plan->name)->toBe('Bisnis')
             ->and($plan->price_monthly)->toBe('149000.00')
             ->and($plan->price_yearly)->toBe('1490000.00')
-            ->and($plan->max_outlets)->toBe(2)
+            ->and($plan->limit('outlets'))->toBe(2)
             ->and($plan->features)->toBe(['member', 'stock'])
             ->and($plan->is_public)->toBeTrue();
     });
@@ -107,7 +107,7 @@ describe('PlanResource (ManagePlans)', function () {
         'nama kosong' => [['name' => ''], 'name'],
         'kode kosong' => [['code' => ''], 'code'],
         'harga bulanan negatif' => [['price_monthly' => '-1'], 'price_monthly'],
-        'maks. outlet 0' => [['max_outlets' => 0], 'max_outlets'],
+        'maks. outlet 0' => [['limits' => ['outlets' => 0]], 'limits.outlets'],
     ]);
 
     // Aturan kode (format & unik) dicek SavePlan di server: error tampil di field "code"
@@ -157,7 +157,7 @@ describe('TenantPlanAction (Atur paket)', function () {
     it('mengatur paket & siklus tenant, batas outlet ikut paket, jadwal ganti paket dibatalkan', function () {
         $tenant = Tenant::factory()->create([
             'status' => TenantStatus::Active, 'subscription_ends_at' => now()->addDays(15),
-            'plan_id' => $this->pro->id, 'billing_cycle' => BillingCycle::Monthly, 'max_outlets' => 3,
+            'plan_id' => $this->pro->id, 'billing_cycle' => BillingCycle::Monthly,
         ]);
         $tenant->forceFill(['next_plan_id' => $this->basic->id, 'next_billing_cycle' => BillingCycle::Monthly, 'plan_changes_at' => now()->addDays(15)])->save();
 
@@ -168,7 +168,7 @@ describe('TenantPlanAction (Atur paket)', function () {
         $tenant->refresh();
         expect($tenant->plan_id)->toBe($this->basic->id)
             ->and($tenant->billing_cycle)->toBe(BillingCycle::Yearly)
-            ->and($tenant->max_outlets)->toBe(1)
+            ->and($tenant->outletLimit())->toBe(1)
             ->and($tenant->next_plan_id)->toBeNull()
             ->and($tenant->next_billing_cycle)->toBeNull()
             ->and($tenant->plan_changes_at)->toBeNull()
@@ -177,7 +177,7 @@ describe('TenantPlanAction (Atur paket)', function () {
     });
 
     it('paket dikosongkan = semua fitur, siklus dihapus', function () {
-        $tenant = Tenant::factory()->create(['plan_id' => $this->basic->id, 'billing_cycle' => BillingCycle::Monthly, 'max_outlets' => 1]);
+        $tenant = Tenant::factory()->create(['plan_id' => $this->basic->id, 'billing_cycle' => BillingCycle::Monthly]);
 
         Livewire::test(ViewTenant::class, ['record' => $tenant->getRouteKey()])
             ->callAction('plan', ['plan_id' => null, 'billing_cycle' => 'monthly']);

@@ -15,7 +15,7 @@ Keputusan: [ADR 0013](../adr/0013-member-loyalty-program.md), SPEC Q60–Q67 (ta
 
 Error umum: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `403 SUBSCRIPTION_EXPIRED`, `403 FEATURE_NOT_AVAILABLE` (paket tanpa
 fitur `member`, termasuk checkout dengan `member_id`/voucher; kasbon butuh fitur `credit`; `error.details.feature`, ADR 0025),
-`404 MEMBER_NOT_FOUND`,
+`404 MEMBER_NOT_FOUND`, `409 PLAN_LIMIT_REACHED` (daftar member melebihi kuota paket, ADR 0025),
 `422 MEMBER_PROGRAM_DISABLED` (program belum diaktifkan owner di **Pengaturan → Program member**),
 `422 VALIDATION_ERROR`, `422 VOUCHER_INVALID`, `429 TOO_MANY_REQUESTS`.
 

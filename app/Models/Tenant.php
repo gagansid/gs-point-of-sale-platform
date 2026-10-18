@@ -31,7 +31,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property BusinessType $business_type
  * @property TenantStatus $status
  * @property CarbonImmutable|null $subscription_ends_at
- * @property int|null $max_outlets batas outlet aktif (SaaS, diatur admin); null = tanpa batas
+ * @property array<string, int>|null $limit_overrides batas khusus dari admin per kuota (ADR 0025); menimpa batas paket
  * @property string|null $plan_id paket langganan (ADR 0024); null = semua fitur
  * @property BillingCycle|null $billing_cycle
  * @property string|null $next_plan_id paket yang dijadwalkan berlaku di plan_changes_at (ADR 0024 revisi)
@@ -49,7 +49,7 @@ final class Tenant extends Model
         'business_type',
         'status',
         'subscription_ends_at',
-        'max_outlets',
+        'limit_overrides',
     ];
 
     protected function casts(): array
@@ -58,7 +58,7 @@ final class Tenant extends Model
             'business_type' => BusinessType::class,
             'status' => TenantStatus::class,
             'subscription_ends_at' => 'immutable_datetime',
-            'max_outlets' => 'integer',
+            'limit_overrides' => 'array',
             'billing_cycle' => BillingCycle::class,
             'next_billing_cycle' => BillingCycle::class,
             'plan_changes_at' => 'immutable_datetime',
@@ -83,11 +83,37 @@ final class Tenant extends Model
     }
 
     /**
-     * Batas outlet aktif yang berlaku (ADR 0010). Edisi jual putus tidak dibatasi.
+     * Batas kuota yang berlaku (ADR 0025): batas khusus admin, lalu batas paket; null = tanpa batas. Edisi jual putus
+     * tidak dibatasi.
      */
+    public function limit(string $quota): ?int
+    {
+        if (Edition::isSelfHosted()) {
+            return null;
+        }
+
+        $override = $this->limit_overrides[$quota] ?? null;
+        if ($override !== null) {
+            return (int) $override;
+        }
+
+        return $this->plan_id !== null ? $this->plan?->limit($quota) : null;
+    }
+
+    /**
+     * Batas efektif semua kuota master data (null = tanpa batas).
+     *
+     * @return array<string, int|null>
+     */
+    public function limits(): array
+    {
+        return array_map(fn (string $key): ?int => $this->limit($key), array_combine(array_keys(Quota::options()), array_keys(Quota::options())));
+    }
+
+    /** Batas outlet aktif yang berlaku (ADR 0010, kuota "outlets" ADR 0025). */
     public function outletLimit(): ?int
     {
-        return Edition::isSaas() ? $this->max_outlets : null;
+        return $this->limit('outlets');
     }
 
     /** Boleh login & melihat data (tidak diblokir). Hanya-baca tetap boleh login. */

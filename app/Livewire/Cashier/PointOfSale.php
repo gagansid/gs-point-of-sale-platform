@@ -38,6 +38,7 @@ use App\Services\Member\StampCards;
 use App\Services\Member\Vouchers;
 use App\Services\Order\CalculationResult;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
 use App\Support\Money;
 use App\Support\Phone;
 use App\Support\WebCashier;
@@ -636,7 +637,8 @@ final class PointOfSale extends Component
     #[Computed]
     public function memberProgramEnabled(): bool
     {
-        return $this->user()->can('member.view') && MemberSetting::current()->enabled;
+        // Fitur paket member (ADR 0025): tanpa fitur, UI member kasir web disembunyikan (mesin juga menolak)
+        return $this->user()->can('member.view') && Features::enabled('member') && MemberSetting::current()->enabled;
     }
 
     /**

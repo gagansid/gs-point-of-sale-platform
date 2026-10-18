@@ -18,6 +18,8 @@ use App\Models\StockMovement;
 use App\Models\User;
 use App\Services\Stock\StockConsumption;
 use App\Support\Idempotency;
+use App\Support\Quotas;
+use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -48,6 +50,7 @@ final class SaveProduct
         $product = DB::transaction(function () use ($product, $data, $outlet, $by, $kind, $components): Product {
             $isNew = $product === null;
             $product ??= new Product;
+            $wasCounted = ! $isNew && Quotas::countsAsProduct($product);
 
             if ($isNew && $data->id !== null) {
                 $product->id = $data->id;
@@ -68,6 +71,11 @@ final class SaveProduct
                 'is_active' => $data->isActive,
                 'is_favorite' => $data->isFavorite,
             ]);
+
+            // Kuota produk aktif (ADR 0025): produk baru, diaktifkan lagi, atau bahan baku dijadikan produk jualan
+            if (! $wasCounted && Quotas::countsAsProduct($product)) {
+                Quotas::ensureAvailable(TenantContext::idOrFail(), Quotas::PRODUCTS);
+            }
 
             $product->save();
 

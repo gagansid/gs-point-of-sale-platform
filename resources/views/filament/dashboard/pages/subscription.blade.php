@@ -14,7 +14,7 @@
                 <div><dt>Siklus</dt><dd>{{ $tenant->billing_cycle?->getLabel() ?? '—' }}</dd></div>
                 <div><dt>Status</dt><dd>{{ $tenant->status->getLabel() }}{{ $tenant->isReadOnly() ? ' · hanya-baca' : '' }}</dd></div>
                 <div><dt>Aktif sampai</dt><dd>{{ $date($tenant->subscription_ends_at) }}</dd></div>
-                <div><dt>Maks. outlet</dt><dd>{{ $tenant->max_outlets ?? 'Tanpa batas' }}</dd></div>
+                <div class="is-wide"><dt>Kuota</dt><dd>{{ \App\Models\Quota::summary($tenant->limits()) }}</dd></div>
                 @if ($tenant->nextPlan && $tenant->plan_changes_at)
                     <div class="is-wide"><dt>Paket berikutnya</dt><dd>{{ $tenant->nextPlan->name }} · {{ $tenant->next_billing_cycle?->getLabel() }}, mulai {{ $date($tenant->plan_changes_at) }}</dd></div>
                 @endif

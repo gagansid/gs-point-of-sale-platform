@@ -9,6 +9,7 @@ use App\Exceptions\BusinessException;
 use App\Models\Device;
 use App\Models\PersonalAccessToken;
 use App\Models\Shift;
+use App\Support\Quotas;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -25,6 +26,10 @@ final class SetDeviceRevoked
             $locked = Device::query()->lockForUpdate()->findOrFail($device->id);
 
             if (! $revoked) {
+                // Aktif lagi = menambah pemakaian kuota perangkat (ADR 0025)
+                if ($locked->revoked_at !== null) {
+                    Quotas::ensureAvailable($locked->tenant_id, Quotas::DEVICES);
+                }
                 $locked->forceFill(['revoked_at' => null])->save();
 
                 return $locked;

@@ -10,6 +10,7 @@ use App\Models\Outlet;
 use App\Models\OutletPaymentMethod;
 use App\Models\ProductStock;
 use App\Models\Tenant;
+use App\Support\Quotas;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -83,10 +84,7 @@ final class CreateOutlet
      */
     public static function ensureWithinLimit(Tenant $tenant): void
     {
-        $limit = $tenant->outletLimit();
-
-        if ($limit !== null && Outlet::forTenant($tenant->id)->active()->count() >= $limit) {
-            throw BusinessException::of(ErrorCode::OutletLimitReached, details: ['max_outlets' => $limit]);
-        }
+        // Kuota "outlets" (ADR 0025): batas khusus admin / paket
+        Quotas::ensureAvailable($tenant->id, Quotas::OUTLETS);
     }
 }

@@ -10,6 +10,7 @@ use App\Exceptions\BusinessException;
 use App\Models\Device;
 use App\Models\Outlet;
 use App\Models\User;
+use App\Support\Quotas;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -45,12 +46,17 @@ final class RegisterWebDevice
             }
 
             try {
-                $device = DB::transaction(fn (): Device => Device::query()->create([
-                    'outlet_id' => $outlet->id,
-                    'name' => 'Kasir web '.mb_substr($browserId, 0, 4),
-                    'device_uid' => $uid,
-                    'platform' => AppPlatform::Web,
-                ]));
+                $device = DB::transaction(function () use ($outlet, $browserId, $uid): Device {
+                    // Kuota perangkat paket (ADR 0025), dihitung bersama perangkat aplikasi Android
+                    Quotas::ensureAvailable($outlet->tenant_id, Quotas::DEVICES);
+
+                    return Device::query()->create([
+                        'outlet_id' => $outlet->id,
+                        'name' => 'Kasir web '.mb_substr($browserId, 0, 4),
+                        'device_uid' => $uid,
+                        'platform' => AppPlatform::Web,
+                    ]);
+                });
             } catch (UniqueConstraintViolationException) {
                 // Dua tab membuat bersamaan: pakai yang sudah ada
                 $device = Device::forTenant($outlet->tenant_id)->where('device_uid', $uid)->firstOrFail();

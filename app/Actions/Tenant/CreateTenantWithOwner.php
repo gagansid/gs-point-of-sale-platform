@@ -13,6 +13,7 @@ use App\Models\Outlet;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Edition;
+use App\Support\Quotas;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -35,8 +36,8 @@ final class CreateTenantWithOwner
                 'business_type' => $data->businessType,
                 'status' => $data->status,
                 'subscription_ends_at' => $data->subscriptionEndsAt,
-                // Batas outlet paket awal (SaaS); jual putus tanpa batas (ADR 0010)
-                'max_outlets' => Edition::isSaas() ? (int) config('pos.default_max_outlets') : null,
+                // Batas outlet awal sebelum berpaket (SaaS, ADR 0010/0025); jual putus tanpa batas
+                'limit_overrides' => Edition::isSaas() ? [Quotas::OUTLETS => (int) config('pos.default_max_outlets')] : null,
             ]);
 
             TenantContext::run($tenant->id, function () use ($data): void {
