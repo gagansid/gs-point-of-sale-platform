@@ -7,6 +7,7 @@ namespace App\Filament\Admin\Widgets;
 use App\Filament\Admin\Resources\Plans\PlanResource;
 use App\Filament\Admin\Resources\SubscriptionInvoices\SubscriptionInvoiceResource;
 use App\Filament\Dashboard\Widgets\Concerns\DescribesTrend;
+use App\Services\Admin\DashboardCache;
 use App\Services\Billing\SubscriptionMetrics;
 use App\Support\Edition;
 use App\Support\Money;
@@ -32,6 +33,8 @@ final class SubscriptionStatsWidget extends StatsOverviewWidget
 
     protected ?string $heading = 'Langganan';
 
+    protected int|string|array $columnSpan = 'full';
+
     public static function canView(): bool
     {
         return Edition::isSaas();
@@ -46,13 +49,15 @@ final class SubscriptionStatsWidget extends StatsOverviewWidget
     protected function getStats(): array
     {
         $metrics = app(SubscriptionMetrics::class);
-        $paid = $metrics->paidPerMonth(6);
+        // Query lintas tenant di-cache 10 menit (Muat ulang data di Dasbor)
+        $paid = DashboardCache::remember('paid-6', fn (): array => $metrics->paidPerMonth(6));
         $months = array_keys($paid);
         $thisMonth = $paid[$months[5]];
         $lastMonth = $paid[$months[4]];
         $lastLabel = CarbonImmutable::createFromFormat('Y-m', $months[4])->locale('id')->translatedFormat('F Y');
-        $pending = $metrics->pending();
-        $active = $metrics->activeSubscriptions();
+        $pending = DashboardCache::remember('pending', fn (): array => $metrics->pending());
+        $active = DashboardCache::remember('active-subscriptions', fn (): array => $metrics->activeSubscriptions());
+        $trials = DashboardCache::remember('trials', fn (): int => $metrics->trialCount());
         $perPlan = implode(' · ', array_map(fn (array $p): string => $p['name'].' '.$p['count'], $active['plans']));
 
         return [
@@ -70,7 +75,7 @@ final class SubscriptionStatsWidget extends StatsOverviewWidget
                 ->color('gray'),
             Stat::make('Bisnis berlangganan', number_format($active['count'], 0, ',', '.'))
                 ->icon(Heroicon::OutlinedBuildingOffice2)
-                ->description(($perPlan !== '' ? $perPlan.' · ' : '').'trial '.$metrics->trialCount())
+                ->description(($perPlan !== '' ? $perPlan.' · ' : '').'trial '.$trials)
                 ->color('gray')
                 ->url(PlanResource::getUrl('index')),
         ];
