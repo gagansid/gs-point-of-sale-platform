@@ -679,6 +679,11 @@ final class PointOfSale extends Component
             $change = Money::add($change, Money::sub($tendered, $amount));
         }
 
+        // Format bukti dicek di sini; kecocokan kode/PIN tetap diverifikasi saat checkout
+        if ($this->usesPoints() && $this->memberProofInput() === []) {
+            return ['ready' => false, 'tone' => 'muted', 'message' => 'Isi kode QR atau PIN member', 'change' => $change];
+        }
+
         return ['ready' => true, 'tone' => 'success', 'message' => 'Lunas', 'change' => $change];
     }
 
@@ -785,13 +790,18 @@ final class PointOfSale extends Component
     public function usesPoints(): bool
     {
         foreach ($this->payments as $payment) {
-            // Poin & kasbon butuh bukti QR/PIN member yang sama (ADR 0013, ADR 0023)
-            if (in_array($this->paymentMethods->firstWhere('id', $payment['payment_method_id'])?->category, [PaymentCategory::Points, PaymentCategory::Receivable], true)) {
+            if ($this->needsMemberProof($payment['payment_method_id'])) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /** Poin & kasbon butuh bukti QR/PIN member yang sama (ADR 0013, ADR 0023); tanpa no. referensi. */
+    public function needsMemberProof(string $methodId): bool
+    {
+        return in_array($this->paymentMethods->firstWhere('id', $methodId)?->category, [PaymentCategory::Points, PaymentCategory::Receivable], true);
     }
 
     /** Saldo poin member terpasang (dibaca ulang tiap render: bisa berubah dari kasir lain). */

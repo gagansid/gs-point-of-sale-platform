@@ -5482,3 +5482,114 @@
 .pos-line-total {
     font-size: 14px;
 }
+
+/* Verifikasi member (bayar Poin / Kasbon): judul + saldo, kode QR | atau | PIN — kolom seragam dengan input Rp */
+.pos-pay .pos-member-proof {
+    gap: 12px;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 14px;
+    border: 1px solid rgb(45 66 130 / 0.18);
+    border-radius: var(--pos-radius);
+    background: var(--site-primary-lt);
+}
+
+.pos-member-proof-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pos-member-proof-head > div {
+    display: grid;
+    line-height: 1.3;
+}
+
+.pos-member-proof-head strong {
+    color: var(--site-navy);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.pos-member-proof-head span {
+    color: var(--site-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.pos-member-proof-icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--pos-radius);
+    background: #ffffff;
+    color: var(--site-primary);
+}
+
+.pos-member-proof-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.pos-pay .pos-member-proof p {
+    color: var(--site-muted);
+    font-size: 13px;
+}
+
+.pos-member-proof-fields {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 10px;
+    align-items: end;
+}
+
+.pos-member-proof-or {
+    padding-bottom: 14px;
+    color: var(--site-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.pos-modal .pos-proof-field {
+    gap: 6px;
+    color: var(--site-navy);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.cashier-body .pos-modal .pos-proof-field input {
+    width: 100%;
+    height: 48px;
+    padding: 0 12px;
+    border: 1.5px solid var(--site-border);
+    border-radius: var(--pos-radius);
+    background: #ffffff;
+    color: var(--site-navy);
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.2em;
+    text-align: center;
+    outline: none;
+    transition: border-color 120ms, box-shadow 120ms;
+}
+
+.cashier-body .pos-modal .pos-proof-field input::placeholder {
+    color: var(--site-mist);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0;
+}
+
+.cashier-body .pos-modal .pos-proof-field input:focus {
+    border-color: var(--site-primary);
+    box-shadow: 0 0 0 4px rgb(45 66 130 / 0.12);
+}
+
+.pos-pay-status > span {
+    white-space: nowrap;
+}

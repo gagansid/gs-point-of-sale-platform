@@ -150,8 +150,11 @@ it('metode Poin hanya muncul bila member terpasang; bayar poin dengan PIN member
     $page->call('openPayment')
         ->call('setMethod', 0, $points->id)->set('payments.0.amount', '10000')
         ->call('addPaymentRow')->set('payments.1.tendered', '20000')
-        ->assertSee('Kode QR (6 digit)')
-        ->set('memberPin', '4821')
+        ->assertSee('Verifikasi member')->assertDontSee('No. referensi');
+    // Bukti member wajib sebelum Selesaikan aktif
+    expect($page->instance()->paymentState())->toMatchArray(['ready' => false, 'message' => 'Isi kode QR atau PIN member']);
+
+    $page->set('memberPin', '4821')
         ->call('pay')
         ->assertSet('memberPin', '');
 

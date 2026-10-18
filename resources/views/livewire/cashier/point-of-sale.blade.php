@@ -511,7 +511,7 @@
                                     <button type="button" wire:click="setTendered({{ (int) $i }}, '{{ $note }}')">{{ $money($note) }}</button>
                                 @endforeach
                             </div>
-                        @else
+                        @elseif (! $this->needsMemberProof($payment['payment_method_id']))
                             <label class="pos-money-field">
                                 <span>No. referensi <small>(opsional)</small></span>
                                 <input type="text" maxlength="50" wire:model="payments.{{ $i }}.reference" placeholder="mis. 4 digit terakhir / ID transaksi">
@@ -519,6 +519,36 @@
                         @endif
                     </div>
                 @endforeach
+
+                {{-- Bayar dengan poin (ADR 0013) / kasbon (ADR 0023): bukti pemilik dari halaman member atau PIN member --}}
+                @if ($this->usesPoints())
+                    <div class="pos-member-proof">
+                        <div class="pos-member-proof-head">
+                            <span class="pos-member-proof-icon" aria-hidden="true">@svg('heroicon-o-shield-check')</span>
+                            <div>
+                                <strong>Verifikasi member</strong>
+                                <span>
+                                    Saldo {{ number_format((int) $this->memberPoints, 0, ',', '.') }} poin
+                                    @if ($this->memberCredit)
+                                        · kasbon {{ \App\Support\Money::format($this->memberCredit['balance']) }} dari batas {{ \App\Support\Money::format($this->memberCredit['limit']) }}
+                                    @endif
+                                </span>
+                            </div>
+                        </div>
+                        <p>Minta pelanggan menunjukkan kode QR di halaman member, atau memasukkan PIN member.</p>
+                        <div class="pos-member-proof-fields">
+                            <label class="pos-proof-field">
+                                <span>Kode QR</span>
+                                <input type="text" inputmode="numeric" maxlength="6" wire:model.live.debounce.300ms="memberCode" autocomplete="off" placeholder="6 digit">
+                            </label>
+                            <span class="pos-member-proof-or">atau</span>
+                            <label class="pos-proof-field">
+                                <span>PIN member</span>
+                                <input type="password" inputmode="numeric" maxlength="4" wire:model.live.debounce.300ms="memberPin" autocomplete="off" placeholder="4 digit">
+                            </label>
+                        </div>
+                    </div>
+                @endif
 
                 {{-- Ringkasan: kembalian besar bila siap; selain itu langkah berikutnya --}}
                 <div @class(['pos-pay-status', 'is-'.$state['tone']]) role="status" aria-live="polite">
@@ -531,14 +561,6 @@
                     @endif
                 </div>
 
-                {{-- Bayar dengan poin (ADR 0013) / kasbon (ADR 0023): bukti pemilik dari halaman member atau PIN member --}}
-                @if ($this->usesPoints())
-                    <div class="pos-member-proof">
-                        <p>Saldo {{ number_format((int) $this->memberPoints, 0, ',', '.') }} poin{{ $this->memberCredit ? ' · kasbon '.\App\Support\Money::format($this->memberCredit['balance']).' dari batas '.\App\Support\Money::format($this->memberCredit['limit']) : '' }}. Minta pelanggan menunjukkan kode QR halaman member atau memasukkan PIN member.</p>
-                        <label>Kode QR (6 digit) <input type="text" inputmode="numeric" maxlength="6" wire:model="memberCode" autocomplete="off"></label>
-                        <label>atau PIN member <input type="password" inputmode="numeric" maxlength="4" wire:model="memberPin" autocomplete="off"></label>
-                    </div>
-                @endif
                 @if ($payError)
                     <p class="site-error" role="alert">{{ $payError }}</p>
                 @endif
