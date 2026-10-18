@@ -316,7 +316,28 @@ Catatan kontrak yang terungkap (bukan bug, sudah didokumentasikan di test):
 Sisa: G7 (replay webhook billing di level HTTP), G8 (PlanResource, CancelInvoice, TenantPlanAction), G10 (toggle aktif),
 G12 (`TABLE_NOT_FOUND` — menunggu keputusan), isolasi Filament (Shift/Employee/PaymentMethod/Promotion) → Fase 3–5.
 
-## 10. Rencana fase berikutnya
+## 10. Status setelah Fase 3 (skenario lintas modul)
+
+186 test baru (SQLite & MySQL hijau), 2 di-skip karena **bug B5**:
+
+| File | Test | Isi |
+|---|---|---|
+| `Scenarios/NormalCafeDayTest.php` | 3 | 10 transaksi campuran → kas keluar → tutup shift selisih 0; laporan = hitungan manual |
+| `Scenarios/VoidAndApprovalTest.php` | 5 | void tanpa PIN / PIN sendiri / supervisor; rantai diskon 20% / 50% |
+| `Scenarios/MultiOutletDayTest.php` | 4 | katalog & metode bayar per outlet; laporan semua = A + B |
+| `Scenarios/StockLifecycleTest.php` | 4 | rata-rata tertimbang, transfer, opname, PO, resep/paket, HPP & laporan stok/laba |
+| `Scenarios/MemberJourneyTest.php` | 3 | poin, tier, stempel, voucher, kasbon; void ganda membalik sekali |
+| `Scenarios/SelfOrderQrTest.php` | 2 | QR → kasir; bayar online + webhook sah/palsu/ganda; kedaluwarsa; laporan kanal |
+| `Scenarios/TenantIsolationSweepTest.php` | 121 | setiap ID tenant B di API, daftar, laporan, dashboard, ekspor → 404/kosong, data tidak berubah |
+| `Scenarios/OnboardingAndBillingTest.php` | 7 | daftar → trial → hanya-baca → bayar → webhook ganda (G7) → upgrade/downgrade → suspend/aktif; jual putus |
+| `Filament/Admin/PlanAndInvoiceAdminTest.php` | 15 | G8: Paket, Batalkan tagihan, atur paket manual |
+| `Filament/Dashboard/ToggleAndAccessContractTest.php` | 16 | G10 toggle + efeknya; izin & isolasi Filament |
+
+**B5 (Tinggi, belum diperbaiki):** owner bisnis yang trial/langganannya sudah habis tidak bisa membuat tagihan atau bayar
+online di Langganan — `SetDashboardTenant` memasang konteks hanya-baca dan `BelongsToTenant` menolak `save()`
+`SubscriptionInvoice` (`SUBSCRIPTION_EXPIRED`). Bertentangan dengan Q109. Test: `OnboardingAndBillingTest` (2 skip).
+
+## 11. Rencana fase berikutnya
 
 - **Fase 2 (kontrak API):** tutup G2, G4–G6, G9, G11 dan kolom ❌ di §4.
 - **Fase 3 (skenario lintas modul):** `tests/Feature/Scenarios/` — hari normal, void & approval, diskon, multi-outlet,
