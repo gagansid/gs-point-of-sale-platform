@@ -28,7 +28,7 @@ final class StaleShiftsWidget extends TableWidget
     {
         $stale = app(PlatformActivity::class)->staleShifts(PlatformActivity::STALE_SHIFT_HOURS, self::LIMIT);
 
-        return self::compact($table, 'Shift terbuka > '.PlatformActivity::STALE_SHIFT_HOURS.' jam ('.$stale['count'].')', null, 'Tidak ada shift tertinggal', 'heroicon-o-check-circle')
+        return self::compact($table, 'Shift terbuka > '.PlatformActivity::STALE_SHIFT_HOURS.' jam ('.$stale['count'].')', null, 'Tidak ada shift tertinggal', 'heroicon-o-check-circle', 'heroicon-o-lock-open')
             ->emptyStateDescription('Shift yang terbuka lebih dari '.PlatformActivity::STALE_SHIFT_HOURS.' jam akan muncul di sini')
             ->records(fn (): array => collect($stale['rows'])->keyBy('shift_id')->all())
             ->recordUrl(fn (array $record): string => TenantResource::getUrl('view', ['record' => $record['tenant_id']]))

@@ -30,7 +30,7 @@ final class PendingInvoicesWidget extends TableWidget
 
     public function table(Table $table): Table
     {
-        return self::compact($table, 'Tagihan menunggu', SubscriptionInvoiceResource::getUrl('index', ['filters' => ['status' => ['value' => InvoiceStatus::Pending->value]]]), 'Tidak ada tagihan menunggu', 'heroicon-o-check-circle')
+        return self::compact($table, 'Tagihan menunggu', SubscriptionInvoiceResource::getUrl('index', ['filters' => ['status' => ['value' => InvoiceStatus::Pending->value]]]), 'Tidak ada tagihan menunggu', 'heroicon-o-check-circle', 'heroicon-o-document-currency-dollar')
             // Lintas tenant: panel /admin
             ->query(fn () => SubscriptionInvoice::allTenants()->with(['tenant:id,name', 'items'])
                 ->where('status', InvoiceStatus::Pending)->orderBy('due_at')->limit(self::LIMIT))

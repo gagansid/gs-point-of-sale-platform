@@ -30,7 +30,7 @@ final class NewLeadsWidget extends TableWidget
 
     public function table(Table $table): Table
     {
-        return self::compact($table, 'Calon pelanggan belum dihubungi', SalesLeadResource::getUrl('index'), 'Semua calon pelanggan sudah dihubungi', 'heroicon-o-check-circle')
+        return self::compact($table, 'Calon pelanggan belum dihubungi', SalesLeadResource::getUrl('index'), 'Semua calon pelanggan sudah dihubungi', 'heroicon-o-check-circle', 'heroicon-o-chat-bubble-left-right')
             ->query(fn () => SalesLead::query()->where('status', SalesLeadStatus::New)->oldest()->limit(self::LIMIT))
             ->columns([
                 TextColumn::make('business_name')->label('Bisnis')->weight('medium')

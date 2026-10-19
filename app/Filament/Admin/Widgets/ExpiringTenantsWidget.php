@@ -29,7 +29,7 @@ final class ExpiringTenantsWidget extends TableWidget
 
     public function table(Table $table): Table
     {
-        return self::compact($table, 'Segera berakhir (14 hari)', TenantResource::getUrl('index', ['tab' => 'expiring']), 'Tidak ada yang segera berakhir', 'heroicon-o-check-circle')
+        return self::compact($table, 'Segera berakhir (14 hari)', TenantResource::getUrl('index', ['tab' => 'expiring']), 'Tidak ada yang segera berakhir', 'heroicon-o-check-circle', 'heroicon-o-clock')
             ->query(fn () => Tenant::query()->with('plan:id,name')
                 ->where('status', '!=', TenantStatus::Suspended)
                 ->whereBetween('subscription_ends_at', [now(), now()->addDays(14)])

@@ -9,11 +9,11 @@
     ]
   },
   "resources/css/filament/admin/theme.css": {
-    "file": "assets/theme-DprmZtPg.css",
+    "file": "assets/theme-u6UFAZtd.css",
     "src": "resources/css/filament/admin/theme.css"
   },
   "resources/css/filament/dashboard/theme.css": {
-    "file": "assets/theme-DnNjvmNb.css",
+    "file": "assets/theme-BaTjQlVH.css",
     "src": "resources/css/filament/dashboard/theme.css",
     "isEntry": true,
     "name": "theme",

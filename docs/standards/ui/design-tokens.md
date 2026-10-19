@@ -41,16 +41,21 @@ Primary sengaja lebih muda dari navy logo agar tombol tidak terasa berat (sama s
 
 ### Warna permukaan (dark)
 
+Satu keluarga navy: latar & sidebar paling gelap, card sedikit lebih terang, satu aksen indigo.
+
 | Token | Nilai |
 |---|---|
-| `--body-bg` | `#0F1623` |
-| `--bg-surface` | `#1A2332` |
-| `--bg-surface-secondary` | `#141D2B` |
-| `--border-color` | `rgba(255,255,255,.08)` |
-| `--text` | `#E6EBF2` |
-| `--text-secondary` | `#B3BCCB` |
-| `--text-muted` | `#8A93A3` |
-| `primary` (dark) | `#B8C0D4` (mist) |
+| `--body-bg` | `#0D1422` |
+| `--bg-surface` (card) | `#151E2F` |
+| `--bg-surface-secondary` | `#111A29` |
+| `--sidebar-bg` | `#0F1726` + garis kanan `rgba(148,163,204,.10)` |
+| `--border-color` | `rgba(148,163,204,.12)` |
+| `--text` | `#E6EBF4` |
+| `--text-secondary` | `#B4BED0` |
+| `--text-muted` | `#8893A8` |
+| `--primary` (aksen: ikon, tab, tautan, fokus, item sidebar aktif) | `#8EA2E0` |
+| `--primary-btn` (tombol primary, paginasi aktif; teks putih) | `#4B65A8`, hover `#5A75BD` |
+| Seri chart | `#6F86C2` (light tetap `#2D4282`), lewat `AdminChart::ELEMENTS` |
 
 ### Warna latar transparan (`-lt`)
 

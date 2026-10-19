@@ -29,7 +29,7 @@ final class AtRiskTenantsWidget extends TableWidget
     {
         $risk = app(PlatformActivity::class)->atRiskTenants(14, self::LIMIT);
 
-        return self::compact($table, 'Tidak bertransaksi 14 hari ('.$risk['count'].')', TenantResource::getUrl('index'), 'Semua bisnis aktif bertransaksi', 'heroicon-o-check-circle')
+        return self::compact($table, 'Tidak bertransaksi 14 hari ('.$risk['count'].')', TenantResource::getUrl('index'), 'Semua bisnis aktif bertransaksi', 'heroicon-o-check-circle', 'heroicon-o-exclamation-triangle')
             ->emptyStateDescription('Bisnis aktif berumur ≥ 14 hari tanpa transaksi akan muncul di sini')
             ->records(fn (): array => collect($risk['rows'])->keyBy('tenant_id')->all())
             ->recordUrl(fn (array $record): string => TenantResource::getUrl('view', ['record' => $record['tenant_id']]))

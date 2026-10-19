@@ -51,9 +51,8 @@ final class TransactionsChartWidget extends ChartWidget
                 'label' => 'Nilai transaksi',
                 // float hanya untuk menggambar grafik; angka resmi tetap string desimal
                 'data' => array_map(fn (array $d): float => (float) $d['gmv'], array_values($perDay)),
-                'borderColor' => self::PRIMARY,
+                // Warna garis & isi dari AdminChart::ELEMENTS (mengikuti light/dark)
                 'borderWidth' => 2,
-                'backgroundColor' => 'rgba(45, 66, 130, 0.08)',
                 'fill' => true,
                 'cubicInterpolationMode' => 'monotone',
                 'pointRadius' => 0,

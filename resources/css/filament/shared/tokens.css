@@ -31,6 +31,9 @@
     --sidebar-active-bg: rgb(184 192 212 / 0.16);
     --sidebar-border: rgb(255 255 255 / 0.08);
     --sidebar-group-label: rgb(184 192 212 / 0.6);
+    --sidebar-accent: var(--brand-mist);
+    --primary-btn: #2d4282;
+    --primary-btn-hover: #25386f;
 
     /* Topbar */
     --topbar-h: 56px;
@@ -56,27 +59,43 @@
 }
 
 .dark {
-    --primary: #b8c0d4;
-    --primary-dk: #8a919e;
-    --primary-lt: rgb(184 192 212 / 0.14);
+    /*
+     * Dark mode satu keluarga warna navy: latar & sidebar navy sangat gelap, card sedikit lebih terang,
+     * aksen indigo lembut (#8ea2e0) untuk ikon, tab, tautan, fokus; tombol primary #4b65a8 (primary 500) teks putih.
+     */
+    --primary: #8ea2e0;
+    --primary-dk: #6f86c2;
+    --primary-lt: rgb(142 162 224 / 0.14);
+    --primary-btn: #4b65a8;
+    --primary-btn-hover: #5a75bd;
 
-    --body-bg: #0f1623;
-    --bg-surface: #1a2332;
-    --bg-surface-secondary: #141d2b;
-    --border-color: rgb(255 255 255 / 0.08);
-    --border-color-light: rgb(255 255 255 / 0.05);
-    --border-translucent: rgb(255 255 255 / 0.08);
-    --text: #e6ebf2;
-    --text-secondary: #b3bccb;
-    --text-muted: #8a93a3;
-    --text-disabled: #5a6473;
+    --body-bg: #0d1422;
+    --bg-surface: #151e2f;
+    --bg-surface-secondary: #111a29;
+    --border-color: rgb(148 163 204 / 0.12);
+    --border-color-light: rgb(148 163 204 / 0.07);
+    --border-translucent: rgb(148 163 204 / 0.1);
+    --text: #e6ebf4;
+    --text-secondary: #b4bed0;
+    --text-muted: #8893a8;
+    --text-disabled: #566177;
 
-    --topbar-bg: rgb(20 29 43 / 0.85);
+    /* Sidebar menyatu dengan latar (lebih gelap dari card), dipisah garis tipis */
+    --sidebar-bg: #0f1726;
+    --sidebar-text: #aab5cc;
+    --sidebar-text-hover: #ffffff;
+    --sidebar-hover: rgb(142 162 224 / 0.08);
+    --sidebar-active-bg: rgb(142 162 224 / 0.14);
+    --sidebar-border: rgb(148 163 204 / 0.1);
+    --sidebar-group-label: rgb(170 181 204 / 0.55);
+    --sidebar-accent: #8ea2e0;
 
-    --field-border: rgb(255 255 255 / 0.14);
-    --field-border-hover: rgb(255 255 255 / 0.24);
-    --field-focus-ring: rgb(184 192 212 / 0.2);
+    --topbar-bg: rgb(13 20 34 / 0.85);
 
-    --shadow: rgb(0 0 0 / 0.4) 0 2px 4px 0;
+    --field-border: rgb(148 163 204 / 0.18);
+    --field-border-hover: rgb(148 163 204 / 0.3);
+    --field-focus-ring: rgb(142 162 224 / 0.22);
+
+    --shadow: rgb(0 0 0 / 0.35) 0 2px 4px 0;
     --shadow-card: 0 0 0 1px var(--border-translucent), 0 2px 4px rgb(0 0 0 / 0.3);
 }

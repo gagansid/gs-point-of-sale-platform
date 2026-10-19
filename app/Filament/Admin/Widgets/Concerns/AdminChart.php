@@ -14,7 +14,23 @@ use Filament\Support\RawJs;
  */
 trait AdminChart
 {
-    private const PRIMARY = '#2D4282';
+    /**
+     * Warna seri mengikuti tema saat chart digambar (light: navy #2D4282, dark: indigo #6F86C2 selaras token dark).
+     * Dipasang di `elements` (scriptable) karena data chart dikirim sebagai JSON tanpa fungsi. Kutip tunggal saja:
+     * opsi dirender di atribut HTML berkutip ganda.
+     */
+    private const ELEMENTS = <<<'JS'
+        elements: {
+            bar: {
+                backgroundColor: () => document.documentElement.classList.contains('dark') ? '#6F86C2' : '#2D4282',
+                hoverBackgroundColor: () => document.documentElement.classList.contains('dark') ? '#8EA2E0' : '#066FD1',
+            },
+            line: {
+                borderColor: () => document.documentElement.classList.contains('dark') ? '#8EA2E0' : '#2D4282',
+                backgroundColor: () => document.documentElement.classList.contains('dark') ? 'rgba(142, 162, 224, 0.14)' : 'rgba(45, 66, 130, 0.08)',
+            },
+        },
+        JS;
 
     /**
      * @param  list<float|int>  $values
@@ -25,8 +41,6 @@ trait AdminChart
         return [
             'label' => $label,
             'data' => $values,
-            'backgroundColor' => self::PRIMARY,
-            'hoverBackgroundColor' => '#066FD1',
             'borderRadius' => 4,
             'borderSkipped' => 'start',
             'maxBarThickness' => 28,
@@ -47,9 +61,10 @@ trait AdminChart
     /** Sumbu "Rp1,2 jt / Rp850 rb", tooltip Rupiah lengkap. suggestedMax: data nol tetap berskala wajar (bukan "Rp0 rb" berulang). */
     private static function rupiahOptions(): RawJs
     {
-        return RawJs::make(<<<'JS'
+        return self::chartOptions(<<<'JS'
             {
                 animation: { duration: 0 },
+                {ELEMENTS}
                 plugins: {
                     legend: { display: false },
                     tooltip: { callbacks: { label: (ctx) => 'Rp' + Math.round(ctx.parsed.y).toLocaleString('id-ID') } },
@@ -70,9 +85,10 @@ trait AdminChart
         // Opsi dirender di atribut HTML berkutip ganda: pakai kutip tunggal, satuan hanya huruf/spasi
         $unit = preg_replace('/[^\pL ]/u', '', $unit);
 
-        return RawJs::make(<<<JS
+        return self::chartOptions(<<<JS
             {
                 animation: { duration: 0 },
+                {ELEMENTS}
                 plugins: {
                     legend: { display: false },
                     tooltip: { callbacks: { label: (ctx) => Math.round(ctx.parsed.y ?? ctx.parsed.x).toLocaleString('id-ID') + ' {$unit}' } },
@@ -91,10 +107,11 @@ trait AdminChart
         // Opsi dirender di atribut HTML berkutip ganda: pakai kutip tunggal, satuan hanya huruf/spasi
         $unit = preg_replace('/[^\pL ]/u', '', $unit);
 
-        return RawJs::make(<<<JS
+        return self::chartOptions(<<<JS
             {
                 indexAxis: 'y',
                 animation: { duration: 0 },
+                {ELEMENTS}
                 plugins: {
                     legend: { display: false },
                     tooltip: { callbacks: { label: (ctx) => Math.round(ctx.parsed.x).toLocaleString('id-ID') + ' {$unit}' } },
@@ -105,5 +122,11 @@ trait AdminChart
                 },
             }
         JS);
+    }
+
+    /** Opsi chart + warna seri sesuai tema (ELEMENTS). */
+    private static function chartOptions(string $options): RawJs
+    {
+        return RawJs::make(str_replace('{ELEMENTS}', self::ELEMENTS, $options));
     }
 }

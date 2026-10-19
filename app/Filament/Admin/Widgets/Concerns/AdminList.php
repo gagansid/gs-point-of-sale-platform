@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Admin\Widgets\Concerns;
 
+use App\Filament\Shared\Tables\TableHeading;
 use Filament\Actions\Action;
 use Filament\Tables\Table;
 
@@ -15,10 +16,11 @@ trait AdminList
 {
     private const LIMIT = 6;
 
-    private static function compact(Table $table, string $heading, ?string $allUrl, string $emptyHeading, string $emptyIcon): Table
+    private static function compact(Table $table, string $heading, ?string $allUrl, string $emptyHeading, string $emptyIcon, ?string $headingIcon = null): Table
     {
         return $table
-            ->heading($heading)
+            // Judul berikon (ikon keadaan kosong) seperti header card tabel lain
+            ->heading(TableHeading::make($heading, $headingIcon ?? $emptyIcon))
             ->paginated(false)
             ->headerActions($allUrl === null ? [] : [
                 Action::make('all')->label('Lihat semua')->link()->url($allUrl),

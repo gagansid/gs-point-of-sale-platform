@@ -157,7 +157,7 @@
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn,
 .dark .fi-sidebar-item.fi-active > .fi-sidebar-item-btn {
     background-color: var(--sidebar-active-bg);
-    box-shadow: inset 3px 0 0 var(--brand-mist);
+    box-shadow: inset 3px 0 0 var(--sidebar-accent);
 }
 
 .fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-btn > .fi-sidebar-item-label {
@@ -171,7 +171,12 @@
 }
 
 .fi-sidebar-item.fi-active > .fi-sidebar-item-btn .fi-sidebar-item-grouped-border-part {
-    background-color: var(--brand-mist);
+    background-color: var(--sidebar-accent);
+}
+
+/* Dark: sidebar dipisah garis tipis dari konten (warna latar hampir sama) */
+.dark .fi-sidebar {
+    border-inline-end: 1px solid var(--sidebar-border);
 }
 
 /* Badge angka di menu */
@@ -1410,8 +1415,28 @@
     color: #ffffff;
 }
 
+.dark .fi-pagination .fi-pagination-item.fi-active .fi-pagination-item-btn {
+    border-color: var(--primary-btn);
+    background-color: var(--primary-btn);
+}
+
 .dark .fi-pagination .fi-pagination-item.fi-active .fi-pagination-item-label {
-    color: var(--brand-navy);
+    color: #ffffff;
+}
+
+/* Dark: tombol primary satu warna (primary 500) teks putih, selaras dengan aksen & sidebar */
+.dark .fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-link) {
+    background-color: var(--primary-btn);
+    color: #ffffff;
+}
+
+.dark .fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-link):hover,
+.dark .fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-link):focus-visible {
+    background-color: var(--primary-btn-hover);
+}
+
+.dark .fi-btn.fi-color-primary:not(.fi-outlined):not(.fi-link) > .fi-icon {
+    color: #ffffff;
 }
 
 /* ---------- Tab bergaris bawah (tabs-underline) ---------- */
