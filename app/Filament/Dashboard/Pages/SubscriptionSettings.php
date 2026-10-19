@@ -79,8 +79,9 @@ final class SubscriptionSettings extends Page
     {
         $current = $this->tenant()->plan_id;
 
+        // Publik & di dalam periode (promo), atau paket bisnis ini sendiri
         return Plan::query()->where('is_active', true)
-            ->where(fn ($q) => $q->where('is_public', true)->when($current !== null, fn ($q) => $q->orWhere('id', $current)))
+            ->where(fn ($q) => $q->where(fn ($q) => $q->where('is_public', true)->withinPeriod())->when($current !== null, fn ($q) => $q->orWhere('id', $current)))
             ->orderBy('sort_order')->orderBy('price_monthly')->get();
     }
 
@@ -189,9 +190,15 @@ final class SubscriptionSettings extends Page
         Notification::make()->success()->title($stop ? 'Add-on akan berhenti di akhir masa aktif' : 'Add-on dilanjutkan')->send();
     }
 
-    public function pendingInvoice(): ?SubscriptionInvoice
+    /**
+     * Tagihan menunggu yang masih bisa dibayar: satu tagihan paket/add-on + tagihan manual admin (bisa lebih dari satu).
+     *
+     * @return Collection<int, SubscriptionInvoice>
+     */
+    public function pendingInvoices(): Collection
     {
-        return SubscriptionInvoice::query()->where('status', InvoiceStatus::Pending)->where('due_at', '>', now())->latest()->first();
+        return SubscriptionInvoice::query()->with('items')->where('status', InvoiceStatus::Pending)->where('due_at', '>', now())
+            ->orderBy('due_at')->get();
     }
 
     public function onlinePaymentAvailable(): bool
@@ -255,12 +262,13 @@ final class SubscriptionSettings extends Page
     public function payOnlineAction(): Action
     {
         return Action::make('payOnline')->label('Bayar online')->icon(Heroicon::OutlinedArrowTopRightOnSquare)
-            ->visible(fn (): bool => $this->pendingInvoice() !== null && $this->onlinePaymentAvailable())
-            ->action(function (Action $action): void {
+            ->visible(fn (): bool => $this->pendingInvoices()->isNotEmpty() && $this->onlinePaymentAvailable())
+            // Argumen id: tagihan menunggu milik bisnis ini (scope tenant)
+            ->action(function (Action $action, array $arguments): void {
                 abort_unless(self::canAccess(), 403);
                 $user = auth()->user();
                 abort_unless($user instanceof User, 403);
-                $invoice = $this->pendingInvoice() ?? abort(404);
+                $invoice = $this->pendingInvoices()->firstWhere('id', (string) ($arguments['id'] ?? '')) ?? abort(404);
 
                 try {
                     $url = app(StartInvoicePayment::class)->handle($invoice, $user, self::getUrl());

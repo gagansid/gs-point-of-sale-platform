@@ -118,8 +118,9 @@ final class TenantInfolist
                     ])
                     ->schema([
                         TextEntry::make('number'),
-                        TextEntry::make('plan_name')
-                            ->formatStateUsing(fn (string $state, SubscriptionInvoice $record): string => $record->description()),
+                        // Tagihan manual boleh tanpa paket: uraian dari description()
+                        TextEntry::make('description')
+                            ->state(fn (SubscriptionInvoice $record): string => $record->description()),
                         TextEntry::make('amount')->alignEnd()->formatStateUsing(fn (string $state): string => Money::format($state)),
                         TextEntry::make('due_at')->date('j M Y'),
                         TextEntry::make('status')->badge(),

@@ -8,11 +8,15 @@ use App\Models\Plan;
 use App\Support\Features;
 use App\Support\Money;
 use App\Support\Quotas;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
-/** Buat/ubah paket langganan dari panel /admin (ADR 0024, Q108). Fitur harus ada di master data features (ADR 0025). */
+/**
+ * Buat/ubah paket langganan dari panel /admin (ADR 0024, Q108). Fitur harus ada di master data features (ADR 0025).
+ * Periode opsional (available_from/until, UTC): di luar periode paket tidak bisa dipilih owner untuk tagihan baru.
+ */
 final class SavePlan
 {
     /**
@@ -33,8 +37,14 @@ final class SavePlan
             'features.*' => ['string', Rule::exists('features', 'key')],
             'is_active' => ['nullable', 'boolean'],
             'is_public' => ['nullable', 'boolean'],
+            // Periode bisa dipilih owner (promo); kosong = tanpa batas
+            'available_from' => ['nullable', 'date'],
+            'available_until' => ['nullable', 'date', ...(filled($data['available_from'] ?? null) ? ['after:available_from'] : [])],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
-        ], [], ['code' => 'kode', 'name' => 'nama', 'price_monthly' => 'harga bulanan', 'price_yearly' => 'harga tahunan'])->validate();
+        ], [], [
+            'code' => 'kode', 'name' => 'nama', 'price_monthly' => 'harga bulanan', 'price_yearly' => 'harga tahunan',
+            'available_from' => 'mulai', 'available_until' => 'berakhir',
+        ])->validate();
 
         $plan ??= new Plan;
         $plan->fill([
@@ -45,6 +55,8 @@ final class SavePlan
             'features' => array_values(array_unique(array_map('strval', (array) ($v['features'] ?? [])))),
             'is_active' => (bool) ($v['is_active'] ?? true),
             'is_public' => (bool) ($v['is_public'] ?? true),
+            'available_from' => filled($v['available_from'] ?? null) ? CarbonImmutable::parse((string) $v['available_from']) : null,
+            'available_until' => filled($v['available_until'] ?? null) ? CarbonImmutable::parse((string) $v['available_until']) : null,
             'sort_order' => (int) ($v['sort_order'] ?? 0),
         ])->save();
 

@@ -30,7 +30,8 @@ Teks bantuan / pesan error (12px)
 | Pilihan dari enum | `Select::options(OrderType::class)` | Label dari `HasLabel` |
 | Ya/tidak dengan efek langsung | `Toggle` | `is_active`, `track_stock`, `tax_inclusive` |
 | Ya/tidak dalam daftar | `Checkbox` / `CheckboxList` | |
-| Tanggal | `DatePicker` | `->native(false)->displayFormat('j M Y')` |
+| Tanggal | `DatePicker` / `DateTimePicker` | `->native(false)->displayFormat('j M Y')` (jam: `'j M Y, H.i'`, tanpa detik). Ikon kalender di kanan **bisa diklik** membuka popup (suffix action JS). Panel /admin: bawaan otomatis lewat `App\Filament\Shared\FieldDefaults` + zona waktu `pos.default_timezone` |
+| Pilihan di /admin | `Select` | Selalu komponen JS (`native(false)` lewat `FieldDefaults`) agar ikon chevron seragam; filter ya/tidak (`TernaryFilter`) placeholder "Semua" seperti `SelectFilter` |
 | PIN | `PinInput` (Shared) | 6 digit, `->password()->revealable(false)`, tanpa autocomplete |
 | Gambar produk | `FileUpload::image()` | `->imageEditor()->imageEditorAspectRatios(['1:1'])->panelAspectRatio('1:1')->maxSize(1024)`; placeholder ikon + "Pilih gambar atau seret ke sini"; helper format & ukuran. Panel bergaris putus-putus (hover primary), pratinjau tanpa nama file/gradasi, tombol ✕/✎ bulat putih 28px dengan kursor pointer |
 | Daftar berulang | `Repeater` tabel ringkas | Opsi dalam grup opsi: `->table([...TableColumn])->compact()->reorderableWithButtons()->reorderableWithDragAndDrop(false)->addable(false)`; satu baris per item (↑↓ · isian · hapus), input tanpa garis sampai hover/fokus; tombol "Tambah opsi" di `headerActions` card (kanan atas). **Tetap tabel di semua lebar** (bawaan Filament jadi tumpukan kartu di bawah ±576px); di HP kolom harga 112px, lebar min. 300px lalu geser |
@@ -39,7 +40,7 @@ Teks bantuan / pesan error (12px)
 
 | Properti | Nilai |
 |---|---|
-| Tinggi input | 32px (termasuk select bersearch) |
+| Tinggi input | 32px (termasuk select bersearch, datepicker, tombol di header section mis. "Tambah baris" — jangan `->size('sm')`) |
 | Radius | 6px (`--control-radius`, sama dengan tombol) |
 | Label | 12.5px / 500 `--text`; tanda wajib `*` merah |
 | Font input | 13px |

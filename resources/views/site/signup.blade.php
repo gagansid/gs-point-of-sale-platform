@@ -6,7 +6,7 @@
 
             @if (! $open)
                 <h1>Pendaftaran sedang ditutup</h1>
-                <p class="site-auth-sub">Tim kami siap membantu menyiapkan akun Anda.</p>
+                <p class="site-auth-sub">{{ $closedMessage ?? 'Tim kami siap membantu menyiapkan akun Anda.' }}</p>
                 <a href="{{ route('landing') }}#contact" class="site-btn site-btn-primary site-btn-lg site-btn-block">Hubungi sales</a>
                 <p class="site-auth-foot">Sudah punya akun? <a href="{{ $loginUrl }}">Masuk</a></p>
             @else

@@ -8,6 +8,7 @@ use App\Enums\BillingCycle;
 use App\Enums\InvoiceKind;
 use App\Enums\InvoiceStatus;
 use App\Models\Concerns\BelongsToTenant;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -21,10 +22,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $tenant_id
  * @property string $number
  * @property InvoiceKind $kind
- * @property string $plan_id
- * @property string $plan_name
- * @property BillingCycle $billing_cycle
- * @property string $amount
+ * @property string|null $plan_id null = tagihan manual untuk bisnis tanpa paket
+ * @property string|null $plan_name
+ * @property BillingCycle|null $billing_cycle
+ * @property string|null $title judul tagihan manual
+ * @property string $amount total akhir (setelah diskon & PPN)
+ * @property string $discount_amount
+ * @property string $tax_rate PPN persen
+ * @property string $tax_amount
+ * @property string|null $memo catatan untuk pelanggan (tagihan manual)
  * @property InvoiceStatus $status
  * @property CarbonImmutable $due_at
  * @property CarbonImmutable|null $paid_at
@@ -52,6 +58,9 @@ final class SubscriptionInvoice extends Model
             'kind' => InvoiceKind::class,
             'status' => InvoiceStatus::class,
             'amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'tax_rate' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
             'due_at' => 'immutable_datetime',
             'paid_at' => 'immutable_datetime',
             'period_start' => 'immutable_datetime',
@@ -83,8 +92,20 @@ final class SubscriptionInvoice extends Model
         return $this->hasMany(SubscriptionInvoiceItem::class, 'invoice_id')->orderBy('sort_order');
     }
 
+    /** Subtotal baris (sebelum diskon & PPN). */
+    public function subtotal(): string
+    {
+        return Money::add(...$this->items->pluck('amount')->map(fn (mixed $a): string => (string) $a)->all());
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->status === InvoiceStatus::Pending && $this->due_at->isPast();
+    }
+
     /**
-     * Uraian singkat untuk tabel & email: "Perpanjangan Pro · Bulanan + Outlet tambahan ×2" / "Add-on: Self-order QR".
+     * Uraian singkat untuk tabel & email: "Perpanjangan Pro · Bulanan + Outlet tambahan ×2" / "Add-on: Self-order QR" /
+     * "Biaya instalasi · 3 item" (manual).
      */
     public function description(): string
     {
@@ -95,6 +116,12 @@ final class SubscriptionInvoice extends Model
             return 'Add-on: '.$addons;
         }
 
-        return $this->kind->getLabel().' '.$this->plan_name.' · '.$this->billing_cycle->getLabel().($addons !== '' ? ' + '.$addons : '');
+        if ($this->kind === InvoiceKind::Manual) {
+            $count = $this->items->count();
+
+            return ($this->title ?? 'Tagihan manual').($count > 1 ? " · {$count} item" : '');
+        }
+
+        return $this->kind->getLabel().' '.$this->plan_name.' · '.$this->billing_cycle?->getLabel().($addons !== '' ? ' + '.$addons : '');
     }
 }

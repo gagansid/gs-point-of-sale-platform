@@ -15,6 +15,7 @@ use App\Models\TenantAddon;
 use App\Models\User;
 use App\Support\Features;
 use App\Support\TenantContext;
+use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
@@ -67,7 +68,7 @@ describe('SaveAddon', function () {
 
         Livewire::test(ManageAddons::class)
             ->assertCanSeeTableRecords([$this->selfOrder, $this->extraOutlet])
-            ->callAction('create', ['name' => 'Karyawan +5', 'code' => 'extra-users', 'type' => 'quota', 'quota_key' => 'users', 'quota_amount' => 5, 'price_monthly' => '25000', 'price_yearly' => '250000', 'is_active' => true, 'is_public' => true])
+            ->callAction(TestAction::make('create')->table(), ['name' => 'Karyawan +5', 'code' => 'extra-users', 'type' => 'quota', 'quota_key' => 'users', 'quota_amount' => 5, 'price_monthly' => '25000', 'price_yearly' => '250000', 'is_active' => true, 'is_public' => true])
             ->assertHasNoActionErrors();
 
         expect(Addon::query()->where('code', 'extra-users')->sole()->quota_amount)->toBe(5);

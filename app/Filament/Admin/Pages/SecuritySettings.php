@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Pages;
 
 use App\Actions\Admin\SetAdminTwoFactorRequirement;
+use App\Filament\Admin\Resources\Admins\AdminResource;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Admin;
+use App\Services\Admin\SecurityChecklist;
 use App\Support\SystemSettings;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -14,11 +16,12 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Collection;
 use UnitEnum;
 
 /**
- * Sistem → Keamanan: on/off kewajiban 2FA untuk semua super admin.
- * Setiap admin tetap bisa mengaktifkan 2FA miliknya sendiri dari halaman profil.
+ * Sistem → Keamanan: on/off kewajiban 2FA untuk semua super admin, status 2FA tiap admin, pemeriksaan konfigurasi
+ * (SecurityChecklist), dan ringkasan perlindungan bawaan. Setiap admin mengatur 2FA miliknya dari halaman profil.
  */
 final class SecuritySettings extends Page
 {
@@ -44,6 +47,34 @@ final class SecuritySettings extends Page
     public function currentAdminHasTwoFactor(): bool
     {
         return $this->admin()->hasTwoFactorEnabled();
+    }
+
+    public function getSubheading(): string
+    {
+        return 'Kebijakan login super admin dan pemeriksaan konfigurasi server';
+    }
+
+    /** @return list<array{key: string, label: string, ok: bool, value: string, fix: string}> */
+    public function checklist(): array
+    {
+        return app(SecurityChecklist::class)->items();
+    }
+
+    /** @return Collection<int, Admin> */
+    public function admins(): Collection
+    {
+        return Admin::query()->orderBy('name')->get(['id', 'name', 'email', 'last_login_at', 'app_authentication_secret']);
+    }
+
+    /** Batas percobaan login per menit (pos.rate_limits.auth) untuk kartu perlindungan. */
+    public function loginRateLimit(): int
+    {
+        return (int) config('pos.rate_limits.auth');
+    }
+
+    public function adminsUrl(): string
+    {
+        return AdminResource::getUrl('index');
     }
 
     protected function getHeaderActions(): array

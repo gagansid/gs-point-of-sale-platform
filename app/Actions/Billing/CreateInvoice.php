@@ -27,8 +27,9 @@ use Illuminate\Support\Str;
  * nominal snapshot, jatuh tempo pos.billing.due_days. Tagihan menunggu yang lama dibatalkan (satu per tenant).
  * Jenis, baris (paket + add-on aktif, ADR 0025 C2) & nominal dari InvoiceQuote.
  *
- * Dibuat super admin ($admin): boleh paket aktif non-publik (penawaran khusus), pembuat tercatat, dan owner aktif
- * bisa diberi tahu lewat email ($notifyOwners).
+ * Dibuat super admin ($admin): boleh paket aktif non-publik (penawaran khusus) atau di luar periode, pembuat tercatat,
+ * dan owner aktif bisa diberi tahu lewat email ($notifyOwners). Owner: paket di luar periode (promo berakhir) hanya
+ * bisa dipilih bila itu paketnya sendiri. Tagihan manual admin (CreateManualInvoice) tidak ikut dibatalkan.
  */
 final class CreateInvoice
 {
@@ -37,7 +38,9 @@ final class CreateInvoice
     {
         self::ensureSaas();
 
-        if (! $plan->is_active || (! $plan->is_public && $admin === null && $tenant->plan_id !== $plan->id)) {
+        // Owner: paket publik di dalam periode, atau paket miliknya sendiri (perpanjangan). Admin: semua paket aktif.
+        $ownPlan = $tenant->plan_id === $plan->id;
+        if (! $plan->is_active || ($admin === null && ! $ownPlan && (! $plan->is_public || ! $plan->isAvailable()))) {
             throw BusinessException::of(ErrorCode::ValidationError, 'Paket tidak tersedia', ['plan_id' => ['Paket tidak tersedia']]);
         }
 
@@ -66,7 +69,7 @@ final class CreateInvoice
 
         $invoice = DB::transaction(function () use ($tenant, $plan, $cycle, $quote, $dueAt, $admin): SubscriptionInvoice {
             SubscriptionInvoice::query()->withoutGlobalScopes()->where('tenant_id', $tenant->id)
-                ->where('status', InvoiceStatus::Pending)->lockForUpdate()
+                ->where('status', InvoiceStatus::Pending)->where('kind', '!=', InvoiceKind::Manual)->lockForUpdate()
                 ->update(['status' => InvoiceStatus::Cancelled, 'updated_at' => now()]);
 
             $invoice = new SubscriptionInvoice([

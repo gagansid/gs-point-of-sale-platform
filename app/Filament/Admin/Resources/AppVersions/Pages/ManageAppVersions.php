@@ -11,8 +11,10 @@ use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Filament\Shared\Concerns\HasTableCardHeader;
 use App\Models\AppVersion;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ManageRecords;
+use Filament\Support\Icons\Heroicon;
 
 final class ManageAppVersions extends ManageRecords
 {
@@ -21,10 +23,11 @@ final class ManageAppVersions extends ManageRecords
 
     protected static string $resource = AppVersionResource::class;
 
-    protected function getHeaderActions(): array
+    /** @return array<Action> */
+    protected function getTableCardActions(): array
     {
         return [
-            CreateAction::make()->label('Tambah platform')->modalWidth('md')
+            CreateAction::make()->label('Tambah')->icon(Heroicon::OutlinedPlus)->modalHeading('Tambah platform')->modalWidth('md')
                 // Satu baris per platform: tombol hilang bila Android & iOS sudah ada
                 ->visible(fn (): bool => AppVersion::query()->count() < count(AppVersionResource::platforms()))
                 ->using(fn (array $data, CreateAction $action): AppVersion => RunBusinessAction::run(fn (): AppVersion => app(SaveAppVersion::class)->handle(

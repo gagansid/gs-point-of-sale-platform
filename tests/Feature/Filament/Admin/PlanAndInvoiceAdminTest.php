@@ -63,14 +63,15 @@ describe('PlanResource (ManagePlans)', function () {
 
         Livewire::test(ManagePlans::class)
             ->assertCanSeeTableRecords([$hidden, $this->basic, $this->pro], inOrder: true)
-            ->assertTableColumnStateSet('status', 'Khusus', $hidden)
-            ->assertTableColumnStateSet('status', 'Publik', $this->basic)
+            ->assertTableColumnFormattedStateSet('is_public', 'Khusus', $hidden)
+            ->assertTableColumnFormattedStateSet('is_public', 'Publik', $this->basic)
+            ->assertTableColumnFormattedStateSet('is_active', 'Aktif', $this->basic)
             ->assertTableColumnStateSet('features', '1 dari '.count(Feature::options()), $this->basic);
     });
 
     it('membuat paket baru dengan harga, batas outlet, dan fitur', function () {
         Livewire::test(ManagePlans::class)
-            ->callAction('create', planAdminForm())
+            ->callAction(TestAction::make('create')->table(), planAdminForm())
             ->assertHasNoActionErrors();
 
         $plan = Plan::query()->where('code', 'bisnis')->sole();
@@ -99,7 +100,7 @@ describe('PlanResource (ManagePlans)', function () {
 
     it('memvalidasi form paket', function (array $override, string $field) {
         Livewire::test(ManagePlans::class)
-            ->callAction('create', planAdminForm($override))
+            ->callAction(TestAction::make('create')->table(), planAdminForm($override))
             ->assertHasActionErrors([$field]);
 
         expect(Plan::query()->count())->toBe(2);
@@ -113,7 +114,7 @@ describe('PlanResource (ManagePlans)', function () {
     // Aturan kode (format & unik) dicek SavePlan di server: error tampil di field "code"
     it('menolak kode paket berformat salah atau sudah dipakai', function (string $code) {
         Livewire::test(ManagePlans::class)
-            ->callAction('create', planAdminForm(['code' => $code]))
+            ->callAction(TestAction::make('create')->table(), planAdminForm(['code' => $code]))
             ->assertHasErrors(['code']);
 
         expect(Plan::query()->count())->toBe(2);

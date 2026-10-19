@@ -20,6 +20,19 @@ final class SystemSettings
 
     public const SIGNUP_ENABLED = 'onboarding.signup_enabled';
 
+    public const TRIAL_PLAN_ID = 'onboarding.trial_plan_id';
+
+    public const SIGNUP_DAILY_LIMIT = 'onboarding.signup_daily_limit';
+
+    public const SIGNUP_BLOCKED_DOMAINS = 'onboarding.signup_blocked_domains';
+
+    public const SIGNUP_NOTIFY_EMAILS = 'onboarding.signup_notify_emails';
+
+    public const SIGNUP_CLOSED_MESSAGE = 'onboarding.signup_closed_message';
+
+    /** Batas pendaftaran mandiri per hari (0 = tanpa batas). */
+    public const SIGNUP_DAILY_LIMIT_MAX = 10000;
+
     /** Batas lama trial yang bisa diatur admin (hari). */
     public const TRIAL_DAYS_MIN = 1;
 
@@ -61,6 +74,55 @@ final class SystemSettings
         $this->set(self::SIGNUP_ENABLED, $signupEnabled, $by);
     }
 
+    /** Paket yang dipakai selama trial (fitur & kuota paket); null = semua fitur tanpa batas. */
+    public function trialPlanId(): ?string
+    {
+        $id = $this->get(self::TRIAL_PLAN_ID, null);
+
+        return is_string($id) && $id !== '' ? $id : null;
+    }
+
+    /** Maksimal pendaftaran mandiri per hari (zona waktu platform); 0 = tanpa batas. */
+    public function signupDailyLimit(): int
+    {
+        return max(0, min(self::SIGNUP_DAILY_LIMIT_MAX, (int) $this->get(self::SIGNUP_DAILY_LIMIT, 0)));
+    }
+
+    /** @return list<string> domain email yang ditolak saat daftar mandiri (huruf kecil, mis. mailinator.com) */
+    public function signupBlockedDomains(): array
+    {
+        return array_values(array_filter(array_map('strval', (array) $this->get(self::SIGNUP_BLOCKED_DOMAINS, []))));
+    }
+
+    /** @return list<string> email tim yang diberi tahu setiap ada pendaftar baru */
+    public function signupNotifyEmails(): array
+    {
+        return array_values(array_filter(array_map('strval', (array) $this->get(self::SIGNUP_NOTIFY_EMAILS, []))));
+    }
+
+    /** Pesan di halaman daftar saat pendaftaran ditutup; null = pesan bawaan. */
+    public function signupClosedMessage(): ?string
+    {
+        $message = $this->get(self::SIGNUP_CLOSED_MESSAGE, null);
+
+        return is_string($message) && trim($message) !== '' ? $message : null;
+    }
+
+    /**
+     * Setelan lanjutan pendaftaran (Sistem → Pendaftaran).
+     *
+     * @param  list<string>  $blockedDomains
+     * @param  list<string>  $notifyEmails
+     */
+    public function setOnboardingExtras(?string $trialPlanId, int $dailyLimit, array $blockedDomains, array $notifyEmails, ?string $closedMessage, ?Admin $by = null): void
+    {
+        $this->set(self::TRIAL_PLAN_ID, $trialPlanId, $by);
+        $this->set(self::SIGNUP_DAILY_LIMIT, $dailyLimit, $by);
+        $this->set(self::SIGNUP_BLOCKED_DOMAINS, $blockedDomains, $by);
+        $this->set(self::SIGNUP_NOTIFY_EMAILS, $notifyEmails, $by);
+        $this->set(self::SIGNUP_CLOSED_MESSAGE, $closedMessage, $by);
+    }
+
     private function get(string $key, mixed $default): mixed
     {
         $stored = Cache::rememberForever(self::CACHE_PREFIX.$key, function () use ($key): array {
@@ -75,7 +137,12 @@ final class SystemSettings
 
     private function set(string $key, mixed $value, ?Admin $by): void
     {
-        SystemSetting::query()->updateOrCreate(['key' => $key], ['value' => $value, 'updated_by' => $by?->id]);
+        // Kolom value NOT NULL: null = setelan dihapus (kembali ke nilai bawaan)
+        if ($value === null) {
+            SystemSetting::query()->whereKey($key)->delete();
+        } else {
+            SystemSetting::query()->updateOrCreate(['key' => $key], ['value' => $value, 'updated_by' => $by?->id]);
+        }
 
         Cache::forget(self::CACHE_PREFIX.$key);
     }

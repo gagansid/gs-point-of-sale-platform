@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Filament\Admin\Pages\Dashboard;
+use App\Filament\Shared\FieldDefaults;
 use App\Filament\Shared\Layout;
 use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\EnsureAdminTwoFactorWhenRequired;
@@ -36,6 +37,8 @@ final class AdminPanelProvider extends PanelProvider
         return Layout::apply($panel)
             ->default()
             ->id('admin')
+            // Select & tanggal seragam (JS Filament, ikon sama), zona waktu platform
+            ->bootUsing(fn () => FieldDefaults::apply())
             ->domain(Domains::admin())
             ->path(Domains::adminPath())
             ->authGuard('admin')

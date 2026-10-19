@@ -8,6 +8,7 @@ use App\Actions\Auth\DashboardLoginTicket;
 use App\Actions\Tenant\Data\SignupData;
 use App\Actions\Tenant\RegisterTenant;
 use App\Enums\BusinessType;
+use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Web\SignupRequest;
 use App\Support\Domains;
@@ -28,6 +29,7 @@ final class SignupController extends Controller
         return view('site.signup', [
             'open' => $settings->signupEnabled(),
             'trialDays' => $settings->trialDays(),
+            'closedMessage' => $settings->signupClosedMessage(),
             'businessTypes' => BusinessType::cases(),
             'loginUrl' => Domains::enabled() ? route('login') : Filament::getPanel('dashboard')->getLoginUrl(),
         ]);
@@ -45,7 +47,12 @@ final class SignupController extends Controller
             return redirect()->route('signup');
         }
 
-        $owner = $register->handle(SignupData::fromArray($request->validated()));
+        try {
+            $owner = $register->handle(SignupData::fromArray($request->validated()));
+        } catch (BusinessException $e) {
+            // Kuota pendaftaran harian penuh: kembali ke form dengan pesan, isian (kecuali kata sandi) tetap
+            return back()->withInput($request->except(['password', 'password_confirmation']))->withErrors(['email' => $e->getMessage()]);
+        }
 
         if (Domains::enabled()) {
             $ticket = $tickets->issue($owner, remember: false, next: null);

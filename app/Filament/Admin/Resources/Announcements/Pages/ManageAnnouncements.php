@@ -8,8 +8,10 @@ use App\Filament\Admin\Resources\Announcements\AnnouncementResource;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Filament\Shared\Concerns\HasTableCardHeader;
 use App\Models\Announcement;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ManageRecords;
+use Filament\Support\Icons\Heroicon;
 
 final class ManageAnnouncements extends ManageRecords
 {
@@ -18,10 +20,11 @@ final class ManageAnnouncements extends ManageRecords
 
     protected static string $resource = AnnouncementResource::class;
 
-    protected function getHeaderActions(): array
+    /** @return array<Action> */
+    protected function getTableCardActions(): array
     {
         return [
-            CreateAction::make()->label('Buat pengumuman')->modalWidth('xl')
+            CreateAction::make()->label('Tambah')->icon(Heroicon::OutlinedPlus)->modalHeading('Tambah pengumuman')->modalWidth('xl')
                 ->using(fn (array $data, CreateAction $action): Announcement => AnnouncementResource::save(null, $data, $action)),
         ];
     }

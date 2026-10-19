@@ -6,17 +6,19 @@ namespace App\Filament\Shared\Concerns;
 
 use BackedEnum;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\ManageRecords;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\IconSize;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\HtmlString;
+use UnitEnum;
 
 use function Filament\Support\generate_icon_html;
 
 /**
  * Breadcrumb sebagai judul halaman seperti gs-task-tracker (layout.md §4):
- * item pertama diberi ikon menu (mis. "🏢 Tenant › Daftar"). Halaman tanpa breadcrumb
- * (beranda, halaman custom) mendapat satu item: ikon + judul halaman.
+ * item pertama diberi ikon menu (mis. "🏢 Tenant › Daftar"). Halaman tanpa breadcrumb: ManageRecords
+ * "Menu › Daftar", halaman custom "Grup › Judul", beranda cukup ikon + judul.
  *
  * Halaman satu data: "Menu › Detail/Ubah › Nama data" (bawaan Filament: "Menu › Nama data › Lihat").
  *
@@ -36,7 +38,7 @@ trait HasIconBreadcrumbs
         );
 
         if ($breadcrumbs === []) {
-            $breadcrumbs = [$this->getTitle()];
+            $breadcrumbs = $this->defaultBreadcrumbs();
         }
 
         $breadcrumbs = $this->moveRecordLabelLast($breadcrumbs);
@@ -75,6 +77,26 @@ trait HasIconBreadcrumbs
         $breadcrumbs[] = $record;
 
         return $breadcrumbs;
+    }
+
+    /**
+     * Seragam semua halaman: daftar resource (ManageRecords) "Menu › Daftar" seperti ListRecords; halaman custom
+     * "Grup menu › Judul" (mis. "Sistem › Keamanan"); tanpa grup (Dasbor) cukup judul.
+     *
+     * @return array<int|string, string|Htmlable>
+     */
+    private function defaultBreadcrumbs(): array
+    {
+        if ($this instanceof ManageRecords) {
+            $resource = $this::getResource();
+
+            return [$resource::getUrl('index') => $resource::getBreadcrumb(), 'Daftar'];
+        }
+
+        $group = static::getNavigationGroup();
+        $group = $group instanceof UnitEnum ? null : $group;
+
+        return filled($group) ? [(string) $group, $this->getTitle()] : [$this->getTitle()];
     }
 
     protected function getBreadcrumbIcon(): string|BackedEnum|Htmlable|null

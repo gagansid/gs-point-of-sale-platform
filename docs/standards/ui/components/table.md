@@ -77,11 +77,14 @@ Semua tabel memakai pola yang sama dengan Produk (dijaga `tests/Feature/Filament
 |---|---|
 | Global (`Layout::configureActions`) | Panel filter lipat 4 kolom, filter/pencarian/urutan/baris per halaman di session, `[5,10,25,50,100]`, ikon urut, reset filter di footer |
 | Halaman | Deklarasikan ulang `public ?array $tableFilters = null;` (dan `public ?string $activeTab = null;` bila ada tab) tanpa `#[Url]` |
-| Tombol tambah | `CreateAction::make()->label('Tambah')->icon(Heroicon::OutlinedPlus)` di `getTableCardActions()`; judul modal tetap spesifik ("Tambah kategori") |
+| Tombol tambah | `CreateAction::make()->label('Tambah')->icon(Heroicon::OutlinedPlus)` di `getTableCardActions()` (bukan `getHeaderActions()`), ukuran bawaan 32px; judul modal tetap spesifik (`->modalHeading('Tambah kategori')`) |
+| Header & footer card | Judul `Daftar {objek}` berikon menu resource dalam kotak 28px primary lembut (`HasTableCardHeader`), tinggi header min. 56px; footer paginasi berlatar `surface-secondary` + garis atas, min. 48px |
+| Kode | Kode/nomor (mis. kode paket, nomor tagihan) kolom sendiri, font mono 12px, `->searchable()->copyable()`, bukan deskripsi di bawah nama |
+| Lebar | Tabel harus muat di 1366px tanpa geser: gabungkan harga bulanan/tahunan dalam satu kolom (deskripsi), keterangan panjang lewat tooltip; teks panjang (ringkasan kuota) `gs-ta-cell-wide` (min. 16rem) |
 | Aksi baris | Satu ikon utama (Ubah untuk master data, Lihat untuk transaksi) + `⋯` berisi sisanya (Hapus, Tutup paksa, Void, Suspend) |
 | Kolom | Semua kolom data `->sortable()`; maks. 7 terlihat — sisanya `->toggleable(isToggledHiddenByDefault: true)` |
 | Empty state | `TableEmptyState::apply($table, $icon, 'objek', 'deskripsi')` — tanpa tombol, pesan beda saat dipersempit |
-| Status aktif | Master data ber-`is_active`: kolom ikon "Aktif", tab `StatusTabs::make(Model::class)`, aksi `⋯` `ActiveStatusActions::make(...)` (Nonaktifkan berkonfirmasi, Aktifkan langsung), toggle di form |
+| Status aktif | Master data ber-`is_active`: kolom ikon "Aktif" (admin: badge Aktif/Nonaktif), tab `StatusTabs::make(Model::class)`, aksi `⋯` `ActiveStatusActions::make(...)` (Nonaktifkan berkonfirmasi, Aktifkan langsung), toggle di form |
 | Hapus massal | `BulkDeleteAction::make(Model::class, fn ($r) => app(DeleteX::class)->handle($r), 'objek', 'catatan', 'permission')` — hanya master data. **Tidak** untuk transaksi/audit (penjualan, shift, tenant) |
 | Tab cepat | `HasCardTabs` + `getTabs()`; status yang punya tab tidak diulang sebagai filter. Angka di tab hanya bila tidak dibatasi filter tanggal (Penjualan & Shift tanpa angka) |
 
@@ -93,6 +96,9 @@ Semua tabel memakai pola yang sama dengan Produk (dijaga `tests/Feature/Filament
 | Penjualan | Semua · Selesai · Open bill · Void | Tanggal, tipe, kasir | — |
 | Shift | Semua · Buka · Ditutup · Ada selisih | Tanggal dibuka | — |
 | Tenant (`/admin`) | Semua · Aktif · Trial · Suspended · Segera berakhir | Jenis usaha | — |
+| Paket (`/admin`) | Semua · Aktif · Nonaktif | Tampil, Periode, Memuat fitur, Dipakai bisnis | — |
+| Add-on (`/admin`) | Semua · Aktif · Nonaktif | Jenis, Fitur, Kuota, Tampil, Dipakai bisnis | — |
+| Tagihan (`/admin`) | Semua · per status · Lewat jatuh tempo | Status, Bisnis, Jenis, Paket, Siklus, Dibayar via, Dibuat oleh, Lewat jatuh tempo, Tanggal dibuat/jatuh tempo/lunas, Total min–maks | — |
 
 ## Filter standar per halaman
 

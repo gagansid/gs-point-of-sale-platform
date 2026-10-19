@@ -164,3 +164,14 @@ Phishing menyerang **manusia**, sehingga kontrolnya sebagian besar operasional:
 - [ ] Uji manual: IDOR antar tenant, brute force PIN, manipulasi nominal checkout, replay request,
       upload file berbahaya, akses `/admin` dengan akun tenant.
 - [ ] Hasil scan & perbaikan dicatat di `docs/security/{YYYY-MM-DD}-pentest.md`.
+
+
+## Pendaftaran mandiri & halaman Keamanan admin (2026-10-19, SPEC Q120–Q121)
+
+| Kontrol | Implementasi |
+|---|---|
+| Spam pendaftaran | Selain throttle `signup` per IP & honeypot: **batas pendaftar per hari** (Sistem → Pendaftaran, WIB; penuh → `TOO_MANY_REQUESTS`) |
+| Email sekali pakai | **Domain email diblokir** (termasuk subdomain) divalidasi di `SignupRequest`; domain divalidasi format & dinormalkan huruf kecil |
+| Deteksi dini | Email notifikasi tim setiap pendaftar baru (`TenantSignedUp`, antrean database) |
+| Konfigurasi server | Sistem → Keamanan menampilkan `SecurityChecklist` (APP_DEBUG, APP_ENV, HTTPS, `SESSION_SECURE_COOKIE`, `SESSION_LIFETIME` ≤ 120, wajib 2FA, semua admin ber-2FA) + langkah perbaikan; hanya baca |
+| Tagihan manual | Nominal dihitung ulang di server (`ManualInvoiceTotals`), validasi diskon ≤ subtotal, total ≥ Rp1, PPN 0–100%; hanya guard `admin`; dicatat di log (`Tagihan manual dibuat`) |

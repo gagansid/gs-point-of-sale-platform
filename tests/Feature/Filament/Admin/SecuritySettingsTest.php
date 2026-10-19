@@ -18,9 +18,11 @@ beforeEach(function () {
 it('menampilkan status kebijakan dan status 2FA akun', function () {
     $this->get('/admin/security')
         ->assertOk()
-        ->assertSee('Verifikasi dua langkah (2FA)')
+        ->assertSee('Wajib 2FA')
         ->assertSee('Wajib')
-        ->assertSee('2FA aktif');
+        ->assertSee('2FA aktif')
+        ->assertSee('Pemeriksaan konfigurasi')
+        ->assertSee($this->admin->email);
 });
 
 it('menolak mengubah kebijakan tanpa kata sandi yang benar', function () {

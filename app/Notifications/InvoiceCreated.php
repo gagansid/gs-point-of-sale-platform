@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Enums\InvoiceKind;
 use App\Filament\Dashboard\Pages\SubscriptionSettings;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
@@ -31,6 +32,11 @@ final class InvoiceCreated extends Notification implements ShouldQueue
 
     public readonly string $dueDate;
 
+    /** Tagihan manual: tidak membatalkan tagihan lain; catatan admin ikut dikirim. */
+    public readonly bool $manual;
+
+    public readonly ?string $memo;
+
     public function __construct(SubscriptionInvoice $invoice, Tenant $tenant)
     {
         $this->number = $invoice->number;
@@ -39,6 +45,8 @@ final class InvoiceCreated extends Notification implements ShouldQueue
         $this->description = $invoice->description();
         $this->amount = Money::format($invoice->amount);
         $this->dueDate = $invoice->due_at->setTimezone((string) config('pos.default_timezone'))->locale('id')->translatedFormat('j F Y');
+        $this->manual = $invoice->kind === InvoiceKind::Manual;
+        $this->memo = $invoice->memo;
     }
 
     /** @return list<string> */
@@ -49,12 +57,18 @@ final class InvoiceCreated extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject("Tagihan {$this->number} — {$this->businessName}")
             ->greeting('Halo,')
-            ->line("Ada tagihan langganan gs.POS baru untuk {$this->businessName}:")
-            ->line("{$this->description}: {$this->amount}, jatuh tempo {$this->dueDate}.")
-            ->action('Lihat & bayar tagihan', SubscriptionSettings::getUrl(panel: 'dashboard'))
-            ->line('Tagihan menunggu sebelumnya (bila ada) otomatis dibatalkan.');
+            ->line("Ada tagihan gs.POS baru untuk {$this->businessName}:")
+            ->line("{$this->description}: {$this->amount}, jatuh tempo {$this->dueDate}.");
+
+        if ($this->memo !== null) {
+            $mail->line($this->memo);
+        }
+
+        $mail->action('Lihat & bayar tagihan', SubscriptionSettings::getUrl(panel: 'dashboard'));
+
+        return $this->manual ? $mail : $mail->line('Tagihan menunggu sebelumnya (bila ada) otomatis dibatalkan.');
     }
 }

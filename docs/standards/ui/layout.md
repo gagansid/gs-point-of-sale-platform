@@ -73,10 +73,14 @@ Aturan:
 
 - Maksimal **satu** tombol primary per halaman. Aksi lain `gray`/outline.
 - Aksi berbahaya (`Void`, `Hapus`, `Cabut akses`) selalu `danger` + konfirmasi, tidak pernah primary.
-- Judul halaman = **breadcrumb** 16px seperti gs-task-tracker: item pertama berikon menu, item terakhir tebal
-  (`🏢 Tenant › Daftar`, `📦 Produk › Americano › Ubah`). Trait `HasIconBreadcrumbs` dipasang di semua halaman;
-  halaman tanpa breadcrumb (Beranda, Laporan, Keamanan) memakai ikon + judul. H1 tetap ada untuk pembaca
-  layar dan tampil di HP (< 640px), tempat breadcrumb disembunyikan Filament.
+- Judul halaman = **breadcrumb** 15px seperti gs-task-tracker: item pertama berikon menu dalam kotak 30px primary
+  lembut, item terakhir tebal (`🏢 Tenant › Daftar`, `📦 Produk › Americano › Ubah`). Trait `HasIconBreadcrumbs`
+  dipasang di semua halaman. Seragam: halaman daftar (ListRecords & ManageRecords) **`Menu › Daftar`**, tambah
+  `Menu › Tambah`, halaman custom **`Grup menu › Judul`** (`Sistem › Keamanan`), tanpa grup (Beranda/Dasbor) cukup
+  ikon + judul. Subjudul singkat (`getSubheading()`) di bawah breadcrumb untuk halaman setelan. H1 tetap ada untuk
+  pembaca layar dan tampil di HP (< 640px), tempat breadcrumb disembunyikan Filament.
+- Halaman setelan/ringkasan admin (Pendaftaran, Keamanan): baris kartu KPI (`gs-kpi-grid`, 4 kolom ≥ 1280px) di atas
+  section; daftar pemeriksaan memakai `gs-checklist` (ikon hijau/kuning + langkah perbaikan).
 
 ## 5. Grid & lebar
 

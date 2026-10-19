@@ -77,11 +77,12 @@ describe('panel dashboard', function () {
         TenantContext::set($manager->tenant_id);
     });
 
-    it('halaman kelola kategori memakai judul halaman sebagai breadcrumb berikon', function () {
+    it('halaman kelola kategori memakai breadcrumb "Menu › Daftar" berikon seperti halaman daftar lain', function () {
         $breadcrumbs = Livewire::test(ManageCategories::class)->instance()->getBreadcrumbs();
 
-        expect($breadcrumbs)->toHaveCount(1)
-            ->and(array_values($breadcrumbs)[0]->toHtml())->toContain('<svg')->toContain('Kategori');
+        expect($breadcrumbs)->toHaveCount(2)
+            ->and(array_values($breadcrumbs)[0]->toHtml())->toContain('<svg')->toContain('Kategori')
+            ->and(array_values($breadcrumbs)[1])->toBe('Daftar');
     });
 });
 

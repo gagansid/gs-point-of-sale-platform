@@ -26,13 +26,14 @@ final class ActiveStatusActions
      *
      * @param  class-string<TModel>  $model
      * @param  Closure(TModel, bool): mixed  $setActive  memanggil Action bisnis, mis. SetCategoryActive::handle
+     * @param  string|null  $permission  null = panel /admin (super admin, guard terpisah tanpa permission tenant)
      * @return array{0: Action, 1: Action}
      */
-    public static function make(string $model, Closure $setActive, string $object, string $note, string $permission): array
+    public static function make(string $model, Closure $setActive, string $object, string $note, ?string $permission): array
     {
         $apply = fn (Model $record, bool $active): mixed => $setActive($model::query()->whereKey($record->getKey())->firstOrFail(), $active);
 
-        $canManage = fn (): bool => auth()->user()?->can($permission) ?? false;
+        $canManage = fn (): bool => $permission === null || (auth()->user()?->can($permission) ?? false);
 
         return [
             Action::make('deactivate')

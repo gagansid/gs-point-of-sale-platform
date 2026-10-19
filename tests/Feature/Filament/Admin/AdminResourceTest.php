@@ -20,15 +20,15 @@ beforeEach(function () {
 
 it('tambah admin: kata sandi kuat + konfirmasi kata sandi sendiri', function () {
     Livewire::test(ManageAdmins::class)
-        ->callAction('create', ['name' => 'Rina', 'email' => 'RINA@gspos.test', 'password' => 'lemah123', 'current_password' => 'Rahasia-Admin-1!'])
+        ->callAction(TestAction::make('create')->table(), ['name' => 'Rina', 'email' => 'RINA@gspos.test', 'password' => 'lemah123', 'current_password' => 'Rahasia-Admin-1!'])
         ->assertHasFormErrors(['password']);
 
     Livewire::test(ManageAdmins::class)
-        ->callAction('create', ['name' => 'Rina', 'email' => 'RINA@gspos.test', 'password' => 'Kuat-Sekali-123!', 'current_password' => 'salah'])
+        ->callAction(TestAction::make('create')->table(), ['name' => 'Rina', 'email' => 'RINA@gspos.test', 'password' => 'Kuat-Sekali-123!', 'current_password' => 'salah'])
         ->assertHasFormErrors(['current_password']);
 
     Livewire::test(ManageAdmins::class)
-        ->callAction('create', ['name' => 'Rina', 'email' => 'RINA@gspos.test', 'password' => 'Kuat-Sekali-123!', 'current_password' => 'Rahasia-Admin-1!'])
+        ->callAction(TestAction::make('create')->table(), ['name' => 'Rina', 'email' => 'RINA@gspos.test', 'password' => 'Kuat-Sekali-123!', 'current_password' => 'Rahasia-Admin-1!'])
         ->assertHasNoFormErrors();
 
     $rina = Admin::query()->where('email', 'rina@gspos.test')->sole();

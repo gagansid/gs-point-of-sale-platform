@@ -10,6 +10,17 @@
 
 ## 1. Sudah dikerjakan
 
+### Rapikan panel /admin (2026-10-19, SPEC Q118–Q121) — belum di-commit
+- Standar UI: Select & DatePicker JS seragam (`FieldDefaults`, ikon kalender bisa diklik, zona waktu WIB di /admin),
+  tombol **+ Tambah** di header card (Paket, Add-on, Pengumuman, Admin, Versi aplikasi, Tagihan), judul card berikon,
+  footer paginasi, breadcrumb seragam (`Menu › Daftar`, `Grup › Judul`), modal jarak atas = bawah & scroll di dalam,
+  dropdown Select di repeater tabel tidak terpotong.
+- Paket: kolom Kode, cari, tab aktif/nonaktif, filter, periode promo (`available_from/until`). Add-on: filter, status,
+  katalog `AddonSeeder` (15 add-on, aman diulang). Tagihan: filter lengkap, detail, **tagihan manual** (`CreateManualInvoice`).
+- Pendaftaran: ringkasan + setelan lanjutan (paket trial, batas/hari, domain diblokir, email tim, pesan tutup).
+  Keamanan: `SecurityChecklist` + daftar admin 2FA. Migrasi `2026_11_06_100000_add_plan_period_and_manual_invoices`.
+- 1922+ test SQLite lulus; billing & admin juga lulus di MySQL `gspos_test`.
+
 ### Fondasi (Minggu 1–6) — sudah di-commit
 - Standar proyek, SPEC, ADR 0001–0010, CI, envelope API, tenant scope fail-closed, permission per role.
 - Auth API: login email, device token, login PIN (kunci 15 menit), `/auth/me`, logout.

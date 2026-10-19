@@ -17,6 +17,7 @@ use App\Support\Features;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use LogicException;
 
 /**
  * Tagihan lunas (ADR 0024, Q110): paket & siklus tenant diganti, batas outlet = paket, status aktif, masa aktif
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\Log;
  * Revisi 2026-10-16: tagihan upgrade mengganti paket tanpa menambah masa aktif; perpanjangan dengan paket/siklus lain
  * selagi langganan berbayar berjalan dijadwalkan (next_plan_id) dan diterapkan ApplyScheduledPlanChanges.
  * ADR 0025 C2: tagihan add-on memasang add-on tanpa mengubah paket/masa aktif.
+ * Tagihan manual admin: hanya baris add-on yang dipasang; paket, status & masa aktif tetap; periode kosong.
  */
 final class MarkInvoicePaid
 {
@@ -37,10 +39,14 @@ final class MarkInvoicePaid
             }
 
             $tenant = Tenant::query()->lockForUpdate()->findOrFail($locked->tenant_id);
-            $plan = Plan::query()->findOrFail($locked->plan_id);
             $now = CarbonImmutable::now();
 
-            if ($locked->kind === InvoiceKind::Addon) {
+            if ($locked->kind === InvoiceKind::Manual) {
+                // Tagihan manual: paket & masa aktif tetap; baris add-on (bila ada) dipasang, biaya bebas tidak mengubah apa pun
+                $from = null;
+                $until = null;
+                TenantAddons::attachFromInvoice($locked);
+            } elseif ($locked->kind === InvoiceKind::Addon) {
                 // Tambah add-on (ADR 0025 C2): paket & masa aktif tetap; add-on aktif sampai akhir masa aktif
                 $from = $now;
                 $until = $tenant->subscription_ends_at !== null && $tenant->subscription_ends_at->isAfter($now) ? $tenant->subscription_ends_at : $now;
@@ -49,18 +55,20 @@ final class MarkInvoicePaid
                 // Upgrade prorata: paket langsung berganti, masa aktif tetap
                 $from = $now;
                 $until = $tenant->subscription_ends_at !== null && $tenant->subscription_ends_at->isAfter($now) ? $tenant->subscription_ends_at : $now;
-                $tenant->forceFill(['plan_id' => $plan->id, 'limit_overrides' => null]);
+                $tenant->forceFill(['plan_id' => (string) $locked->plan_id, 'limit_overrides' => null]);
             } else {
-                $quote = InvoiceQuote::for($tenant, $plan, $locked->billing_cycle, $now);
+                $plan = Plan::query()->findOrFail($locked->plan_id);
+                $cycle = $locked->billing_cycle ?? throw new LogicException('Tagihan paket tanpa siklus');
+                $quote = InvoiceQuote::for($tenant, $plan, $cycle, $now);
                 $from = $quote->startsAt;
-                $until = $from->addMonthsNoOverflow($locked->billing_cycle->months());
+                $until = $from->addMonthsNoOverflow($cycle->months());
 
                 // Downgrade / ganti siklus selagi langganan berbayar berjalan: berlaku di akhir masa aktif lama
                 $tenant->forceFill($quote->scheduled
-                    ? ['next_plan_id' => $plan->id, 'next_billing_cycle' => $locked->billing_cycle, 'plan_changes_at' => $tenant->plan_changes_at ?? $from]
+                    ? ['next_plan_id' => $plan->id, 'next_billing_cycle' => $cycle, 'plan_changes_at' => $tenant->plan_changes_at ?? $from]
                     : [
                         'plan_id' => $plan->id,
-                        'billing_cycle' => $locked->billing_cycle,
+                        'billing_cycle' => $cycle,
                         // Paket diterapkan: batas mengikuti paket (batas khusus admin dihapus, ADR 0025)
                         'limit_overrides' => null,
                         'next_plan_id' => null, 'next_billing_cycle' => null, 'plan_changes_at' => null,

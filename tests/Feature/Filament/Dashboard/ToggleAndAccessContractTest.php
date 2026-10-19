@@ -354,7 +354,7 @@ describe('isolasi tenant di dashboard', function () {
 
         expect($page->instance()->tenant()->id)->toBe($this->pos->tenantId)
             ->and($page->instance()->invoices()->pluck('id')->all())->not->toContain($this->b->invoice->id)
-            ->and($page->instance()->pendingInvoice())->toBeNull()
+            ->and($page->instance()->pendingInvoices())->toBeEmpty()
             ->and(SubscriptionInvoice::allTenants()->whereKey($this->b->invoice->id)->exists())->toBeTrue();
     });
 });

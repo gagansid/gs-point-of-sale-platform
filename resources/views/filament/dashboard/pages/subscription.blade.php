@@ -1,7 +1,7 @@
 {{-- Pengaturan → Langganan (ADR 0024): paket & masa aktif, tagihan menunggu, riwayat. --}}
 @php
     $tenant = $this->tenant();
-    $pending = $this->pendingInvoice();
+    $pendingInvoices = $this->pendingInvoices();
     $money = fn (string $v): string => \App\Support\Money::format($v);
     $tz = \App\Support\CurrentOutlet::timezone();
     $date = fn ($d): string => $d ? $d->setTimezone($tz)->locale('id')->translatedFormat('j M Y') : '—';
@@ -32,24 +32,32 @@
         </x-filament::section>
 
         <x-filament::section heading="Tagihan menunggu">
-            @if ($pending)
-                <dl class="gs-nota-meta gs-nota-meta--single">
-                    <div><dt>Nomor</dt><dd>{{ $pending->number }}</dd></div>
-                    <div><dt>Rincian</dt><dd>{{ $pending->description() }}</dd></div>
-                    <div><dt>Total</dt><dd>{{ $money($pending->amount) }}</dd></div>
-                    <div><dt>Jatuh tempo</dt><dd>{{ $date($pending->due_at) }}</dd></div>
-                </dl>
-                <div class="mt-4 flex flex-col gap-2">
-                    @if ($this->onlinePaymentAvailable())
-                        {{ $this->payOnlineAction }}
-                    @endif
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ $this->onlinePaymentAvailable() ? 'Atau transfer manual: ' : '' }}{{ config('pos.billing.bank_info') }} Cantumkan nomor {{ $pending->number }}.
-                    </p>
+            @forelse ($pendingInvoices as $pending)
+                <div wire:key="pending-{{ $pending->id }}" @class(['mt-4 border-t border-gray-200 pt-4 dark:border-white/10' => ! $loop->first])>
+                    <dl class="gs-nota-meta gs-nota-meta--single">
+                        <div><dt>Nomor</dt><dd>{{ $pending->number }}</dd></div>
+                        <div><dt>Rincian</dt><dd>{{ $pending->description() }}</dd></div>
+                        @if ($pending->kind === \App\Enums\InvoiceKind::Manual)
+                            <div><dt>Item</dt><dd>{{ $pending->items->map(fn ($i) => $i->name.($i->quantity > 1 ? ' ×'.$i->quantity : ''))->implode(' · ') }}</dd></div>
+                        @endif
+                        <div><dt>Total</dt><dd>{{ $money($pending->amount) }}</dd></div>
+                        <div><dt>Jatuh tempo</dt><dd>{{ $date($pending->due_at) }}</dd></div>
+                        @if ($pending->memo)
+                            <div><dt>Catatan</dt><dd class="whitespace-pre-line">{{ $pending->memo }}</dd></div>
+                        @endif
+                    </dl>
+                    <div class="mt-4 flex flex-col gap-2">
+                        @if ($this->onlinePaymentAvailable())
+                            {{ ($this->payOnlineAction)(['id' => $pending->id]) }}
+                        @endif
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            {{ $this->onlinePaymentAvailable() ? 'Atau transfer manual: ' : '' }}{{ config('pos.billing.bank_info') }} Cantumkan nomor {{ $pending->number }}.
+                        </p>
+                    </div>
                 </div>
-            @else
+            @empty
                 <p class="text-sm text-gray-600 dark:text-gray-400">Tidak ada tagihan. Buat tagihan untuk memperpanjang atau ganti paket.</p>
-            @endif
+            @endforelse
         </x-filament::section>
     </div>
 

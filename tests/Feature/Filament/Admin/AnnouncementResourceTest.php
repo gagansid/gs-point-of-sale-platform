@@ -18,7 +18,7 @@ beforeEach(function () {
 
 it('buat pengumuman; tampil di API dan banner dashboard', function () {
     Livewire::test(ManageAnnouncements::class)
-        ->callAction('create', ['title' => 'Maintenance', 'body' => 'Minggu 02.00 <b>WIB</b>', 'starts_at' => now()->subMinute()->toDateTimeString(), 'ends_at' => null])
+        ->callAction(TestAction::make('create')->table(), ['title' => 'Maintenance', 'body' => 'Minggu 02.00 <b>WIB</b>', 'starts_at' => now()->subMinute()->toDateTimeString(), 'ends_at' => null])
         ->assertHasNoFormErrors();
 
     $pos = posSetup();
@@ -45,7 +45,7 @@ it('terjadwal & selesai tidak tayang; akhiri sekarang menghentikan', function ()
 
 it('validasi: judul & isi wajib, selesai setelah mulai', function () {
     Livewire::test(ManageAnnouncements::class)
-        ->callAction('create', ['title' => '', 'body' => '', 'starts_at' => now()->toDateTimeString(), 'ends_at' => now()->subDay()->toDateTimeString()])
+        ->callAction(TestAction::make('create')->table(), ['title' => '', 'body' => '', 'starts_at' => now()->toDateTimeString(), 'ends_at' => now()->subDay()->toDateTimeString()])
         ->assertHasFormErrors(['title', 'body', 'ends_at']);
 });
 

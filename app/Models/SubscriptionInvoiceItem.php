@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property string $id
  * @property string $invoice_id
- * @property string $type plan / addon
+ * @property string $type plan / addon / custom
  * @property string|null $plan_id
  * @property string|null $addon_id
  * @property string $name
@@ -30,6 +30,9 @@ final class SubscriptionInvoiceItem extends Model
     public const PLAN = 'plan';
 
     public const ADDON = 'addon';
+
+    /** Biaya bebas tagihan manual (instalasi, pelatihan, perangkat, ...): tidak mengubah langganan. */
+    public const CUSTOM = 'custom';
 
     protected $fillable = ['type', 'plan_id', 'addon_id', 'name', 'quantity', 'unit_price', 'amount', 'sort_order'];
 

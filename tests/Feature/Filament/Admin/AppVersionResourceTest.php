@@ -20,7 +20,7 @@ beforeEach(function () {
 
 it('tambah Android lalu ubah; API langsung memakai versi baru (cache terhapus)', function () {
     Livewire::test(ManageAppVersions::class)
-        ->callAction('create', ['platform' => 'android', 'min_version' => '1.2.0', 'latest_version' => '1.4.0', 'force_update' => false])
+        ->callAction(TestAction::make('create')->table(), ['platform' => 'android', 'min_version' => '1.2.0', 'latest_version' => '1.4.0', 'force_update' => false])
         ->assertHasNoFormErrors();
 
     $version = AppVersion::query()->sole();
@@ -42,7 +42,7 @@ it('tambah Android lalu ubah; API langsung memakai versi baru (cache terhapus)',
 
 it('validasi: format versi, terbaru ≥ minimum', function (array $data, string $field) {
     Livewire::test(ManageAppVersions::class)
-        ->callAction('create', ['platform' => 'ios', 'min_version' => '1.0.0', 'latest_version' => '1.0.0', ...$data])
+        ->callAction(TestAction::make('create')->table(), ['platform' => 'ios', 'min_version' => '1.0.0', 'latest_version' => '1.0.0', ...$data])
         ->assertHasFormErrors([$field]);
 
     expect(AppVersion::query()->count())->toBe(0);

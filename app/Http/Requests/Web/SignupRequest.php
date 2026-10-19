@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Requests\Web;
 
 use App\Enums\BusinessType;
+use App\Support\SystemSettings;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -24,7 +26,7 @@ final class SignupRequest extends FormRequest
             'business_type' => ['required', Rule::enum(BusinessType::class)],
             'name' => ['required', 'string', 'max:100'],
             // Email unik global (login email lintas tenant), termasuk akun yang dihapus lunak
-            'email' => ['required', 'string', 'email', 'max:150', Rule::unique('users', 'email')],
+            'email' => ['required', 'string', 'email', 'max:150', Rule::unique('users', 'email'), $this->allowedDomain(...)],
             'password' => ['required', 'string', 'max:255', 'confirmed', Password::defaults()],
             // Honeypot: field tersembunyi, hanya diisi bot
             'website' => ['nullable', 'string', 'max:255'],
@@ -47,6 +49,20 @@ final class SignupRequest extends FormRequest
     public function messages(): array
     {
         return ['email.unique' => 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.'];
+    }
+
+    /** Domain email yang diblokir admin (Sistem → Pendaftaran), termasuk subdomainnya. */
+    private function allowedDomain(string $attribute, mixed $value, Closure $fail): void
+    {
+        $domain = mb_strtolower((string) str((string) $value)->afterLast('@'));
+
+        foreach (app(SystemSettings::class)->signupBlockedDomains() as $blocked) {
+            if ($domain === $blocked || str_ends_with($domain, '.'.$blocked)) {
+                $fail('Email dengan domain ini tidak bisa dipakai untuk mendaftar. Gunakan email lain.');
+
+                return;
+            }
+        }
     }
 
     public function isBot(): bool
