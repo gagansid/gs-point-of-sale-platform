@@ -7,6 +7,7 @@ namespace App\Filament\Dashboard\Pages;
 use App\Actions\Payment\TestPaymentGateway;
 use App\Actions\Payment\UpdatePaymentGateway;
 use App\Exceptions\BusinessException;
+use App\Filament\Shared\Actions\SettingsFormActions;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\PaymentGatewaySetting;
 use App\Models\User;
@@ -19,7 +20,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
@@ -110,11 +110,10 @@ final class PaymentGatewaySettings extends Page
                 ->id('form')
                 ->livewireSubmitHandler('save')
                 ->footer([
-                    Actions::make([
-                        Action::make('save')->label('Simpan')->submit('save')->keyBindings(['mod+s']),
+                    SettingsFormActions::make(self::getUrl(), extra: [
                         Action::make('test')->label('Tes koneksi')->color('gray')->icon(Heroicon::OutlinedSignal)
                             ->action(fn () => $this->testConnection()),
-                    ])->alignEnd(),
+                    ]),
                 ]),
         ]);
     }

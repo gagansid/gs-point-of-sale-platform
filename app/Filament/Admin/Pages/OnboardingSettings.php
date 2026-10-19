@@ -8,6 +8,7 @@ use App\Actions\Admin\UpdateOnboardingSettings;
 use App\Actions\Tenant\RegisterTenant;
 use App\Enums\TenantStatus;
 use App\Filament\Admin\Resources\Tenants\TenantResource;
+use App\Filament\Shared\Actions\SettingsFormActions;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Admin;
 use App\Models\Plan;
@@ -16,19 +17,15 @@ use App\Support\Edition;
 use App\Support\SystemSettings;
 use BackedEnum;
 use Carbon\CarbonImmutable;
-use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -95,15 +92,14 @@ final class OnboardingSettings extends Page
                     ->description('Calon pelanggan mendaftar di halaman depan tanpa menunggu tim sales')
                     ->columns(2)
                     ->schema([
-                        Toggle::make('signup_enabled')->label('Buka pendaftaran sendiri')->live()->columnSpanFull()
+                        Toggle::make('signup_enabled')->label('Buka pendaftaran sendiri')->columnSpanFull()
                             ->helperText(fn (): string => 'Halaman daftar: '.self::signupUrl()),
                         TextInput::make('signup_daily_limit')->label('Batas pendaftar per hari')->integer()->minValue(0)
                             ->maxValue(SystemSettings::SIGNUP_DAILY_LIMIT_MAX)->suffix('bisnis')->default(0)
-                            ->helperText('Mencegah spam. 0 = tanpa batas; dihitung per hari WIB'),
-                        Textarea::make('signup_closed_message')->label('Pesan saat ditutup')->maxLength(500)->rows(2)->autosize()
+                            ->helperText('0 = tanpa batas; dihitung per hari WIB'),
+                        TextInput::make('signup_closed_message')->label('Pesan saat ditutup')->maxLength(500)
                             ->placeholder('Tim kami siap membantu menyiapkan akun Anda.')
-                            ->helperText('Tampil di halaman daftar saat pendaftaran ditutup')
-                            ->visible(fn (Get $get): bool => ! $get('signup_enabled')),
+                            ->helperText('Tampil di halaman daftar saat pendaftaran ditutup'),
                     ]),
                 Section::make('Trial')
                     ->icon(Heroicon::OutlinedClock)
@@ -145,9 +141,7 @@ final class OnboardingSettings extends Page
                 ->id('form')
                 ->livewireSubmitHandler('save')
                 ->footer([
-                    Actions::make([
-                        Action::make('save')->label('Simpan')->submit('save')->keyBindings(['mod+s']),
-                    ])->alignEnd(),
+                    SettingsFormActions::make(self::getUrl()),
                 ]),
         ]);
     }

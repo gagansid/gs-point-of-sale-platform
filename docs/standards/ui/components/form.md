@@ -48,7 +48,8 @@ Teks bantuan / pesan error (12px)
 | Jarak | Label → field 6px · field → bantuan/error 4px |
 | Border | Garis 1px `--field-border` **tanpa bayangan** (bawaan Filament ring + `shadow-sm` dihapus); hover `--field-border-hover`; fokus: garis primary 1px + halo 3px `--field-focus-ring`; error: garis danger (+ halo saat fokus); nonaktif: latar `surface-secondary` |
 | Jarak antar field | 16px |
-| Card section | Judul 14px/600 + deskripsi 12.5px muted di atas isi, **tanpa garis pemisah**; padding 16px 20px 20px. Setiap section diberi `->description()` singkat |
+| Card section | Header seragam dengan header card tabel: min. 56px, **garis bawah**, ikon `->icon(Heroicon::Outlined…)` dalam kotak 28px primary lembut, judul 14.5px/600 + deskripsi 12.5px muted, aksi/tautan header rata kanan; isi padding 20px; footer section berlatar `surface-secondary` + garis atas. Section berdampingan tingginya sama. Setiap section diberi ikon & `->description()` singkat |
+| Halaman setelan | Bar tombol menempel di bawah seperti form Tambah: **Batal · Simpan** (`SettingsFormActions::make(self::getUrl())`; aksi tambahan seperti "Tes koneksi" di kiri Batal). Ringkasan di atas form: kartu KPI berikon (`gs-kpi`) |
 | Kode produk | SKU: kode internal opsional (`KOP-001`). Barcode: angka di bawah garis barcode kemasan (EAN-13/UPC) untuk dipindai kasir; kosong untuk menu racikan |
 | Kolom | `columns(2)` di ≥ md; field panjang (`Textarea`, `Repeater`) `columnSpanFull()` |
 | Overline grup | 12px, 600, uppercase, `text-muted` |

@@ -5,7 +5,7 @@
     $colors = ['emergency' => 'danger', 'alert' => 'danger', 'critical' => 'danger', 'error' => 'danger', 'warning' => 'warning', 'notice' => 'info', 'info' => 'info', 'debug' => 'gray'];
 @endphp
 <x-filament-panels::page>
-    <x-filament::section>
+    <x-filament::section icon="heroicon-o-funnel" heading="Pilih log" description="File, level, dan kata kunci">
         <div class="grid gap-3 sm:grid-cols-3">
             <x-filament::input.wrapper>
                 <x-filament::input.select wire:model.live="file" aria-label="File log">
@@ -31,7 +31,7 @@
         <p class="mt-2 text-[13px] text-gray-500 dark:text-gray-400">200 entri terbaru dari 1 MB terakhir file. Unduh untuk melihat seluruh isi.</p>
     </x-filament::section>
 
-    <x-filament::section>
+    <x-filament::section icon="heroicon-o-document-text" heading="Entri log" description="Klik entri untuk melihat detail & stack trace">
         @forelse ($entries as $i => $entry)
             <details class="border-b border-gray-100 py-2 last:border-0 dark:border-white/10" wire:key="log-{{ $i }}-{{ md5($entry['time'].$entry['message']) }}">
                 <summary class="flex cursor-pointer items-start gap-3 text-sm">

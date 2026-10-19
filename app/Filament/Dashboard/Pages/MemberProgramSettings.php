@@ -10,6 +10,7 @@ use App\Actions\Member\UpdateCreditProgram;
 use App\Actions\Member\UpdateMemberProgram;
 use App\Enums\DiscountType;
 use App\Exceptions\BusinessException;
+use App\Filament\Shared\Actions\SettingsFormActions;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Models\MemberSetting;
@@ -30,7 +31,6 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
@@ -168,10 +168,7 @@ final class MemberProgramSettings extends Page
                 ->id('form')
                 ->livewireSubmitHandler('save')
                 ->footer([
-                    Actions::make([
-                        Action::make('save')->label('Simpan')->submit('save')->keyBindings(['mod+s'])
-                            ->visible(fn (): bool => self::canEdit()),
-                    ])->alignEnd(),
+                    SettingsFormActions::make(self::getUrl(), fn (): bool => self::canEdit()),
                 ]),
         ]);
     }

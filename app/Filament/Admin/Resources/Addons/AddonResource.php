@@ -64,13 +64,13 @@ final class AddonResource extends Resource
         $isQuota = fn (Get $get): bool => $get('type') === Addon::TYPE_QUOTA;
 
         return $schema->columns(2)->components([
-            Section::make('Identitas add-on')->description('Nama tampil di halaman Langganan owner & tagihan')
+            Section::make('Identitas add-on')->icon(Heroicon::OutlinedIdentification)->description('Nama tampil di halaman Langganan owner & tagihan')
                 ->columns(2)->columnSpanFull()->schema([
                     TextInput::make('name')->label('Nama')->required()->maxLength(60)->placeholder('Outlet tambahan')->autofocus(),
                     TextInput::make('code')->label('Kode')->required()->maxLength(30)->placeholder('extra-outlet')->helperText('Huruf kecil, angka, tanda hubung'),
                     Textarea::make('description')->label('Keterangan')->maxLength(255)->rows(2)->autosize()->columnSpanFull(),
                 ]),
-            Section::make('Manfaat')->description('Jenis & manfaat tidak bisa diubah setelah add-on dipakai bisnis')
+            Section::make('Manfaat')->icon(Heroicon::OutlinedSparkles)->description('Jenis & manfaat tidak bisa diubah setelah add-on dipakai bisnis')
                 ->columns(2)->columnSpanFull()->schema([
                     ToggleButtons::make('type')->label('Jenis')->options(Addon::TYPES)->inline()->required()->live()
                         ->default(Addon::TYPE_FEATURE)->columnSpanFull(),
@@ -81,14 +81,14 @@ final class AddonResource extends Resource
                     TextInput::make('quota_amount')->label('Tambahan per unit')->integer()->minValue(1)->maxValue(100000)
                         ->visible($isQuota)->required($isQuota)->placeholder('1'),
                 ]),
-            Section::make('Harga per unit')->description('Ditagih prorata sisa masa aktif saat dibeli, lalu ikut tagihan perpanjangan')
+            Section::make('Harga per unit')->icon(Heroicon::OutlinedBanknotes)->description('Ditagih prorata sisa masa aktif saat dibeli, lalu ikut tagihan perpanjangan')
                 ->columns(3)->columnSpanFull()->schema([
                     MoneyInput::make('price_monthly')->label('Harga bulanan')->required(),
                     MoneyInput::make('price_yearly')->label('Harga tahunan')->required(),
                     TextInput::make('sort_order')->label('Urutan')->integer()->minValue(0)->maxValue(999)->default(0)
                         ->helperText('Urutan tampil, kecil di depan'),
                 ]),
-            Section::make('Status')->description('Add-on nonaktif tidak bisa dibeli; bisnis yang memilikinya tetap memakai')
+            Section::make('Status')->icon(Heroicon::OutlinedPower)->description('Add-on nonaktif tidak bisa dibeli; bisnis yang memilikinya tetap memakai')
                 ->columns(2)->columnSpanFull()->schema([
                     Toggle::make('is_active')->label('Aktif')->default(true),
                     Toggle::make('is_public')->label('Tampil di halaman Langganan owner')->default(true)

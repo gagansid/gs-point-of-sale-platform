@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Pages;
 
 use App\Actions\Outlet\Data\OutletSettingsData;
 use App\Actions\Outlet\UpdateOutletSettings;
+use App\Filament\Shared\Actions\SettingsFormActions;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Http\Requests\Api\V1\Outlet\OutletSettingsRequest;
 use App\Models\Outlet;
@@ -13,14 +14,12 @@ use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Timezones;
 use BackedEnum;
-use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Grid;
@@ -185,10 +184,7 @@ final class OutletSettings extends Page
                 ->id('form')
                 ->livewireSubmitHandler('save')
                 ->footer([
-                    Actions::make([
-                        Action::make('save')->label('Simpan')->submit('save')->keyBindings(['mod+s'])
-                            ->visible(fn (): bool => self::canEdit()),
-                    ])->alignEnd(),
+                    SettingsFormActions::make(self::getUrl(), fn (): bool => self::canEdit()),
                 ]),
         ]);
     }

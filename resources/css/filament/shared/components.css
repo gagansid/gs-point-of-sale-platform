@@ -528,11 +528,41 @@
 }
 
 /*
- * Section/card: judul + deskripsi di atas isi tanpa garis pemisah (lebih lega), padding 20px.
+ * Section/card: header seragam dengan header card tabel — tinggi min. 56px, garis bawah, ikon (opsional) dalam
+ * kotak 28px primary lembut, judul 14.5px/600 + deskripsi 12.5px, aksi/tautan header rata kanan. Isi 20px.
  */
 .fi-section:not(.fi-section-not-contained):not(.fi-aside) > .fi-section-header {
-    min-height: 0;
-    padding: 16px 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.fi-section:not(.fi-section-not-contained):not(.fi-aside).fi-collapsed > .fi-section-header {
+    border-bottom: 0;
+}
+
+.fi-section:not(.fi-section-not-contained):not(.fi-aside) > .fi-section-header > .fi-icon {
+    box-sizing: border-box;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    padding: 6px;
+    border-radius: var(--radius);
+    background-color: var(--primary-lt);
+    color: var(--primary);
+}
+
+.fi-section:not(.fi-section-not-contained):not(.fi-aside) > .fi-section-header > .fi-section-header-text-ctn {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.fi-section:not(.fi-section-not-contained):not(.fi-aside) > .fi-section-header > .fi-section-header-after-ctn {
+    flex: none;
+    margin-inline-start: auto;
 }
 
 .fi-section:not(.fi-section-not-contained).fi-section-has-header:not(.fi-collapsed):not(.fi-aside) > .fi-section-content-ctn {
@@ -540,18 +570,24 @@
 }
 
 .fi-section:not(.fi-section-not-contained):not(.fi-divided) > .fi-section-content-ctn > .fi-section-content {
-    padding: 16px 20px 20px;
+    padding: 20px;
 }
 
+/* Footer section seragam dengan footer card tabel: latar sekunder + garis atas, tombol rata kanan */
 .fi-section:not(.fi-section-not-contained) > .fi-section-content-ctn > .fi-section-footer {
-    padding: 10px 16px;
-    border-top-color: var(--border-color-light);
+    min-height: 48px;
+    padding: 8px 20px;
+    border-top: 1px solid var(--border-color);
+    border-bottom-left-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
+    background-color: var(--bg-surface-secondary);
 }
 
 .fi-section-header-heading {
     color: var(--text);
-    font-size: 14px;
+    font-size: 14.5px;
     font-weight: 600;
+    letter-spacing: -0.005em;
     line-height: 20px;
 }
 
@@ -567,7 +603,8 @@
  * position: sticky (bukan fixed bawaan Filament) agar tidak menimpa sidebar. Dipasang di grid footer
  * form (anak terakhir <form>), bukan kolom tombolnya: kolom berada di grid setinggi tombol saja.
  */
-.fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page, .gs-form-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
+.fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page, .gs-form-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']),
+.fi-page .fi-page-content > .fi-sc > .fi-grid-col > .fi-sc-component > .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
     position: sticky;
     bottom: 0;
     z-index: 20;
@@ -580,7 +617,8 @@
 }
 
 @media (max-width: 48rem) {
-    .fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page, .gs-form-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
+    .fi-page:is(.fi-resource-create-record-page, .fi-resource-edit-record-page, .gs-form-page) .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']),
+    .fi-page .fi-page-content > .fi-sc > .fi-grid-col > .fi-sc-component > .fi-sc-form > :last-child:has(> .fi-grid-col > .fi-sc-component > .fi-sc-actions [type='submit']) {
         margin: 0 -12px -12px;
         padding: 10px 12px;
     }
@@ -2768,12 +2806,35 @@ select.fi-select-input {
 .gs-kpi {
     display: grid;
     align-content: start;
-    gap: 6px;
+    gap: 8px;
     padding: 16px 20px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     background-color: var(--bg-surface);
     box-shadow: var(--shadow);
+}
+
+.gs-kpi-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.gs-kpi-icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius);
+    background-color: var(--primary-lt);
+    color: var(--primary);
+}
+
+.gs-kpi-icon .fi-icon {
+    width: 16px;
+    height: 16px;
 }
 
 .gs-kpi-label {

@@ -20,6 +20,7 @@ use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Facades\FilamentTimezone;
+use Filament\Support\Icons\Heroicon;
 
 /**
  * Detail tenant + statistik pemakaian (infolist.md).
@@ -31,7 +32,7 @@ final class TenantInfolist
         return $schema
             ->columns(1)
             ->components([
-                Section::make('Detail tenant')
+                Section::make('Detail tenant')->icon(Heroicon::OutlinedBuildingStorefront)
                     ->columns(3)
                     ->schema([
                         TextEntry::make('name')->label('Nama bisnis')->weight('semibold'),
@@ -45,7 +46,7 @@ final class TenantInfolist
                         TextEntry::make('created_at')->label('Terdaftar')->dateTime('j M Y, H.i'),
                     ]),
 
-                Section::make('Pemakaian')
+                Section::make('Pemakaian')->icon(Heroicon::OutlinedChartBar)
                     ->columns(4)
                     ->schema([
                         TextEntry::make('outlets_count')->label('Outlet')
@@ -73,7 +74,7 @@ final class TenantInfolist
     /** Paket, jadwal perubahan paket & 5 tagihan terbaru (ADR 0024). Hanya edisi SaaS. */
     private static function subscription(): Section
     {
-        return Section::make('Langganan')
+        return Section::make('Langganan')->icon(Heroicon::OutlinedCreditCard)
             ->visible(fn (): bool => Edition::isSaas())
             ->columns(4)
             ->headerActions([

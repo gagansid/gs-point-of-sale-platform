@@ -44,7 +44,8 @@
 ## Perilaku & state
 
 - Section berisi field wajib tidak boleh `collapsed()` secara default.
-- Aksi header section (mis. "Ubah") memakai tombol `sm` gray atau link.
+- Aksi header section (mis. "Ubah") memakai tombol gray ukuran bawaan (32px) atau link; tidak `->size('sm')`.
+- Header: ikon dalam kotak 28px + judul + deskripsi, garis bawah (sama dengan header card tabel). Lihat form.md → Card section.
 
 ## Aksesibilitas
 

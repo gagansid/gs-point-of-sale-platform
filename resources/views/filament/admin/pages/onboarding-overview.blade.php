@@ -5,7 +5,7 @@
 <div class="gs-overview">
     <div class="gs-kpi-grid">
         <div class="gs-kpi">
-            <div class="gs-kpi-label">Status pendaftaran</div>
+            <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-globe-alt" /></span><span class="gs-kpi-label">Status pendaftaran</span></div>
             <div class="gs-kpi-value">
                 @if ($open)
                     <x-filament::badge color="success" icon="heroicon-o-lock-open">Dibuka</x-filament::badge>
@@ -16,17 +16,17 @@
             <div class="gs-kpi-hint">{{ $limit > 0 ? 'Batas '.$num($limit).' bisnis/hari' : 'Tanpa batas harian' }}</div>
         </div>
         <div class="gs-kpi">
-            <div class="gs-kpi-label">Pendaftar hari ini</div>
+            <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-user-plus" /></span><span class="gs-kpi-label">Pendaftar hari ini</span></div>
             <div class="gs-kpi-value tabular-nums">{{ $num($today) }}{{ $limit > 0 ? ' / '.$num($limit) : '' }}</div>
             <div class="gs-kpi-hint">7 hari {{ $num($week) }} · 30 hari {{ $num($month) }}</div>
         </div>
         <div class="gs-kpi">
-            <div class="gs-kpi-label">Trial berjalan</div>
+            <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-clock" /></span><span class="gs-kpi-label">Trial berjalan</span></div>
             <div class="gs-kpi-value tabular-nums">{{ $num($trials) }}</div>
             <div class="gs-kpi-hint">Semua bisnis berstatus trial</div>
         </div>
         <div class="gs-kpi">
-            <div class="gs-kpi-label">Konversi 90 hari</div>
+            <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-arrow-trending-up" /></span><span class="gs-kpi-label">Konversi 90 hari</span></div>
             <div class="gs-kpi-value tabular-nums">{{ $conversion === null ? '—' : $conversion.'%' }}</div>
             <div class="gs-kpi-hint">{{ $num($converted) }} dari {{ $num($total90) }} pendaftar kini berlangganan</div>
         </div>

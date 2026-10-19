@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
@@ -36,7 +37,7 @@ final class TenantForm
         return $schema
             ->columns(1)
             ->components([
-                Section::make('Informasi bisnis')
+                Section::make('Informasi bisnis')->icon(Heroicon::OutlinedBuildingStorefront)
                     ->columns(2)
                     ->schema([
                         TextInput::make('name')
@@ -84,13 +85,13 @@ final class TenantForm
                     ]),
 
                 // Batas khusus per kuota (ADR 0025): menimpa batas paket; dihapus saat paket diterapkan
-                Section::make('Batas khusus')
+                Section::make('Batas khusus')->icon(Heroicon::OutlinedAdjustmentsHorizontal)
                     ->description('Kosongkan untuk mengikuti paket. Berlaku sampai paket diganti (paket baru memakai batasnya sendiri). Tanpa paket & tanpa batas khusus = tanpa batas')
                     ->columns(3)
                     ->visible(fn (string $operation): bool => $operation === 'edit' && Edition::isSaas())
                     ->schema(fn (): array => self::limitFields('limit_overrides', 'Ikut paket')),
 
-                Section::make('Outlet pertama')
+                Section::make('Outlet pertama')->icon(Heroicon::OutlinedMapPin)
                     ->description('Outlet berikutnya ditambah owner di Pengaturan → Outlet. Kode outlet menjadi awalan nomor order, mis. JKT01-261008-0042')
                     ->columns(3)
                     ->visibleOn('create')
@@ -114,7 +115,7 @@ final class TenantForm
                             ->required(),
                     ]),
 
-                Section::make('Owner pertama')
+                Section::make('Owner pertama')->icon(Heroicon::OutlinedUserCircle)
                     ->description('Akun untuk login dashboard & aplikasi. Sampaikan kata sandi secara aman dan minta owner menggantinya')
                     ->columns(3)
                     ->visibleOn('create')

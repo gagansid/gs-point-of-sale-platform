@@ -8,7 +8,7 @@
     <div class="gs-overview">
         <div class="gs-kpi-grid">
             <div class="gs-kpi">
-                <div class="gs-kpi-label">Wajib 2FA</div>
+                <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-lock-closed" /></span><span class="gs-kpi-label">Wajib 2FA</span></div>
                 <div class="gs-kpi-value">
                     @if ($this->isTwoFactorRequired())
                         <x-filament::badge color="success" icon="heroicon-o-lock-closed">Wajib</x-filament::badge>
@@ -19,7 +19,7 @@
                 <div class="gs-kpi-hint">{{ $this->isTwoFactorRequired() ? 'Admin tanpa 2FA wajib mengaturnya dulu' : 'Disarankan wajib di production' }}</div>
             </div>
             <div class="gs-kpi">
-                <div class="gs-kpi-label">Akun Anda</div>
+                <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-user-circle" /></span><span class="gs-kpi-label">Akun Anda</span></div>
                 <div class="gs-kpi-value">
                     @if ($this->currentAdminHasTwoFactor())
                         <x-filament::badge color="success" icon="heroicon-o-check-circle">2FA aktif</x-filament::badge>
@@ -30,12 +30,12 @@
                 <div class="gs-kpi-hint">Atur di <x-filament::link :href="filament()->getProfileUrl()" size="sm">halaman profil</x-filament::link></div>
             </div>
             <div class="gs-kpi">
-                <div class="gs-kpi-label">Super admin ber-2FA</div>
+                <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-users" /></span><span class="gs-kpi-label">Super admin ber-2FA</span></div>
                 <div class="gs-kpi-value tabular-nums">{{ $admins->filter(fn ($a) => $a->hasTwoFactorEnabled())->count() }} / {{ $admins->count() }}</div>
                 <div class="gs-kpi-hint">Kode 6 digit aplikasi authenticator</div>
             </div>
             <div class="gs-kpi">
-                <div class="gs-kpi-label">Pemeriksaan</div>
+                <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-clipboard-document-check" /></span><span class="gs-kpi-label">Pemeriksaan</span></div>
                 <div class="gs-kpi-value tabular-nums">{{ $passed }} / {{ count($checks) }} lolos</div>
                 <div class="gs-kpi-hint">{{ $passed === count($checks) ? 'Konfigurasi sudah aman' : 'Lihat langkah perbaikan di bawah' }}</div>
             </div>

@@ -41,7 +41,7 @@ final class ManualInvoiceForm
     public static function configure(Schema $schema): Schema
     {
         return $schema->columns(3)->components([
-            Section::make('Pelanggan & tagihan')->description('Tagihan tidak mengubah paket & masa aktif. Tagihan menunggu lain tidak dibatalkan')
+            Section::make('Pelanggan & tagihan')->icon(Heroicon::OutlinedBuildingStorefront)->description('Tagihan tidak mengubah paket & masa aktif. Tagihan menunggu lain tidak dibatalkan')
                 ->columns(2)->columnSpan(['default' => 3, 'lg' => 2])->schema([
                     Select::make('tenant_id')->label('Bisnis')->required()->searchable()->live()
                         ->getSearchResultsUsing(fn (string $search): array => Tenant::query()->where('name', 'like', '%'.$search.'%')
@@ -55,12 +55,12 @@ final class ManualInvoiceForm
                         ->default(fn (): string => now()->addDays((int) config('pos.billing.due_days'))->toDateString()),
                     Toggle::make('notify_owners')->label('Kirim email tagihan ke owner')->default(true)->inline(false),
                 ]),
-            Section::make('Total')->description('Dihitung ulang di server saat disimpan')
+            Section::make('Total')->icon(Heroicon::OutlinedCalculator)->description('Dihitung ulang di server saat disimpan')
                 ->columnSpan(['default' => 3, 'lg' => 1])->extraAttributes(['class' => 'gs-summary'])->schema([
                     Placeholder::make('summary')->hiddenLabel()
                         ->content(fn (Get $get): HtmlString => self::summaryHtml(self::totals($get))),
                 ]),
-            Section::make('Rincian')->description('Baris add-on dipasang ke bisnis saat tagihan lunas; biaya lain tidak mengubah apa pun')
+            Section::make('Rincian')->icon(Heroicon::OutlinedListBullet)->description('Baris add-on dipasang ke bisnis saat tagihan lunas; biaya lain tidak mengubah apa pun')
                 ->columnSpanFull()
                 ->headerActions([
                     Action::make('addLine')->label('Tambah baris')->icon(Heroicon::OutlinedPlus)
@@ -101,13 +101,13 @@ final class ManualInvoiceForm
                         ->addable(false)
                         ->deleteAction(fn (Action $action): Action => $action->tooltip('Hapus baris')),
                 ]),
-            Section::make('Diskon & pajak')->description('Diskon nominal dari subtotal; PPN dihitung dari subtotal setelah diskon')
+            Section::make('Diskon & pajak')->icon(Heroicon::OutlinedReceiptPercent)->description('Diskon nominal dari subtotal; PPN dihitung dari subtotal setelah diskon')
                 ->columns(2)->columnSpan(['default' => 3, 'lg' => 1])->schema([
                     MoneyInput::make('discount_amount')->label('Diskon')->live(onBlur: true),
                     TextInput::make('tax_rate')->label('PPN')->numeric()->minValue(0)->maxValue(100)->step(0.01)->suffix('%')
                         ->default(0)->live(onBlur: true)->helperText('0 = tanpa PPN'),
                 ]),
-            Section::make('Catatan untuk pelanggan')->description('Tampil di halaman Langganan owner & email tagihan')
+            Section::make('Catatan untuk pelanggan')->icon(Heroicon::OutlinedChatBubbleBottomCenterText)->description('Tampil di halaman Langganan owner & email tagihan')
                 ->columnSpan(['default' => 3, 'lg' => 2])->schema([
                     Textarea::make('memo')->hiddenLabel()->maxLength(1000)->rows(3)->autosize()
                         ->placeholder('mis. Pembayaran ke BCA 123 456 7890 a.n. PT Abati. Cantumkan nomor tagihan.'),

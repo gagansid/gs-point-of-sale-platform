@@ -69,21 +69,21 @@ final class PlanResource extends Resource
         $limited = fn (Get $get): bool => (bool) $get('has_period');
 
         return $schema->columns(2)->components([
-            Section::make('Identitas paket')->description('Nama tampil di halaman Langganan owner & tagihan')
+            Section::make('Identitas paket')->icon(Heroicon::OutlinedIdentification)->description('Nama tampil di halaman Langganan owner & tagihan')
                 ->columns(2)->columnSpanFull()->schema([
                     TextInput::make('name')->label('Nama')->required()->maxLength(60)->placeholder('Pro')->autofocus(),
                     TextInput::make('code')->label('Kode')->required()->maxLength(30)->placeholder('pro')
                         ->helperText('Huruf kecil, angka, tanda hubung'),
                     Textarea::make('description')->label('Keterangan')->maxLength(255)->rows(2)->autosize()->columnSpanFull(),
                 ]),
-            Section::make('Harga')->description('Harga tahunan biasanya 10× bulanan (2 bulan gratis)')
+            Section::make('Harga')->icon(Heroicon::OutlinedBanknotes)->description('Harga tahunan biasanya 10× bulanan (2 bulan gratis)')
                 ->columns(3)->columnSpanFull()->schema([
                     MoneyInput::make('price_monthly')->label('Harga bulanan')->required(),
                     MoneyInput::make('price_yearly')->label('Harga tahunan')->required(),
                     TextInput::make('sort_order')->label('Urutan')->integer()->minValue(0)->maxValue(999)->default(0)
                         ->helperText('Urutan tampil, kecil di depan'),
                 ]),
-            Section::make('Periode penjualan')
+            Section::make('Periode penjualan')->icon(Heroicon::OutlinedCalendarDays)
                 ->description('Untuk paket promo. Di luar periode paket tidak bisa dipilih owner; bisnis yang sudah memakainya tetap bisa memperpanjang')
                 ->columns(2)->columnSpanFull()->schema([
                     Toggle::make('has_period')->label('Batasi periode')->live()->dehydrated(false)->columnSpanFull()
@@ -95,13 +95,13 @@ final class PlanResource extends Resource
                         ->after('available_from'),
                 ]),
             // Kuota dari master data quotas (ADR 0025); kosong = tanpa batas
-            Section::make('Kuota')->description('Kosong = tanpa batas')->compact()->columns(3)->columnSpanFull()
+            Section::make('Kuota')->icon(Heroicon::OutlinedChartBar)->description('Kosong = tanpa batas')->compact()->columns(3)->columnSpanFull()
                 ->schema(fn (): array => TenantForm::limitFields('limits', 'Tanpa batas')),
-            Section::make('Fitur')->description('Kasir, laporan, retur, pecah bill, kas masuk/keluar selalu tersedia')->columnSpanFull()->schema([
+            Section::make('Fitur')->icon(Heroicon::OutlinedSparkles)->description('Kasir, laporan, retur, pecah bill, kas masuk/keluar selalu tersedia')->columnSpanFull()->schema([
                 CheckboxList::make('features')->hiddenLabel()->options(fn (): array => Feature::options())->columns(2)->bulkToggleable()
                     ->helperText('Daftar fitur dikelola di database (tabel features)'),
             ]),
-            Section::make('Status')->description('Paket nonaktif tidak bisa ditagihkan; bisnis yang memakainya tetap berjalan')
+            Section::make('Status')->icon(Heroicon::OutlinedPower)->description('Paket nonaktif tidak bisa ditagihkan; bisnis yang memakainya tetap berjalan')
                 ->columns(2)->columnSpanFull()->schema([
                     Toggle::make('is_active')->label('Aktif')->default(true),
                     Toggle::make('is_public')->label('Tampil di halaman Langganan owner')->default(true)
