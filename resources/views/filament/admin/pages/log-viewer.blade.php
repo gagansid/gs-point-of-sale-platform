@@ -6,9 +6,10 @@
 @endphp
 <x-filament-panels::page>
     <x-filament::section icon="heroicon-o-funnel" heading="Pilih log" description="File, level, dan kata kunci">
-        <div class="grid gap-3 sm:grid-cols-3">
+        <div class="grid gap-4 sm:grid-cols-3">
+            <label class="gs-field"><span class="fi-fo-field-label-content">File log</span>
             <x-filament::input.wrapper>
-                <x-filament::input.select wire:model.live="file" aria-label="File log">
+                <x-filament::input.select wire:model.live="file">
                     @forelse ($files as $name => $info)
                         <option value="{{ $name }}">{{ $name }} ({{ \Illuminate\Support\Number::fileSize($info['size']) }})</option>
                     @empty
@@ -16,26 +17,31 @@
                     @endforelse
                 </x-filament::input.select>
             </x-filament::input.wrapper>
+            </label>
+            <label class="gs-field"><span class="fi-fo-field-label-content">Level</span>
             <x-filament::input.wrapper>
-                <x-filament::input.select wire:model.live="level" aria-label="Level">
+                <x-filament::input.select wire:model.live="level">
                     <option value="">Semua level</option>
                     @foreach (\App\Support\LogReader::LEVELS as $lvl)
                         <option value="{{ $lvl }}">{{ ucfirst($lvl) }}</option>
                     @endforeach
                 </x-filament::input.select>
             </x-filament::input.wrapper>
-            <x-filament::input.wrapper>
-                <x-filament::input type="search" wire:model.live.debounce.500ms="search" placeholder="Cari teks…" aria-label="Cari" />
+            </label>
+            <label class="gs-field"><span class="fi-fo-field-label-content">Cari</span>
+            <x-filament::input.wrapper prefix-icon="heroicon-o-magnifying-glass">
+                <x-filament::input type="search" wire:model.live.debounce.500ms="search" placeholder="Cari teks…" />
             </x-filament::input.wrapper>
+            </label>
         </div>
-        <p class="mt-2 text-[13px] text-gray-500 dark:text-gray-400">200 entri terbaru dari 1 MB terakhir file. Unduh untuk melihat seluruh isi.</p>
+        <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">200 entri terbaru dari 1 MB terakhir file. Unduh untuk melihat seluruh isi.</p>
     </x-filament::section>
 
-    <x-filament::section icon="heroicon-o-document-text" heading="Entri log" description="Klik entri untuk melihat detail & stack trace">
+    <x-filament::section icon="heroicon-o-document-text" heading="Entri log" :description="count($entries).' entri ditampilkan · klik entri untuk melihat detail & stack trace'">
         @forelse ($entries as $i => $entry)
             <details class="border-b border-gray-100 py-2 last:border-0 dark:border-white/10" wire:key="log-{{ $i }}-{{ md5($entry['time'].$entry['message']) }}">
                 <summary class="flex cursor-pointer items-start gap-3 text-sm">
-                    <x-filament::badge :color="$colors[$entry['level']] ?? 'gray'">{{ strtoupper($entry['level']) }}</x-filament::badge>
+                    <x-filament::badge class="gs-log-level shrink-0" :color="$colors[$entry['level']] ?? 'gray'">{{ strtoupper($entry['level']) }}</x-filament::badge>
                     <span class="shrink-0 font-mono text-xs text-gray-500">{{ $entry['time'] }}</span>
                     <span class="min-w-0 break-words">{{ \Illuminate\Support\Str::limit($entry['message'], 300) }}</span>
                 </summary>

@@ -1,19 +1,42 @@
-{{-- Sistem → Queue: ringkasan antrean + tabel job gagal. --}}
+{{-- Sistem → Queue: kartu ringkas antrean, job di antrean (QueuedJobsWidget), job gagal (tabel halaman). --}}
+@php
+    $stats = $this->stats();
+    $cron = $this->scheduler();
+    $num = fn (int $n): string => number_format($n, 0, ',', '.');
+@endphp
 <x-filament-panels::page>
-    @php($pending = $this->pending())
-    <x-filament::section icon="heroicon-o-queue-list" heading="Antrean"
-        description="Dijalankan cron setiap menit (queue:work --stop-when-empty). Antrean yang terus menumpuk berarti cron belum berjalan.">
-        <dl class="grid gap-6 sm:grid-cols-2">
-            <div>
-                <dt class="text-[13px] font-medium text-gray-500 dark:text-gray-400">Menunggu</dt>
-                <dd class="mt-1 text-2xl font-semibold tabular-nums">{{ number_format($pending['pending'], 0, ',', '.') }}</dd>
+    <div class="gs-overview">
+        <div class="gs-kpi-grid">
+            <div class="gs-kpi">
+                <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-clock" /></span><span class="gs-kpi-label">Menunggu</span></div>
+                <div class="gs-kpi-value tabular-nums">{{ $num($stats['pending']) }}</div>
+                <div class="gs-kpi-hint">Tertua {{ $stats['oldest']?->locale('id')->diffForHumans() ?? '—' }}</div>
             </div>
-            <div>
-                <dt class="text-[13px] font-medium text-gray-500 dark:text-gray-400">Job tertua</dt>
-                <dd class="mt-1 text-sm">{{ $pending['oldest'] ?? '—' }}</dd>
+            <div class="gs-kpi">
+                <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-arrow-path" /></span><span class="gs-kpi-label">Diproses / terjadwal</span></div>
+                <div class="gs-kpi-value tabular-nums">{{ $num($stats['processing']) }} / {{ $num($stats['delayed']) }}</div>
+                <div class="gs-kpi-hint">Terjadwal = menunggu waktu jalan (retry, tunda)</div>
             </div>
-        </dl>
-    </x-filament::section>
+            <div class="gs-kpi">
+                <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-exclamation-triangle" /></span><span class="gs-kpi-label">Job gagal</span></div>
+                <div class="gs-kpi-value tabular-nums">{{ $num($stats['failed']) }}</div>
+                <div class="gs-kpi-hint">{{ $num($stats['failed_24h']) }} dalam 24 jam terakhir</div>
+            </div>
+            <div class="gs-kpi">
+                <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-cpu-chip" /></span><span class="gs-kpi-label">Cron scheduler</span></div>
+                <div class="gs-kpi-value">
+                    @if ($cron['healthy'])
+                        <x-filament::badge color="success" icon="heroicon-o-check-circle">Berjalan</x-filament::badge>
+                    @else
+                        <x-filament::badge color="danger" icon="heroicon-o-x-circle">Tidak berjalan</x-filament::badge>
+                    @endif
+                </div>
+                <div class="gs-kpi-hint">Detak terakhir {{ $cron['last']?->locale('id')->diffForHumans() ?? 'belum pernah' }}</div>
+            </div>
+        </div>
 
-    {{ $this->table }}
+        @livewire(\App\Filament\Admin\Widgets\QueuedJobsWidget::class, ['showQueueLink' => false])
+
+        {{ $this->table }}
+    </div>
 </x-filament-panels::page>

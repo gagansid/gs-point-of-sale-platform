@@ -36,6 +36,11 @@ final class MaintenanceMode extends Page
 
     protected static ?int $navigationSort = 4;
 
+    public function getSubheading(): string
+    {
+        return 'Matikan sementara semua halaman & API pelanggan, mis. saat migrasi besar';
+    }
+
     public function isEnabled(): bool
     {
         return app(SetMaintenanceMode::class)->isEnabled();

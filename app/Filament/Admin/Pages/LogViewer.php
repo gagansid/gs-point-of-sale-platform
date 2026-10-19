@@ -48,6 +48,11 @@ final class LogViewer extends Page
     #[Url(as: 'q')]
     public string $search = '';
 
+    public function getSubheading(): string
+    {
+        return 'Log aplikasi di storage/logs: cari error tanpa akses server';
+    }
+
     public function mount(): void
     {
         // File tidak dikenal (mis. URL diubah) → file terbaru

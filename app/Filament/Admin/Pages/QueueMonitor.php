@@ -7,8 +7,11 @@ namespace App\Filament\Admin\Pages;
 use App\Actions\Admin\ManageFailedJobs;
 use App\Filament\Admin\Widgets\QueuedJobsWidget;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
+use App\Filament\Shared\Tables\TableHeading;
 use App\Models\FailedJob;
+use App\Services\Admin\SystemHealth;
 use BackedEnum;
+use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -23,7 +26,6 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 use UnitEnum;
 
 /**
@@ -63,22 +65,33 @@ final class QueueMonitor extends Page implements HasActions, HasSchemas, HasTabl
         return 'danger';
     }
 
-    /** @return array{pending: int, oldest: string|null} */
-    public function pending(): array
+    /** @return array{pending: int, processing: int, delayed: int, oldest: CarbonImmutable|null, failed: int, failed_24h: int} */
+    public function stats(): array
     {
-        $oldest = DB::table('jobs')->min('created_at');
+        return app(SystemHealth::class)->queue();
+    }
 
-        return [
-            'pending' => DB::table('jobs')->count(),
-            'oldest' => $oldest !== null ? now()->setTimestamp((int) $oldest)->diffForHumans() : null,
-        ];
+    /**
+     * Heartbeat cron (schedule:run tiap menit): tanpa cron antrean tidak pernah diproses.
+     *
+     * @return array{last: CarbonImmutable|null, healthy: bool}
+     */
+    public function scheduler(): array
+    {
+        return app(SystemHealth::class)->scheduler();
+    }
+
+    public function getSubheading(): string
+    {
+        return 'Antrean database dijalankan cron setiap menit (queue:work --stop-when-empty)';
     }
 
     public function table(Table $table): Table
     {
         return $table
             ->query(FailedJob::query())
-            ->heading('Job gagal')
+            ->heading(TableHeading::make('Job gagal', Heroicon::OutlinedExclamationTriangle))
+            ->description('Job yang gagal setelah semua percobaan. Lihat error, ulangi, atau hapus')
             ->defaultSort('failed_at', 'desc')
             ->columns([
                 TextColumn::make('job')->label('Job')->weight('medium')
@@ -108,17 +121,6 @@ final class QueueMonitor extends Page implements HasActions, HasSchemas, HasTabl
             ])
             ->emptyStateHeading('Tidak ada job gagal')
             ->emptyStateIcon(Heroicon::OutlinedCheckCircle);
-    }
-
-    /** Job yang sedang diproses / menunggu (nama job saja), di atas daftar job gagal. */
-    protected function getHeaderWidgets(): array
-    {
-        return [QueuedJobsWidget::make(['showQueueLink' => false])];
-    }
-
-    public function getHeaderWidgetsColumns(): int
-    {
-        return 1;
     }
 
     protected function getHeaderActions(): array

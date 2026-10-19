@@ -19,9 +19,10 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rules\Password;
 use UnitEnum;
@@ -80,14 +81,28 @@ final class AdminResource extends Resource
     {
         $table = $table
             ->defaultSort('name')
-            ->paginated(false)
             ->columns([
-                TextColumn::make('name')->label('Nama')->weight('medium')->searchable()
+                TextColumn::make('name')->label('Nama')->weight('medium')->searchable()->sortable()
                     ->description(fn (Admin $record): ?string => $record->is(auth('admin')->user()) ? 'Anda' : null),
-                TextColumn::make('email')->label('Email')->searchable(),
-                IconColumn::make('two_factor')->label('2FA')->boolean()->alignCenter()
-                    ->state(fn (Admin $record): bool => $record->hasTwoFactorEnabled()),
-                TextColumn::make('last_login_at')->label('Login terakhir')->since()->dateTimeTooltip('j M Y, H.i')->placeholder('Belum pernah'),
+                TextColumn::make('email')->label('Email')->searchable()->sortable()->copyable()->copyMessage('Email disalin'),
+                TextColumn::make('two_factor')->label('2FA')->badge()
+                    ->state(fn (Admin $record): string => $record->hasTwoFactorEnabled() ? 'Aktif' : 'Belum')
+                    ->color(fn (string $state): string => $state === 'Aktif' ? 'success' : 'warning')
+                    ->icon(fn (string $state): Heroicon => $state === 'Aktif' ? Heroicon::OutlinedShieldCheck : Heroicon::OutlinedExclamationTriangle),
+                TextColumn::make('last_login_at')->label('Login terakhir')->since()->dateTimeTooltip('j M Y, H.i')->placeholder('Belum pernah')->sortable(),
+                TextColumn::make('created_at')->label('Dibuat')->dateTime('j M Y')->sortable()->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                TernaryFilter::make('two_factor')->label('2FA')->trueLabel('Aktif')->falseLabel('Belum')
+                    ->queries(
+                        true: fn (Builder $query): Builder => $query->whereNotNull('app_authentication_secret'),
+                        false: fn (Builder $query): Builder => $query->whereNull('app_authentication_secret'),
+                    ),
+                TernaryFilter::make('logged_in')->label('Pernah login')->trueLabel('Pernah')->falseLabel('Belum pernah')
+                    ->queries(
+                        true: fn (Builder $query): Builder => $query->whereNotNull('last_login_at'),
+                        false: fn (Builder $query): Builder => $query->whereNull('last_login_at'),
+                    ),
             ])
             ->recordActions([
                 EditAction::make()->iconButton()->tooltip('Ubah')->modalWidth('lg')

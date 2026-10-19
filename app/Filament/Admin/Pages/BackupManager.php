@@ -50,6 +50,11 @@ final class BackupManager extends Page
         return app(ManageBackups::class)->list();
     }
 
+    public function getSubheading(): string
+    {
+        return 'Otomatis: backup 02.00, bersihkan 03.00, pantau 04.00 WIB. Unduh berkala ke tempat lain';
+    }
+
     public function download(string $name): StreamedResponse
     {
         return Storage::disk(ManageBackups::DISK)->download(app(ManageBackups::class)->path($name));
@@ -57,8 +62,11 @@ final class BackupManager extends Page
 
     public function deleteAction(): Action
     {
+        // Ikon aksi baris standar (row-actions.md): ikon 32px abu, merah saat hover
         return Action::make('delete')->label('Hapus')->color('danger')->icon(Heroicon::OutlinedTrash)
+            ->iconButton()->tooltip('Hapus')
             ->requiresConfirmation()
+            ->modalSubmitActionLabel('Hapus backup')
             ->modalHeading(fn (array $arguments): string => 'Hapus '.($arguments['name'] ?? '').'?')
             ->schema([
                 TextInput::make('current_password')->label('Kata sandi Anda')->password()->required()->currentPassword(guard: 'admin'),

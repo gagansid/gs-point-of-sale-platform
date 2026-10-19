@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Widgets;
 
 use App\Filament\Admin\Pages\QueueMonitor;
+use App\Filament\Shared\Tables\TableHeading;
 use App\Services\Admin\SystemHealth;
 use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
@@ -40,7 +41,7 @@ final class QueuedJobsWidget extends TableWidget
     public function table(Table $table): Table
     {
         return $table
-            ->heading('Job di antrean')
+            ->heading(TableHeading::make('Job di antrean', Heroicon::OutlinedQueueList))
             ->description('Diproses cron tiap menit. Menampilkan maks. '.self::LIMIT.' job: yang sedang diproses dulu, lalu yang paling lama menunggu')
             ->records(fn (): array => collect(app(SystemHealth::class)->jobs(self::LIMIT))->keyBy('id')->all())
             ->paginated(false)

@@ -852,6 +852,11 @@
     white-space: nowrap;
 }
 
+/* Judul berikon: deskripsi sejajar dengan teks judul (kotak ikon 28px + jarak 10px) */
+.fi-ta-header:has(.gs-ta-title-icon) .fi-ta-header-description {
+    padding-inline-start: 38px;
+}
+
 .fi-ta-header-description {
     margin-top: 2px;
     color: var(--text-muted);
@@ -1418,7 +1423,8 @@
 
 /* ---------- Tombol aksi baris: 32px seperti kontrol lain (L6), ikon garis 14px, abu ---------- */
 .fi-ta-cell .fi-ta-actions .fi-icon-btn,
-.fi-ta-cell .fi-ta-actions .fi-dropdown-trigger .fi-icon-btn {
+.fi-ta-cell .fi-ta-actions .fi-dropdown-trigger .fi-icon-btn,
+.gs-row-actions .fi-icon-btn {
     width: var(--control-h);
     height: var(--control-h);
     margin: 0;
@@ -1428,7 +1434,8 @@
 }
 
 /* Ikon aksi 14px: secara visual sama besar dengan ikon status 16px (check-circle berpadding) */
-.fi-ta-cell .fi-ta-actions .fi-icon-btn > .fi-icon {
+.fi-ta-cell .fi-ta-actions .fi-icon-btn > .fi-icon,
+.gs-row-actions .fi-icon-btn > .fi-icon {
     width: 14px;
     height: 14px;
     color: inherit;
@@ -1444,7 +1451,8 @@
 }
 
 /* Hover: warna aksi + latar transparan senada */
-.fi-ta-actions .fi-icon-btn.fi-color-gray:hover {
+.fi-ta-actions .fi-icon-btn.fi-color-gray:hover,
+.gs-row-actions .fi-icon-btn.fi-color-gray:hover {
     color: var(--primary);
     background-color: rgb(45 66 130 / 0.12);
 }
@@ -1454,7 +1462,8 @@
     background-color: rgb(6 111 209 / 0.12);
 }
 
-.fi-ta-actions .fi-icon-btn.fi-color-danger:hover {
+.fi-ta-actions .fi-icon-btn.fi-color-danger:hover,
+.gs-row-actions .fi-icon-btn.fi-color-danger:hover {
     color: #d63939;
     background-color: rgb(214 57 57 / 0.12);
 }
@@ -2774,6 +2783,26 @@ select.fi-select-input {
     font-size: 12px;
 }
 
+.fi-badge.gs-log-level {
+    justify-content: center;
+    min-width: 76px;
+}
+
+.gs-field {
+    display: grid;
+    gap: 6px;
+}
+
+.gs-row-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.gs-detail-table td .gs-detail-sub {
+    display: inline;
+}
+
 .gs-detail-empty {
     color: var(--text-muted);
     font-size: 13px;
@@ -2800,6 +2829,10 @@ select.fi-select-input {
 @media (min-width: 80rem) {
     .gs-kpi-grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .gs-kpi-grid.gs-kpi-grid--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
