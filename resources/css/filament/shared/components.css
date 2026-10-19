@@ -2783,6 +2783,35 @@ select.fi-select-input {
     font-size: 12px;
 }
 
+.gs-log-label {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.gs-log-pre {
+    max-height: 18rem;
+    margin: 0;
+    padding: 12px 14px;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background-color: var(--bg-surface-secondary);
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.gs-log-pre--dark {
+    max-height: 26rem;
+    border-color: transparent;
+    background-color: #0f1623;
+    color: #e6ebf2;
+}
+
 .fi-badge.gs-log-level {
     justify-content: center;
     min-width: 76px;
