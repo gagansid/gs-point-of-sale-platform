@@ -40,10 +40,12 @@ final class UpdateOnboardingSettings
         $v = Validator::make($data, [
             'trial_days' => ['required', 'integer', 'min:'.SystemSettings::TRIAL_DAYS_MIN, 'max:'.SystemSettings::TRIAL_DAYS_MAX],
             'signup_enabled' => ['required', 'boolean'],
-            'trial_plan_id' => ['nullable', 'string', Rule::exists('plans', 'id')->where('is_active', true)],
+            // Paket publik saja: paket khusus (non-publik) selama trial bisa diperpanjang owner tanpa batas
+            'trial_plan_id' => ['nullable', 'string', Rule::exists('plans', 'id')->where('is_active', true)->where('is_public', true)],
             'signup_daily_limit' => ['nullable', 'integer', 'min:0', 'max:'.SystemSettings::SIGNUP_DAILY_LIMIT_MAX],
             'signup_blocked_domains' => ['array', 'max:200'],
-            'signup_blocked_domains.*' => ['string', 'max:100', 'regex:/^(?:[a-z0-9-]+\.)+[a-z]{2,}$/'],
+            // Label: huruf/angka, tanda hubung hanya di tengah; TLD huruf atau punycode (xn--…)
+            'signup_blocked_domains.*' => ['string', 'max:100', 'regex:/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$/'],
             'signup_notify_emails' => ['array', 'max:10'],
             'signup_notify_emails.*' => ['email', 'max:150'],
             'signup_closed_message' => ['nullable', 'string', 'max:500'],

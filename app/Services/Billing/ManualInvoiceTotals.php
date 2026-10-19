@@ -49,16 +49,23 @@ final readonly class ManualInvoiceTotals
 
         $subtotal = Money::add(...array_column($lines, 'amount'));
         $discount = self::money($discount);
-        $rate = is_numeric($taxRate) ? Money::round((string) $taxRate) : '0.00';
+        $taxRate = is_float($taxRate) ? sprintf('%.2f', $taxRate) : $taxRate;
+        $rate = self::isPlainNumber($taxRate) ? Money::round((string) $taxRate) : '0.00';
         $taxable = Money::sub($subtotal, $discount);
         $tax = bccomp($taxable, '0', 2) > 0 ? Money::of(Money::round(bcdiv(bcmul($taxable, $rate, 4), '100', 4), 0)) : '0.00';
 
         return new self($lines, $subtotal, $discount, $rate, $tax, Money::add($taxable, $tax));
     }
 
-    /** Nilai sudah dinormalkan ("22000" / "22000.50"); selain angka ≥ 0 dianggap 0. */
+    /** Nilai sudah dinormalkan ("22000" / "22000.50"); selain angka desimal biasa ≥ 0 dianggap 0. */
     private static function money(mixed $value): string
     {
-        return is_numeric($value) && (float) $value >= 0 ? Money::of(Money::round((string) $value)) : '0.00';
+        return self::isPlainNumber($value) ? Money::of(Money::round((string) $value)) : '0.00';
+    }
+
+    /** Hanya "123" / "123.45" (bcmath menolak notasi ilmiah "1e5", tanda, spasi). */
+    private static function isPlainNumber(mixed $value): bool
+    {
+        return (is_string($value) || is_int($value)) && preg_match('/^\d+(\.\d+)?$/', (string) $value) === 1;
     }
 }

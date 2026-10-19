@@ -153,17 +153,19 @@ final class SubscriptionInvoiceResource extends Resource
                     ->modalContent(fn (SubscriptionInvoice $record) => view('filament.admin.invoices.detail', ['invoice' => $record->loadMissing(['items', 'tenant', 'createdByAdmin'])])),
                 ActionGroup::make([
                     Action::make('markPaid')->label('Tandai lunas')->icon(Heroicon::OutlinedCheckCircle)
-                        ->visible(fn (SubscriptionInvoice $record): bool => $record->status !== InvoiceStatus::Paid)
+                        // Menunggu atau kedaluwarsa (transfer datang terlambat); tagihan dibatalkan admin tidak bisa dilunasi
+                        ->visible(fn (SubscriptionInvoice $record): bool => in_array($record->status, [InvoiceStatus::Pending, InvoiceStatus::Expired], true))
                         ->modalHeading('Tandai lunas (transfer manual)')
                         ->modalDescription(fn (SubscriptionInvoice $record): string => $record->kind === InvoiceKind::Manual
                             ? 'Baris add-on (bila ada) langsung aktif; paket & masa aktif tidak berubah'
                             : 'Paket & masa aktif bisnis diperbarui seperti pembayaran online')
                         ->modalSubmitActionLabel('Tandai lunas')
                         ->schema([TextInput::make('notes')->label('Catatan')->maxLength(255)->placeholder('mis. transfer BCA 14 Okt')])
-                        ->action(function (SubscriptionInvoice $record, array $data): void {
+                        ->action(function (SubscriptionInvoice $record, array $data, Action $action): void {
                             $admin = auth('admin')->user();
                             abort_unless($admin instanceof Admin, 403);
-                            app(MarkInvoicePaid::class)->handle($record, 'manual', $admin, $data['notes'] ?? null);
+                            abort_if($record->status === InvoiceStatus::Cancelled, 422);
+                            RunBusinessAction::run(fn () => app(MarkInvoicePaid::class)->handle($record, 'manual', $admin, $data['notes'] ?? null), $action);
                             Notification::make()->success()->title('Tagihan lunas')->send();
                         }),
                     Action::make('cancel')->label('Batalkan')->icon(Heroicon::OutlinedXCircle)->color('danger')

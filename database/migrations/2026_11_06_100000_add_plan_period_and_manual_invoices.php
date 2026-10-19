@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -21,8 +22,20 @@ return new class extends Migration
             $table->timestamp('available_until')->nullable()->after('available_from');
         });
 
+        // plan_id (FK): ubah nullable TANPA mengganti tipenya. `uuid()->change()` di MariaDB 10.7+ menjadi tipe
+        // UUID native, sedangkan plans.id bisa char(36) (mis. hasil dump) → FK tidak cocok (errno 150).
+        if (in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            $type = (string) DB::table('information_schema.COLUMNS')
+                ->where('TABLE_SCHEMA', DB::connection()->getDatabaseName())
+                ->where('TABLE_NAME', 'subscription_invoices')->where('COLUMN_NAME', 'plan_id')
+                ->value('COLUMN_TYPE');
+            DB::statement("ALTER TABLE `subscription_invoices` MODIFY `plan_id` {$type} NULL");
+        }
+
         Schema::table('subscription_invoices', function (Blueprint $table): void {
-            $table->uuid('plan_id')->nullable()->change();
+            if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+                $table->uuid('plan_id')->nullable()->change();
+            }
             $table->string('plan_name', 60)->nullable()->change();
             $table->string('billing_cycle', 10)->nullable()->change();
             $table->string('title', 120)->nullable()->after('kind');

@@ -9,6 +9,7 @@ use App\Enums\AppPlatform;
 use App\Filament\Admin\Resources\AppVersions\Pages\ManageAppVersions;
 use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Columns\AuditColumns;
+use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\AppVersion;
 use BackedEnum;
@@ -20,7 +21,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +33,8 @@ use UnitEnum;
  */
 final class AppVersionResource extends Resource
 {
+    use HasSentenceCaseLabels;
+
     protected static ?string $model = AppVersion::class;
 
     protected static ?string $slug = 'app-versions';
@@ -95,7 +97,10 @@ final class AppVersionResource extends Resource
                 TextColumn::make('platform')->label('Platform')->badge()->color('gray'),
                 TextColumn::make('min_version')->label('Minimum')->fontFamily('mono'),
                 TextColumn::make('latest_version')->label('Terbaru')->fontFamily('mono'),
-                IconColumn::make('force_update')->label('Paksa update')->boolean()->alignCenter(),
+                // Badge Ya/Tidak (bukan ikon ✕ merah: "tidak" bukan kesalahan)
+                TextColumn::make('force_update')->label('Paksa update')->badge()
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Ya' : 'Tidak')
+                    ->color(fn (bool $state): string => $state ? 'warning' : 'gray'),
                 ...AuditColumns::make(created: false),
             ])
             ->recordActions([

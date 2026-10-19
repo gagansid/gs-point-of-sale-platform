@@ -52,7 +52,7 @@ it('tabel: filter level (banyak), stack trace, tanggal, dan pencarian', function
 it('klik baris membuka detail: pesan, data JSON rapi, stack trace', function () {
     Livewire::test(LogViewer::class)
         ->filterTable('file', $this->file)
-        ->mountAction(TestAction::make('detail')->table('1'))
+        ->mountAction(TestAction::make('detail')->table(logKey($this->path, 'SMTP gagal')))
         ->assertMountedActionModalSee('Stack trace')
         ->assertMountedActionModalSee('SMTP gagal')
         ->assertMountedActionModalSee('"exception": "..."')
@@ -73,4 +73,26 @@ it('kosongkan file dengan konfirmasi kata sandi', function () {
         ->callAction('clear', ['current_password' => 'Rahasia-Admin-1!']);
 
     expect(filesize($this->path))->toBe(0);
+});
+
+/** Kunci baris log (stabil, dari isi entri) untuk entri berpesan $text. */
+function logKey(string $path, string $text): string
+{
+    $page = Livewire::test(LogViewer::class)->instance();
+    $records = $page->getTableRecords();
+
+    return (string) collect($records->items())->first(fn (array $r): bool => str_contains($r['message'], $text))['id'];
+}
+
+it('kunci baris stabil: log baru tidak menggeser detail yang dibuka', function () {
+    Livewire::test(LogViewer::class)->filterTable('file', $this->file);
+    $key = logKey($this->path, 'SMTP gagal');
+
+    file_put_contents($this->path, "[2026-10-11 10:03:00] local.INFO: Entri baru\n", FILE_APPEND);
+
+    Livewire::test(LogViewer::class)
+        ->filterTable('file', $this->file)
+        ->mountAction(TestAction::make('detail')->table($key))
+        ->assertMountedActionModalSee('SMTP gagal')
+        ->assertMountedActionModalDontSee('Entri baru');
 });

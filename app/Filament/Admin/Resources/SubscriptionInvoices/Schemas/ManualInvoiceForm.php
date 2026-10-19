@@ -12,6 +12,7 @@ use App\Models\Addon;
 use App\Models\Tenant;
 use App\Services\Billing\ManualInvoiceTotals;
 use App\Support\Money;
+use Carbon\CarbonImmutable;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Placeholder;
@@ -51,8 +52,8 @@ final class ManualInvoiceForm
                         ->helperText(fn (Get $get): ?string => self::tenantInfo($get('tenant_id'))),
                     TextInput::make('title')->label('Judul tagihan')->required()->maxLength(120)
                         ->placeholder('mis. Biaya instalasi & pelatihan'),
-                    DatePicker::make('due_at')->label('Jatuh tempo')->required()->minDate(fn (): string => now()->toDateString())
-                        ->default(fn (): string => now()->addDays((int) config('pos.billing.due_days'))->toDateString()),
+                    DatePicker::make('due_at')->label('Jatuh tempo')->required()->minDate(fn (): string => CreateManualInvoice::today())
+                        ->default(fn (): string => CarbonImmutable::parse(CreateManualInvoice::today())->addDays((int) config('pos.billing.due_days'))->toDateString()),
                     Toggle::make('notify_owners')->label('Kirim email tagihan ke owner')->default(true)->inline(false),
                 ]),
             Section::make('Total')->icon(Heroicon::OutlinedCalculator)->description('Dihitung ulang di server saat disimpan')
@@ -217,6 +218,7 @@ final class ManualInvoiceForm
     {
         $value = (new MoneyStateCast)->get($value);
 
-        return is_numeric($value) ? (string) $value : '0';
+        // Hanya angka desimal biasa: notasi ilmiah ("1e5") membuat bcmath gagal di pratinjau
+        return (is_string($value) || is_int($value)) && preg_match('/^\d+(\.\d+)?$/', (string) $value) === 1 ? (string) $value : '0';
     }
 }

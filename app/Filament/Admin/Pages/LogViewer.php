@@ -201,11 +201,15 @@ final class LogViewer extends Page implements HasActions, HasSchemas, HasTable
             return [];
         }
 
-        return $this->cache[(string) $file] ??= array_map(fn (array $e, int $i): array => [
-            ...$e,
-            ...self::parse($e['message'], $e['context']),
-            'id' => (string) $i,
-        ], $entries = LogReader::entries($path, limit: self::LIMIT), array_keys($entries));
+        // Kunci stabil dari isi entri (bukan urutan): log baru di antara render & klik tidak menggeser detail
+        $seen = [];
+
+        return $this->cache[(string) $file] ??= array_map(function (array $e) use (&$seen): array {
+            $key = substr(hash('sha256', $e['time'].'|'.$e['level'].'|'.$e['message'].'|'.$e['context']), 0, 16);
+            $seen[$key] = ($seen[$key] ?? 0) + 1;
+
+            return [...$e, ...self::parse($e['message'], $e['context']), 'id' => $seen[$key] > 1 ? $key.'-'.$seen[$key] : $key];
+        }, LogReader::entries($path, limit: self::LIMIT));
     }
 
     /**

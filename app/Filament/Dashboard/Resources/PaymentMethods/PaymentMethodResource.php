@@ -9,6 +9,7 @@ use App\Enums\PaymentCategory;
 use App\Filament\Dashboard\Resources\PaymentMethods\Pages\ManagePaymentMethods;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Columns\AuditColumns;
+use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Forms\OutletPickList;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
@@ -37,6 +38,8 @@ use UnitEnum;
  */
 final class PaymentMethodResource extends Resource
 {
+    use HasSentenceCaseLabels;
+
     protected static ?string $model = PaymentMethod::class;
 
     protected static ?string $slug = 'settings/payment-methods';

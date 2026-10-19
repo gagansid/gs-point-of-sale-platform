@@ -73,7 +73,8 @@ final class OnboardingSettings extends Page
         $this->settingsForm()->fill([
             'trial_days' => $settings->trialDays(),
             'signup_enabled' => $settings->signupEnabled(),
-            'trial_plan_id' => $settings->trialPlanId(),
+            // Paket trial yang kini nonaktif/khusus dikosongkan agar form tetap bisa disimpan
+            'trial_plan_id' => Plan::query()->where('is_active', true)->where('is_public', true)->whereKey($settings->trialPlanId())->value('id'),
             'signup_daily_limit' => $settings->signupDailyLimit(),
             'signup_blocked_domains' => $settings->signupBlockedDomains(),
             'signup_notify_emails' => $settings->signupNotifyEmails(),
@@ -110,8 +111,8 @@ final class OnboardingSettings extends Page
                             ->minValue(SystemSettings::TRIAL_DAYS_MIN)->maxValue(SystemSettings::TRIAL_DAYS_MAX)->required()
                             ->helperText('Setelah trial habis tanpa berlangganan, bisnis menjadi hanya-baca'),
                         Select::make('trial_plan_id')->label('Paket selama trial')->placeholder('Semua fitur, tanpa batas')
-                            ->options(fn (): array => Plan::query()->where('is_active', true)->orderBy('sort_order')->pluck('name', 'id')->all())
-                            ->helperText('Fitur & kuota paket berlaku selama trial; kosong = semua fitur'),
+                            ->options(fn (): array => Plan::query()->where('is_active', true)->where('is_public', true)->orderBy('sort_order')->pluck('name', 'id')->all())
+                            ->helperText('Paket publik. Fitur & kuota paket berlaku selama trial; kosong = semua fitur'),
                     ]),
                 Section::make('Perlindungan')
                     ->icon(Heroicon::OutlinedShieldExclamation)

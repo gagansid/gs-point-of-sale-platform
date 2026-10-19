@@ -10,6 +10,7 @@ use App\Filament\Dashboard\Resources\StockReceipts\Pages\CreateStockReceipt;
 use App\Filament\Dashboard\Resources\StockReceipts\Pages\EditStockReceipt;
 use App\Filament\Dashboard\Resources\StockReceipts\Pages\ListStockReceipts;
 use App\Filament\Dashboard\Resources\StockReceipts\Pages\ViewStockReceipt;
+use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
@@ -51,6 +52,8 @@ use UnitEnum;
  */
 final class StockReceiptResource extends Resource
 {
+    use HasSentenceCaseLabels;
+
     protected static ?string $model = StockReceipt::class;
 
     protected static ?string $slug = 'stock/receipts';

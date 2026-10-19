@@ -12,6 +12,7 @@ use App\Enums\TenantStatus;
 use App\Exceptions\BusinessException;
 use App\Filament\Admin\Resources\SalesLeads\Pages\ListSalesLeads;
 use App\Filament\Shared\Columns\AuditColumns;
+use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Admin;
@@ -46,6 +47,8 @@ use UnitEnum;
  */
 final class SalesLeadResource extends Resource
 {
+    use HasSentenceCaseLabels;
+
     protected static ?string $model = SalesLead::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChatBubbleLeftRight;

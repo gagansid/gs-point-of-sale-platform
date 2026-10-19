@@ -10,6 +10,7 @@ use App\Filament\Dashboard\Resources\PurchaseOrders\Pages\CreatePurchaseOrder;
 use App\Filament\Dashboard\Resources\PurchaseOrders\Pages\EditPurchaseOrder;
 use App\Filament\Dashboard\Resources\PurchaseOrders\Pages\ListPurchaseOrders;
 use App\Filament\Dashboard\Resources\PurchaseOrders\Pages\ViewPurchaseOrder;
+use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
@@ -50,6 +51,8 @@ use UnitEnum;
  */
 final class PurchaseOrderResource extends Resource
 {
+    use HasSentenceCaseLabels;
+
     protected static ?string $model = PurchaseOrder::class;
 
     protected static ?string $slug = 'stock/purchase-orders';

@@ -73,10 +73,10 @@ describe('detail tenant', function () {
             ->assertCanNotSeeTableRecords([$this->otherDevice])
             ->assertSee(['Outlet Braga', 'Android', 'Kasir web', '1.4.2', 'Dicabut', 'Aktif'])
             ->assertDontSee(['Kasir Rahasia', 'Outlet Lain'])
-            ->assertTableColumnStateSet('open_shift', true, $this->browser)
-            ->assertTableColumnStateSet('open_shift', true, $this->tablet)
+            ->assertTableColumnStateSet('open_shift', 'Ada', $this->browser)
+            ->assertTableColumnStateSet('open_shift', 'Ada', $this->tablet)
             // Shift perangkat lama sudah ditutup
-            ->assertTableColumnStateSet('open_shift', false, $this->old);
+            ->assertTableColumnStateSet('open_shift', 'Tidak', $this->old);
     });
 
     it('shift terbuka: hanya status terbuka milik tenant ini, merah bila > 24 jam', function () {

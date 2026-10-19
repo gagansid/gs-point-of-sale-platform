@@ -10,7 +10,6 @@ use App\Models\Device;
 use App\Models\Outlet;
 use App\Models\Shift;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -57,8 +56,9 @@ final class DevicesRelationManager extends RelationManager
                     ->state(fn (Device $record): string => $record->isRevoked() ? 'Dicabut' : 'Aktif')
                     ->color(fn (Device $record): string => $record->isRevoked() ? 'danger' : 'success')
                     ->tooltip(fn (Device $record): ?string => $record->revoked_at?->translatedFormat('j M Y, H.i')),
-                IconColumn::make('open_shift')->label('Shift terbuka')->boolean()->alignCenter()
-                    ->state(fn (Device $record): bool => $record->getAttribute('open_shift') !== null),
+                TextColumn::make('open_shift')->label('Shift terbuka')->badge()
+                    ->state(fn (Device $record): string => $record->getAttribute('open_shift') !== null ? 'Ada' : 'Tidak')
+                    ->color(fn (string $state): string => $state === 'Ada' ? 'warning' : 'gray'),
             ]);
     }
 

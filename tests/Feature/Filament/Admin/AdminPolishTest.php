@@ -9,9 +9,12 @@ use App\Actions\Billing\SavePlan;
 use App\Enums\BillingCycle;
 use App\Enums\TenantStatus;
 use App\Exceptions\BusinessException;
+use App\Filament\Admin\Pages\Auth\EditProfile;
 use App\Filament\Admin\Pages\OnboardingSettings;
 use App\Filament\Admin\Resources\Addons\Pages\ManageAddons;
+use App\Filament\Admin\Resources\AppVersions\AppVersionResource;
 use App\Filament\Admin\Resources\Plans\Pages\ManagePlans;
+use App\Filament\Admin\Resources\SalesLeads\SalesLeadResource;
 use App\Filament\Admin\Resources\SubscriptionInvoices\Pages\ListSubscriptionInvoices;
 use App\Models\Addon;
 use App\Models\Admin;
@@ -26,6 +29,7 @@ use Database\Seeders\AddonSeeder;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -238,5 +242,74 @@ describe('Keamanan', function () {
         config(['app.debug' => false, 'app.url' => 'https://gspos.id']);
         $items = collect(app(SecurityChecklist::class)->items())->keyBy('key');
         expect($items['debug']['ok'])->toBeTrue()->and($items['https']['ok'])->toBeTrue();
+    });
+});
+
+describe('perbaikan review 2026-10-19', function () {
+    beforeEach(function () {
+        Notification::fake();
+        RateLimiter::clear('signup-h:127.0.0.1');
+        RateLimiter::clear('signup-d:127.0.0.1');
+    });
+
+    $body = fn (array $o = []): array => ['business_name' => 'Kopi Fajar', 'business_type' => 'cafe', 'name' => 'Fajar', 'email' => 'fajar@kopifajar.test', 'password' => 'rahasia123', 'password_confirmation' => 'rahasia123', ...$o];
+
+    it('pendaftar tetap terhitung walau admin login di browser yang sama; tenant terhapus tetap memakai kuota', function () use ($body) {
+        app(SystemSettings::class)->setOnboardingExtras(null, 1, [], [], null);
+
+        // Admin masih login (guard admin) saat form daftar dikirim
+        $this->post('/register', $body())->assertRedirect();
+        $tenant = Tenant::query()->sole();
+        expect($tenant->created_by)->toBeNull();
+
+        $tenant->delete();
+        auth('web')->logout();
+        $this->post('/register', $body(['email' => 'lain@kopi.test']))->assertSessionHasErrors('email');
+        expect(Tenant::query()->count())->toBe(0);
+    });
+
+    it('paket selama trial harus paket publik', function () {
+        $special = app(SavePlan::class)->handle(null, ['code' => 'khusus', 'name' => 'Khusus', 'price_monthly' => '1', 'price_yearly' => '1', 'is_public' => false]);
+
+        expect(fn () => app(UpdateOnboardingSettings::class)->handle($this->admin, ['trial_days' => 14, 'signup_enabled' => true, 'trial_plan_id' => $special->id]))
+            ->toThrow(ValidationException::class);
+
+        // Paket trial yang kemudian dinonaktifkan dikosongkan di form sehingga tetap bisa disimpan
+        app(SystemSettings::class)->setOnboardingExtras($this->basic->id, 0, [], [], null);
+        $this->basic->forceFill(['is_active' => false])->save();
+        Livewire::test(OnboardingSettings::class)->assertSet('data.trial_plan_id', null)->call('save')->assertHasNoFormErrors();
+    });
+
+    it('domain diblokir: punycode diterima, label bertanda hubung di tepi ditolak', function (string $domain, bool $ok) {
+        $call = fn () => app(UpdateOnboardingSettings::class)->handle($this->admin, ['trial_days' => 14, 'signup_enabled' => true, 'signup_blocked_domains' => [$domain]]);
+
+        $ok ? expect($call)->not->toThrow(ValidationException::class) : expect($call)->toThrow(ValidationException::class);
+    })->with([
+        ['mailinator.com', true],
+        ['mail.xn--p1ai', true],
+        ['sub.temp-mail.org', true],
+        ['-foo-.com', false],
+        ['foo', false],
+    ]);
+
+    it('label resource berkata ganda ditulis seperti menu (huruf besar hanya di awal)', function () {
+        expect(SalesLeadResource::getTitleCasePluralModelLabel())->toBe('Calon pelanggan')
+            ->and(AppVersionResource::getTitleCasePluralModelLabel())->toBe('Versi aplikasi');
+    });
+
+    it('profil admin: kata sandi baru mengikuti aturan admin (min. 12, campuran, simbol)', function () {
+        $this->admin->forceFill(['password' => 'Rahasia-Admin-1!'])->save();
+
+        Livewire::test(EditProfile::class)
+            ->fillForm(['password' => 'lemah123', 'passwordConfirmation' => 'lemah123', 'currentPassword' => 'Rahasia-Admin-1!'])
+            ->call('save')
+            ->assertHasFormErrors(['password']);
+
+        Livewire::test(EditProfile::class)
+            ->fillForm(['password' => 'Baru-Sekali-12345!', 'passwordConfirmation' => 'Baru-Sekali-12345!', 'currentPassword' => 'Rahasia-Admin-1!'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        expect(Hash::check('Baru-Sekali-12345!', $this->admin->refresh()->password))->toBeTrue();
     });
 });

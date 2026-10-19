@@ -10,6 +10,7 @@ use App\Filament\Dashboard\Resources\StampPrograms\Pages\ManageStampPrograms;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Columns\AuditColumns;
+use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Category;
@@ -39,6 +40,8 @@ use UnitEnum;
  */
 final class StampProgramResource extends Resource
 {
+    use HasSentenceCaseLabels;
+
     protected static ?string $model = StampProgram::class;
 
     protected static ?string $slug = 'stamp-programs';

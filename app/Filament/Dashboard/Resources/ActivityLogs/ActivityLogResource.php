@@ -8,6 +8,7 @@ use App\Actions\Product\SetProductAvailability;
 use App\Enums\PaymentCategory;
 use App\Enums\UserRole;
 use App\Filament\Dashboard\Resources\ActivityLogs\Pages\ListActivityLogs;
+use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Filters\DateRangeFilter;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\ActivityLog;
@@ -39,6 +40,8 @@ use UnitEnum;
  */
 final class ActivityLogResource extends Resource
 {
+    use HasSentenceCaseLabels;
+
     protected static ?string $model = ActivityLog::class;
 
     protected static ?string $slug = 'settings/activity';

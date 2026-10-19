@@ -6,6 +6,7 @@ namespace App\Actions\Billing;
 
 use App\Enums\ErrorCode;
 use App\Enums\InvoiceKind;
+use App\Enums\InvoiceStatus;
 use App\Enums\UserRole;
 use App\Exceptions\BusinessException;
 use App\Models\Addon;
@@ -36,6 +37,9 @@ final class CreateManualInvoice
 {
     public const MAX_LINES = 30;
 
+    /** Angka bulat ≥ 0, boleh berakhiran ".00" (nilai dari database). */
+    private const WHOLE_RUPIAH = '/^\d+(\.0{1,2})?$/';
+
     /**
      * @param  array<string, mixed>  $data  title, due_at (Y-m-d), items[], discount_amount, tax_rate, memo
      *
@@ -47,26 +51,40 @@ final class CreateManualInvoice
 
         $v = Validator::make($data, [
             'title' => ['required', 'string', 'max:120'],
-            'due_at' => ['required', 'date', 'after_or_equal:today'],
+            // "Hari ini" menurut zona waktu platform (WIB), sama dengan jatuh tempo yang disimpan
+            'due_at' => ['required', 'date', 'after_or_equal:'.self::today()],
             'items' => ['required', 'array', 'min:1', 'max:'.self::MAX_LINES],
             'items.*.type' => ['required', Rule::in([SubscriptionInvoiceItem::CUSTOM, SubscriptionInvoiceItem::ADDON])],
             'items.*.addon_id' => ['nullable', 'required_if:items.*.type,'.SubscriptionInvoiceItem::ADDON, 'string', Rule::exists('addons', 'id')],
             'items.*.name' => ['required', 'string', 'max:120'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:999'],
-            'items.*.unit_price' => ['required', 'decimal:0,2', 'min:0', 'max:'.Money::MAX_PRICE],
-            'discount_amount' => ['nullable', 'decimal:0,2', 'min:0', 'max:'.Money::MAX_PRICE],
-            'tax_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            // Rupiah penuh: Midtrans menerima nominal bulat (StartInvoicePayment), sen membuat webhook tidak cocok
+            'items.*.unit_price' => ['required', 'regex:'.self::WHOLE_RUPIAH, 'max:'.Money::MAX_PRICE],
+            'discount_amount' => ['nullable', 'regex:'.self::WHOLE_RUPIAH, 'max:'.Money::MAX_PRICE],
+            'tax_rate' => ['nullable', 'decimal:0,2', 'min:0', 'max:100'],
             'memo' => ['nullable', 'string', 'max:1000'],
-        ], [], [
+        ], [
+            'items.*.unit_price.regex' => 'Harga satuan harus rupiah penuh tanpa sen',
+            'discount_amount.regex' => 'Diskon harus rupiah penuh tanpa sen',
+        ], [
             'title' => 'judul', 'due_at' => 'jatuh tempo', 'items' => 'rincian', 'items.*.name' => 'uraian',
             'items.*.quantity' => 'jumlah', 'items.*.unit_price' => 'harga satuan', 'items.*.addon_id' => 'add-on',
             'discount_amount' => 'diskon', 'tax_rate' => 'PPN', 'memo' => 'catatan',
         ])->validate();
 
         $items = array_values($v['items']);
+        $featureAddons = [];
         foreach ($items as $i => $item) {
             if ($item['type'] === SubscriptionInvoiceItem::ADDON) {
                 $items[$i] = self::checkAddonLine($tenant, $item, $i);
+                // Add-on fitur cukup satu baris: dua baris = bayar 2×, terpasang 1×
+                $addonId = (string) $items[$i]['addon_id'];
+                if (isset($featureAddons[$addonId])) {
+                    throw self::invalid("items.{$i}.addon_id", 'Add-on fitur yang sama sudah ada di baris lain');
+                }
+                if (! Addon::query()->findOrFail($addonId)->isQuota()) {
+                    $featureAddons[$addonId] = true;
+                }
             } else {
                 $items[$i]['addon_id'] = null;
             }
@@ -149,9 +167,31 @@ final class CreateManualInvoice
             if (TenantAddon::forTenant($tenant->id)->where('addon_id', $addon->id)->where('status', TenantAddon::ACTIVE)->exists()) {
                 throw self::invalid($field, "Add-on {$addon->name} sudah aktif");
             }
+            if (self::hasPendingAddon($tenant->id, $addon->id)) {
+                throw self::invalid($field, "Add-on {$addon->name} sudah ada di tagihan menunggu lain");
+            }
         }
 
         return [...$item, 'addon_id' => $addon->id, 'name' => filled($item['name'] ?? null) ? $item['name'] : $addon->name];
+    }
+
+    /**
+     * Add-on sudah ditagih di tagihan menunggu (belum jatuh tempo) bisnis ini. $manualOnly: hanya tagihan manual
+     * (dipakai CreateAddonInvoice, yang membatalkan tagihan menunggu lain lebih dulu).
+     */
+    public static function hasPendingAddon(string $tenantId, string $addonId, bool $manualOnly = false): bool
+    {
+        return SubscriptionInvoiceItem::query()->where('addon_id', $addonId)
+            ->whereHas('invoice', fn ($q) => $q->withoutGlobalScopes()->where('tenant_id', $tenantId)
+                ->where('status', InvoiceStatus::Pending)->where('due_at', '>', now())
+                ->when($manualOnly, fn ($q) => $q->where('kind', InvoiceKind::Manual)))
+            ->exists();
+    }
+
+    /** Tanggal hari ini di zona waktu platform (Y-m-d). */
+    public static function today(): string
+    {
+        return CarbonImmutable::now((string) config('pos.default_timezone'))->toDateString();
     }
 
     private static function invalid(string $field, string $message): BusinessException

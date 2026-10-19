@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Pages\Auth\EditProfile;
 use App\Filament\Admin\Pages\Dashboard;
 use App\Filament\Shared\FieldDefaults;
 use App\Filament\Shared\Layout;
@@ -43,7 +44,7 @@ final class AdminPanelProvider extends PanelProvider
             ->path(Domains::adminPath())
             ->authGuard('admin')
             ->login()
-            ->profile(isSimple: false)
+            ->profile(EditProfile::class, isSimple: false)
             // 2FA aplikasi authenticator. Route & middleware selalu terdaftar ("wajib"); keputusan
             // wajib/tidak diambil per request oleh middleware dari setelan Sistem → Keamanan
             ->multiFactorAuthentication(

@@ -45,6 +45,10 @@ final class CreateAddonInvoice
             if (TenantAddon::forTenant($tenant->id)->where('addon_id', $addon->id)->where('status', TenantAddon::ACTIVE)->exists()) {
                 throw self::invalid("Add-on {$addon->name} sudah aktif");
             }
+            // Tagihan manual admin tidak ikut dibatalkan: jangan tagih add-on fitur yang sama dua kali
+            if (CreateManualInvoice::hasPendingAddon($tenant->id, $addon->id, manualOnly: true)) {
+                throw self::invalid("Add-on {$addon->name} sudah ada di tagihan menunggu");
+            }
         }
 
         $quote = InvoiceQuote::forAddon($tenant, $addon, $quantity);

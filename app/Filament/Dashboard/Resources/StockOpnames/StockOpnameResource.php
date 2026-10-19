@@ -8,6 +8,7 @@ use App\Enums\StockDocumentStatus;
 use App\Filament\Dashboard\Resources\StockOpnames\Pages\CountStockOpname;
 use App\Filament\Dashboard\Resources\StockOpnames\Pages\ListStockOpnames;
 use App\Filament\Dashboard\Resources\StockOpnames\Pages\ViewStockOpname;
+use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\StockOpname;
@@ -42,6 +43,8 @@ use UnitEnum;
  */
 final class StockOpnameResource extends Resource
 {
+    use HasSentenceCaseLabels;
+
     protected static ?string $model = StockOpname::class;
 
     protected static ?string $slug = 'stock/opnames';

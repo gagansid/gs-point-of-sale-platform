@@ -51,7 +51,7 @@ final class RegisterTenant
         }
 
         $planId = $this->settings->trialPlanId();
-        $trialPlan = $planId !== null ? Plan::query()->where('is_active', true)->find($planId) : null;
+        $trialPlan = $planId !== null ? Plan::query()->where('is_active', true)->where('is_public', true)->find($planId) : null;
 
         $tenant = DB::transaction(function () use ($data, $trialPlan): Tenant {
             $tenant = $this->createTenant->handle(new CreateTenantData(
@@ -69,12 +69,15 @@ final class RegisterTenant
                 ownerEmailVerified: false,
             ));
 
-            // Paket selama trial: fitur & kuota paket berlaku sejak hari pertama (null = semua fitur)
-            if ($trialPlan !== null) {
-                $tenant->forceFill(['plan_id' => $trialPlan->id])->save();
-            }
+            // Penanda daftar mandiri = tanpa pembuat; jangan tercatat atas nama admin yang kebetulan login di browser yang sama
+            Tenant::query()->whereKey($tenant->id)->update([
+                'created_by' => null,
+                'updated_by' => null,
+                // Paket selama trial: fitur & kuota paket berlaku sejak hari pertama (null = semua fitur)
+                'plan_id' => $trialPlan?->id,
+            ]);
 
-            return $tenant;
+            return $tenant->refresh();
         });
 
         $owner = User::allTenants()
@@ -98,6 +101,7 @@ final class RegisterTenant
     {
         $start = CarbonImmutable::now((string) config('pos.default_timezone'))->startOfDay()->utc();
 
-        return Tenant::query()->whereNull('created_by')->where('created_at', '>=', $start)->count();
+        // Termasuk tenant yang sudah dihapus: menghapus pendaftar spam tidak membuka kuota hari itu
+        return Tenant::query()->withTrashed()->whereNull('created_by')->where('created_at', '>=', $start)->count();
     }
 }

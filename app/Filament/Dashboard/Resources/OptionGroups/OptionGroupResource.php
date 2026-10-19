@@ -9,6 +9,7 @@ use App\Filament\Dashboard\Resources\OptionGroups\Pages\EditOptionGroup;
 use App\Filament\Dashboard\Resources\OptionGroups\Pages\ListOptionGroups;
 use App\Filament\Dashboard\Resources\OptionGroups\Schemas\OptionGroupForm;
 use App\Filament\Dashboard\Resources\OptionGroups\Tables\OptionGroupsTable;
+use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Models\OptionGroup;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -22,6 +23,8 @@ use UnitEnum;
  */
 final class OptionGroupResource extends Resource
 {
+    use HasSentenceCaseLabels;
+
     protected static ?string $model = OptionGroup::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAdjustmentsHorizontal;
