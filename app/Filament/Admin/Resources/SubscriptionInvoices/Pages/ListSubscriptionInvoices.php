@@ -36,20 +36,26 @@ final class ListSubscriptionInvoices extends ListRecords
     /** @return array<string, Tab> */
     public function getTabs(): array
     {
-        $query = fn (): Builder => SubscriptionInvoice::query()->withoutGlobalScopes();
-        $tabs = ['all' => Tab::make('Semua')->badge(fn (): int => $query()->count())];
+        $base = fn (): Builder => SubscriptionInvoice::query()->withoutGlobalScopes();
+        $tabs = ['all' => Tab::make('Semua')->badge(fn (): int => $base()->count())];
+
+        // Bukti transfer manual menunggu dicek admin (Q123)
+        $tabs['verify'] = Tab::make('Perlu verifikasi')
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', InvoiceStatus::Pending)->whereNotNull('proof_submitted_at'))
+            ->badge(fn (): int => $base()->where('status', InvoiceStatus::Pending)->whereNotNull('proof_submitted_at')->count())
+            ->badgeColor('info');
 
         foreach (InvoiceStatus::cases() as $status) {
             $tabs[$status->value] = Tab::make($status->getLabel())
-                ->modifyQueryUsing(fn (Builder $q): Builder => $q->where('status', $status))
-                ->badge(fn (): int => $query()->where('status', $status)->count())
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', $status))
+                ->badge(fn (): int => $base()->where('status', $status)->count())
                 ->badgeColor($status === InvoiceStatus::Pending ? 'warning' : null);
         }
 
         // Menunggu tetapi sudah lewat jatuh tempo (belum diproses pos:billing-reminders)
         $tabs['overdue'] = Tab::make('Lewat jatuh tempo')
-            ->modifyQueryUsing(fn (Builder $q): Builder => $q->where('status', InvoiceStatus::Pending)->where('due_at', '<', now()))
-            ->badge(fn (): int => $query()->where('status', InvoiceStatus::Pending)->where('due_at', '<', now())->count())
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', InvoiceStatus::Pending)->where('due_at', '<', now())->whereNull('proof_submitted_at'))
+            ->badge(fn (): int => $base()->where('status', InvoiceStatus::Pending)->where('due_at', '<', now())->whereNull('proof_submitted_at')->count())
             ->badgeColor('danger');
 
         return $tabs;

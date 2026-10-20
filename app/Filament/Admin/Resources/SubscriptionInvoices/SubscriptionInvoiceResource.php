@@ -6,8 +6,10 @@ namespace App\Filament\Admin\Resources\SubscriptionInvoices;
 
 use App\Actions\Billing\CancelInvoice;
 use App\Actions\Billing\MarkInvoicePaid;
+use App\Actions\Billing\RejectPaymentProof;
 use App\Enums\BillingCycle;
 use App\Enums\InvoiceKind;
+use App\Enums\InvoicePaymentMethod;
 use App\Enums\InvoiceStatus;
 use App\Filament\Admin\Resources\SubscriptionInvoices\Pages\CreateSubscriptionInvoice;
 use App\Filament\Admin\Resources\SubscriptionInvoices\Pages\ListSubscriptionInvoices;
@@ -26,6 +28,8 @@ use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -39,6 +43,7 @@ use Filament\Tables\Filters\Indicator;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
@@ -123,7 +128,9 @@ final class SubscriptionInvoiceResource extends Resource
                         'midtrans' => 'Online (Midtrans)',
                         default => null,
                     }),
-                TextColumn::make('status')->label('Status')->badge()->sortable(),
+                TextColumn::make('status')->label('Status')->badge()->sortable()
+                    ->formatStateUsing(fn (SubscriptionInvoice $record): string => $record->statusLabel())
+                    ->color(fn (SubscriptionInvoice $record): string => $record->statusColor()),
             ])
             ->filters([
                 SelectFilter::make('status')->label('Status')->options(InvoiceStatus::class),
@@ -133,6 +140,7 @@ final class SubscriptionInvoiceResource extends Resource
                 SelectFilter::make('plan_id')->label('Paket')->options(fn (): array => Plan::query()->orderBy('sort_order')->pluck('name', 'id')->all()),
                 SelectFilter::make('billing_cycle')->label('Siklus')->options(BillingCycle::class),
                 SelectFilter::make('paid_via')->label('Dibayar via')->options(['manual' => 'Transfer manual', 'midtrans' => 'Online (Midtrans)']),
+                SelectFilter::make('payment_method')->label('Metode dipilih owner')->options(InvoicePaymentMethod::class),
                 TernaryFilter::make('created_by_admin_id')->label('Dibuat oleh')->nullable()
                     ->trueLabel('Admin')->falseLabel('Owner'),
                 TernaryFilter::make('overdue')->label('Lewat jatuh tempo')->trueLabel('Ya')->falseLabel('Tidak')
@@ -147,20 +155,39 @@ final class SubscriptionInvoiceResource extends Resource
             ])
             ->filtersFormColumns(['default' => 1, 'sm' => 2, 'lg' => 4])
             ->recordActions([
-                ViewAction::make()->iconButton()->tooltip('Detail')->modalHeading(fn (SubscriptionInvoice $record): string => 'Tagihan '.$record->number)
+                ViewAction::make()->iconButton()->tooltip('Detail')->modalHeading('Detail tagihan')
                     ->modalWidth('3xl')->modalSubmitAction(false)->modalCancelActionLabel('Tutup')
                     ->schema([])
-                    ->modalContent(fn (SubscriptionInvoice $record) => view('filament.admin.invoices.detail', ['invoice' => $record->loadMissing(['items', 'tenant', 'createdByAdmin'])])),
+                    ->modalContent(fn (SubscriptionInvoice $record) => view('filament.shared.invoice-detail', ['invoice' => $record->loadMissing(['items', 'tenant', 'createdByAdmin']), 'audience' => 'admin'])),
                 ActionGroup::make([
+                    Action::make('rejectProof')->label('Tolak bukti')->icon(Heroicon::OutlinedNoSymbol)->color('danger')
+                        ->visible(fn (SubscriptionInvoice $record): bool => $record->awaitingVerification())
+                        ->modalHeading(fn (SubscriptionInvoice $record): string => 'Tolak bukti transfer '.$record->number.'?')
+                        ->modalDescription('Owner melihat alasan ini dan bisa mengunggah bukti baru. Tagihan tetap menunggu bayar')
+                        ->modalSubmitActionLabel('Tolak bukti')
+                        ->schema([Textarea::make('reason')->label('Alasan')->required()->maxLength(500)->rows(3)
+                            ->placeholder('mis. Nominal tidak sesuai / dana belum masuk ke rekening')])
+                        ->action(function (SubscriptionInvoice $record, array $data, Action $action): void {
+                            $admin = auth('admin')->user();
+                            abort_unless($admin instanceof Admin, 403);
+                            RunBusinessAction::run(fn () => app(RejectPaymentProof::class)->handle($record, $admin, (string) $data['reason']), $action);
+                            Notification::make()->success()->title('Bukti transfer ditolak')->send();
+                        }),
                     Action::make('markPaid')->label('Tandai lunas')->icon(Heroicon::OutlinedCheckCircle)
                         // Menunggu atau kedaluwarsa (transfer datang terlambat); tagihan dibatalkan admin tidak bisa dilunasi
                         ->visible(fn (SubscriptionInvoice $record): bool => in_array($record->status, [InvoiceStatus::Pending, InvoiceStatus::Expired], true))
-                        ->modalHeading('Tandai lunas (transfer manual)')
+                        ->modalHeading(fn (SubscriptionInvoice $record): string => $record->awaitingVerification() ? 'Verifikasi & tandai lunas' : 'Tandai lunas (transfer manual)')
                         ->modalDescription(fn (SubscriptionInvoice $record): string => $record->kind === InvoiceKind::Manual
                             ? 'Baris add-on (bila ada) langsung aktif; paket & masa aktif tidak berubah'
                             : 'Paket & masa aktif bisnis diperbarui seperti pembayaran online')
                         ->modalSubmitActionLabel('Tandai lunas')
-                        ->schema([TextInput::make('notes')->label('Catatan')->maxLength(255)->placeholder('mis. transfer BCA 14 Okt')])
+                        ->modalWidth(fn (SubscriptionInvoice $record): string => $record->proof_path !== null ? '3xl' : 'lg')
+                        ->schema(fn (SubscriptionInvoice $record): array => [
+                            Placeholder::make('proof')->label('Bukti transfer')->visible($record->proof_path !== null)
+                                ->content(fn (): View => view('filament.shared.invoice-detail', ['invoice' => $record->loadMissing(['items', 'tenant']), 'audience' => 'admin'])),
+                            TextInput::make('notes')->label('Catatan')->maxLength(255)->placeholder('mis. transfer BCA 14 Okt')
+                                ->default($record->proof_sender !== null ? 'Transfer dari '.$record->proof_sender : null),
+                        ])
                         ->action(function (SubscriptionInvoice $record, array $data, Action $action): void {
                             $admin = auth('admin')->user();
                             abort_unless($admin instanceof Admin, 403);

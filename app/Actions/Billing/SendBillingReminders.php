@@ -28,8 +28,9 @@ final class SendBillingReminders
     {
         $now ??= CarbonImmutable::now();
 
+        // Bukti transfer yang sedang diverifikasi admin tidak membuat tagihan kedaluwarsa (Q123)
         $expired = SubscriptionInvoice::query()->withoutGlobalScopes()->where('status', InvoiceStatus::Pending)
-            ->where('due_at', '<', $now)->update(['status' => InvoiceStatus::Expired, 'updated_at' => $now]);
+            ->where('due_at', '<', $now)->whereNull('proof_submitted_at')->update(['status' => InvoiceStatus::Expired, 'updated_at' => $now]);
 
         if (! Edition::isSaas()) {
             return ['expired' => $expired, 'reminded' => 0];

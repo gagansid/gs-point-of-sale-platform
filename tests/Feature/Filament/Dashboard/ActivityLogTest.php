@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\TenantContext;
+use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
 
@@ -54,7 +55,8 @@ it('halaman Riwayat perubahan menampilkan perubahan dengan nama pelaku', functio
 
     Livewire::test(ListActivityLogs::class)
         ->assertCanSeeTableRecords(ActivityLog::query()->where('subject_id', $this->product->id)->get())
-        ->assertSee('Harga: Rp24.000 → Rp26.000')
+        ->assertSee('Sebelum')->assertSee('Sesudah')
+        ->assertSee('Rp24.000')->assertSee('Rp26.000')
         ->assertSee('Rina')
         ->assertSee('Croissant');
 
@@ -121,4 +123,33 @@ it('kotak cari: nama data, nilai, nama pelaku, dan jenis data dicari di server',
     $page->searchTable('Outlet')->assertCanSeeTableRecords($outletLog)->assertCanNotSeeTableRecords($productLog);
     $page->searchTable('rina')->assertCanSeeTableRecords([...$productLog, ...$teaLog]);
     $page->searchTable('tidak-ada-apa-apa')->assertCanNotSeeTableRecords([...$productLog, ...$teaLog, ...$outletLog]);
+});
+
+it('perubahan per kolom: sebelum & sesudah terpisah, detail menampilkan nilai lengkap, tab per aksi', function () {
+    $this->product->update(['price' => '26000']);
+    $log = ActivityLog::query()->where('subject_id', $this->product->id)->where('event', 'updated')->sole();
+    $created = ActivityLog::query()->where('subject_id', $this->product->id)->where('event', 'created')->sole();
+
+    expect(ActivityLogResource::changes($log))->toContain(['field' => 'price', 'label' => 'Harga', 'old' => 'Rp24.000', 'new' => 'Rp26.000'])
+        ->and(collect(ActivityLogResource::changes($created))->pluck('old')->unique()->all())->toBe(['—']);
+
+    $longAddress = str_repeat('Jl. Kemang Raya ', 6);
+    $this->outlet->update(['address' => $longAddress]);
+    $outletLog = ActivityLog::query()->where('subject_type', Outlet::class)->latest('id')->first();
+    expect(ActivityLogResource::changes($outletLog)[0]['new'])->toEndWith('…')
+        ->and(ActivityLogResource::changes($outletLog, full: true)[0]['new'])->toBe($longAddress);
+
+    Livewire::test(ListActivityLogs::class)
+        ->mountAction(TestAction::make('detail')->table($log))
+        ->assertActionMounted(TestAction::make('detail')->table($log));
+    $html = view('filament.dashboard.activity.detail', ['log' => $log, 'changes' => ActivityLogResource::changes($log, full: true), 'causer' => 'Rina',
+        'role' => 'Owner', 'subject' => 'Produk', 'name' => 'Croissant', 'event' => 'Diubah', 'eventColor' => 'info'])->render();
+    expect($html)->toContain('Harga')->toContain('Rp24.000')->toContain('Rp26.000')->toContain('Sebelum')->toContain('Sesudah');
+
+    Livewire::test(ListActivityLogs::class)
+        ->set('activeTab', 'created')
+        ->assertCanSeeTableRecords([$created])
+        ->assertCanNotSeeTableRecords([$log])
+        ->set('activeTab', 'updated')
+        ->assertCanSeeTableRecords([$log]);
 });

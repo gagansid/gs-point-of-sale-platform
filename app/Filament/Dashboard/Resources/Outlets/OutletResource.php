@@ -119,14 +119,19 @@ final class OutletResource extends Resource
     {
         $table = $table
             ->defaultSort(fn (Builder $query): Builder => $query->orderBy('created_at'))
-            ->paginated(false)
             ->columns([
-                TextColumn::make('name')->label('Nama')->weight('medium')->searchable()->sortable()
-                    ->description(fn (Outlet $record): ?string => $record->address),
-                TextColumn::make('code')->label('Kode')->badge()->color('gray')->searchable()->sortable(),
-                TextColumn::make('users_count')->label('Karyawan')->counts('users')->alignEnd()->sortable()
+                TextColumn::make('name')->label('Nama')->weight('medium')->searchable()->sortable(),
+                TextColumn::make('code')->label('Kode')->fontFamily('mono')->size('xs')->searchable()->sortable()->copyable()
+                    ->copyMessage('Kode disalin'),
+                TextColumn::make('address')->label('Alamat')->placeholder('—')->searchable()->sortable()
+                    ->limit(60)->tooltip(fn (Outlet $record): ?string => mb_strlen((string) $record->address) > 60 ? $record->address : null)
+                    ->wrap()->extraCellAttributes(['class' => 'gs-ta-cell-wide']),
+                TextColumn::make('timezone')->label('Zona waktu')->sortable()
+                    ->formatStateUsing(fn (?string $state): string => Timezones::OPTIONS[$state] ?? (string) $state)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('users_count')->label('Karyawan')->counts('users')->numeric(locale: 'id')->alignEnd()->sortable()
                     ->tooltip('Karyawan yang ditugaskan (owner memegang semua outlet)'),
-                TextColumn::make('devices_count')->label('Perangkat')->counts('devices')->alignEnd()->sortable(),
+                TextColumn::make('devices_count')->label('Perangkat')->counts('devices')->numeric(locale: 'id')->alignEnd()->sortable(),
                 IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable(),
                 // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom
                 ...AuditColumns::make(),

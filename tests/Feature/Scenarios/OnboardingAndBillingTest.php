@@ -137,7 +137,7 @@ function obOwnerBuysPlan(object $test, User $owner, Plan $plan, string $cycle = 
 
     // Tombol bayar per tagihan menunggu (argumen id)
     Livewire::test(SubscriptionSettings::class)
-        ->callAction('payOnline', arguments: ['id' => $invoice->id])
+        ->callAction('payInvoice', ['method' => 'qris'], ['id' => $invoice->id])
         ->assertRedirect('https://snap.test/pay');
 
     return $invoice->refresh();
@@ -396,7 +396,7 @@ it('owner bisnis hanya-baca bisa membuka bayar online tagihan yang sudah dibuat'
     $this->travelTo(Carbon::parse('2026-10-16 03:00:00'));
     obOwnerDashboard($this, $owner);
     $pending = SubscriptionInvoice::query()->withoutGlobalScopes()->where('tenant_id', $owner->tenant_id)->where('status', InvoiceStatus::Pending)->sole();
-    Livewire::test(SubscriptionSettings::class)->callAction('payOnline', arguments: ['id' => $pending->id])->assertRedirect('https://snap.test/pay');
+    Livewire::test(SubscriptionSettings::class)->callAction('payInvoice', ['method' => 'qris'], ['id' => $pending->id])->assertRedirect('https://snap.test/pay');
 
     expect(SubscriptionInvoice::query()->withoutGlobalScopes()->sole()->gateway_order_id)->not->toBeNull();
 })->skip('BUG: StartInvoicePayment ditolak SUBSCRIPTION_EXPIRED saat tenant hanya-baca (BelongsToTenant read-only guard)');

@@ -108,7 +108,8 @@ it('isolasi tenant: log tenant lain tidak terlihat di Riwayat perubahan', functi
         ->assertCanSeeTableRecords(availabilityLogs($this->pos->tenantId))
         ->assertCanNotSeeTableRecords(availabilityLogs($foreign->tenantId))
         ->assertSee('Ketersediaan menu')
-        ->assertSee('Croissant ditandai habis di Kemang oleh Budi');
+        ->assertSee('Croissant · Kemang')
+        ->assertSee('Habis');
 });
 
 it('dashboard: owner bisa mencari; manager hanya melihat outlet yang dipegangnya', function () {

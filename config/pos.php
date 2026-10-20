@@ -103,6 +103,12 @@ return [
         'midtrans_production' => (bool) env('POS_BILLING_MIDTRANS_PRODUCTION', false),
         'bank_info' => env('POS_BILLING_BANK_INFO', 'Transfer ke rekening gs.POS, lalu kirim bukti ke tim kami.'),
         'due_days' => (int) env('POS_BILLING_DUE_DAYS', 3),
+        // Penerbit di dokumen tagihan (detail tagihan owner & admin)
+        'issuer' => [
+            'name' => env('POS_BILLING_ISSUER_NAME', 'gs.POS'),
+            'address' => env('POS_BILLING_ISSUER_ADDRESS'),
+            'email' => env('POS_BILLING_ISSUER_EMAIL', env('MAIL_FROM_ADDRESS')),
+        ],
         'reminder_days' => [7, 3, 1],
     ],
 

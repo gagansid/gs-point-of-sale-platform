@@ -3402,3 +3402,957 @@ select.fi-select-input {
     font-size: 12px;
     color: var(--text-secondary, #626d7d);
 }
+
+/* ---------- Langganan owner (Q123): paket, tagihan menunggu, bayar, detail tagihan ---------- */
+.gs-sub-grid {
+    display: grid;
+    gap: 16px;
+}
+
+@media (min-width: 1024px) {
+    .gs-sub-grid {
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        align-items: stretch;
+    }
+}
+
+.gs-plan-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.gs-plan-name {
+    color: var(--text);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.gs-plan-meta {
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.gs-plan-period {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface-secondary);
+    font-size: 13px;
+}
+
+.gs-plan-period-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 4px 12px;
+    color: var(--text-secondary);
+}
+
+.gs-plan-period-row strong {
+    color: var(--text);
+}
+
+.gs-plan-bar {
+    height: 6px;
+    margin-top: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--border-color);
+}
+
+.gs-plan-bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--success-500);
+}
+
+.gs-plan-period.is-warning .gs-plan-bar span { background: var(--warning-500); }
+.gs-plan-period.is-danger .gs-plan-bar span { background: var(--danger-500); }
+.gs-plan-period.is-danger .gs-plan-period-row > span:last-child { color: var(--danger-600); font-weight: 600; }
+
+.gs-plan-features {
+    margin-top: 16px;
+}
+
+.gs-plan-label {
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.gs-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.gs-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-surface);
+    color: var(--text);
+    font-size: 12.5px;
+}
+
+.gs-chip-icon {
+    width: 13px;
+    height: 13px;
+    color: var(--success-600);
+}
+
+.gs-chip.is-addon {
+    border-color: transparent;
+    background: var(--primary-lt);
+}
+
+.gs-chip.is-addon .gs-chip-icon {
+    color: var(--primary);
+}
+
+.gs-muted {
+    margin-top: 12px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.gs-callout {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.gs-callout.is-info {
+    border-color: color-mix(in srgb, var(--info-500) 30%, transparent);
+    background: color-mix(in srgb, var(--info-500) 8%, transparent);
+    color: var(--text);
+}
+
+.gs-callout.is-danger {
+    border-color: color-mix(in srgb, var(--danger-500) 30%, transparent);
+    background: color-mix(in srgb, var(--danger-500) 8%, transparent);
+    color: var(--text);
+}
+
+.gs-due-card + .gs-due-card {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.gs-due-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.gs-due-number {
+    color: var(--text-secondary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+}
+
+.gs-due-amount {
+    margin-top: 8px;
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+.gs-due-desc {
+    margin-top: 4px;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.gs-due-date,
+.gs-due-memo {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.gs-due-memo {
+    margin-top: 8px;
+    white-space: pre-line;
+}
+
+.gs-due-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.gs-due-actions > :first-child:not(:last-child) {
+    flex: 1;
+}
+
+.gs-due-actions > :first-child:not(:last-child) .fi-btn {
+    width: 100%;
+}
+
+.gs-empty-mini {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    padding: 24px 8px;
+    text-align: center;
+}
+
+.gs-empty-mini-icon {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 6px;
+    color: var(--success-500);
+}
+
+.gs-empty-mini-title {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.gs-empty-mini-text {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.gs-sub-table td {
+    vertical-align: middle;
+}
+
+.gs-cell-sub {
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Pilihan berbentuk kartu (Radio): paket & metode bayar */
+.gs-choice-cards {
+    display: grid !important;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.gs-choice-cards > label,
+.gs-choice-cards .fi-fo-radio-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    cursor: pointer;
+    transition: border-color .15s, background-color .15s, box-shadow .15s;
+}
+
+.gs-choice-cards > label:hover,
+.gs-choice-cards .fi-fo-radio-label:hover {
+    border-color: var(--field-border-hover);
+}
+
+.gs-choice-cards > label:has(input:checked),
+.gs-choice-cards .fi-fo-radio-label:has(input:checked) {
+    border-color: var(--primary);
+    background: var(--primary-lt);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+/* Ringkasan tagihan (Buat tagihan) */
+.gs-quote {
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface-secondary);
+}
+
+.gs-quote-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.gs-quote-kind {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+}
+
+.gs-quote-amount {
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.gs-quote-text {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    line-height: 1.55;
+}
+
+/* Bayar tagihan: ringkasan & rekening */
+.gs-pay-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding: 14px 16px;
+    border-radius: var(--radius-lg);
+    background: var(--primary-lt);
+}
+
+.gs-pay-summary-label,
+.gs-pay-summary dt {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.gs-pay-summary-amount {
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.gs-pay-summary-sub {
+    color: var(--text-secondary);
+    font-size: 12.5px;
+}
+
+.gs-pay-summary dl {
+    display: grid;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.gs-pay-summary dd {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.gs-bank-list {
+    display: grid;
+    gap: 8px;
+}
+
+.gs-bank-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+.gs-bank-logo {
+    flex: none;
+    border-radius: 9px;
+}
+
+.gs-bank-logo-img {
+    border-radius: 9px;
+    object-fit: contain;
+    background: #fff;
+}
+
+.gs-bank-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.gs-bank-number {
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+
+.gs-bank-holder {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.gs-copy-btn {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--field-border);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    transition: border-color .15s, color .15s, background-color .15s;
+}
+
+.gs-copy-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.gs-copy-btn.is-copied {
+    border-color: var(--success-500);
+    background: color-mix(in srgb, var(--success-500) 10%, transparent);
+    color: var(--success-600);
+}
+
+.gs-copy-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.gs-bank-qris {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    font-size: 12.5px;
+}
+
+.gs-bank-qris img {
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius);
+    background: #fff;
+    object-fit: contain;
+}
+
+.gs-bank-empty {
+    color: var(--danger-600);
+    font-size: 13px;
+}
+
+.gs-bank-steps {
+    display: grid;
+    gap: 4px;
+    margin: 4px 0 0;
+    padding-left: 18px;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    list-style: decimal;
+}
+
+/* Detail tagihan: kepala & pembayaran */
+.gs-invoice-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.gs-invoice-number {
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.gs-invoice-desc {
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.gs-invoice-head-end {
+    display: grid;
+    justify-items: end;
+    gap: 6px;
+}
+
+.gs-invoice-total {
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.gs-invoice-detail .gs-nota-meta {
+    margin-top: 0;
+}
+
+.gs-invoice-pay {
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.gs-invoice-pay-title {
+    margin-bottom: 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.gs-proof {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.gs-proof img {
+    max-width: 240px;
+    max-height: 240px;
+    border-radius: var(--radius);
+    object-fit: contain;
+}
+
+.gs-proof-file {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--danger-500) 12%, transparent);
+    color: var(--danger-600);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* ---------- Riwayat perubahan: kolom / sebelum / sesudah sejajar per baris + detail ---------- */
+.gs-diff-cell.fi-ta-text-item,
+.gs-diff-cell li {
+    max-width: 16rem;
+    overflow: hidden;
+    line-height: 22px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+ul.gs-diff-cell {
+    display: grid;
+    gap: 2px;
+}
+
+.fi-ta-cell .gs-diff-cell.is-field,
+.fi-ta-cell .gs-diff-cell.is-field li {
+    color: var(--text-secondary);
+}
+
+.fi-ta-cell .gs-diff-cell.is-old,
+.fi-ta-cell .gs-diff-cell.is-old li {
+    color: var(--danger-600);
+}
+
+.fi-ta-cell .gs-diff-cell.is-new,
+.fi-ta-cell .gs-diff-cell.is-new li {
+    color: var(--success-700);
+    font-weight: 500;
+}
+
+.dark .fi-ta-cell .gs-diff-cell.is-old,
+.dark .fi-ta-cell .gs-diff-cell.is-old li { color: var(--danger-400); }
+.dark .fi-ta-cell .gs-diff-cell.is-new,
+.dark .fi-ta-cell .gs-diff-cell.is-new li { color: var(--success-400); }
+
+.gs-audit-detail {
+    display: grid;
+    gap: 18px;
+}
+
+.gs-audit-detail .gs-nota-meta {
+    margin-top: 0;
+}
+
+.gs-audit-sub {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.gs-diff-val {
+    display: inline-block;
+    max-width: 100%;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    overflow-wrap: anywhere;
+    white-space: pre-line;
+}
+
+.gs-diff-val.is-old {
+    background: color-mix(in srgb, var(--danger-500) 9%, transparent);
+    color: var(--danger-700);
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--danger-500) 45%, transparent);
+}
+
+.gs-diff-val.is-new {
+    background: color-mix(in srgb, var(--success-500) 10%, transparent);
+    color: var(--success-700);
+    font-weight: 500;
+}
+
+.dark .gs-diff-val.is-old { color: var(--danger-300); }
+.dark .gs-diff-val.is-new { color: var(--success-300); }
+
+.gs-diff-val.is-empty {
+    background: none;
+    color: var(--text-disabled);
+    text-decoration: none;
+}
+
+.gs-audit-table td {
+    vertical-align: top;
+}
+
+.gs-audit-arrow-col {
+    width: 24px;
+    color: var(--text-disabled);
+    text-align: center;
+}
+
+.gs-audit-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+/* ---------- Dokumen tagihan (detail tagihan owner & admin) ---------- */
+.gs-inv {
+    display: grid;
+    gap: 20px;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.gs-inv-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 18px;
+    border-bottom: 2px solid var(--primary);
+}
+
+.gs-inv-brand {
+    display: grid;
+    gap: 8px;
+}
+
+.gs-inv-logo {
+    height: 28px;
+    width: auto;
+}
+
+.gs-inv-issuer {
+    display: grid;
+    gap: 1px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.gs-inv-issuer strong {
+    color: var(--text);
+    font-size: 13px;
+}
+
+.gs-inv-title {
+    display: grid;
+    justify-items: end;
+    gap: 6px;
+    text-align: right;
+}
+
+.gs-inv-kicker {
+    color: var(--primary);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: .14em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.gs-inv-number {
+    color: var(--text-secondary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.gs-inv-parties {
+    display: grid;
+    gap: 16px;
+}
+
+@media (min-width: 640px) {
+    .gs-inv-parties {
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+    }
+}
+
+.gs-inv-label {
+    margin-bottom: 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.gs-inv-strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.gs-inv-muted {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.gs-inv-amount-box {
+    min-width: 220px;
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    background: var(--primary-lt);
+    text-align: right;
+}
+
+.gs-inv-amount {
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+.gs-inv-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+    margin: 0;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+@media (min-width: 640px) {
+    .gs-inv-facts {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.gs-inv-facts.is-compact {
+    margin-top: 14px;
+    padding: 0;
+    border: 0;
+}
+
+.gs-inv-facts .is-wide {
+    grid-column: 1 / -1;
+}
+
+.gs-inv-facts dt {
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+.gs-inv-facts dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+}
+
+.gs-inv-lines table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.gs-inv-lines th {
+    padding: 8px 10px;
+    background: var(--bg-surface-secondary);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.gs-inv-lines td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color-light);
+    vertical-align: top;
+}
+
+.gs-inv-lines .is-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.gs-inv-totals {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    max-width: 300px;
+    margin: 12px 0 0 auto;
+    padding-right: 10px;
+}
+
+.gs-inv-totals > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.gs-inv-totals > .is-total {
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 2px solid var(--text);
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.gs-inv-pay {
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface-secondary);
+}
+
+.gs-inv-section-title {
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.gs-inv-steps {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.gs-inv-steps li {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    padding-bottom: 14px;
+}
+
+.gs-inv-steps li:last-child {
+    padding-bottom: 0;
+}
+
+/* Garis penghubung antar langkah */
+.gs-inv-steps li:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    bottom: 0;
+    left: 5px;
+    width: 2px;
+    background: var(--border-color);
+}
+
+.gs-inv-steps li.is-done:not(:last-child)::before {
+    background: var(--success-500);
+}
+
+.gs-inv-step-dot {
+    position: relative;
+    flex: none;
+    width: 12px;
+    height: 12px;
+    margin-top: 3px;
+    border: 2px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-surface);
+}
+
+.gs-inv-steps li.is-done .gs-inv-step-dot {
+    border-color: var(--success-500);
+    background: var(--success-500);
+}
+
+.gs-inv-steps li.is-danger .gs-inv-step-dot {
+    border-color: var(--danger-500);
+    background: var(--danger-500);
+}
+
+.gs-inv-steps li.is-current .gs-inv-step-dot {
+    border-color: var(--warning-500);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning-500) 20%, transparent);
+}
+
+.gs-inv-notes {
+    display: grid;
+    gap: 12px;
+}
+
+.gs-inv-notes p {
+    color: var(--text-secondary);
+}
+
+.gs-inv-foot {
+    padding-top: 14px;
+    border-top: 1px dashed var(--border-color);
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+/* Pilihan bank berlogo (Select allowHtml) */
+.gs-bank-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.gs-bank-option svg,
+.gs-bank-option img {
+    flex: none;
+    border-radius: 5px;
+}
+
+.gs-bank-option-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

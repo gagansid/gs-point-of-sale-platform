@@ -48,6 +48,17 @@ final class SystemSettings
 
     public const TRIAL_DAYS_MAX = 90;
 
+    /** Rekening tujuan transfer manual tagihan langganan (Q123): list {bank_id, bank, number, holder}. */
+    public const BILLING_BANK_ACCOUNTS = 'billing.bank_accounts';
+
+    /** Gambar QRIS statis vendor (disk public) untuk transfer manual. */
+    public const BILLING_QRIS_IMAGE = 'billing.qris_image';
+
+    /** Petunjuk tambahan transfer manual. */
+    public const BILLING_MANUAL_NOTE = 'billing.manual_note';
+
+    public const BILLING_ACCOUNTS_MAX = 5;
+
     private const CACHE_PREFIX = 'system_settings:';
 
     /**
@@ -178,6 +189,62 @@ final class SystemSettings
         $this->set(self::SIGNUP_BLOCKED_DOMAINS, $blockedDomains, $by);
         $this->set(self::SIGNUP_NOTIFY_EMAILS, $notifyEmails, $by);
         $this->set(self::SIGNUP_CLOSED_MESSAGE, $closedMessage, $by);
+    }
+
+    /**
+     * Rekening gs.POS untuk transfer manual (bank dari master Sistem → Bank; nama bank tersimpan sebagai cadangan).
+     *
+     * @return list<array{bank_id: string|null, bank: string, number: string, holder: string}>
+     */
+    public function billingBankAccounts(): array
+    {
+        $accounts = [];
+        foreach ((array) $this->get(self::BILLING_BANK_ACCOUNTS, []) as $row) {
+            if (is_array($row) && (filled($row['bank_id'] ?? null) || filled($row['bank'] ?? null)) && filled($row['number'] ?? null)) {
+                $accounts[] = [
+                    'bank_id' => filled($row['bank_id'] ?? null) ? (string) $row['bank_id'] : null,
+                    'bank' => (string) ($row['bank'] ?? ''),
+                    'number' => (string) $row['number'],
+                    'holder' => (string) ($row['holder'] ?? ''),
+                ];
+            }
+        }
+
+        return $accounts;
+    }
+
+    public function billingQrisImage(): ?string
+    {
+        $path = $this->get(self::BILLING_QRIS_IMAGE, null);
+
+        return is_string($path) && $path !== '' ? $path : null;
+    }
+
+    /** Petunjuk transfer manual; bawaan dari POS_BILLING_BANK_INFO. */
+    public function billingManualNote(): ?string
+    {
+        $note = $this->get(self::BILLING_MANUAL_NOTE, null);
+        if (is_string($note) && trim($note) !== '') {
+            return $note;
+        }
+
+        $fallback = config('pos.billing.bank_info');
+
+        return is_string($fallback) && trim($fallback) !== '' ? $fallback : null;
+    }
+
+    /** Transfer manual tersedia: ada rekening atau QRIS statis. */
+    public function manualBillingAvailable(): bool
+    {
+        return $this->billingBankAccounts() !== [] || $this->billingQrisImage() !== null;
+    }
+
+    /** @param  list<array{bank_id: string|null, bank: string, number: string, holder: string}>  $accounts */
+    public function setBillingPayment(array $accounts, ?string $qrisImage, ?string $note, ?Admin $by = null): void
+    {
+        $this->set(self::BILLING_BANK_ACCOUNTS, $accounts !== [] ? $accounts : null, $by);
+        $this->set(self::BILLING_QRIS_IMAGE, $qrisImage, $by);
+        $this->set(self::BILLING_MANUAL_NOTE, $note, $by);
     }
 
     private function get(string $key, mixed $default): mixed

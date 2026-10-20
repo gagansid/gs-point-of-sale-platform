@@ -336,7 +336,7 @@ describe('perbaikan review 2026-10-19', function () {
         Http::fake();
         $page = Livewire::test(SubscriptionSettings::class);
         // abort(404) di aksi: komponen tidak dirender ulang; yang penting tidak ada Snap untuk tagihan bisnis lain
-        rescue(fn () => $page->callAction('payOnline', arguments: ['id' => $foreign->id]), report: false);
+        rescue(fn () => $page->callAction('payInvoice', ['method' => 'qris'], ['id' => $foreign->id]), report: false);
 
         Http::assertNothingSent();
         expect($foreign->refresh()->gateway_order_id)->toBeNull()->and($foreign->snap_url)->toBeNull();

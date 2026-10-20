@@ -185,3 +185,14 @@ Phishing menyerang **manusia**, sehingga kontrolnya sebagian besar operasional:
 | Verifikasi | Server-side `challenges.cloudflare.com/turnstile/v0/siteverify` dengan secret + IP; token maks. 2048 karakter; **fail-closed** (Cloudflare tak terjangkau = ditolak); token direset setelah gagal |
 | Kunci | Diisi di Sistem → Keamanan → Cloudflare Turnstile: secret terenkripsi (Crypt/APP_KEY), tidak ditampilkan ulang, tidak dicatat di log, diuji ke Cloudflare sebelum disimpan; `.env` `TURNSTILE_*` cadangan. Kunci uji Cloudflare (`1x000…AA`) hanya untuk lokal |
 | Tetap berlaku | Throttle login per akun+IP, pesan error umum (anti enumerasi), timebox, 2FA admin |
+
+## Bukti transfer tagihan & master bank (2026-10-20, SPEC Q123–Q124)
+
+| Kontrol | Implementasi |
+|---|---|
+| Unggah bukti | Hanya owner (`billing.manage`); gambar PNG/JPG/WEBP atau PDF ≤ 2 MB; disimpan di disk **privat** `local` folder `billing-proofs/{tenant_id}`; Action menolak path di luar folder bisnis sendiri atau berisi `..` |
+| Akses bukti | Tidak pernah publik: ditampilkan lewat `temporaryUrl` bertanda tangan 15 menit di detail tagihan owner (scope tenant) & admin |
+| Isolasi tenant | Argumen `id` di aksi Bayar/Detail dicari lewat scope tenant → tagihan bisnis lain 404 (diuji) |
+| Pembayaran ganda | Bukti menunggu verifikasi mengunci tagihan: bayar online & kirim ulang ditolak; ganti metode QRIS ↔ VA membatalkan transaksi Snap lama |
+| Logo bank & QRIS | Hanya raster (PNG/JPG/WEBP); SVG unggahan ditolak (XSS); path wajib di folder `banks/` / `billing/`; file lama dihapus saat diganti |
+| Audit | Kirim bukti, tolak bukti, ubah setelan pembayaran & bank dicatat di log aplikasi (tanpa isi file) |

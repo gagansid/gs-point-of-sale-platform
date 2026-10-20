@@ -68,6 +68,14 @@ final class CreateInvoice
         }
 
         $invoice = DB::transaction(function () use ($tenant, $plan, $cycle, $quote, $dueAt, $admin): SubscriptionInvoice {
+            // Tagihan yang buktinya sedang diverifikasi tidak boleh ikut dibatalkan (uang mungkin sudah masuk, Q123)
+            $reviewing = SubscriptionInvoice::query()->withoutGlobalScopes()->where('tenant_id', $tenant->id)
+                ->where('status', InvoiceStatus::Pending)->where('kind', '!=', InvoiceKind::Manual)->whereNotNull('proof_submitted_at')
+                ->lockForUpdate()->value('number');
+            if ($reviewing !== null) {
+                throw BusinessException::of(ErrorCode::ValidationError, 'Tagihan '.$reviewing.' sedang diverifikasi. Tunggu hasilnya sebelum membuat tagihan baru');
+            }
+
             SubscriptionInvoice::query()->withoutGlobalScopes()->where('tenant_id', $tenant->id)
                 ->where('status', InvoiceStatus::Pending)->where('kind', '!=', InvoiceKind::Manual)->lockForUpdate()
                 ->update(['status' => InvoiceStatus::Cancelled, 'updated_at' => now()]);

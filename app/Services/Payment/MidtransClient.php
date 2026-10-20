@@ -44,16 +44,17 @@ final class MidtransClient
      * Buat transaksi Snap; nominal bulat rupiah (IDR tanpa desimal).
      *
      * @param  array{first_name: string, phone?: string|null}  $customer
+     * @param  list<string>|null  $channels  kanal Snap; null = setelan akun (enabled_payments)
      * @return array{token: string, redirect_url: string}
      *
      * @throws BusinessException
      */
-    public function createSnap(string $orderId, int $amount, array $customer, string $finishUrl): array
+    public function createSnap(string $orderId, int $amount, array $customer, string $finishUrl, ?array $channels = null): array
     {
         $response = $this->send(fn () => $this->request()->post($this->snapUrl().'/snap/v1/transactions', array_filter([
             'transaction_details' => ['order_id' => $orderId, 'gross_amount' => $amount],
             'customer_details' => array_filter($customer),
-            'enabled_payments' => $this->setting->enabled_payments ?: null,
+            'enabled_payments' => $channels ?: ($this->setting->enabled_payments ?: null),
             'callbacks' => ['finish' => $finishUrl],
             'expiry' => ['unit' => 'minutes', 'duration' => 30],
         ])));

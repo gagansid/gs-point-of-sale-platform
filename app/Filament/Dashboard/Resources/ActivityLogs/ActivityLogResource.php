@@ -21,8 +21,10 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\User;
+use App\Support\CurrentOutlet;
 use App\Support\Money;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -116,35 +118,47 @@ final class ActivityLogResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->modifyQueryUsing(fn (Builder $query): Builder => self::visibleTo($query)->with('causer'))
             ->columns([
-                TextColumn::make('created_at')->label('Waktu')->dateTime('j M Y, H.i')->sortable(),
-                TextColumn::make('causer_name')->label('Oleh')
-                    ->state(fn (ActivityLog $record): string => match (true) {
-                        $record->causer instanceof Admin => 'Tim gs.POS',
-                        $record->causer instanceof User => $record->causer->name,
-                        default => 'Sistem',
-                    }),
+                TextColumn::make('created_at')->label('Waktu')->dateTime('j M Y')->sortable()
+                    ->description(fn (ActivityLog $record): string => (string) $record->created_at?->setTimezone(CurrentOutlet::timezone())->format('H.i')),
+                TextColumn::make('causer_name')->label('Oleh')->weight('medium')
+                    ->state(fn (ActivityLog $record): string => self::causerName($record))
+                    ->description(fn (ActivityLog $record): string => self::causerRole($record)),
                 TextColumn::make('subject_label')->label('Data')
-                    ->state(fn (ActivityLog $record): string => self::SUBJECTS[$record->subject_type][0] ?? 'Data')
-                    ->description(fn (ActivityLog $record): string => self::subjectName($record))
-                    ->weight('medium'),
+                    ->state(fn (ActivityLog $record): string => self::subjectName($record))
+                    ->description(fn (ActivityLog $record): string => self::SUBJECTS[$record->subject_type][0] ?? 'Data')
+                    ->weight('medium')->wrap(),
                 TextColumn::make('event')->label('Aksi')->badge()
-                    ->state(fn (ActivityLog $record): string => match (true) {
-                        $record->description === 'credentials' => 'Kredensial',
-                        $record->event === SetProductAvailability::LOG_EVENT => ($record->properties['attributes']['is_available'] ?? false) ? 'Tersedia' : 'Habis',
-                        $record->event === 'created' => 'Dibuat',
-                        $record->event === 'deleted' => 'Dihapus',
-                        default => 'Diubah',
-                    })
-                    ->color(fn (string $state): string => match ($state) {
-                        'Dibuat', 'Tersedia' => 'success',
-                        'Dihapus' => 'danger',
-                        'Kredensial', 'Habis' => 'warning',
-                        default => 'gray',
-                    }),
-                TextColumn::make('changes_summary')->label('Perubahan')->wrap()
-                    ->state(fn (ActivityLog $record): string => self::summary($record))
+                    ->state(fn (ActivityLog $record): string => self::eventLabel($record))
+                    ->color(fn (string $state): string => self::eventColor($state)),
+                // Kolom, nilai sebelum & sesudah dipisah per baris (sejajar), maks. 3 baris; selengkapnya di Detail
+                TextColumn::make('changed_fields')->label('Kolom')
+                    ->state(fn (ActivityLog $record): array => self::changeColumn($record, 'label'))
+                    ->listWithLineBreaks()->extraAttributes(['class' => 'gs-diff-cell is-field'])
                     // Kotak "Cari" tabel: dicari di server (isi perubahan, nama pelaku, jenis data)
                     ->searchable(query: fn (Builder $query, string $search): Builder => self::search($query, $search)),
+                TextColumn::make('old_values')->label('Sebelum')
+                    ->state(fn (ActivityLog $record): array => self::changeColumn($record, 'old'))
+                    ->listWithLineBreaks()->extraAttributes(['class' => 'gs-diff-cell is-old']),
+                TextColumn::make('new_values')->label('Sesudah')
+                    ->state(fn (ActivityLog $record): array => self::changeColumn($record, 'new'))
+                    ->listWithLineBreaks()->extraAttributes(['class' => 'gs-diff-cell is-new']),
+            ])
+            ->recordAction('detail')
+            ->recordActions([
+                Action::make('detail')->label('Detail')->icon(Heroicon::OutlinedEye)->iconButton()->tooltip('Detail perubahan')
+                    ->modalHeading(fn (ActivityLog $record): string => self::eventLabel($record).' · '.(self::SUBJECTS[$record->subject_type][0] ?? 'Data'))
+                    ->modalDescription(fn (ActivityLog $record): string => self::subjectName($record))
+                    ->modalWidth('3xl')->modalSubmitAction(false)->modalCancelActionLabel('Tutup')
+                    ->modalContent(fn (ActivityLog $record) => view('filament.dashboard.activity.detail', [
+                        'log' => $record,
+                        'changes' => self::changes($record, full: true),
+                        'causer' => self::causerName($record),
+                        'role' => self::causerRole($record),
+                        'subject' => self::SUBJECTS[$record->subject_type][0] ?? 'Data',
+                        'name' => self::subjectName($record),
+                        'event' => self::eventLabel($record),
+                        'eventColor' => self::eventColor(self::eventLabel($record)),
+                    ])),
             ])
             ->filters([
                 DateRangeFilter::make('created_at', defaultToday: false),
@@ -235,6 +249,96 @@ final class ActivityLogResource extends Resource
         return is_string($name) ? $name : '—';
     }
 
+    /** Label aksi: Dibuat / Diubah / Dihapus / Kredensial / Habis / Tersedia. */
+    public static function eventLabel(ActivityLog $record): string
+    {
+        return match (true) {
+            $record->description === 'credentials' => 'Kredensial',
+            $record->event === SetProductAvailability::LOG_EVENT => ($record->properties['attributes']['is_available'] ?? false) ? 'Tersedia' : 'Habis',
+            $record->event === 'created' => 'Dibuat',
+            $record->event === 'deleted' => 'Dihapus',
+            default => 'Diubah',
+        };
+    }
+
+    public static function eventColor(string $label): string
+    {
+        return match ($label) {
+            'Dibuat', 'Tersedia' => 'success',
+            'Dihapus' => 'danger',
+            'Kredensial', 'Habis' => 'warning',
+            default => 'info',
+        };
+    }
+
+    /**
+     * Perubahan per kolom (sebelum & sesudah terpisah). Dibuat: sebelum "—"; dihapus: sesudah "—";
+     * kredensial: nilai tidak pernah tersimpan, hanya "Diganti".
+     *
+     * @return list<array{field: string, label: string, old: string, new: string}>
+     */
+    public static function changes(ActivityLog $record, bool $full = false): array
+    {
+        $properties = $record->properties;
+
+        if ($record->description === 'credentials') {
+            return array_values(array_map(fn (string $s): array => [
+                'field' => $s, 'label' => $s === 'pin' ? 'PIN' : 'Kata sandi', 'old' => '••••••', 'new' => 'Diganti',
+            ], (array) ($properties['secrets'] ?? [])));
+        }
+
+        $new = (array) ($properties['attributes'] ?? []);
+        $old = (array) ($properties['old'] ?? []);
+        $rows = [];
+        foreach ($record->event === 'deleted' ? $old : $new as $field => $value) {
+            $field = (string) $field;
+            $rows[] = [
+                'field' => $field,
+                'label' => self::FIELDS[$field] ?? $field,
+                'old' => $record->event === 'created' ? '—' : self::format($field, $record->event === 'deleted' ? $value : ($old[$field] ?? null), $full),
+                'new' => $record->event === 'deleted' ? '—' : self::format($field, $value, $full),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Satu sisi perubahan untuk kolom tabel, maks. 3 baris (+N di kolom pertama).
+     *
+     * @param  'label'|'old'|'new'  $key
+     * @return list<string>
+     */
+    private static function changeColumn(ActivityLog $record, string $key): array
+    {
+        $changes = self::changes($record);
+        $values = array_map(fn (array $c): string => $c[$key], array_slice($changes, 0, 3));
+        if (count($changes) > 3) {
+            // Baris pengisi (spasi tak putus) agar kolom sebelum/sesudah tetap sejajar dengan kolom pertama
+            $values[] = $key === 'label' ? '+'.(count($changes) - 3).' kolom lain' : "\u{00A0}";
+        }
+
+        return $values === [] ? ['—'] : $values;
+    }
+
+    private static function causerName(ActivityLog $record): string
+    {
+        return match (true) {
+            $record->causer instanceof Admin => 'Tim gs.POS',
+            $record->causer instanceof User => $record->causer->name,
+            default => 'Sistem',
+        };
+    }
+
+    private static function causerRole(ActivityLog $record): string
+    {
+        return match (true) {
+            $record->causer instanceof Admin => 'Super admin',
+            $record->causer instanceof User => $record->causer->role->getLabel(),
+            default => 'Otomatis',
+        };
+    }
+
     /** "Harga: Rp24.000 → Rp26.000 · Aktif: Ya → Tidak" */
     public static function summary(ActivityLog $record): string
     {
@@ -267,7 +371,7 @@ final class ActivityLogResource extends Resource
         return $parts === [] ? '—' : implode(' · ', $parts);
     }
 
-    private static function format(string $field, mixed $value): string
+    private static function format(string $field, mixed $value, bool $full = false): string
     {
         return match (true) {
             $value === null || $value === '' => '—',
@@ -279,7 +383,7 @@ final class ActivityLogResource extends Resource
             $field === 'category' => PaymentCategory::tryFrom((string) $value)?->getLabel() ?? (string) $value,
             $field === 'discount_limits' && is_array($value) => 'Kasir '.($value['cashier'] ?? 0).'%, Supervisor '.($value['supervisor'] ?? 0).'%',
             is_array($value) => (string) json_encode($value),
-            default => mb_strimwidth((string) $value, 0, 60, '…'),
+            default => $full ? (string) $value : mb_strimwidth((string) $value, 0, 60, '…'),
         };
     }
 

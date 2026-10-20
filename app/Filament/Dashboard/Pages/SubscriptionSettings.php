@@ -8,7 +8,9 @@ use App\Actions\Billing\CreateAddonInvoice;
 use App\Actions\Billing\CreateInvoice;
 use App\Actions\Billing\StartInvoicePayment;
 use App\Actions\Billing\StopTenantAddon;
+use App\Actions\Billing\SubmitPaymentProof;
 use App\Enums\BillingCycle;
+use App\Enums\InvoicePaymentMethod;
 use App\Enums\InvoiceStatus;
 use App\Enums\TenantStatus;
 use App\Exceptions\BusinessException;
@@ -24,11 +26,14 @@ use App\Services\Payment\MidtransClient;
 use App\Support\CurrentOutlet;
 use App\Support\Edition;
 use App\Support\Money;
+use App\Support\SystemSettings;
 use App\Support\TenantContext;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
@@ -36,6 +41,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 /**
@@ -197,7 +203,9 @@ final class SubscriptionSettings extends Page
      */
     public function pendingInvoices(): Collection
     {
-        return SubscriptionInvoice::query()->with('items')->where('status', InvoiceStatus::Pending)->where('due_at', '>', now())
+        // Menunggu verifikasi tetap tampil walau lewat jatuh tempo (tidak kedaluwarsa selama dicek admin)
+        return SubscriptionInvoice::query()->with('items')->where('status', InvoiceStatus::Pending)
+            ->where(fn ($q) => $q->where('due_at', '>', now())->orWhereNotNull('proof_submitted_at'))
             ->orderBy('due_at')->get();
     }
 
@@ -211,18 +219,21 @@ final class SubscriptionSettings extends Page
         return Action::make('createInvoice')->label('Buat tagihan')->icon(Heroicon::OutlinedDocumentPlus)
             ->visible(fn (): bool => $this->plans()->isNotEmpty())
             ->modalHeading('Buat tagihan langganan')
+            ->modalWidth('2xl')
+            ->modalSubmitActionLabel('Buat tagihan')
             ->modalDescription('Upgrade ke paket lebih mahal: bayar selisih sisa masa aktif, paket langsung berganti. Lainnya: perpanjangan dari akhir masa aktif sekarang')
             ->fillForm(fn (): array => [
                 'plan_id' => $this->tenant()->plan_id ?? $this->plans()->first()?->id,
                 'billing_cycle' => ($this->tenant()->billing_cycle ?? BillingCycle::Monthly)->value,
             ])
             ->schema([
+                ToggleButtons::make('billing_cycle')->label('Siklus tagihan')->required()->inline()->options(BillingCycle::class)->live(),
                 Radio::make('plan_id')->label('Paket')->required()->live()
-                    ->options(fn (): array => $this->plans()->mapWithKeys(fn (Plan $p): array => [$p->id => $p->name])->all())
-                    ->descriptions(fn (): array => $this->plans()->mapWithKeys(fn (Plan $p): array => [$p->id => Money::format($p->price_monthly).'/bulan · '.Money::format($p->price_yearly).'/tahun'.($p->limits ? ' · '.$p->limitsSummary() : '')])->all()),
-                ToggleButtons::make('billing_cycle')->label('Siklus')->required()->inline()->options(BillingCycle::class)->live(),
-                Placeholder::make('quote')->label('Tagihan')
-                    ->content(fn (Get $get): string => $this->quoteText($get('plan_id'), $get('billing_cycle'))),
+                    ->options(fn (): array => $this->plans()->mapWithKeys(fn (Plan $p): array => [$p->id => $p->name.($p->id === $this->tenant()->plan_id ? ' (paket saat ini)' : '')])->all())
+                    ->descriptions(fn (Get $get): array => $this->plans()->mapWithKeys(fn (Plan $p): array => [$p->id => $this->planPriceText($p, $get('billing_cycle')).($p->limits ? ' · '.$p->limitsSummary() : '')])->all())
+                    ->extraAttributes(['class' => 'gs-choice-cards']),
+                Placeholder::make('quote')->label('Ringkasan tagihan')
+                    ->content(fn (Get $get): HtmlString => $this->quoteHtml($get('plan_id'), $get('billing_cycle'))),
             ])
             ->action(function (array $data): void {
                 abort_unless(self::canAccess(), 403);
@@ -254,31 +265,123 @@ final class SubscriptionSettings extends Page
         return InvoiceQuote::for($this->tenant(), $plan, $cycle)->summary($plan, CurrentOutlet::timezone());
     }
 
+    /** Ringkasan tagihan bergaya kartu: total besar, jenis & efek (InvoiceQuote, sama dengan server). */
+    public function quoteHtml(mixed $planId, mixed $cycle): HtmlString
+    {
+        $plan = $this->plans()->firstWhere('id', $planId);
+        $cycle = self::cycle($cycle);
+        $quote = $plan !== null && $cycle !== null ? InvoiceQuote::for($this->tenant(), $plan, $cycle) : null;
+
+        return new HtmlString(view('filament.dashboard.subscription.quote', [
+            'quote' => $quote,
+            'text' => $quote !== null ? $quote->summary($plan, CurrentOutlet::timezone()) : 'Pilih paket & siklus',
+        ])->render());
+    }
+
+    private function planPriceText(Plan $plan, mixed $cycle): string
+    {
+        return self::cycle($cycle) === BillingCycle::Yearly
+            ? Money::format($plan->price_yearly).'/tahun'
+            : Money::format($plan->price_monthly).'/bulan';
+    }
+
     private static function cycle(mixed $value): ?BillingCycle
     {
         return $value instanceof BillingCycle ? $value : BillingCycle::tryFrom((string) $value);
     }
 
-    public function payOnlineAction(): Action
+    /** @return list<InvoicePaymentMethod> metode yang tersedia sekarang (QRIS & VA butuh Midtrans vendor) */
+    public function paymentMethods(): array
     {
-        return Action::make('payOnline')->label('Bayar online')->icon(Heroicon::OutlinedArrowTopRightOnSquare)
-            ->visible(fn (): bool => $this->pendingInvoices()->isNotEmpty() && $this->onlinePaymentAvailable())
+        return array_values(array_filter(InvoicePaymentMethod::cases(), fn (InvoicePaymentMethod $m): bool => $m->isOnline()
+            ? $this->onlinePaymentAvailable()
+            : app(SystemSettings::class)->manualBillingAvailable() || ! $this->onlinePaymentAvailable()));
+    }
+
+    /** Bayar tagihan menunggu (argumen id): pilih QRIS / VA (Snap Midtrans) atau transfer manual + unggah bukti. */
+    public function payInvoiceAction(): Action
+    {
+        return Action::make('payInvoice')->label('Bayar sekarang')->icon(Heroicon::OutlinedCreditCard)
+            ->modalHeading(fn (array $arguments): string => 'Bayar tagihan '.($this->payableInvoice($arguments)->number ?? ''))
+            ->modalDescription('Pilih cara bayar. QRIS & VA lunas otomatis; transfer manual diverifikasi tim gs.POS')
+            ->modalWidth('2xl')
+            ->modalSubmitActionLabel('Lanjutkan')
+            ->fillForm(fn (array $arguments): array => [
+                'method' => ($this->payableInvoice($arguments)->payment_method ?? $this->paymentMethods()[0] ?? InvoicePaymentMethod::Manual)->value,
+            ])
+            ->schema(fn (array $arguments): array => [
+                Placeholder::make('summary')->hiddenLabel()
+                    ->content(fn (): HtmlString => new HtmlString(view('filament.dashboard.subscription.pay-summary', ['invoice' => $this->payableInvoice($arguments)])->render())),
+                Radio::make('method')->label('Metode pembayaran')->required()->live()
+                    ->options(collect($this->paymentMethods())->mapWithKeys(fn (InvoicePaymentMethod $m): array => [$m->value => $m->getLabel()])->all())
+                    ->descriptions(collect($this->paymentMethods())->mapWithKeys(fn (InvoicePaymentMethod $m): array => [$m->value => $m->getDescription()])->all())
+                    ->extraAttributes(['class' => 'gs-choice-cards']),
+                Placeholder::make('transfer_to')->label('Transfer ke')
+                    ->visible(fn (Get $get): bool => $get('method') === InvoicePaymentMethod::Manual->value)
+                    ->content(fn (): HtmlString => new HtmlString(view('filament.dashboard.subscription.bank-accounts', [
+                        'accounts' => app(SystemSettings::class)->billingBankAccounts(),
+                        'qris' => app(SystemSettings::class)->billingQrisImage(),
+                        'note' => app(SystemSettings::class)->billingManualNote(),
+                        'invoice' => $this->payableInvoice($arguments),
+                    ])->render())),
+                FileUpload::make('proof')->label('Bukti transfer')->required()
+                    ->visible(fn (Get $get): bool => $get('method') === InvoicePaymentMethod::Manual->value)
+                    ->disk('local')->directory(fn (): string => SubmitPaymentProof::directory(TenantContext::idOrFail()))->visibility('private')
+                    ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp', 'application/pdf'])->maxSize(2048)
+                    ->helperText('Foto/screenshot atau PDF, maks. 2 MB. Pastikan nominal, tanggal & rekening tujuan terlihat'),
+                TextInput::make('proof_sender')->label('Nama pengirim & bank asal')->required()->maxLength(120)
+                    ->placeholder('mis. Budi Santoso · BCA')
+                    ->visible(fn (Get $get): bool => $get('method') === InvoicePaymentMethod::Manual->value),
+                Textarea::make('proof_note')->label('Catatan (opsional)')->rows(2)->maxLength(500)
+                    ->visible(fn (Get $get): bool => $get('method') === InvoicePaymentMethod::Manual->value),
+            ])
             // Argumen id: tagihan menunggu milik bisnis ini (scope tenant)
-            ->action(function (Action $action, array $arguments): void {
+            ->action(function (Action $action, array $data, array $arguments): void {
                 abort_unless(self::canAccess(), 403);
                 $user = auth()->user();
                 abort_unless($user instanceof User, 403);
-                $invoice = $this->pendingInvoices()->firstWhere('id', (string) ($arguments['id'] ?? '')) ?? abort(404);
+                $invoice = $this->payableInvoice($arguments) ?? abort(404);
+                $method = InvoicePaymentMethod::tryFrom((string) ($data['method'] ?? ''));
+                abort_unless($method !== null && in_array($method, $this->paymentMethods(), true), 422);
 
                 try {
-                    $url = app(StartInvoicePayment::class)->handle($invoice, $user, self::getUrl());
+                    if ($method->isOnline()) {
+                        $action->redirect(app(StartInvoicePayment::class)->handle($invoice, $user, self::getUrl(), $method));
+
+                        return;
+                    }
+
+                    app(SubmitPaymentProof::class)->handle($invoice, $user, (string) $data['proof'], (string) ($data['proof_sender'] ?? ''), $data['proof_note'] ?? null);
                 } catch (BusinessException $e) {
                     Notification::make()->danger()->title($e->getMessage())->send();
+                    $action->halt();
 
                     return;
                 }
 
-                $action->redirect($url);
+                Notification::make()->success()->title('Bukti transfer terkirim')
+                    ->body('Tim gs.POS memverifikasi maks. 1×24 jam kerja. Status tagihan berubah otomatis setelah diverifikasi')->send();
             });
+    }
+
+    /** Detail tagihan (argumen id): rincian baris, total, pembayaran & bukti transfer. */
+    public function invoiceDetailAction(): Action
+    {
+        return Action::make('invoiceDetail')->label('Detail')->icon(Heroicon::OutlinedEye)->iconButton()->color('gray')->tooltip('Detail tagihan')
+            ->modalHeading('Detail tagihan')
+            ->modalWidth('3xl')->modalSubmitAction(false)->modalCancelActionLabel('Tutup')
+            ->modalContent(function (array $arguments) {
+                abort_unless(self::canAccess(), 403);
+                // Scope tenant: tagihan bisnis lain = 404
+                $invoice = SubscriptionInvoice::query()->with('items')->findOrFail((string) ($arguments['id'] ?? ''));
+
+                return view('filament.shared.invoice-detail', ['invoice' => $invoice, 'audience' => 'owner']);
+            });
+    }
+
+    /** @param  array<string, mixed>  $arguments */
+    private function payableInvoice(array $arguments): ?SubscriptionInvoice
+    {
+        return $this->pendingInvoices()->first(fn (SubscriptionInvoice $i): bool => $i->id === (string) ($arguments['id'] ?? '') && $i->isPayable());
     }
 }
