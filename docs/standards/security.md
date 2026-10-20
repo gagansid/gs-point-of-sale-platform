@@ -195,4 +195,5 @@ Phishing menyerang **manusia**, sehingga kontrolnya sebagian besar operasional:
 | Isolasi tenant | Argumen `id` di aksi Bayar/Detail dicari lewat scope tenant → tagihan bisnis lain 404 (diuji) |
 | Pembayaran ganda | Bukti menunggu verifikasi mengunci tagihan: bayar online & kirim ulang ditolak; ganti metode QRIS ↔ VA membatalkan transaksi Snap lama |
 | Logo bank & QRIS | Hanya raster (PNG/JPG/WEBP); SVG unggahan ditolak (XSS); path wajib di folder `banks/` / `billing/`; file lama dihapus saat diganti |
+| Key Midtrans vendor | Per mode (sandbox/produksi), terenkripsi (Crypt/APP_KEY), tidak pernah ditampilkan ulang atau dicatat; format dicek & diuji ke Midtrans sebelum disimpan; webhook hanya menerima tanda tangan dengan key mode aktif |
 | Audit | Kirim bukti, tolak bukti, ubah setelan pembayaran & bank dicatat di log aplikasi (tanpa isi file) |

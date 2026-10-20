@@ -7,6 +7,7 @@ namespace App\Services\Payment;
 use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\PaymentGatewaySetting;
+use App\Support\SystemSettings;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -26,18 +27,29 @@ final class MidtransClient
         return new self($setting);
     }
 
-    /** Akun Midtrans milik vendor gs.POS untuk tagihan langganan (ADR 0024); null bila server key belum diisi. */
-    public static function vendor(): ?self
+    /**
+     * Akun Midtrans milik vendor gs.POS untuk tagihan langganan (ADR 0024): mode aktif (sandbox/produksi) & key-nya dari
+     * SystemSettings (panel → .env). null bila key mode aktif belum diisi. $mode/$key untuk menguji key baru.
+     */
+    public static function vendor(?string $mode = null, ?string $key = null): ?self
     {
-        $key = config('pos.billing.midtrans_server_key');
+        $settings = app(SystemSettings::class);
+        $mode ??= $settings->billingMidtransMode();
+        $key ??= $settings->billingMidtransKey($mode);
         if (blank($key)) {
             return null;
         }
 
         $setting = new PaymentGatewaySetting;
-        $setting->forceFill(['server_key' => (string) $key, 'is_production' => (bool) config('pos.billing.midtrans_production')]);
+        $setting->forceFill(['server_key' => (string) $key, 'is_production' => $mode === 'production']);
 
         return new self($setting);
+    }
+
+    /** Server key vendor mode aktif (tanda tangan webhook tagihan). */
+    public static function vendorServerKey(): ?string
+    {
+        return app(SystemSettings::class)->billingMidtransKey();
     }
 
     /**

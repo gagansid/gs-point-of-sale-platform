@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Filament\Admin\Pages;
 
+use App\Actions\Admin\UpdateBillingMidtransSettings;
 use App\Actions\Admin\UpdateBillingPaymentSettings;
 use App\Exceptions\BusinessException;
 use App\Filament\Shared\Actions\SettingsFormActions;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Admin;
 use App\Models\Bank;
-use App\Services\Payment\MidtransClient;
 use App\Support\Edition;
 use App\Support\SystemSettings;
 use BackedEnum;
@@ -21,6 +21,8 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedSchema;
@@ -28,14 +30,13 @@ use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use LogicException;
 use UnitEnum;
 
 /**
  * Sistem → Pembayaran langganan (Q123): rekening & QRIS statis untuk transfer manual tagihan langganan, petunjuk
- * untuk owner, dan status Midtrans vendor (QRIS/VA otomatis, key di .env).
+ * untuk owner, dan Midtrans vendor (QRIS/VA otomatis): mode sandbox/produksi + server key per mode.
  */
 final class BillingPaymentSettings extends Page
 {
@@ -74,6 +75,7 @@ final class BillingPaymentSettings extends Page
             'accounts' => $settings->billingBankAccounts(),
             'qris_image' => $settings->billingQrisImage(),
             'manual_note' => $settings->billingManualNote(),
+            'midtrans_mode' => $settings->billingMidtransMode(),
         ]);
     }
 
@@ -124,15 +126,27 @@ final class BillingPaymentSettings extends Page
                     ]),
                 Section::make('Pembayaran otomatis (Midtrans)')
                     ->icon(Heroicon::OutlinedBolt)
-                    ->description('QRIS & virtual account, lunas otomatis lewat webhook')
+                    ->description('QRIS & virtual account, lunas otomatis lewat webhook. Key tersimpan terenkripsi, diuji ke Midtrans sebelum disimpan')
                     ->columnSpan(['default' => 3, 'lg' => 2])
+                    ->columns(2)
                     ->schema([
-                        Placeholder::make('midtrans')->hiddenLabel()->content(fn (): HtmlString => new HtmlString(Blade::render(
-                            '<div class="flex flex-wrap items-center gap-2 text-sm"><x-filament::badge :color="$on ? \'success\' : \'gray\'">{{ $on ? \'Aktif\' : \'Belum diatur\' }}</x-filament::badge><span>{!! $text !!}</span></div>',
-                            ['on' => MidtransClient::vendor() !== null, 'text' => MidtransClient::vendor() !== null
-                                ? 'Mode '.(config('pos.billing.midtrans_production') ? 'produksi' : 'sandbox').'. Owner bisa memilih QRIS atau Transfer bank (VA).'
-                                : 'Isi <code>POS_BILLING_MIDTRANS_SERVER_KEY</code> di .env untuk mengaktifkan QRIS & VA otomatis. Tanpa key, owner hanya bisa transfer manual.'],
-                        ))),
+                        ToggleButtons::make('midtrans_mode')->label('Mode aktif')->inline()->required()
+                            ->options(SystemSettings::MIDTRANS_MODES)
+                            ->colors(['sandbox' => 'warning', 'production' => 'success'])
+                            ->icons(['sandbox' => Heroicon::OutlinedBeaker, 'production' => Heroicon::OutlinedCheckBadge])
+                            ->helperText('Sandbox untuk uji coba (uang tidak sungguhan). Produksi untuk pembayaran nyata')
+                            ->columnSpanFull(),
+                        TextInput::make('midtrans_sandbox_key')->label('Server key sandbox (dev)')->password()->revealable()
+                            ->maxLength(120)->autocomplete('off')
+                            ->placeholder(fn (): string => self::keyPlaceholder('sandbox', 'SB-Mid-server-…'))
+                            ->helperText(fn (): string => self::keyStatus('sandbox')),
+                        TextInput::make('midtrans_production_key')->label('Server key produksi')->password()->revealable()
+                            ->maxLength(120)->autocomplete('off')
+                            ->placeholder(fn (): string => self::keyPlaceholder('production', 'Mid-server-…'))
+                            ->helperText(fn (): string => self::keyStatus('production')),
+                        Toggle::make('midtrans_clear_keys')->label('Hapus key tersimpan (kembali ke .env)')->columnSpanFull(),
+                        Placeholder::make('webhook')->label('URL notifikasi (isi di dashboard Midtrans, kedua mode)')->columnSpanFull()
+                            ->content(fn (): HtmlString => new HtmlString('<code class="text-xs">'.e(rtrim((string) config('app.url'), '/').'/webhooks/billing/midtrans').'</code>')),
                     ]),
             ]);
     }
@@ -152,6 +166,8 @@ final class BillingPaymentSettings extends Page
         $data = $this->settingsForm()->getState();
 
         try {
+            // Midtrans dulu: key salah ditolak sebelum setelan lain tersimpan
+            $online = app(UpdateBillingMidtransSettings::class)->handle($this->admin(), $data);
             app(UpdateBillingPaymentSettings::class)->handle($this->admin(), $data);
         } catch (BusinessException $e) {
             Notification::make()->danger()->title($e->getMessage())->send();
@@ -159,7 +175,28 @@ final class BillingPaymentSettings extends Page
             return;
         }
 
-        Notification::make()->success()->title('Setelan pembayaran disimpan')->send();
+        // Key tidak pernah diisi ulang ke form
+        $this->settingsForm()->fill([...$data, 'midtrans_sandbox_key' => null, 'midtrans_production_key' => null, 'midtrans_clear_keys' => false]);
+
+        $notification = Notification::make()->success()->title('Setelan pembayaran disimpan');
+        if (! $online) {
+            $notification->warning()->body('Key Midtrans mode '.SystemSettings::MIDTRANS_MODES[app(SystemSettings::class)->billingMidtransMode()].' belum diisi: owner hanya bisa transfer manual');
+        }
+        $notification->send();
+    }
+
+    private static function keyStatus(string $mode): string
+    {
+        return match (app(SystemSettings::class)->billingMidtransKeySource($mode)) {
+            'saved' => 'Tersimpan di panel. Kosongkan bila tidak diubah',
+            'env' => 'Dari .env. Isi untuk menyimpan di panel',
+            default => 'Belum diisi',
+        };
+    }
+
+    private static function keyPlaceholder(string $mode, string $example): string
+    {
+        return app(SystemSettings::class)->billingMidtransKeySource($mode) !== null ? '•••••••• (tersimpan)' : $example;
     }
 
     private function settingsForm(): Schema

@@ -28,7 +28,7 @@ final class HandleBillingNotification
             return 404;
         }
 
-        $expected = MidtransClient::signature($orderId, (string) ($payload['status_code'] ?? ''), (string) ($payload['gross_amount'] ?? ''), (string) config('pos.billing.midtrans_server_key'));
+        $expected = MidtransClient::signature($orderId, (string) ($payload['status_code'] ?? ''), (string) ($payload['gross_amount'] ?? ''), (string) MidtransClient::vendorServerKey());
         if (! hash_equals($expected, (string) ($payload['signature_key'] ?? ''))) {
             Log::warning('Notifikasi tagihan dengan tanda tangan salah', ['order_id' => mb_substr($orderId, 0, 64)]);
 

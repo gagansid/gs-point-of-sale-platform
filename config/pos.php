@@ -99,7 +99,12 @@ return [
 
     // Tagihan langganan SaaS (ADR 0024): Midtrans milik vendor; tanpa key = transfer manual (instruksi di bank_info)
     'billing' => [
+        // Key per mode (bisa juga diatur di /admin Sistem → Pembayaran langganan, tersimpan terenkripsi & diutamakan).
+        // POS_BILLING_MIDTRANS_SERVER_KEY = cara lama, dipakai untuk mode bawaan bila key per mode kosong.
+        'midtrans_sandbox_server_key' => env('POS_BILLING_MIDTRANS_SANDBOX_SERVER_KEY'),
+        'midtrans_production_server_key' => env('POS_BILLING_MIDTRANS_PRODUCTION_SERVER_KEY'),
         'midtrans_server_key' => env('POS_BILLING_MIDTRANS_SERVER_KEY'),
+        // Mode bawaan sebelum diatur di panel
         'midtrans_production' => (bool) env('POS_BILLING_MIDTRANS_PRODUCTION', false),
         'bank_info' => env('POS_BILLING_BANK_INFO', 'Transfer ke rekening gs.POS, lalu kirim bukti ke tim kami.'),
         'due_days' => (int) env('POS_BILLING_DUE_DAYS', 3),

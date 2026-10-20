@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Admin\UpdateBillingMidtransSettings;
 use App\Actions\Admin\UpdateBillingPaymentSettings;
 use App\Actions\Billing\CreateInvoice;
 use App\Actions\Billing\RejectPaymentProof;
@@ -21,8 +22,10 @@ use App\Models\Admin;
 use App\Models\Bank;
 use App\Models\Plan;
 use App\Models\SubscriptionInvoice;
+use App\Models\SystemSetting;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\Payment\MidtransClient;
 use App\Support\CurrentOutlet;
 use App\Support\SystemSettings;
 use App\Support\TenantContext;
@@ -222,4 +225,63 @@ it('setelan pembayaran admin: rekening divalidasi & disimpan, QRIS lama dihapus 
     Filament::setCurrentPanel('admin');
     $this->actingAs($this->admin, 'admin');
     Livewire::test(BillingPaymentSettings::class)->assertOk()->assertSee('Rekening transfer manual');
+});
+
+it('Midtrans vendor: mode sandbox/produksi, key per mode diuji & terenkripsi, cadangan .env', function () {
+    $action = app(UpdateBillingMidtransSettings::class);
+    $settings = app(SystemSettings::class);
+    config(['pos.billing.midtrans_server_key' => null]);
+
+    expect($settings->billingMidtransMode())->toBe('sandbox')->and(MidtransClient::vendor())->toBeNull();
+
+    // Midtrans: key berisi "salah" → 401, selain itu 404 (transaksi uji tidak ada = key diterima)
+    Http::fake(fn (Request $r) => str_contains(base64_decode(substr((string) $r->header('Authorization')[0], 6)), 'salah')
+        ? Http::response(['status_code' => '401'], 401)
+        : Http::response(['status_code' => '404'], 404));
+
+    // Format: key sandbox di kolom produksi ditolak tanpa memanggil Midtrans
+    expect(fn () => $action->handle($this->admin, ['midtrans_mode' => 'production', 'midtrans_production_key' => 'SB-Mid-server-abcdefgh123']))
+        ->toThrow(BusinessException::class, 'Mid-server-');
+    Http::assertNothingSent();
+
+    // Key ditolak Midtrans (401) tidak disimpan
+    expect(fn () => $action->handle($this->admin, ['midtrans_mode' => 'production', 'midtrans_production_key' => 'Mid-server-salahsekali1']))
+        ->toThrow(BusinessException::class, 'ditolak');
+    expect($settings->billingMidtransKey('production'))->toBeNull();
+
+    // Key valid: tersimpan terenkripsi, mode produksi memakai API produksi
+    expect($action->handle($this->admin, ['midtrans_mode' => 'production', 'midtrans_production_key' => 'Mid-server-benarsekali1', 'midtrans_sandbox_key' => 'SB-Mid-server-benarsekali2']))->toBeTrue();
+    $raw = (string) SystemSetting::query()->whereKey(SystemSettings::BILLING_MIDTRANS_KEY_PREFIX.'production')->value('value');
+    expect($raw)->not->toContain('benarsekali1')
+        ->and($settings->billingMidtransMode())->toBe('production')
+        ->and($settings->billingMidtransKey())->toBe('Mid-server-benarsekali1')
+        ->and($settings->billingMidtransKey('sandbox'))->toBe('SB-Mid-server-benarsekali2')
+        ->and(MidtransClient::vendorServerKey())->toBe('Mid-server-benarsekali1');
+    Http::assertSent(fn (Request $r): bool => str_starts_with($r->url(), 'https://api.midtrans.com/'));
+    Http::assertSent(fn (Request $r): bool => str_starts_with($r->url(), 'https://api.sandbox.midtrans.com/'));
+
+    // Kosong = tidak diubah; hapus = kembali ke .env per mode
+    $action->handle($this->admin, ['midtrans_mode' => 'sandbox']);
+    expect($settings->billingMidtransKey('production'))->toBe('Mid-server-benarsekali1');
+    config(['pos.billing.midtrans_sandbox_server_key' => 'SB-Mid-server-dariEnv000']);
+    expect($action->handle($this->admin, ['midtrans_mode' => 'sandbox', 'midtrans_clear_keys' => true]))->toBeTrue()
+        ->and($settings->billingMidtransKeySource('sandbox'))->toBe('env')
+        ->and($settings->billingMidtransKeySource('production'))->toBeNull()
+        ->and($action->handle($this->admin, ['midtrans_mode' => 'production']))->toBeFalse();
+
+    Filament::setCurrentPanel('admin');
+    $this->actingAs($this->admin, 'admin');
+    Livewire::test(BillingPaymentSettings::class)->assertOk()->assertSee('Server key sandbox (dev)')->assertDontSee('dariEnv000');
+});
+
+it('webhook tagihan memakai key mode aktif', function () {
+    app(SystemSettings::class)->setBillingMidtrans('production', ['production' => 'Mid-server-prodkey00001']);
+    $invoice = payInvoice($this);
+    $invoice->forceFill(['gateway_order_id' => 'BILL-P'])->save();
+    Http::fake(['api.midtrans.com/v2/BILL-P/status' => Http::response(['transaction_status' => 'settlement', 'gross_amount' => '199000.00'])]);
+
+    $payload = ['order_id' => 'BILL-P', 'status_code' => '200', 'gross_amount' => '199000.00'];
+    $this->postJson('/webhooks/billing/midtrans', [...$payload, 'signature_key' => MidtransClient::signature('BILL-P', '200', '199000.00', 'SB-vendor-key')])->assertStatus(403);
+    $this->postJson('/webhooks/billing/midtrans', [...$payload, 'signature_key' => MidtransClient::signature('BILL-P', '200', '199000.00', 'Mid-server-prodkey00001')])->assertOk();
+    expect($invoice->refresh()->status)->toBe(InvoiceStatus::Paid);
 });

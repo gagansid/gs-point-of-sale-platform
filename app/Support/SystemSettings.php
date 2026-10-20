@@ -59,6 +59,14 @@ final class SystemSettings
 
     public const BILLING_ACCOUNTS_MAX = 5;
 
+    /** Mode Midtrans vendor tagihan langganan: sandbox (dev) | production. */
+    public const BILLING_MIDTRANS_MODE = 'billing.midtrans_mode';
+
+    /** Server key Midtrans vendor per mode (terenkripsi): billing.midtrans_key.sandbox / .production */
+    public const BILLING_MIDTRANS_KEY_PREFIX = 'billing.midtrans_key.';
+
+    public const MIDTRANS_MODES = ['sandbox' => 'Sandbox (dev)', 'production' => 'Produksi'];
+
     private const CACHE_PREFIX = 'system_settings:';
 
     /**
@@ -245,6 +253,73 @@ final class SystemSettings
         $this->set(self::BILLING_BANK_ACCOUNTS, $accounts !== [] ? $accounts : null, $by);
         $this->set(self::BILLING_QRIS_IMAGE, $qrisImage, $by);
         $this->set(self::BILLING_MANUAL_NOTE, $note, $by);
+    }
+
+    /** Mode aktif; bawaan dari POS_BILLING_MIDTRANS_PRODUCTION. */
+    public function billingMidtransMode(): string
+    {
+        $mode = $this->get(self::BILLING_MIDTRANS_MODE, null);
+
+        return is_string($mode) && array_key_exists($mode, self::MIDTRANS_MODES)
+            ? $mode
+            : (config('pos.billing.midtrans_production') ? 'production' : 'sandbox');
+    }
+
+    /**
+     * Server key untuk mode (bawaan: mode aktif): tersimpan di panel → .env per mode → POS_BILLING_MIDTRANS_SERVER_KEY
+     * (lama, hanya untuk mode bawaan .env).
+     */
+    public function billingMidtransKey(?string $mode = null): ?string
+    {
+        $mode ??= $this->billingMidtransMode();
+
+        return $this->savedMidtransKey($mode) ?? self::envMidtransKey($mode);
+    }
+
+    /** Asal key: 'saved' (panel), 'env', atau null (belum ada). */
+    public function billingMidtransKeySource(string $mode): ?string
+    {
+        return match (true) {
+            $this->savedMidtransKey($mode) !== null => 'saved',
+            self::envMidtransKey($mode) !== null => 'env',
+            default => null,
+        };
+    }
+
+    /** @param  array<string, string|null>  $keys  mode → key baru (null = tidak diubah, '' = hapus, kembali ke .env) */
+    public function setBillingMidtrans(string $mode, array $keys, ?Admin $by = null): void
+    {
+        foreach ($keys as $keyMode => $key) {
+            if ($key !== null && array_key_exists($keyMode, self::MIDTRANS_MODES)) {
+                $this->set(self::BILLING_MIDTRANS_KEY_PREFIX.$keyMode, $key !== '' ? Crypt::encryptString($key) : null, $by);
+            }
+        }
+        $this->set(self::BILLING_MIDTRANS_MODE, $mode, $by);
+    }
+
+    private function savedMidtransKey(string $mode): ?string
+    {
+        $encrypted = $this->get(self::BILLING_MIDTRANS_KEY_PREFIX.$mode, null);
+        if (! is_string($encrypted) || $encrypted === '') {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($encrypted);
+        } catch (DecryptException) {
+            // APP_KEY berganti: key lama tidak terbaca, dianggap belum diisi
+            return null;
+        }
+    }
+
+    private static function envMidtransKey(string $mode): ?string
+    {
+        $key = config('pos.billing.midtrans_'.$mode.'_server_key');
+        if (blank($key) && ($mode === 'production') === (bool) config('pos.billing.midtrans_production')) {
+            $key = config('pos.billing.midtrans_server_key');
+        }
+
+        return is_string($key) && $key !== '' ? $key : null;
     }
 
     private function get(string $key, mixed $default): mixed
