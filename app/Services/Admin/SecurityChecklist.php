@@ -68,7 +68,7 @@ final class SecurityChecklist
                 'key' => 'turnstile_admin', 'label' => 'Turnstile di login super admin',
                 'ok' => app(Turnstile::class)->enabled(Turnstile::ADMIN),
                 'value' => app(Turnstile::class)->enabled(Turnstile::ADMIN) ? 'Aktif' : (Turnstile::configured() ? 'Nonaktif' : 'Kunci belum diisi'),
-                'fix' => 'Isi kunci TURNSTILE_* di .env lalu aktifkan di kartu Cloudflare Turnstile di bawah',
+                'fix' => 'Isi kunci & aktifkan di kartu Cloudflare Turnstile di bawah (tombol Atur)',
             ],
             [
                 'key' => 'two_factor_all', 'label' => 'Semua super admin memakai 2FA',

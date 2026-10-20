@@ -6,7 +6,9 @@ namespace App\Support;
 
 use App\Models\Admin;
 use App\Models\SystemSetting;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 
 /**
  * Akses bertipe ke setelan sistem global. Nilai di-cache (driver database) dan cache
@@ -18,6 +20,11 @@ final class SystemSettings
 
     /** Prefix on/off Cloudflare Turnstile per halaman login (Turnstile::AUDIENCES). */
     public const TURNSTILE_PREFIX = 'security.turnstile.';
+
+    public const TURNSTILE_SITE_KEY = 'security.turnstile_site_key';
+
+    /** Secret Turnstile disimpan terenkripsi (Crypt, APP_KEY); tidak pernah dikirim ke browser. */
+    public const TURNSTILE_SECRET_KEY = 'security.turnstile_secret_key';
 
     public const TRIAL_DAYS = 'onboarding.trial_days';
 
@@ -60,6 +67,39 @@ final class SystemSettings
     public function turnstileEnabled(string $audience): bool
     {
         return (bool) $this->get(self::TURNSTILE_PREFIX.$audience, false);
+    }
+
+    public function turnstileSiteKey(): ?string
+    {
+        $key = $this->get(self::TURNSTILE_SITE_KEY, null);
+
+        return is_string($key) && $key !== '' ? $key : null;
+    }
+
+    public function turnstileSecretKey(): ?string
+    {
+        $encrypted = $this->get(self::TURNSTILE_SECRET_KEY, null);
+        if (! is_string($encrypted) || $encrypted === '') {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($encrypted);
+        } catch (DecryptException) {
+            // APP_KEY berganti: secret lama tidak terbaca, dianggap belum diisi
+            return null;
+        }
+    }
+
+    /** null = tidak diubah, '' = hapus (kembali ke .env). */
+    public function setTurnstileKeys(?string $siteKey, ?string $secretKey, ?Admin $by = null): void
+    {
+        if ($siteKey !== null) {
+            $this->set(self::TURNSTILE_SITE_KEY, $siteKey !== '' ? $siteKey : null, $by);
+        }
+        if ($secretKey !== null) {
+            $this->set(self::TURNSTILE_SECRET_KEY, $secretKey !== '' ? Crypt::encryptString($secretKey) : null, $by);
+        }
     }
 
     /** @param array<string, bool> $audiences halaman login → aktif */

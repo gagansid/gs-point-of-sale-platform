@@ -183,5 +183,5 @@ Phishing menyerang **manusia**, sehingga kontrolnya sebagian besar operasional:
 |---|---|
 | Anti-bot / credential stuffing | Widget Turnstile di login super admin, owner (+ lupa kata sandi), kasir web — on/off per halaman di Sistem → Keamanan (konfirmasi kata sandi, dicatat log) |
 | Verifikasi | Server-side `challenges.cloudflare.com/turnstile/v0/siteverify` dengan secret + IP; token maks. 2048 karakter; **fail-closed** (Cloudflare tak terjangkau = ditolak); token direset setelah gagal |
-| Kunci | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` di .env (bukan di database); tanpa kunci Turnstile tidak bisa diaktifkan. Kunci uji Cloudflare (`1x000…AA`) hanya untuk lokal |
+| Kunci | Diisi di Sistem → Keamanan → Cloudflare Turnstile: secret terenkripsi (Crypt/APP_KEY), tidak ditampilkan ulang, tidak dicatat di log, diuji ke Cloudflare sebelum disimpan; `.env` `TURNSTILE_*` cadangan. Kunci uji Cloudflare (`1x000…AA`) hanya untuk lokal |
 | Tetap berlaku | Throttle login per akun+IP, pesan error umum (anti enumerasi), timebox, 2FA admin |

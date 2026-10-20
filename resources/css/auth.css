@@ -113,10 +113,27 @@
 
 .cashier-auth-inner {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-items: center;
     gap: 56px;
     width: 100%;
     max-width: 400px;
+}
+
+/*
+ * HP: kartu & latar lebih rapat agar isi kartu ≥ 300px — widget Cloudflare Turnstile minimal 300px; bila kurang,
+ * kartu melebar keluar layar.
+ */
+@media (max-width: 480px) {
+    .cashier-auth {
+        justify-content: flex-start;
+        padding: 28px 14px 24px;
+    }
+
+    .cashier-auth .cashier-auth-card {
+        padding: 24px 18px 20px;
+        border-radius: 14px;
+    }
 }
 
 .cashier-auth-brand {
@@ -517,23 +534,55 @@
     gap: 8px;
     color: var(--site-text);
     cursor: pointer;
+    user-select: none;
 }
 
-.auth-check input {
+/* Checkbox gaya panel (Filament): kotak 16px radius 4px, terisi primary + centang putih */
+.auth-check input[type='checkbox'] {
+    display: grid;
+    flex: none;
+    place-content: center;
     width: 16px;
     height: 16px;
     margin: 0;
-    accent-color: var(--site-primary);
+    border: 1px solid #c4c8cf;
+    border-radius: 4px;
+    background-color: #ffffff;
+    cursor: pointer;
+    appearance: none;
+    transition: background-color 120ms, border-color 120ms, box-shadow 120ms;
 }
 
-.auth-link {
-    color: var(--site-primary);
+.auth-check input[type='checkbox']:hover {
+    border-color: #9aa2b1;
+}
+
+.auth-check input[type='checkbox']:checked {
+    border-color: var(--site-primary);
+    background-color: var(--site-primary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M12.207 4.793a1 1 0 0 1 0 1.414l-5 5a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L6.5 9.086l4.293-4.293a1 1 0 0 1 1.414 0z'/%3E%3C/svg%3E");
+    background-position: center;
+    background-size: 14px 14px;
+    background-repeat: no-repeat;
+}
+
+.auth-check input[type='checkbox']:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.18);
+}
+
+/* Tautan di form masuk: biru brand terang, tanpa garis bawah (hover: navy) */
+.cashier-auth .auth-link {
+    color: #3f5bb0;
     font-weight: 600;
     text-decoration: none;
+    transition: color 120ms;
 }
 
-.auth-link:hover {
-    text-decoration: underline;
+.cashier-auth .auth-link:hover,
+.cashier-auth .auth-link:focus-visible {
+    color: var(--site-navy);
+    text-decoration: none;
 }
 
 .auth-back {
@@ -552,6 +601,7 @@
     display: grid;
     gap: 6px;
     min-height: 65px;
+    max-width: 100%;
 }
 
 .auth-turnstile .cf-turnstile {

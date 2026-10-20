@@ -126,3 +126,84 @@
 .dark .fi-auth-shell .fi-fo-field-label-content {
     color: var(--text);
 }
+
+/*
+ * Samakan posisi dengan x-auth.field: ikon di 14px dari tepi, teks di 42px; jarak antar field 16px; tanpa tanda
+ * wajib (*) seperti halaman masuk lain.
+ */
+.fi-auth-shell .fi-sc.fi-sc-has-gap {
+    row-gap: 16px;
+}
+
+.fi-auth-shell .fi-input-wrp .fi-input-wrp-prefix:not(.fi-inline):has(.fi-icon) {
+    padding-inline: 14px 0;
+}
+
+.fi-auth-shell .fi-input-wrp:has(.fi-input-wrp-prefix .fi-icon) .fi-input {
+    padding-inline-start: 10px;
+}
+
+.fi-auth-shell .fi-input-wrp .fi-input-wrp-actions {
+    padding-inline-end: 6px;
+}
+
+.fi-auth-shell .fi-fo-field-label-required-mark {
+    display: none;
+}
+
+.fi-auth-shell .fi-fo-field {
+    row-gap: 6px;
+}
+
+/* Checkbox "Ingat saya" sama dengan halaman masuk lain: kotak 16px radius 4px, garis abu */
+.fi-auth-shell .fi-checkbox-input {
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px #c4c8cf;
+}
+
+.fi-auth-shell .fi-checkbox-input:checked {
+    box-shadow: none;
+}
+
+.fi-auth-shell .fi-fo-checkbox .fi-fo-field-label-content,
+.fi-auth-shell .fi-fo-field-label:has(.fi-checkbox-input) .fi-fo-field-label-content {
+    font-weight: 400;
+}
+
+/* Widget Turnstile tidak menempel ke tombol */
+.fi-auth-shell .auth-turnstile {
+    margin-top: 2px;
+}
+
+/* Input mengisi tinggi field 44px agar teks/placeholder tepat di tengah vertikal (bawaan Filament 30px di atas) */
+.fi-auth-shell .fi-input-wrp-content-ctn {
+    display: flex;
+    align-items: center;
+    align-self: stretch;
+}
+
+.fi-auth-shell .fi-input-wrp .fi-input {
+    height: 42px;
+    padding-block: 0;
+    line-height: 42px;
+}
+
+.fi-auth-shell .fi-input-wrp-prefix,
+.fi-auth-shell .fi-input-wrp-suffix,
+.fi-auth-shell .fi-input-wrp-actions {
+    align-self: center;
+}
+
+/* Jarak subjudul → field pertama 20px seperti halaman masuk lain: render hook kosong tidak menambah gap */
+.fi-auth-shell .fi-simple-header {
+    margin-bottom: 20px;
+}
+
+.fi-auth-shell .fi-simple-page .fi-grid-col:not(:has(*)),
+.fi-auth-shell .fi-simple-page .fi-grid-col:has(> .fi-sc-component:empty) {
+    display: none;
+}
+
+.fi-auth-shell :has(> .fi-simple-header) {
+    row-gap: 0;
+}

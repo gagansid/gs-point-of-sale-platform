@@ -36,14 +36,47 @@ final class Turnstile
 
     public function __construct(private readonly SystemSettings $settings) {}
 
+    /** Kunci diisi di Sistem → Keamanan, atau .env (TURNSTILE_SITE_KEY / TURNSTILE_SECRET_KEY) sebagai cadangan. */
     public static function configured(): bool
     {
-        return filled(config('services.turnstile.site_key')) && filled(config('services.turnstile.secret_key'));
+        return self::siteKey() !== '' && self::secretKey() !== '';
     }
 
     public static function siteKey(): string
     {
-        return (string) config('services.turnstile.site_key');
+        return app(SystemSettings::class)->turnstileSiteKey() ?? (string) config('services.turnstile.site_key');
+    }
+
+    public static function secretKey(): string
+    {
+        return app(SystemSettings::class)->turnstileSecretKey() ?? (string) config('services.turnstile.secret_key');
+    }
+
+    /** Asal kunci untuk ditampilkan admin: "admin" (diisi di panel), "env", atau null. */
+    public static function keySource(): ?string
+    {
+        $settings = app(SystemSettings::class);
+
+        return match (true) {
+            $settings->turnstileSiteKey() !== null && $settings->turnstileSecretKey() !== null => 'admin',
+            filled(config('services.turnstile.site_key')) && filled(config('services.turnstile.secret_key')) => 'env',
+            default => null,
+        };
+    }
+
+    /**
+     * Secret dikenali Cloudflare? Dicek dengan token kosong: secret salah → `invalid-input-secret`, secret benar →
+     * hanya `invalid-input-response`. null = Cloudflare tidak bisa dihubungi.
+     */
+    public function secretAccepted(string $secret): ?bool
+    {
+        try {
+            $response = Http::asForm()->timeout(5)->post(self::VERIFY_URL, ['secret' => $secret, 'response' => 'gspos-key-check']);
+        } catch (Throwable) {
+            return null;
+        }
+
+        return ! in_array('invalid-input-secret', (array) $response->json('error-codes', []), true);
     }
 
     public function enabled(string $audience): bool
@@ -60,7 +93,7 @@ final class Turnstile
 
         try {
             $response = Http::asForm()->timeout(5)->post(self::VERIFY_URL, array_filter([
-                'secret' => (string) config('services.turnstile.secret_key'),
+                'secret' => self::secretKey(),
                 'response' => (string) $token,
                 'remoteip' => $ip,
             ]));

@@ -81,10 +81,15 @@
             @unless ($ts['configured'])
                 <div class="gs-banner gs-banner-warning mb-4" role="alert">
                     <x-filament::icon icon="heroicon-o-exclamation-triangle" class="gs-banner-icon" />
-                    <div>Kunci belum diisi. Tambahkan <code>TURNSTILE_SITE_KEY</code> & <code>TURNSTILE_SECRET_KEY</code> di .env (dash.cloudflare.com → Turnstile).</div>
+                    <div>Kunci belum diisi. Klik <strong>Atur</strong> lalu isi site key & secret key dari dash.cloudflare.com → Turnstile.</div>
                 </div>
             @endunless
             <ul class="gs-checklist gs-checklist--plain">
+                <li class="gs-check {{ $ts['configured'] ? 'is-ok' : 'is-warn' }}">
+                    <span class="gs-check-icon"><x-filament::icon :icon="$ts['configured'] ? 'heroicon-o-key' : 'heroicon-o-exclamation-triangle'" /></span>
+                    <span class="gs-check-body"><span class="gs-check-label">Kunci widget</span><span class="gs-check-fix">Hostname: {{ implode(' · ', \App\Filament\Admin\Pages\SecuritySettings::turnstileHostnames()) }}</span></span>
+                    <span class="gs-check-value">{{ match ($ts['source']) { 'admin' => 'Diisi di panel', 'env' => 'Dari .env', default => 'Belum diisi' } }}</span>
+                </li>
                 @foreach ($ts['audiences'] as $key => $row)
                     <li wire:key="ts-{{ $key }}" @class(['gs-check', 'is-ok' => $row['enabled'], 'is-warn' => ! $row['enabled']])>
                         <span class="gs-check-icon"><x-filament::icon :icon="$row['enabled'] ? 'heroicon-o-check-circle' : 'heroicon-o-minus-circle'" /></span>
