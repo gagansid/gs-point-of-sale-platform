@@ -455,6 +455,45 @@
     padding-inline-start: 42px;
 }
 
+/* Dropdown (mis. Jenis usaha di daftar): sama dengan input + panah di kanan */
+.cashier-field .auth-input select {
+    width: 100%;
+    height: var(--control-h);
+    padding: 0 40px 0 14px;
+    border: 1px solid #e1e4ea;
+    border-radius: 10px;
+    background-color: #f8f9fb;
+    color: var(--site-text);
+    font: inherit;
+    font-size: 14.5px;
+    transition: border-color 120ms, box-shadow 120ms, background-color 120ms;
+}
+
+.auth-input.has-icon select {
+    padding-inline-start: 42px;
+}
+
+.cashier-field .auth-input select:hover {
+    border-color: #c9ced7;
+}
+
+.cashier-field .auth-input select:focus-visible {
+    border-color: var(--site-primary);
+    outline: none;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgb(45 66 130 / 0.12);
+}
+
+.auth-center {
+    text-align: center;
+}
+
+/* Tombol berupa tautan (mis. "Hubungi sales" saat pendaftaran ditutup) */
+.cashier-auth a.cashier-auth-btn {
+    color: #ffffff;
+    text-decoration: none;
+}
+
 .auth-input.has-reveal input {
     padding-inline-end: 46px;
 }
@@ -631,4 +670,33 @@
     color: rgb(184 192 212 / 0.7);
     font-size: 12px;
     letter-spacing: 0.02em;
+}
+
+/* Tanpa panel brand (x-auth.layout :brand="false"): satu kartu lebar 520px di tengah, logo tetap di kartu */
+.cashier-auth-inner.is-single {
+    max-width: 520px;
+}
+
+@media (min-width: 900px) {
+    .cashier-auth-inner.is-single {
+        grid-template-columns: minmax(0, 1fr);
+        max-width: 520px;
+    }
+
+    .cashier-auth-inner.is-single .cashier-auth-logo {
+        display: flex;
+    }
+}
+
+/* Dua field berdampingan (mis. nama bisnis + jenis usaha); satu kolom di layar sempit */
+.auth-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+@media (min-width: 560px) {
+    .auth-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }

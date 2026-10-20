@@ -11,7 +11,7 @@ use Throwable;
 
 /**
  * Cloudflare Turnstile di halaman login (anti-bot / credential stuffing). Aktif per halaman login (super admin,
- * owner & lupa kata sandi, kasir web) lewat Sistem → Keamanan, dan hanya bila kunci TURNSTILE_* terisi.
+ * owner + daftar + lupa kata sandi, kasir web) lewat Sistem → Keamanan, dan hanya bila kunci TURNSTILE_* terisi.
  * Verifikasi fail-closed: Cloudflare tidak bisa dihubungi = ditolak (pengguna diminta mencoba lagi).
  */
 final class Turnstile
@@ -25,7 +25,7 @@ final class Turnstile
     /** @var array<string, string> halaman login → label setelan */
     public const AUDIENCES = [
         self::ADMIN => 'Login super admin',
-        self::OWNER => 'Login owner & lupa kata sandi',
+        self::OWNER => 'Login owner, daftar & lupa kata sandi',
         self::CASHIER => 'Login kasir web',
     ];
 

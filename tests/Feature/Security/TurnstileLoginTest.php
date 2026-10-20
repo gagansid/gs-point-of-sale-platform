@@ -181,6 +181,22 @@ describe('login owner & lupa kata sandi', function () {
     });
 });
 
+it('daftar (coba gratis) mengikuti setelan owner', function () {
+    RateLimiter::clear('signup-h:127.0.0.1');
+    RateLimiter::clear('signup-d:127.0.0.1');
+    $body = ['business_name' => 'Kopi Fajar', 'business_type' => 'cafe', 'name' => 'Fajar', 'email' => 'fajar@kopifajar.test', 'password' => 'rahasia123', 'password_confirmation' => 'rahasia123'];
+
+    $this->get('/register')->assertOk()->assertDontSee('cf-turnstile', false)->assertSee('data-auth-reveal', false);
+
+    enableTurnstile(Turnstile::OWNER);
+    $this->get('/register')->assertSee('cf-turnstile', false);
+    $this->post('/register', $body)->assertSessionHasErrors(Turnstile::FIELD);
+    expect(Tenant::query()->count())->toBe(0);
+
+    $this->post('/register', [...$body, Turnstile::FIELD => 'token-ok'])->assertRedirect();
+    expect(Tenant::query()->count())->toBe(1);
+});
+
 describe('login kasir web', function () {
     beforeEach(function () {
         $outlet = Outlet::factory()->create();

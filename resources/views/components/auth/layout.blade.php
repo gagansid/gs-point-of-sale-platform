@@ -9,6 +9,8 @@
     'text' => 'Pantau penjualan, stok, dan karyawan semua outlet dalam satu dashboard.',
     'points' => [['chart', 'Laporan penjualan real-time'], ['cube', 'Stok & bahan baku terkendali'], ['users', 'Karyawan, shift, dan hak akses']],
     'home' => null,
+    // false = tanpa panel brand: kartu saja di tengah, logo di dalam kartu (mis. halaman daftar)
+    'brand' => true,
 ])
 <!DOCTYPE html>
 <html lang="id">
@@ -24,8 +26,9 @@
 </head>
 <body class="site-body">
     <main class="cashier-auth">
-        <div class="cashier-auth-inner">
+        <div @class(['cashier-auth-inner', 'is-single' => ! $brand])>
             {{-- Panel brand: hanya di layar lebar --}}
+            @if ($brand)
             <section class="cashier-auth-brand" aria-hidden="true">
                 <x-site.logo light />
                 <h2>{{ $heading }}</h2>
@@ -36,6 +39,7 @@
                     @endforeach
                 </ul>
             </section>
+            @endif
 
             <div class="cashier-auth-column">
                 <div class="cashier-auth-card">

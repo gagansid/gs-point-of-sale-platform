@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Requests\Web;
 
 use App\Enums\BusinessType;
+use App\Rules\TurnstilePassed;
+use App\Services\Security\Turnstile;
 use App\Support\SystemSettings;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -30,6 +32,8 @@ final class SignupRequest extends FormRequest
             'password' => ['required', 'string', 'max:255', 'confirmed', Password::defaults()],
             // Honeypot: field tersembunyi, hanya diisi bot
             'website' => ['nullable', 'string', 'max:255'],
+            // Cloudflare Turnstile mengikuti setelan halaman owner (login, daftar, lupa kata sandi)
+            Turnstile::FIELD => [new TurnstilePassed(Turnstile::OWNER)],
         ];
     }
 

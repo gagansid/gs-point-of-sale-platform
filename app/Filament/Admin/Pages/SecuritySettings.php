@@ -146,7 +146,7 @@ final class SecuritySettings extends Page
                     ->schema(collect(Turnstile::AUDIENCES)->map(fn (string $label, string $key): Toggle => Toggle::make($key)->label($label)
                         ->helperText(match ($key) {
                             Turnstile::ADMIN => 'Halaman login panel /admin',
-                            Turnstile::OWNER => 'Login owner/manager dan halaman lupa kata sandi',
+                            Turnstile::OWNER => 'Login owner/manager, daftar (coba gratis), dan lupa kata sandi',
                             default => 'Login kasir web di browser',
                         }))->values()->all()),
                 // Konfirmasi kata sandi: sesi yang dibajak tidak bisa melemahkan perlindungan login
