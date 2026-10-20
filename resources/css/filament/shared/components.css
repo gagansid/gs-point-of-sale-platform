@@ -1470,6 +1470,15 @@
     gap: 2px;
 }
 
+/*
+ * Kolom aksi baris rata kiri: aksi utama (Lihat/Ubah) selalu di posisi yang sama walau sebagian baris tidak punya
+ * menu ⋯ (mis. shift ditutup), bukan bergeser karena rata kanan.
+ */
+.fi-ta-actions-cell .fi-ta-actions,
+.fi-ta-cell:has(> .fi-ta-actions) > .fi-ta-actions {
+    justify-content: flex-start;
+}
+
 .fi-ta-cell:has(> .fi-ta-actions),
 .fi-ta-actions-cell {
     padding-block: 0;
