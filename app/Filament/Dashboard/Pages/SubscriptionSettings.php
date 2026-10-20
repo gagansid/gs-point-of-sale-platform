@@ -21,6 +21,7 @@ use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
 use App\Models\TenantAddon;
 use App\Models\User;
+use App\Services\Billing\InvoicePdf;
 use App\Services\Billing\InvoiceQuote;
 use App\Services\Payment\MidtransClient;
 use App\Support\CurrentOutlet;
@@ -42,6 +43,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
 /**
@@ -370,6 +372,10 @@ final class SubscriptionSettings extends Page
         return Action::make('invoiceDetail')->label('Detail')->icon(Heroicon::OutlinedEye)->iconButton()->color('gray')->tooltip('Detail tagihan')
             ->modalHeading('Detail tagihan')
             ->modalWidth('3xl')->modalSubmitAction(false)->modalCancelActionLabel('Tutup')
+            ->extraModalFooterActions(fn (array $arguments): array => [
+                Action::make('downloadFromDetail')->label('Unduh PDF')->icon(Heroicon::OutlinedArrowDownTray)->color('gray')
+                    ->action(fn (): StreamedResponse => $this->download((string) ($arguments['id'] ?? ''))),
+            ])
             ->modalContent(function (array $arguments) {
                 abort_unless(self::canAccess(), 403);
                 // Scope tenant: tagihan bisnis lain = 404
@@ -377,6 +383,21 @@ final class SubscriptionSettings extends Page
 
                 return view('filament.shared.invoice-detail', ['invoice' => $invoice, 'audience' => 'owner']);
             });
+    }
+
+    /** Unduh PDF (argumen id): tagihan, atau kuitansi bila sudah lunas. Scope tenant: tagihan bisnis lain = 404. */
+    public function downloadPdfAction(): Action
+    {
+        return Action::make('downloadPdf')->label('Unduh PDF')->icon(Heroicon::OutlinedArrowDownTray)->iconButton()->color('gray')
+            ->tooltip(fn (array $arguments): string => SubscriptionInvoice::query()->whereKey((string) ($arguments['id'] ?? ''))->value('status') === InvoiceStatus::Paid->value ? 'Unduh kuitansi (PDF)' : 'Unduh tagihan (PDF)')
+            ->action(fn (array $arguments): StreamedResponse => $this->download((string) ($arguments['id'] ?? '')));
+    }
+
+    private function download(string $id): StreamedResponse
+    {
+        abort_unless(self::canAccess(), 403);
+
+        return app(InvoicePdf::class)->download(SubscriptionInvoice::query()->with('items')->findOrFail($id));
     }
 
     /** @param  array<string, mixed>  $arguments */

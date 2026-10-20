@@ -197,3 +197,4 @@ Phishing menyerang **manusia**, sehingga kontrolnya sebagian besar operasional:
 | Logo bank & QRIS | Hanya raster (PNG/JPG/WEBP); SVG unggahan ditolak (XSS); path wajib di folder `banks/` / `billing/`; file lama dihapus saat diganti |
 | Key Midtrans vendor | Per mode (sandbox/produksi), terenkripsi (Crypt/APP_KEY), tidak pernah ditampilkan ulang atau dicatat; format dicek & diuji ke Midtrans sebelum disimpan; webhook hanya menerima tanda tangan dengan key mode aktif |
 | Audit | Kirim bukti, tolak bukti, ubah setelan pembayaran & bank dicatat di log aplikasi (tanpa isi file) |
+| PDF & email tagihan | Unduhan PDF dicek akses (owner: scope tenant + `billing.manage`; admin: guard admin), header `private, no-store`; email dikirim setelah commit lewat antrean; file bukti transfer tidak pernah dilampirkan ke email (hanya kuitansi PDF ke owner bisnis itu) |

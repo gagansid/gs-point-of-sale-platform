@@ -4356,3 +4356,17 @@ ul.gs-diff-cell {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Riwayat tagihan & add-on (Langganan): rincian boleh turun baris agar status & aksi tidak terpotong */
+.gs-sub-table td.gs-cell-wrap {
+    min-width: 14rem;
+    white-space: normal;
+}
+
+.gs-sub-table .fi-badge,
+.gs-sub-table .fi-badge .fi-badge-label {
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+}

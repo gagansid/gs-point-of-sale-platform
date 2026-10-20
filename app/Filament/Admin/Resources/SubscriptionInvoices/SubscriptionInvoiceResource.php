@@ -21,6 +21,7 @@ use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Admin;
 use App\Models\Plan;
 use App\Models\SubscriptionInvoice;
+use App\Services\Billing\InvoicePdf;
 use App\Support\Money;
 use BackedEnum;
 use Carbon\CarbonImmutable;
@@ -46,6 +47,7 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
 /**
@@ -157,9 +159,16 @@ final class SubscriptionInvoiceResource extends Resource
             ->recordActions([
                 ViewAction::make()->iconButton()->tooltip('Detail')->modalHeading('Detail tagihan')
                     ->modalWidth('3xl')->modalSubmitAction(false)->modalCancelActionLabel('Tutup')
+                    ->extraModalFooterActions(fn (SubscriptionInvoice $record): array => [
+                        Action::make('downloadFromDetail')->label('Unduh PDF')->icon(Heroicon::OutlinedArrowDownTray)->color('gray')
+                            ->action(fn (): StreamedResponse => app(InvoicePdf::class)->download($record->loadMissing('items'))),
+                    ])
                     ->schema([])
                     ->modalContent(fn (SubscriptionInvoice $record) => view('filament.shared.invoice-detail', ['invoice' => $record->loadMissing(['items', 'tenant', 'createdByAdmin']), 'audience' => 'admin'])),
                 ActionGroup::make([
+                    Action::make('downloadPdf')->icon(Heroicon::OutlinedArrowDownTray)
+                        ->label(fn (SubscriptionInvoice $record): string => InvoicePdf::isReceipt($record) ? 'Unduh kuitansi (PDF)' : 'Unduh tagihan (PDF)')
+                        ->action(fn (SubscriptionInvoice $record): StreamedResponse => app(InvoicePdf::class)->download($record->loadMissing('items'))),
                     Action::make('rejectProof')->label('Tolak bukti')->icon(Heroicon::OutlinedNoSymbol)->color('danger')
                         ->visible(fn (SubscriptionInvoice $record): bool => $record->awaitingVerification())
                         ->modalHeading(fn (SubscriptionInvoice $record): string => 'Tolak bukti transfer '.$record->number.'?')

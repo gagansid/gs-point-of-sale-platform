@@ -8,6 +8,7 @@ use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\Admin;
 use App\Models\SubscriptionInvoice;
+use App\Services\Billing\BillingNotifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -41,6 +42,8 @@ final class RejectPaymentProof
                 'proof_rejected_at' => now(),
                 'due_at' => $dueAt,
             ])->save();
+
+            app(BillingNotifier::class)->proofRejected($locked);
 
             Log::info('Bukti transfer tagihan ditolak', ['invoice' => $locked->number, 'admin_id' => $admin->id]);
 

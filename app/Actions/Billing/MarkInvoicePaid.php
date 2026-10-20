@@ -11,6 +11,7 @@ use App\Models\Admin;
 use App\Models\Plan;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
+use App\Services\Billing\BillingNotifier;
 use App\Services\Billing\InvoiceQuote;
 use App\Services\Billing\TenantAddons;
 use App\Support\Features;
@@ -92,6 +93,9 @@ final class MarkInvoicePaid
                 'period_end' => $until,
                 'notes' => $notes ?? $locked->notes,
             ])->save();
+
+            // Hanya saat baru lunas (lunas ulang keluar lebih awal): owner menerima kuitansi PDF setelah commit
+            app(BillingNotifier::class)->paid($locked);
 
             return $locked;
         });

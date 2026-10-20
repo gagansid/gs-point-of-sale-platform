@@ -132,6 +132,7 @@
                         @if ($pending->isPayable())
                             {{ ($this->payInvoiceAction)(['id' => $pending->id]) }}
                         @endif
+                        {{ ($this->downloadPdfAction)(['id' => $pending->id]) }}
                         {{ ($this->invoiceDetailAction)(['id' => $pending->id]) }}
                     </div>
                 </div>
@@ -192,14 +193,14 @@
         <div class="pos-dash-table-wrap">
             <table class="pos-dash-table gs-sub-table">
                 <thead>
-                    <tr><th>Nomor</th><th>Tanggal</th><th>Rincian</th><th>Metode</th><th class="text-right">Total</th><th>Status</th><th class="w-10"></th></tr>
+                    <tr><th>Nomor</th><th>Tanggal</th><th>Rincian</th><th>Metode</th><th class="text-right">Total</th><th>Status</th><th class="w-20"></th></tr>
                 </thead>
                 <tbody>
                     @forelse ($invoices as $invoice)
                         <tr wire:key="inv-{{ $invoice->id }}">
                             <td class="font-mono text-xs">{{ $invoice->number }}</td>
                             <td class="whitespace-nowrap">{{ $date($invoice->created_at) }}</td>
-                            <td>
+                            <td class="gs-cell-wrap">
                                 <div>{{ $invoice->description() }}</div>
                                 @if ($invoice->period_start)
                                     <div class="gs-cell-sub">Periode {{ $date($invoice->period_start) }} – {{ $date($invoice->period_end) }}</div>
@@ -208,7 +209,12 @@
                             <td class="whitespace-nowrap">{{ $methodLabel($invoice) }}</td>
                             <td class="text-right tabular-nums font-medium">{{ $money((string) $invoice->amount) }}</td>
                             <td><x-filament::badge :color="$invoice->statusColor()">{{ $invoice->statusLabel() }}</x-filament::badge></td>
-                            <td class="text-right">{{ ($this->invoiceDetailAction)(['id' => $invoice->id]) }}</td>
+                            <td class="text-right whitespace-nowrap">
+                                <div class="inline-flex items-center gap-1">
+                                    {{ ($this->downloadPdfAction)(['id' => $invoice->id]) }}
+                                    {{ ($this->invoiceDetailAction)(['id' => $invoice->id]) }}
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr><td colspan="7" class="text-center text-gray-500">Belum ada tagihan</td></tr>

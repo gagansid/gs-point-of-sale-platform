@@ -10,6 +10,7 @@ use App\Enums\InvoiceStatus;
 use App\Exceptions\BusinessException;
 use App\Models\SubscriptionInvoice;
 use App\Models\User;
+use App\Services\Billing\BillingNotifier;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -63,6 +64,9 @@ final class SubmitPaymentProof
             if ($old !== null && $old !== $path) {
                 DB::afterCommit(fn () => Storage::disk('local')->delete($old));
             }
+
+            // Admin diberi tahu setelah commit (BillingNotifier)
+            app(BillingNotifier::class)->proofSubmitted($locked);
 
             Log::info('Bukti transfer tagihan dikirim', ['invoice' => $locked->number, 'tenant_id' => $locked->tenant_id, 'user_id' => $owner->id]);
 
