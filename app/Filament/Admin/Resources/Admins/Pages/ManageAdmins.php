@@ -41,10 +41,10 @@ final class ManageAdmins extends ManageRecords
         return [
             'all' => Tab::make('Semua')->badge(fn (): int => Admin::query()->count()),
             'with_2fa' => Tab::make('2FA aktif')
-                ->modifyQueryUsing(fn (Builder $q): Builder => $q->whereNotNull('app_authentication_secret'))
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereNotNull('app_authentication_secret'))
                 ->badge(fn (): int => Admin::query()->whereNotNull('app_authentication_secret')->count()),
             'without_2fa' => Tab::make('Belum 2FA')
-                ->modifyQueryUsing(fn (Builder $q): Builder => $q->whereNull('app_authentication_secret'))
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereNull('app_authentication_secret'))
                 ->badge(fn (): int => Admin::query()->whereNull('app_authentication_secret')->count())
                 ->badgeColor('warning'),
         ];
