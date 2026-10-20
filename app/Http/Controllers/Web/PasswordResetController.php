@@ -6,6 +6,8 @@ namespace App\Http\Controllers\Web;
 
 use App\Actions\Auth\ResetPasswordWithToken;
 use App\Http\Controllers\Controller;
+use App\Rules\TurnstilePassed;
+use App\Services\Security\Turnstile;
 use App\Support\Domains;
 use Filament\Facades\Filament;
 use Illuminate\Http\RedirectResponse;
@@ -29,7 +31,11 @@ final class PasswordResetController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->merge(['email' => mb_strtolower(trim((string) $request->input('email')))]);
-        $request->validate(['email' => ['required', 'string', 'email', 'max:255']], attributes: ['email' => 'email']);
+        $request->validate([
+            'email' => ['required', 'string', 'email', 'max:255'],
+            // Turnstile mengikuti setelan login owner (halaman yang sama-sama untuk owner/manager)
+            Turnstile::FIELD => [new TurnstilePassed(Turnstile::OWNER)],
+        ], attributes: ['email' => 'email']);
 
         // Hasil (terdaftar/tidak/terlalu sering) tidak dibedakan: cegah enumerasi akun
         Password::broker('users')->sendResetLink(['email' => $request->string('email')->toString()]);

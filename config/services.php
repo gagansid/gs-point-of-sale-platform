@@ -37,4 +37,11 @@ return [
         ],
     ],
 
+    // Cloudflare Turnstile (anti-bot di halaman login): kunci dari dash.cloudflare.com → Turnstile.
+    // Kosong = Turnstile tidak bisa diaktifkan; on/off per halaman login di Sistem → Keamanan
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
 ];

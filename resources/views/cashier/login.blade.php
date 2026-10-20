@@ -15,28 +15,24 @@
             <label><input type="radio" name="mode" value="email" @checked($mode === 'email')><span>Email</span></label>
         </div>
 
-        <div class="cashier-field" data-mode="username">
-            <label for="business">Kode bisnis</label>
-            <input id="business" name="business" type="text" value="{{ $business }}" autocomplete="organization" autocapitalize="none"
-                spellcheck="false" placeholder="mis. kopi-senja" @if ($mode === 'username' && blank($business)) autofocus @endif
-                @error('business') aria-invalid="true" aria-describedby="business-error" @enderror>
-            @error('business') <p id="business-error" class="cashier-field-error">{{ $message }}</p> @enderror
-        </div>
+        <x-auth.field name="business" label="Kode bisnis" icon="store" data-mode="username" :value="$business"
+            autocomplete="organization" autocapitalize="none" spellcheck="false" placeholder="mis. kopi-senja"
+            :autofocus="$mode === 'username' && blank($business)" />
 
         <div class="cashier-field">
             <label for="login"><span data-mode="username">Username</span><span data-mode="email">Alamat email</span></label>
-            <input id="login" name="login" type="text" value="{{ old('login') }}" autocomplete="username" autocapitalize="none"
-                spellcheck="false" @if ($mode === 'email' || filled($business)) autofocus @endif
-                @error('login') aria-invalid="true" aria-describedby="login-error" @enderror>
+            <div class="auth-input has-icon">
+                <x-site.icon name="user" class="auth-input-icon" />
+                <input id="login" name="login" type="text" value="{{ old('login') }}" autocomplete="username" autocapitalize="none"
+                    spellcheck="false" placeholder="Username atau email" @if ($mode === 'email' || filled($business)) autofocus @endif
+                    @error('login') aria-invalid="true" aria-describedby="login-error" @enderror>
+            </div>
             @error('login') <p id="login-error" class="cashier-field-error">{{ $message }}</p> @enderror
         </div>
 
-        <div class="cashier-field">
-            <label for="password">Kata sandi</label>
-            <input id="password" name="password" type="password" autocomplete="current-password"
-                @error('password') aria-invalid="true" aria-describedby="password-error" @enderror>
-            @error('password') <p id="password-error" class="cashier-field-error">{{ $message }}</p> @enderror
-        </div>
+        <x-auth.field name="password" label="Kata sandi" type="password" icon="lock" autocomplete="current-password" placeholder="Kata sandi" />
+
+        <x-auth.turnstile :audience="\App\Services\Security\Turnstile::CASHIER" />
 
         <button type="submit" class="cashier-auth-btn">Masuk</button>
     </form>

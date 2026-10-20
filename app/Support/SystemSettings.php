@@ -16,6 +16,9 @@ final class SystemSettings
 {
     public const ADMIN_TWO_FACTOR_REQUIRED = 'security.admin_two_factor_required';
 
+    /** Prefix on/off Cloudflare Turnstile per halaman login (Turnstile::AUDIENCES). */
+    public const TURNSTILE_PREFIX = 'security.turnstile.';
+
     public const TRIAL_DAYS = 'onboarding.trial_days';
 
     public const SIGNUP_ENABLED = 'onboarding.signup_enabled';
@@ -51,6 +54,20 @@ final class SystemSettings
     public function setAdminTwoFactorRequired(bool $required, ?Admin $by = null): void
     {
         $this->set(self::ADMIN_TWO_FACTOR_REQUIRED, $required, $by);
+    }
+
+    /** Turnstile aktif untuk halaman login ini (bawaan mati sampai admin mengaktifkan). */
+    public function turnstileEnabled(string $audience): bool
+    {
+        return (bool) $this->get(self::TURNSTILE_PREFIX.$audience, false);
+    }
+
+    /** @param array<string, bool> $audiences halaman login → aktif */
+    public function setTurnstile(array $audiences, ?Admin $by = null): void
+    {
+        foreach ($audiences as $audience => $enabled) {
+            $this->set(self::TURNSTILE_PREFIX.$audience, $enabled, $by);
+        }
     }
 
     /** Lama trial tenant baru (ADR 0009, default 14 hari). */

@@ -175,3 +175,13 @@ Phishing menyerang **manusia**, sehingga kontrolnya sebagian besar operasional:
 | Deteksi dini | Email notifikasi tim setiap pendaftar baru (`TenantSignedUp`, antrean database) |
 | Konfigurasi server | Sistem → Keamanan menampilkan `SecurityChecklist` (APP_DEBUG, APP_ENV, HTTPS, `SESSION_SECURE_COOKIE`, `SESSION_LIFETIME` ≤ 120, wajib 2FA, semua admin ber-2FA) + langkah perbaikan; hanya baca |
 | Tagihan manual | Nominal dihitung ulang di server (`ManualInvoiceTotals`), validasi diskon ≤ subtotal, total ≥ Rp1, PPN 0–100%; hanya guard `admin`; dicatat di log (`Tagihan manual dibuat`) |
+
+
+## Cloudflare Turnstile di halaman login (2026-10-20, SPEC Q122)
+
+| Kontrol | Implementasi |
+|---|---|
+| Anti-bot / credential stuffing | Widget Turnstile di login super admin, owner (+ lupa kata sandi), kasir web — on/off per halaman di Sistem → Keamanan (konfirmasi kata sandi, dicatat log) |
+| Verifikasi | Server-side `challenges.cloudflare.com/turnstile/v0/siteverify` dengan secret + IP; token maks. 2048 karakter; **fail-closed** (Cloudflare tak terjangkau = ditolak); token direset setelah gagal |
+| Kunci | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` di .env (bukan di database); tanpa kunci Turnstile tidak bisa diaktifkan. Kunci uji Cloudflare (`1x000…AA`) hanya untuk lokal |
+| Tetap berlaku | Throttle login per akun+IP, pesan error umum (anti enumerasi), timebox, 2FA admin |

@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Pages;
 
 use App\Actions\Admin\SetAdminTwoFactorRequirement;
+use App\Actions\Admin\UpdateTurnstileSettings;
 use App\Filament\Admin\Resources\Admins\AdminResource;
+use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\Admin;
 use App\Services\Admin\SecurityChecklist;
+use App\Services\Security\Turnstile;
 use App\Support\SystemSettings;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -82,6 +86,51 @@ final class SecuritySettings extends Page
         return [
             $this->toggleTwoFactorAction(),
         ];
+    }
+
+    /**
+     * Status Turnstile per halaman login untuk kartu Keamanan.
+     *
+     * @return array{configured: bool, audiences: array<string, array{label: string, enabled: bool}>}
+     */
+    public function turnstileStatus(): array
+    {
+        $settings = app(SystemSettings::class);
+
+        return [
+            'configured' => Turnstile::configured(),
+            'audiences' => collect(Turnstile::AUDIENCES)
+                ->map(fn (string $label, string $key): array => ['label' => $label, 'enabled' => $settings->turnstileEnabled($key)])
+                ->all(),
+        ];
+    }
+
+    /** Atur on/off Cloudflare Turnstile per halaman login (konfirmasi kata sandi). */
+    public function turnstileAction(): Action
+    {
+        return Action::make('turnstile')->label('Atur')->icon(Heroicon::OutlinedAdjustmentsHorizontal)->color('gray')
+            ->modalHeading('Cloudflare Turnstile')
+            ->modalDescription(Turnstile::configured()
+                ? 'Kotak verifikasi anti-bot di bawah form login. Aktifkan per halaman login'
+                : 'Isi TURNSTILE_SITE_KEY & TURNSTILE_SECRET_KEY di .env (dash.cloudflare.com → Turnstile) untuk mengaktifkan')
+            ->modalSubmitActionLabel('Simpan')
+            ->fillForm(fn (): array => collect(Turnstile::AUDIENCES)
+                ->mapWithKeys(fn (string $label, string $key): array => [$key => app(SystemSettings::class)->turnstileEnabled($key)])->all())
+            ->schema([
+                ...collect(Turnstile::AUDIENCES)->map(fn (string $label, string $key): Toggle => Toggle::make($key)->label($label)
+                    ->disabled(fn (): bool => ! Turnstile::configured())
+                    ->helperText(match ($key) {
+                        Turnstile::ADMIN => 'Halaman login panel /admin',
+                        Turnstile::OWNER => 'Login owner/manager dan halaman lupa kata sandi',
+                        default => 'Login kasir web di browser',
+                    }))->values()->all(),
+                // Konfirmasi kata sandi: sesi yang dibajak tidak bisa melemahkan perlindungan login
+                TextInput::make('current_password')->label('Kata sandi Anda')->password()->required()->currentPassword(guard: 'admin'),
+            ])
+            ->action(function (array $data, Action $action): void {
+                RunBusinessAction::run(fn () => app(UpdateTurnstileSettings::class)->handle($this->admin(), $data), $action);
+                Notification::make()->success()->title('Setelan Turnstile disimpan')->send();
+            });
     }
 
     private function toggleTwoFactorAction(): Action

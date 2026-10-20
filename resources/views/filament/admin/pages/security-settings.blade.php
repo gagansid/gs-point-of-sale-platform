@@ -73,6 +73,30 @@
             </x-filament::section>
         </div>
 
+        @php($ts = $this->turnstileStatus())
+        <x-filament::section icon="heroicon-o-shield-exclamation" heading="Cloudflare Turnstile" description="Kotak verifikasi anti-bot di bawah form login; diatur terpisah per halaman login">
+            <x-slot name="afterHeader">
+                {{ $this->turnstileAction }}
+            </x-slot>
+            @unless ($ts['configured'])
+                <div class="gs-banner gs-banner-warning mb-4" role="alert">
+                    <x-filament::icon icon="heroicon-o-exclamation-triangle" class="gs-banner-icon" />
+                    <div>Kunci belum diisi. Tambahkan <code>TURNSTILE_SITE_KEY</code> & <code>TURNSTILE_SECRET_KEY</code> di .env (dash.cloudflare.com → Turnstile).</div>
+                </div>
+            @endunless
+            <ul class="gs-checklist gs-checklist--plain">
+                @foreach ($ts['audiences'] as $key => $row)
+                    <li wire:key="ts-{{ $key }}" @class(['gs-check', 'is-ok' => $row['enabled'], 'is-warn' => ! $row['enabled']])>
+                        <span class="gs-check-icon"><x-filament::icon :icon="$row['enabled'] ? 'heroicon-o-check-circle' : 'heroicon-o-minus-circle'" /></span>
+                        <span class="gs-check-body"><span class="gs-check-label">{{ $row['label'] }}</span></span>
+                        <span class="gs-check-value">
+                            <x-filament::badge :color="$row['enabled'] ? 'success' : 'gray'">{{ $row['enabled'] ? 'Aktif' : 'Nonaktif' }}</x-filament::badge>
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
+        </x-filament::section>
+
         <x-filament::section icon="heroicon-o-users" heading="Super admin" description="Status 2FA & login terakhir setiap akun">
             <x-slot name="afterHeader">
                 <x-filament::link :href="$this->adminsUrl()" size="sm">Kelola admin</x-filament::link>

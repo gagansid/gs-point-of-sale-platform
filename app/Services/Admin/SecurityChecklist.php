@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Admin;
 
 use App\Models\Admin;
+use App\Services\Security\Turnstile;
 use App\Support\SystemSettings;
 
 /**
@@ -62,6 +63,12 @@ final class SecurityChecklist
                 'ok' => $this->settings->adminTwoFactorRequired(),
                 'value' => $this->settings->adminTwoFactorRequired() ? 'Wajib' : 'Tidak wajib',
                 'fix' => 'Klik "Wajibkan 2FA" di kanan atas halaman ini',
+            ],
+            [
+                'key' => 'turnstile_admin', 'label' => 'Turnstile di login super admin',
+                'ok' => app(Turnstile::class)->enabled(Turnstile::ADMIN),
+                'value' => app(Turnstile::class)->enabled(Turnstile::ADMIN) ? 'Aktif' : (Turnstile::configured() ? 'Nonaktif' : 'Kunci belum diisi'),
+                'fix' => 'Isi kunci TURNSTILE_* di .env lalu aktifkan di kartu Cloudflare Turnstile di bawah',
             ],
             [
                 'key' => 'two_factor_all', 'label' => 'Semua super admin memakai 2FA',

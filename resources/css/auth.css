@@ -1,0 +1,584 @@
+/*
+ * Halaman masuk bersama (situs gspos.id, kasir web, login panel Filament admin/dashboard):
+ * token warna situs, logo, ikon, kerangka x-auth.layout & field x-auth.field. CSS biasa tanpa Tailwind agar bisa
+ * diimpor app.css maupun tema Filament (resources/css/filament/{admin,dashboard}/theme.css).
+ */
+:root {
+    --site-navy: #1b2a55;
+    --site-primary: #2d4282;
+    --site-primary-lt: rgb(45 66 130 / 0.08);
+    --site-gray: #8a919e;
+    --site-mist: #b8c0d4;
+    --site-text: #1e2633;
+    --site-muted: #626d7d;
+    --site-border: #e6e7eb;
+    --site-bg: #f5f7fb;
+}
+
+/* ---------- Logo ---------- */
+.site-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.site-logo-mark {
+    width: 30px;
+    height: 30px;
+}
+
+.site-logo .bm-frame {
+    stroke: var(--site-navy);
+}
+
+.site-logo .bm-accent {
+    stroke: var(--site-gray);
+}
+
+.site-logo .bm-dot {
+    fill: var(--site-primary);
+}
+
+.site-logo-word {
+    color: var(--site-navy);
+    font-family: 'Nunito', var(--font-sans);
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+}
+
+.site-logo-word .w-gs {
+    color: var(--site-primary);
+}
+
+.site-logo-light .bm-frame {
+    stroke: #ffffff;
+}
+
+.site-logo-light .bm-accent {
+    stroke: var(--site-mist);
+}
+
+.site-logo-light .bm-dot {
+    fill: #ffffff;
+}
+
+.site-logo-light .site-logo-word {
+    color: #ffffff;
+}
+
+.site-logo-light .site-logo-word .w-gs {
+    color: var(--site-mist);
+}
+
+.site-icon {
+    width: 22px;
+    height: 22px;
+    flex: none;
+}
+
+/*
+ * Kasir web: halaman masuk (login, masuk ulang, pilih outlet). Latar navy brand + pola titik,
+ * kartu ringkas; field & tombol 40px seperti login admin/dashboard (layout simple Filament).
+ */
+.cashier-auth {
+    --control-h: 44px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    min-height: 100dvh;
+    padding: 32px 20px;
+    overflow: hidden;
+    background:
+        radial-gradient(55% 45% at 12% 8%, rgb(77 104 186 / 0.55), transparent 70%),
+        radial-gradient(45% 40% at 92% 95%, rgb(184 192 212 / 0.22), transparent 70%),
+        linear-gradient(155deg, #1f3166 0%, var(--site-navy) 45%, #131d3d 100%);
+    isolation: isolate;
+}
+
+/* Pola titik halus, memudar ke tepi */
+.cashier-auth::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(rgb(255 255 255 / 0.09) 1px, transparent 1px);
+    background-size: 22px 22px;
+    content: '';
+    mask-image: radial-gradient(70% 60% at 50% 45%, #000 30%, transparent 100%);
+}
+
+.cashier-auth-inner {
+    display: grid;
+    align-items: center;
+    gap: 56px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.cashier-auth-brand {
+    display: none;
+    color: var(--site-mist);
+}
+
+.cashier-auth-brand .site-logo {
+    font-size: 15px;
+}
+
+.cashier-auth-brand h2 {
+    margin: 28px 0 10px;
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+}
+
+.cashier-auth-brand p {
+    margin: 0 0 24px;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.cashier-auth-brand ul {
+    display: grid;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.cashier-auth-brand li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #e4e8f2;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.cashier-auth-brand li .site-icon {
+    width: 32px;
+    height: 32px;
+    padding: 7px;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.06);
+    color: #ffffff;
+}
+
+@media (min-width: 900px) {
+    .cashier-auth-inner {
+        grid-template-columns: minmax(0, 1fr) 400px;
+        max-width: 920px;
+    }
+
+    .cashier-auth-brand {
+        display: block;
+    }
+}
+
+.cashier-auth-card {
+    width: 100%;
+    padding: 32px 28px 28px;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgb(8 14 33 / 0.35), 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+
+.cashier-auth-logo {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 900px) {
+    /* Logo sudah tampil di panel brand */
+    .cashier-auth-logo {
+        display: none;
+    }
+}
+
+.cashier-auth-title {
+    margin: 0 0 4px;
+    color: var(--site-navy);
+    font-size: 20px;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+}
+
+.cashier-auth-sub {
+    margin: 0 0 20px;
+    color: var(--site-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.cashier-auth-sub strong {
+    color: var(--site-text);
+    font-weight: 600;
+}
+
+.cashier-auth-alert {
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    border: 1px solid rgb(245 159 0 / 0.35);
+    border-radius: 8px;
+    background: rgb(245 159 0 / 0.1);
+    color: #8a5a00;
+    font-size: 13px;
+}
+
+.cashier-auth-form {
+    display: grid;
+    gap: 16px;
+}
+
+/* Tab cara masuk: radio di form (tidak mengubah URL) */
+.cashier-tabs {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 2px;
+    height: var(--control-h);
+    padding: 2px;
+    border-radius: 8px;
+    background: #eef0f5;
+}
+
+.cashier-tabs label {
+    position: relative;
+    display: flex;
+}
+
+.cashier-tabs input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.cashier-tabs span {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    color: var(--site-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 120ms, color 120ms;
+}
+
+.cashier-tabs input:checked + span {
+    background: #ffffff;
+    color: var(--site-navy);
+    box-shadow: 0 1px 2px rgb(27 42 85 / 0.14);
+}
+
+.cashier-tabs input:focus-visible + span {
+    outline: 2px solid var(--site-primary);
+    outline-offset: 1px;
+}
+
+/* Tab tersegmentasi di halaman kasir (mis. Kas keluar/masuk): tinggi tombol kasir standar 40px */
+.cashier-body .cashier-tabs {
+    height: var(--pos-btn-h);
+    margin-bottom: 4px;
+    border-radius: var(--pos-radius);
+}
+
+.cashier-body .cashier-tabs span {
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* Bagian khusus satu tab disembunyikan saat tab lain aktif */
+.cashier-auth-form:has(input[name='mode'][value='email']:checked) [data-mode='username'],
+.cashier-auth-form:has(input[name='mode'][value='username']:checked) [data-mode='email'],
+.cashier-auth-form:has(input[name='method'][value='password']:checked) [data-mode='pin'],
+.cashier-auth-form:has(input[name='method'][value='pin']:checked) [data-mode='password'] {
+    display: none;
+}
+
+.cashier-field {
+    display: grid;
+    gap: 6px;
+}
+
+.cashier-field label {
+    color: var(--site-text);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.cashier-field input {
+    width: 100%;
+    height: var(--control-h);
+    padding: 0 10px;
+    border: 1px solid #dcdee3;
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--site-text);
+    font: inherit;
+    font-size: 14px;
+    transition: border-color 120ms, box-shadow 120ms;
+}
+
+.cashier-field input::placeholder {
+    color: #a3a9b4;
+}
+
+.cashier-field input:hover {
+    border-color: #c4c8cf;
+}
+
+.cashier-field input:focus-visible {
+    border-color: var(--site-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.14);
+}
+
+.cashier-field input[aria-invalid='true'] {
+    border-color: #d63939;
+}
+
+.cashier-field-error {
+    margin: 0;
+    color: #d63939;
+    font-size: 12px;
+}
+
+.cashier-auth-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: var(--control-h);
+    margin-top: 4px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--site-primary);
+    color: #ffffff;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 120ms;
+}
+
+.cashier-auth-btn:hover {
+    background: var(--site-navy);
+}
+
+.cashier-auth-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.25);
+}
+
+.cashier-auth-foot {
+    margin: 20px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--site-border);
+    color: var(--site-muted);
+    font-size: 12.5px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+.cashier-auth-column {
+    display: grid;
+    gap: 14px;
+}
+
+/*
+ * Field halaman masuk (x-auth.field): 44px, ikon garis di kiri, latar abu sangat muda yang menjadi putih saat
+ * fokus; tombol mata kata sandi tanpa border di kanan field.
+ */
+.auth-input {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.cashier-field .auth-input input {
+    height: var(--control-h);
+    padding: 0 14px;
+    border-color: #e1e4ea;
+    border-radius: 10px;
+    background: #f8f9fb;
+    font-size: 14.5px;
+}
+
+.cashier-field .auth-input input:hover {
+    border-color: #c9ced7;
+}
+
+.cashier-field .auth-input input:focus-visible {
+    border-color: var(--site-primary);
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgb(45 66 130 / 0.12);
+}
+
+.cashier-field .auth-input input[readonly] {
+    color: var(--site-muted);
+    cursor: default;
+}
+
+.cashier-field .auth-input input[aria-invalid='true'] {
+    border-color: #d63939;
+    background: #fffafa;
+}
+
+.auth-input.has-icon input {
+    padding-inline-start: 42px;
+}
+
+.auth-input.has-reveal input {
+    padding-inline-end: 46px;
+}
+
+.auth-input-icon {
+    position: absolute;
+    inset-inline-start: 14px;
+    width: 18px;
+    height: 18px;
+    color: #9aa2b1;
+    pointer-events: none;
+    transition: color 120ms;
+}
+
+.auth-input:focus-within .auth-input-icon {
+    color: var(--site-primary);
+}
+
+.auth-reveal {
+    position: absolute;
+    inset-inline-end: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #9aa2b1;
+    cursor: pointer;
+    transition: color 120ms;
+}
+
+.auth-reveal:hover {
+    color: var(--site-primary);
+}
+
+.auth-reveal:focus-visible {
+    outline: 2px solid var(--site-primary);
+    outline-offset: -2px;
+}
+
+.auth-reveal .site-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.auth-reveal .auth-reveal-hide,
+.auth-reveal[aria-pressed='true'] .auth-reveal-show {
+    display: none;
+}
+
+.auth-reveal[aria-pressed='true'] .auth-reveal-hide {
+    display: block;
+}
+
+.auth-field-hint {
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 12px;
+}
+
+/* Baris "Ingat saya · Lupa kata sandi?" */
+.auth-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.auth-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--site-text);
+    cursor: pointer;
+}
+
+.auth-check input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--site-primary);
+}
+
+.auth-link {
+    color: var(--site-primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-link:hover {
+    text-decoration: underline;
+}
+
+.auth-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.auth-back .site-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Widget Cloudflare Turnstile selebar form */
+.auth-turnstile {
+    display: grid;
+    gap: 6px;
+    min-height: 65px;
+}
+
+.auth-turnstile .cf-turnstile {
+    width: 100%;
+}
+
+.cashier-auth-alert.is-success {
+    border-color: rgb(47 179 68 / 0.35);
+    background: rgb(47 179 68 / 0.1);
+    color: #1d7a2e;
+}
+
+.cashier-auth-alert.is-danger {
+    border-color: rgb(214 57 57 / 0.35);
+    background: rgb(214 57 57 / 0.08);
+    color: #a32222;
+}
+
+.cashier-auth-btn[aria-busy='true'] {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.cashier-auth-version {
+    margin: 0;
+    text-align: center;
+    color: rgb(184 192 212 / 0.7);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+}

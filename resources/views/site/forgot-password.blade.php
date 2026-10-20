@@ -1,22 +1,26 @@
 {{-- gspos.id/forgot-password (SPEC Q34). --}}
-<x-site.layout title="Lupa kata sandi — gs.POS">
-    <main class="site-auth">
-        <div class="site-auth-card">
-            <a href="{{ route('landing') }}" class="site-auth-logo" aria-label="gs.POS beranda"><x-site.logo /></a>
-            <h1>Lupa kata sandi</h1>
-            <p class="site-auth-sub">Masukkan email akun owner/manager. Kami kirim link untuk membuat kata sandi baru.</p>
+<x-auth.layout title="Lupa kata sandi" app="Dashboard" :home="route('landing')"
+    heading="Akses akun kembali dalam semenit"
+    text="Kami kirim link aman ke email Anda untuk membuat kata sandi baru."
+    :points="[['mail', 'Link dikirim ke email terdaftar'], ['clock', 'Berlaku 60 menit, sekali pakai'], ['shield', 'Sesi lama di perangkat lain dikeluarkan']]">
+    <h1 class="cashier-auth-title">Lupa kata sandi</h1>
+    <p class="cashier-auth-sub">Masukkan email akun owner/manager. Kami kirim link untuk membuat kata sandi baru.</p>
 
-            @if (session('status'))
-                <div class="site-alert site-alert-success" role="status">{{ session('status') }}</div>
-            @endif
+    @if (session('status'))
+        <div class="cashier-auth-alert is-success" role="status">{{ session('status') }}</div>
+    @endif
 
-            <form method="POST" action="{{ route('password.email') }}" class="site-form" novalidate>
-                @csrf
-                <x-site.field name="email" label="Alamat email" type="email" required autocomplete="email" autofocus />
-                <button type="submit" class="site-btn site-btn-primary site-btn-lg site-btn-block">Kirim link</button>
-            </form>
+    <form method="POST" action="{{ route('password.email') }}" class="cashier-auth-form" novalidate>
+        @csrf
+        <x-auth.field name="email" label="Alamat email" type="email" icon="mail" required autofocus autocomplete="email" placeholder="nama@bisnis.com" />
 
-            <p class="site-auth-foot">Kasir? Minta owner mengganti kata sandi di menu Karyawan.<br><a href="{{ $loginUrl }}">Kembali ke halaman masuk</a></p>
-        </div>
-    </main>
-</x-site.layout>
+        <x-auth.turnstile :audience="\App\Services\Security\Turnstile::OWNER" />
+
+        <button type="submit" class="cashier-auth-btn">Kirim link</button>
+    </form>
+
+    <p class="cashier-auth-foot">
+        Kasir? Minta owner mengganti kata sandi di menu Karyawan.<br>
+        <a href="{{ $loginUrl }}" class="auth-link auth-back"><x-site.icon name="arrow-left" /> Kembali ke halaman masuk</a>
+    </p>
+</x-auth.layout>

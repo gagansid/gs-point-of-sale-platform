@@ -1,6 +1,8 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
 @import '../shared/tokens.css';
 @import '../shared/components.css';
+@import '../../auth.css';
+@import '../shared/auth.css';
 @import './home.css';
 
 @source '../../../../app/Filament/Dashboard/**/*';

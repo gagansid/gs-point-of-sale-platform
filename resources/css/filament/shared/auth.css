@@ -1,0 +1,128 @@
+/*
+ * Login panel Filament (App\Filament\Shared\Auth\Login, layout filament.shared.auth-layout): komponen Filament
+ * disamakan dengan field x-auth.field halaman masuk lain — 44px, radius 10px, latar abu muda → putih saat fokus,
+ * ikon garis di kiri, tombol mata tanpa border. Kerangka & warna dari resources/css/auth.css.
+ */
+.fi-auth-shell {
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+.fi-auth-shell .fi-simple-page {
+    display: grid;
+    gap: 0;
+}
+
+/* Logo sudah di panel brand (layar lebar); di HP logo Filament tetap tampil di kartu */
+@media (min-width: 900px) {
+    .fi-auth-shell .fi-simple-header .fi-logo {
+        display: none;
+    }
+}
+
+.fi-auth-shell .fi-simple-header {
+    align-items: flex-start;
+    margin-bottom: 20px;
+    text-align: start;
+}
+
+.fi-auth-shell .fi-simple-header-heading {
+    margin: 0;
+    color: var(--site-navy);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-align: start;
+}
+
+.fi-auth-shell .fi-simple-header-subheading {
+    margin-top: 4px;
+    color: var(--site-muted);
+    font-size: 13px;
+    text-align: start;
+}
+
+.fi-auth-shell .fi-fo-field-label-content {
+    color: var(--site-text);
+    font-size: 13px;
+}
+
+.fi-auth-shell .fi-input-wrp {
+    min-height: 44px;
+    border-radius: 10px;
+    background-color: #f8f9fb;
+}
+
+.fi-body .fi-auth-shell .fi-input-wrp {
+    box-shadow: 0 0 0 1px #e1e4ea;
+}
+
+.fi-body .fi-auth-shell .fi-input-wrp:not(.fi-disabled):not(:has(.fi-ac-action:focus)):focus-within {
+    background-color: #ffffff;
+    box-shadow: 0 0 0 1px var(--site-primary), 0 0 0 4px rgb(45 66 130 / 0.12);
+}
+
+.fi-auth-shell .fi-input {
+    font-size: 14.5px;
+}
+
+.fi-auth-shell .fi-input-wrp .fi-input-wrp-prefix .fi-icon {
+    width: 18px;
+    height: 18px;
+    color: #9aa2b1;
+}
+
+.fi-auth-shell .fi-input-wrp:focus-within .fi-input-wrp-prefix .fi-icon {
+    color: var(--site-primary);
+}
+
+/* Tombol mata: ikon saja, tanpa border/latar */
+.fi-auth-shell .fi-input-wrp-actions .fi-icon-btn {
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #9aa2b1;
+}
+
+.fi-auth-shell .fi-input-wrp-actions .fi-icon-btn:hover {
+    color: var(--site-primary);
+}
+
+.fi-auth-shell .fi-input-wrp-actions .fi-icon-btn .fi-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.fi-auth-shell .fi-btn {
+    min-height: 44px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.fi-auth-shell .fi-fo-checkbox-input,
+.fi-auth-shell .fi-checkbox-input {
+    width: 16px;
+    height: 16px;
+}
+
+/* Dark mode: kartu mengikuti permukaan gelap panel, field tetap berkontras */
+.dark .fi-auth-shell .cashier-auth-card {
+    background: var(--bg-surface);
+    box-shadow: 0 24px 60px rgb(0 0 0 / 0.45), 0 0 0 1px var(--border-color);
+}
+
+.dark .fi-auth-shell .fi-simple-header-heading {
+    color: var(--text);
+}
+
+.dark .fi-auth-shell .fi-input-wrp {
+    background-color: var(--bg-surface-secondary);
+}
+
+.dark .fi-body .fi-auth-shell .fi-input-wrp {
+    box-shadow: 0 0 0 1px var(--field-border);
+}
+
+.dark .fi-auth-shell .fi-fo-field-label-content {
+    color: var(--text);
+}
