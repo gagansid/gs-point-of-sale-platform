@@ -28,13 +28,13 @@ final class MaintenanceMode extends Page
 
     protected static string|UnitEnum|null $navigationGroup = 'Sistem';
 
-    protected static ?string $navigationLabel = 'Maintenance';
+    protected static ?string $navigationLabel = 'Pemeliharaan';
 
-    protected static ?string $title = 'Maintenance';
+    protected static ?string $title = 'Pemeliharaan';
 
     protected static ?string $slug = 'maintenance';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 8;
 
     public function getSubheading(): string
     {
@@ -76,7 +76,7 @@ final class MaintenanceMode extends Page
 
                     if ($enabled) {
                         $maintenance->disable();
-                        Notification::make()->success()->title('Maintenance dimatikan')->send();
+                        Notification::make()->success()->title('Pemeliharaan dimatikan')->send();
                         $this->redirect(self::getUrl());
 
                         return;

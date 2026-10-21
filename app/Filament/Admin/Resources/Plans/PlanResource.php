@@ -129,11 +129,12 @@ final class PlanResource extends Resource
                 TextColumn::make('limits')->label('Kuota')->state(fn (Plan $record): string => $record->limitsSummary() ?: 'Tanpa batas')->wrap()
                     ->extraCellAttributes(['class' => 'gs-ta-cell-wide']),
                 TextColumn::make('features')->label('Fitur')
-                    ->state(fn (Plan $record): string => count(array_intersect($record->features, $allFeatures())).' dari '.count($allFeatures())),
+                    ->state(fn (Plan $record): string => count(array_intersect($record->features, $allFeatures())).' dari '.count($allFeatures()))
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('period')->label('Periode')
                     ->state(fn (Plan $record): string => self::periodText($record))
                     ->description(fn (Plan $record): ?string => $record->periodStatus() === Plan::PERIOD_UNLIMITED ? null : Plan::PERIODS[$record->periodStatus()]),
-                TextColumn::make('tenants_count')->label('Bisnis')->counts('tenants')->alignEnd()->sortable(),
+                TextColumn::make('tenants_count')->label('Bisnis')->counts('tenants')->alignEnd()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('is_public')->label('Tampil')->badge()
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Publik' : 'Khusus')
                     ->color(fn (bool $state): string => $state ? 'info' : 'gray'),

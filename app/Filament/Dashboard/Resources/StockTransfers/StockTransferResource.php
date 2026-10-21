@@ -110,7 +110,7 @@ final class StockTransferResource extends Resource
         $mine = $user instanceof User ? $user->outletIds() : [];
 
         return $schema->columns(1)->components([
-            Section::make('Transfer')->columns(2)->schema([
+            Section::make('Transfer')->icon(Heroicon::OutlinedArrowsRightLeft)->columns(2)->schema([
                 Select::make('from_outlet_id')->label('Dari outlet')->required()->native(false)->live()
                     ->options(fn (): array => Outlet::query()->active()->whereIn('id', $mine)->orderBy('name')->pluck('name', 'id')->all())
                     ->default(fn (): ?string => CurrentOutlet::selectedId())
@@ -119,7 +119,7 @@ final class StockTransferResource extends Resource
                     ->options(fn (Get $get): array => Outlet::query()->active()->whereKeyNot((string) $get('from_outlet_id'))->orderBy('name')->pluck('name', 'id')->all()),
                 TextInput::make('notes')->label('Catatan')->maxLength(255)->columnSpanFull(),
             ]),
-            Section::make('Item')->description('Hanya produk dengan lacak stok')->schema([
+            Section::make('Item')->icon(Heroicon::OutlinedListBullet)->description('Hanya produk dengan lacak stok')->schema([
                 Repeater::make('items')
                     ->hiddenLabel()
                     ->table([
@@ -148,7 +148,7 @@ final class StockTransferResource extends Resource
             ->components([
                 Section::make()->columnSpan(['lg' => 2])->schema([View::make('filament.dashboard.stock.transfer')]),
                 Grid::make(1)->columnSpan(['lg' => 1])->schema([
-                    Section::make('Dibatalkan')->compact()
+                    Section::make('Dibatalkan')->icon(Heroicon::OutlinedXCircle)->compact()
                         ->visible(fn (StockTransfer $record): bool => $record->status === StockTransferStatus::Cancelled)
                         ->schema([TextEntry::make('cancel_reason')->label('Alasan')]),
                     AuditInfo::card(),

@@ -1,4 +1,4 @@
-{{-- Sistem → Maintenance: status layanan, URL bypass, dampak & langkah aman. --}}
+{{-- Sistem → Pemeliharaan: status layanan, URL bypass, dampak & langkah aman. --}}
 @php($bypass = $this->bypassUrl())
 <x-filament-panels::page>
     <div class="gs-overview">
@@ -7,7 +7,7 @@
                 <div class="gs-kpi-head"><span class="gs-kpi-icon"><x-filament::icon icon="heroicon-o-signal" /></span><span class="gs-kpi-label">Status layanan</span></div>
                 <div class="gs-kpi-value">
                     @if ($this->isEnabled())
-                        <x-filament::badge color="danger" icon="heroicon-o-pause-circle">Maintenance aktif</x-filament::badge>
+                        <x-filament::badge color="danger" icon="heroicon-o-pause-circle">Pemeliharaan aktif</x-filament::badge>
                     @else
                         <x-filament::badge color="success" icon="heroicon-o-play-circle">Normal</x-filament::badge>
                     @endif

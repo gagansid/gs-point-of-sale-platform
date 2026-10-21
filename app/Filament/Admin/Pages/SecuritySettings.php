@@ -40,6 +40,8 @@ final class SecuritySettings extends Page
 
     protected static string|UnitEnum|null $navigationGroup = 'Sistem';
 
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $navigationLabel = 'Keamanan';
 
     protected static ?string $title = 'Keamanan';

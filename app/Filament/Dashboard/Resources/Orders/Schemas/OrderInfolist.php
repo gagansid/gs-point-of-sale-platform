@@ -13,6 +13,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 
 /**
  * Detail transaksi bergaya nota (infolist.md): info transaksi, item, total, dan pembayaran dalam satu
@@ -28,14 +29,14 @@ final class OrderInfolist
                 Grid::make(1)->columnSpan(['lg' => 2])->schema([
                     Section::make()->schema([View::make('filament.dashboard.orders.nota')]),
                     // Retur sebagian (ADR 0018)
-                    Section::make('Retur')
+                    Section::make('Retur')->icon(Heroicon::OutlinedArrowUturnLeft)
                         ->description(fn (Order $record): string => 'Total diretur '.Money::format($record->refunded_total))
                         ->visible(fn (Order $record): bool => Money::isPositive($record->refunded_total))
                         ->schema([View::make('filament.dashboard.orders.refunds')]),
                 ]),
 
                 Grid::make(1)->columnSpan(['lg' => 1])->schema([
-                    Section::make('Dibatalkan')
+                    Section::make('Dibatalkan')->icon(Heroicon::OutlinedXCircle)
                         ->visible(fn (Order $record): bool => $record->status === OrderStatus::Voided)
                         ->compact()
                         ->schema([

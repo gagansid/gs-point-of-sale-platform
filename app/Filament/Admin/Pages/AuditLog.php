@@ -46,7 +46,7 @@ final class AuditLog extends Page implements HasTable
 
     protected static ?string $slug = 'audit';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 10;
 
     /**
      * Tanpa #[Url(as: 'filters')]: filter disimpan di session (persistFiltersInSession).

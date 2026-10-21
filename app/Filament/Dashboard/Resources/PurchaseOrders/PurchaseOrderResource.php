@@ -105,7 +105,7 @@ final class PurchaseOrderResource extends Resource
         $rules = SavePurchaseOrder::rules();
 
         return $schema->columns(1)->components([
-            Section::make('Pesanan')->columns(2)->schema([
+            Section::make('Pesanan')->icon(Heroicon::OutlinedDocumentText)->columns(2)->schema([
                 Select::make('outlet_id')->label('Outlet')->required()->native(false)
                     ->options(fn (): array => Outlet::query()->active()->whereIn('id', CurrentOutlet::ids())->orderBy('name')->pluck('name', 'id')->all())
                     ->visible(fn (string $operation): bool => $operation === 'create' && CurrentOutlet::selectedId() === null && count(CurrentOutlet::ids()) > 1)
@@ -117,7 +117,7 @@ final class PurchaseOrderResource extends Resource
                 DatePicker::make('expected_on')->label('Perkiraan datang')->native(false)->displayFormat('j M Y'),
                 TextInput::make('notes')->label('Catatan')->rules($rules['notes']),
             ]),
-            Section::make('Item')
+            Section::make('Item')->icon(Heroicon::OutlinedListBullet)
                 ->description('Produk & bahan yang melacak stok. Harga beli perkiraan, bisa disesuaikan saat barang diterima')
                 ->schema([
                     Repeater::make('items')
@@ -160,7 +160,7 @@ final class PurchaseOrderResource extends Resource
                 Section::make()->columnSpan(['lg' => 2])
                     ->schema([View::make('filament.dashboard.stock.purchase-order')]),
                 Grid::make(1)->columnSpan(['lg' => 1])->schema([
-                    Section::make('Dibatalkan')->compact()
+                    Section::make('Dibatalkan')->icon(Heroicon::OutlinedXCircle)->compact()
                         ->visible(fn (PurchaseOrder $record): bool => $record->status === PurchaseOrderStatus::Cancelled)
                         ->schema([
                             TextEntry::make('cancelled_at')->label('Waktu')->dateTime('j M Y, H.i')->timezone(CurrentOutlet::timezone()),

@@ -8,6 +8,7 @@ use App\Actions\Outlet\Data\OutletSettingsData;
 use App\Actions\Outlet\UpdateOutletSettings;
 use App\Filament\Shared\Actions\SettingsFormActions;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
+use App\Filament\Shared\Forms\MoneyInput;
 use App\Http\Requests\Api\V1\Outlet\OutletSettingsRequest;
 use App\Models\Outlet;
 use App\Models\User;
@@ -94,7 +95,7 @@ final class OutletSettings extends Page
             ->columns(['default' => 1, 'lg' => 3])
             ->components([
                 Grid::make(1)->columnSpan(['lg' => 2])->schema([
-                    Section::make('Profil')
+                    Section::make('Profil')->icon(Heroicon::OutlinedBuildingStorefront)
                         ->description('Tampil di struk dan aplikasi kasir')
                         ->columns(2)
                         ->schema([
@@ -106,7 +107,7 @@ final class OutletSettings extends Page
                                 ->helperText('Dipakai untuk tanggal nomor order & laporan harian'),
                         ]),
 
-                    Section::make('Pajak, service & pembulatan')
+                    Section::make('Pajak, service & pembulatan')->icon(Heroicon::OutlinedReceiptPercent)
                         ->description('Berlaku untuk transaksi berikutnya; transaksi lama tidak berubah')
                         ->columns(2)
                         ->schema([
@@ -122,7 +123,7 @@ final class OutletSettings extends Page
                                 ])->all()),
                         ]),
 
-                    Section::make('Struk')
+                    Section::make('Struk')->icon(Heroicon::OutlinedPrinter)
                         ->description('Teks di bagian atas & bawah struk, dan baris yang dicetak')
                         ->columns(2)
                         ->schema([
@@ -137,7 +138,7 @@ final class OutletSettings extends Page
                 ]),
 
                 Grid::make(1)->columnSpan(['lg' => 1])->schema([
-                    Section::make('Batas diskon manual')
+                    Section::make('Batas diskon manual')->icon(Heroicon::OutlinedTag)
                         ->description('Diskon di atas batas butuh PIN atasan. Manager & owner tidak dibatasi')
                         ->schema([
                             TextInput::make('discount_limits.cashier')->label('Kasir')->suffix('%')->numeric()->required()
@@ -146,26 +147,26 @@ final class OutletSettings extends Page
                                 ->rules($rules['discount_limits.supervisor']),
                         ]),
 
-                    Section::make('Target omzet')
+                    Section::make('Target omzet')->icon(Heroicon::OutlinedFlag)
                         ->description('Progres tampil di Beranda. Kosongkan bila tidak memakai target')
                         ->schema([
-                            TextInput::make('daily_sales_target')->label('Harian')->prefix('Rp')->numeric()
+                            MoneyInput::make('daily_sales_target')->label('Harian')
                                 ->rules($rules['daily_sales_target'])->placeholder('3000000'),
-                            TextInput::make('monthly_sales_target')->label('Bulanan')->prefix('Rp')->numeric()
+                            MoneyInput::make('monthly_sales_target')->label('Bulanan')
                                 ->rules($rules['monthly_sales_target'])->placeholder('90000000'),
                         ]),
 
                     // ADR 0017: shift bersama per perangkat
-                    Section::make('Laci kasir')
+                    Section::make('Laci kasir')->icon(Heroicon::OutlinedBanknotes)
                         ->description('Ganti kasir tanpa hitung uang; uang dihitung sekali saat tutup shift')
                         ->schema([
-                            TextInput::make('cash_float')->label('Modal laci tetap')->prefix('Rp')->numeric()
+                            MoneyInput::make('cash_float')->label('Modal laci tetap')
                                 ->rules($rules['cash_float'])->placeholder('500000')
                                 ->helperText('Saat tutup shift, Disetor terisi otomatis = kas dihitung − modal ini. Kosongkan bila tidak dipakai'),
                             TextInput::make('auto_lock_minutes')->label('Kunci layar otomatis')->suffix('menit')->integer()
                                 ->rules($rules['auto_lock_minutes'])->placeholder('5')
                                 ->helperText('Layar kasir terkunci bila tidak dipakai. Kosongkan untuk mematikan'),
-                            TextInput::make('cash_out_approval_limit')->label('Kas keluar tanpa PIN maksimal')->prefix('Rp')->numeric()
+                            MoneyInput::make('cash_out_approval_limit')->label('Kas keluar tanpa PIN maksimal')
                                 ->rules($rules['cash_out_approval_limit'])->placeholder('100000')
                                 ->helperText('Kas keluar kasir di atas nominal ini butuh PIN atasan. Kosongkan bila tidak perlu'),
                             // ADR 0018

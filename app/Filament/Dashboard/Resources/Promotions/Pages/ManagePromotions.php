@@ -7,16 +7,20 @@ namespace App\Filament\Dashboard\Resources\Promotions\Pages;
 use App\Actions\Promotion\SavePromotion;
 use App\Filament\Dashboard\Resources\Promotions\PromotionResource;
 use App\Filament\Shared\Actions\RunBusinessAction;
+use App\Filament\Shared\Concerns\HasCardTabs;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Filament\Shared\Concerns\HasTableCardHeader;
+use App\Filament\Shared\Tables\StatusTabs;
 use App\Models\Promotion;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ManageRecords;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Icons\Heroicon;
 
 final class ManagePromotions extends ManageRecords
 {
+    use HasCardTabs;
     use HasIconBreadcrumbs;
     use HasTableCardHeader;
 
@@ -28,6 +32,15 @@ final class ManagePromotions extends ManageRecords
      * @var array<string, mixed>|null
      */
     public ?array $tableFilters = null;
+
+    /** Tanpa #[Url(as: 'tab')]: tab aktif disimpan di session (HasCardTabs). */
+    public ?string $activeTab = null;
+
+    /** @return array<string, Tab> */
+    public function getTabs(): array
+    {
+        return StatusTabs::make(Promotion::class);
+    }
 
     /** @return array<Action> */
     protected function getTableCardActions(): array

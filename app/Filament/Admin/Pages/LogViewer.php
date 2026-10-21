@@ -69,7 +69,7 @@ final class LogViewer extends Page implements HasActions, HasSchemas, HasTable
 
     protected static ?string $slug = 'logs';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 9;
 
     /**
      * Tanpa #[Url(as: 'filters')]: filter disimpan di session (persistFiltersInSession).

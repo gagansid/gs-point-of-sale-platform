@@ -37,7 +37,7 @@ final class OptionGroupForm
         return $schema
             ->columns(1)
             ->components([
-                Section::make('Grup opsi')
+                Section::make('Grup opsi')->icon(Heroicon::OutlinedAdjustmentsHorizontal)
                     ->description('Contoh: Ukuran (wajib pilih 1), Gula (pilih 1), Topping (boleh lebih dari 1)')
                     ->columns(['default' => 1, 'md' => 4])
                     ->schema([
@@ -58,7 +58,7 @@ final class OptionGroupForm
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Opsi')
+                Section::make('Opsi')->icon(Heroicon::OutlinedListBullet)
                     ->key('optionsSection')
                     ->description('Urutan baris = urutan tampil di aplikasi kasir')
                     ->headerActions([

@@ -19,7 +19,7 @@ use Filament\Tables\Table;
 use UnitEnum;
 
 /**
- * Menu Katalog → Grup Opsi (Ukuran, Gula, Topping) beserta opsinya.
+ * Menu Katalog → Grup opsi (Ukuran, Gula, Topping) beserta opsinya.
  */
 final class OptionGroupResource extends Resource
 {
@@ -33,7 +33,7 @@ final class OptionGroupResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
-    protected static ?string $navigationLabel = 'Grup Opsi';
+    protected static ?string $navigationLabel = 'Grup opsi';
 
     protected static ?string $modelLabel = 'grup opsi';
 

@@ -45,13 +45,13 @@ final class QueueMonitor extends Page implements HasActions, HasSchemas, HasTabl
 
     protected static string|UnitEnum|null $navigationGroup = 'Sistem';
 
-    protected static ?string $navigationLabel = 'Queue';
+    protected static ?string $navigationLabel = 'Antrean';
 
-    protected static ?string $title = 'Queue';
+    protected static ?string $title = 'Antrean';
 
     protected static ?string $slug = 'queue';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 7;
 
     public static function getNavigationBadge(): ?string
     {

@@ -37,7 +37,7 @@ final class TenantStatusActions
             ->action(function (Tenant $record): void {
                 app(ChangeTenantStatus::class)->handle($record, TenantStatus::Suspended, self::admin());
 
-                Notification::make()->success()->title('Bisnis ditangguhkan')->send();
+                Notification::make()->success()->title('Tenant ditangguhkan')->send();
             });
     }
 
@@ -58,7 +58,7 @@ final class TenantStatusActions
             ->action(function (Tenant $record): void {
                 app(ChangeTenantStatus::class)->handle($record, TenantStatus::Active, self::admin());
 
-                Notification::make()->success()->title('Bisnis diaktifkan')->send();
+                Notification::make()->success()->title('Tenant diaktifkan')->send();
             });
     }
 

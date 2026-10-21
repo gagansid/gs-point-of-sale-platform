@@ -124,7 +124,7 @@ final class PromotionResource extends Resource
                 ->visible(fn (Get $get): bool => $type($get) === PromotionType::BuyGet)
                 ->required(fn (Get $get): bool => $type($get) === PromotionType::BuyGet),
 
-            Section::make('Berlaku untuk')->columns(2)->columnSpanFull()
+            Section::make('Berlaku untuk')->icon(Heroicon::OutlinedTag)->columns(2)->columnSpanFull()
                 ->visible(fn (Get $get): bool => $type($get) !== PromotionType::OrderDiscount)
                 ->schema([
                     ToggleButtons::make('applies_to')->hiddenLabel()->inline()->live()->default(Promotion::APPLIES_ALL)
@@ -138,7 +138,7 @@ final class PromotionResource extends Resource
                         ->visible(fn (Get $get): bool => $applies($get) === Promotion::APPLIES_CATEGORIES),
                 ]),
 
-            Section::make('Jadwal')->columns(2)->columnSpanFull()
+            Section::make('Jadwal')->icon(Heroicon::OutlinedCalendarDays)->columns(2)->columnSpanFull()
                 ->description('Kosongkan untuk berlaku setiap saat. Jam memakai waktu outlet; selesai < mulai = lewat tengah malam')
                 ->schema([
                     CheckboxList::make('days')->label('Hari')->options(self::DAYS)->columns(7)->columnSpanFull(),

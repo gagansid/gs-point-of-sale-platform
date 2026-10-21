@@ -41,7 +41,7 @@ it('aktifkan dengan konfirmasi kata sandi → diarahkan ke URL secret; API 503 M
 it('matikan lagi', function () {
     app(SetMaintenanceMode::class)->enable();
 
-    Livewire::test(MaintenanceMode::class)->assertSee('Maintenance aktif')
+    Livewire::test(MaintenanceMode::class)->assertSee('Pemeliharaan aktif')
         ->callAction('toggle', ['current_password' => 'Rahasia-Admin-1!']);
 
     expect(app(SetMaintenanceMode::class)->isEnabled())->toBeFalse();

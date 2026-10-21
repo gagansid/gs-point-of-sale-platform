@@ -106,7 +106,7 @@ final class StockReceiptResource extends Resource
         $rules = SaveStockReceipt::rules();
 
         return $schema->columns(1)->components([
-            Section::make('Barang datang')->columns(2)->schema([
+            Section::make('Barang datang')->icon(Heroicon::OutlinedTruck)->columns(2)->schema([
                 // "Semua outlet" di topbar: pilih outlet penerima
                 Select::make('outlet_id')->label('Outlet')->required()->native(false)
                     ->options(fn (): array => Outlet::query()->active()->whereIn('id', CurrentOutlet::ids())->orderBy('name')->pluck('name', 'id')->all())
@@ -119,7 +119,7 @@ final class StockReceiptResource extends Resource
                 TextInput::make('invoice_number')->label('Nomor nota supplier')->rules($rules['invoice_number']),
                 TextInput::make('notes')->label('Catatan')->rules($rules['notes']),
             ]),
-            Section::make('Item')
+            Section::make('Item')->icon(Heroicon::OutlinedListBullet)
                 ->description('Hanya produk dengan lacak stok. Harga beli dipakai menghitung harga modal rata-rata saat diposting')
                 ->schema([
                     Repeater::make('items')
@@ -162,7 +162,7 @@ final class StockReceiptResource extends Resource
                 Section::make()->columnSpan(['lg' => 2])
                     ->schema([View::make('filament.dashboard.stock.receipt')]),
                 Grid::make(1)->columnSpan(['lg' => 1])->schema([
-                    Section::make('Dibatalkan')->compact()
+                    Section::make('Dibatalkan')->icon(Heroicon::OutlinedXCircle)->compact()
                         ->visible(fn (StockReceipt $record): bool => $record->status === StockDocumentStatus::Cancelled)
                         ->schema([
                             TextEntry::make('cancelled_at')->label('Waktu')->dateTime('j M Y, H.i')->timezone(CurrentOutlet::timezone()),

@@ -111,12 +111,13 @@ final class AddonResource extends Resource
                 TextColumn::make('type')->label('Jenis')->badge()->sortable()
                     ->formatStateUsing(fn (string $state): string => Addon::TYPES[$state] ?? $state)
                     ->color(fn (string $state): string => $state === Addon::TYPE_QUOTA ? 'warning' : 'info'),
-                TextColumn::make('benefit')->label('Manfaat')->state(fn (Addon $record): string => $record->benefit())->wrap(),
+                TextColumn::make('benefit')->label('Manfaat')->state(fn (Addon $record): string => $record->benefit())->wrap()
+                    ->extraCellAttributes(['class' => 'gs-ta-cell-wide']),
                 // Satu kolom: bulanan di atas, tahunan di bawah (tabel tetap muat di layar 1366px)
                 TextColumn::make('price_monthly')->label('Harga')->alignEnd()->sortable()
                     ->formatStateUsing(fn (string $state): string => Money::format($state).'/bln')
                     ->description(fn (Addon $record): string => Money::format($record->price_yearly).'/thn'),
-                TextColumn::make('tenant_addons_count')->label('Bisnis')->alignEnd()->sortable(),
+                TextColumn::make('tenant_addons_count')->label('Bisnis')->alignEnd()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('tenant_addons_sum_quantity')->label('Unit terpakai')->alignEnd()->placeholder('0')
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('is_public')->label('Tampil')->badge()

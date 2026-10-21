@@ -32,7 +32,7 @@ final class ShiftInfolist
             ->columns(['default' => 1, 'lg' => 3])
             ->components([
                 Grid::make(1)->columnSpan(['lg' => 2])->schema([
-                    Section::make('Detail shift')->columns(['default' => 2, 'md' => 4])->schema([
+                    Section::make('Detail shift')->icon(Heroicon::OutlinedClock)->columns(['default' => 2, 'md' => 4])->schema([
                         TextEntry::make('openedBy.name')->label('Dibuka oleh'),
                         TextEntry::make('opened_at')->label('Dibuka')->dateTime('j M Y, H.i'),
                         TextEntry::make('device.name')->label('Perangkat'),
@@ -42,7 +42,7 @@ final class ShiftInfolist
                         TextEntry::make('close_note')->label('Catatan')->placeholder('—')->columnSpan(2),
                     ]),
 
-                    Section::make('Penjualan')->schema([
+                    Section::make('Penjualan')->icon(Heroicon::OutlinedShoppingBag)->schema([
                         Grid::make(['default' => 3])->schema([
                             TextEntry::make('order_count')->label('Transaksi selesai')
                                 ->state(fn (Shift $record): int => $summary($record)['order_count']),
@@ -55,12 +55,12 @@ final class ShiftInfolist
                     ]),
 
                     // ADR 0017: ganti kasir tanpa hitung & kas masuk/keluar
-                    Section::make('Kasir bertugas')->schema([View::make('filament.dashboard.shifts.operators')]),
-                    Section::make('Kas masuk/keluar')->schema([View::make('filament.dashboard.shifts.cash-movements')]),
+                    Section::make('Kasir bertugas')->icon(Heroicon::OutlinedUsers)->schema([View::make('filament.dashboard.shifts.operators')]),
+                    Section::make('Kas masuk/keluar')->icon(Heroicon::OutlinedArrowsUpDown)->schema([View::make('filament.dashboard.shifts.cash-movements')]),
                 ]),
 
                 Grid::make(1)->columnSpan(['lg' => 1])->schema([
-                    Section::make('Kas')
+                    Section::make('Kas')->icon(Heroicon::OutlinedBanknotes)
                         ->extraAttributes(['class' => 'gs-summary'])
                         ->schema([
                             MoneyEntry::make('opening_cash')->label('Kas awal')->inlineLabel()

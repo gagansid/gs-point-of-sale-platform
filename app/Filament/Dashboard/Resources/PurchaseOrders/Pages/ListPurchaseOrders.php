@@ -6,8 +6,10 @@ namespace App\Filament\Dashboard\Resources\PurchaseOrders\Pages;
 
 use App\Enums\PurchaseOrderStatus;
 use App\Filament\Dashboard\Resources\PurchaseOrders\PurchaseOrderResource;
+use App\Filament\Shared\Concerns\HasCardTabs;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Filament\Shared\Concerns\HasTableCardHeader;
+use App\Filament\Shared\Tables\StatusTabs;
 use App\Models\PurchaseOrder;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -18,6 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class ListPurchaseOrders extends ListRecords
 {
+    use HasCardTabs;
     use HasIconBreadcrumbs;
     use HasTableCardHeader;
 
@@ -30,17 +33,23 @@ final class ListPurchaseOrders extends ListRecords
      */
     public ?array $tableFilters = null;
 
+    /** Tanpa #[Url(as: 'tab')]: tab aktif disimpan di session (HasCardTabs). */
+    public ?string $activeTab = null;
+
     /** @return array<string, Tab> */
     public function getTabs(): array
     {
         $waiting = [PurchaseOrderStatus::Ordered->value, PurchaseOrderStatus::Partial->value];
+        $tabs = StatusTabs::forEnum(PurchaseOrder::class, PurchaseOrderStatus::class, [PurchaseOrderStatus::Draft]);
 
+        // PO yang barangnya belum datang lengkap (ADR 0021): tepat setelah "Semua"
         return [
-            'all' => Tab::make('Semua'),
-            // PO yang barangnya belum datang lengkap (ADR 0021)
+            'all' => $tabs['all'],
             'waiting' => Tab::make('Menunggu barang')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereIn('status', $waiting))
-                ->badge(fn (): int => PurchaseOrder::query()->whereIn('status', $waiting)->count()),
+                ->badge(fn (): int => PurchaseOrder::query()->whereIn('status', $waiting)->count())
+                ->badgeColor('warning'),
+            ...array_diff_key($tabs, ['all' => true]),
         ];
     }
 

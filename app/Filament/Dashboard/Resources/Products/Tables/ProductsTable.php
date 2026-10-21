@@ -63,12 +63,16 @@ final class ProductsTable
                     ->searchable(['name', 'sku', 'barcode'])
                     ->sortable(),
                 TextColumn::make('category.name')->label('Kategori')->placeholder('—')->sortable()->toggleable(),
-                MoneyColumn::make('price')->label('Harga')->sortable(),
+                // Bahan baku tidak dijual: harga "—", bukan Rp0
+                MoneyColumn::make('price')->label('Harga')->sortable()->placeholder('—')
+                    ->state(fn (Product $record): ?string => $record->kind === ProductKind::Ingredient ? null : (string) $record->price),
                 TextColumn::make('stock_qty')
                     ->label('Stok')
                     ->state(fn (Product $record): ?int => $record->track_stock ? $record->stock_qty : null)
                     ->placeholder('—')
-                    ->numeric(locale: 'id')
+                    // Satuan bahan (g, ml, pcs) ikut agar angka besar tidak membingungkan
+                    ->formatStateUsing(fn (int $state, Product $record): string => number_format($state, 0, ',', '.')
+                        .($record->kind === ProductKind::Ingredient && filled($record->unit) ? ' '.$record->unit : ''))
                     ->alignEnd()
                     ->sortable()
                     // Merah = habis (≤ 0), kuning = menipis (≤ stok minimum)

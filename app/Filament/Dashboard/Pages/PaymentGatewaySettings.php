@@ -82,7 +82,7 @@ final class PaymentGatewaySettings extends Page
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('Midtrans')
+                Section::make('Midtrans')->icon(Heroicon::OutlinedGlobeAlt)
                     ->description('Pelanggan membayar pesanan dari meja langsung ke akun Midtrans Anda; biaya transaksi (MDR) mengikuti kontrak Anda dengan Midtrans')
                     ->schema([
                         Toggle::make('enabled')->label('Aktifkan pembayaran online')->live(),

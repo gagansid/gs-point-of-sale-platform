@@ -5,23 +5,29 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\StockOpnames\Pages;
 
 use App\Actions\Stock\CreateStockOpname;
+use App\Enums\StockDocumentStatus;
 use App\Filament\Dashboard\Resources\StockOpnames\StockOpnameResource;
 use App\Filament\Shared\Actions\RunBusinessAction;
+use App\Filament\Shared\Concerns\HasCardTabs;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Filament\Shared\Concerns\HasTableCardHeader;
+use App\Filament\Shared\Tables\StatusTabs;
 use App\Models\Category;
 use App\Models\Outlet;
+use App\Models\StockOpname;
 use App\Support\CurrentOutlet;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Str;
 
 final class ListStockOpnames extends ListRecords
 {
+    use HasCardTabs;
     use HasIconBreadcrumbs;
     use HasTableCardHeader;
 
@@ -34,11 +40,20 @@ final class ListStockOpnames extends ListRecords
      */
     public ?array $tableFilters = null;
 
+    /** Tanpa #[Url(as: 'tab')]: tab aktif disimpan di session (HasCardTabs). */
+    public ?string $activeTab = null;
+
+    /** @return array<string, Tab> */
+    public function getTabs(): array
+    {
+        return StatusTabs::forEnum(StockOpname::class, StockDocumentStatus::class, [StockDocumentStatus::Draft]);
+    }
+
     /** @return array<Action> */
     protected function getTableCardActions(): array
     {
         return [
-            Action::make('create')->label('Buat lembar hitung')->icon(Heroicon::OutlinedPlus)
+            Action::make('create')->label('Tambah')->icon(Heroicon::OutlinedPlus)
                 ->visible(fn (): bool => StockOpnameResource::canCreate())
                 ->modalHeading('Buat lembar stok opname')
                 ->modalDescription('Semua produk lacak stok yang dijual di outlet (atau satu kategori) masuk ke lembar dengan stok sistem saat ini')

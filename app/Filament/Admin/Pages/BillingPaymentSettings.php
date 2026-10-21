@@ -52,7 +52,7 @@ final class BillingPaymentSettings extends Page
 
     protected static ?string $slug = 'billing-payment';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
 
     /** @var array<string, mixed>|null */
     public ?array $data = [];

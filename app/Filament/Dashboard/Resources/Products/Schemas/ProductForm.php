@@ -27,6 +27,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Validation\Rules\Unique;
 
 /**
@@ -42,7 +43,7 @@ final class ProductForm
                 Grid::make(1)
                     ->columnSpan(2)
                     ->schema([
-                        Section::make('Informasi produk')
+                        Section::make('Informasi produk')->icon(Heroicon::OutlinedCube)
                             ->description('Nama, kategori, dan harga yang tampil di aplikasi kasir')
                             ->columns(2)
                             ->schema([
@@ -83,7 +84,7 @@ final class ProductForm
                             ]),
 
                         // Resep / isi paket (ADR 0020)
-                        Section::make(fn (Get $get): string => self::kind($get) === ProductKind::Bundle ? 'Isi paket' : 'Resep')
+                        Section::make(fn (Get $get): string => self::kind($get) === ProductKind::Bundle ? 'Isi paket' : 'Resep')->icon(Heroicon::OutlinedBeaker)
                             ->description(fn (Get $get): string => self::kind($get) === ProductKind::Bundle
                                 ? 'Produk di dalam paket; stok dipotong dari isi ini'
                                 : 'Bahan per 1 porsi; bila diisi, stok bahan yang berkurang (bukan stok produk ini)')
@@ -107,7 +108,7 @@ final class ProductForm
                                     ]),
                             ]),
 
-                        Section::make('Grup opsi')
+                        Section::make('Grup opsi')->icon(Heroicon::OutlinedAdjustmentsHorizontal)
                             ->visible(fn (Get $get): bool => self::kind($get) !== ProductKind::Ingredient)
                             ->description('Urutan pilihan = urutan tampil di aplikasi kasir')
                             ->schema([
@@ -119,7 +120,7 @@ final class ProductForm
                                     ->placeholder('Pilih grup opsi, mis. Ukuran, Gula'),
                             ]),
 
-                        Section::make('Stok')
+                        Section::make('Stok')->icon(Heroicon::OutlinedArchiveBox)
                             // Stok awal, stok saat ini, dan stok minimum milik outlet aktif (ADR 0010)
                             ->description(fn (): string => 'Lacak stok untuk mengurangi otomatis saat terjual dan peringatan stok menipis'
                                 .(Outlet::query()->count() > 1 ? '. Angka stok untuk outlet '.CurrentOutlet::getOrFail()->name : ''))
@@ -148,7 +149,7 @@ final class ProductForm
                 Grid::make(1)
                     ->columnSpan(1)
                     ->schema([
-                        Section::make('Gambar')
+                        Section::make('Gambar')->icon(Heroicon::OutlinedPhoto)
                             ->description('Tampil di aplikasi kasir')
                             ->schema([
                                 FileUpload::make('image_path')
@@ -166,7 +167,7 @@ final class ProductForm
                                     ->maxSize(1024)
                                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']),
                             ]),
-                        Section::make('Dijual di outlet')
+                        Section::make('Dijual di outlet')->icon(Heroicon::OutlinedBuildingStorefront)
                             ->description('Produk hanya tampil di aplikasi kasir outlet yang dicentang')
                             // Hanya bila ada lebih dari satu outlet; tersembunyi = status dijual tidak diubah (ADR 0011)
                             ->visible(fn (): bool => self::outletOptions() !== [] && Outlet::query()->active()->count() > 1)
@@ -176,7 +177,7 @@ final class ProductForm
                                     ->outletQuery(fn () => SetProductListing::manageableOutlets(self::user()))
                                     ->default(fn (): array => array_keys(self::outletOptions())),
                             ]),
-                        Section::make('Status')
+                        Section::make('Status')->icon(Heroicon::OutlinedCheckCircle)
                             ->description('Atur tampil atau tidaknya di kasir')
                             ->schema([
                                 Toggle::make('is_active')->label('Aktif')->default(true)

@@ -46,7 +46,7 @@ final class ListTenants extends ListRecords
             'all' => Tab::make('Semua')->badge(fn (): int => Tenant::query()->count()),
             'active' => self::statusTab('Aktif', TenantStatus::Active),
             'trial' => self::statusTab('Trial', TenantStatus::Trial),
-            'suspended' => self::statusTab('Suspended', TenantStatus::Suspended)->badgeColor('danger'),
+            'suspended' => self::statusTab('Ditangguhkan', TenantStatus::Suspended)->badgeColor('danger'),
             // Langganan berakhir dalam 7 hari (atau sudah lewat) dan belum disuspend
             'expiring' => Tab::make('Segera berakhir')
                 ->modifyQueryUsing(fn (Builder $query): Builder => self::expiring($query))

@@ -106,11 +106,13 @@ final class PaymentMethodResource extends Resource
             ->reorderRecordsTriggerAction(fn (Action $action, bool $isReordering): Action => $action
                 ->tooltip($isReordering ? 'Selesai mengatur urutan' : 'Atur urutan tampil di kasir'))
             ->defaultSort(fn (Builder $query): Builder => $query->orderBy('sort_order')->orderBy('name'))
-            ->paginated(false)
             ->columns([
                 TextColumn::make('name')->label('Nama')->weight('medium')->searchable()->sortable(),
                 TextColumn::make('category')->label('Jenis')->badge()->color('gray')->sortable(),
-                IconColumn::make('requires_reference')->label('Wajib referensi')->boolean()->alignCenter()->sortable(),
+                // Badge Ya/Tidak (bukan ikon ✕ merah: "tidak" bukan kesalahan)
+                TextColumn::make('requires_reference')->label('Wajib referensi')->badge()->sortable()
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Ya' : 'Tidak')
+                    ->color(fn (bool $state): string => $state ? 'info' : 'gray'),
                 IconColumn::make('is_active')->label('Aktif')->boolean()->alignCenter()->sortable(),
                 TextColumn::make('outlets')->label('Outlet')
                     ->state(fn (PaymentMethod $record): string => self::outletSummary($record))

@@ -94,7 +94,7 @@ final class StockOpnameResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->columns(1)->components([
-            Section::make('Hitungan fisik')
+            Section::make('Hitungan fisik')->icon(Heroicon::OutlinedClipboardDocumentCheck)
                 ->description('Isi qty fisik produk yang dihitung; kosongkan bila tidak dihitung. Selisih dihitung terhadap stok saat posting')
                 ->schema([
                     Repeater::make('counts')

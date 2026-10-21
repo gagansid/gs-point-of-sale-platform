@@ -79,7 +79,7 @@ class EditProfile extends BaseEditProfile
 
                 // Kanan: form
                 Grid::make(1)->columnSpan(['lg' => 2])->schema([
-                    Section::make('Data diri')
+                    Section::make('Data diri')->icon(Heroicon::OutlinedUser)
                         ->columns(['default' => 1, 'md' => 2])
                         ->schema([
                             $this->getNameFormComponent(),
@@ -88,7 +88,7 @@ class EditProfile extends BaseEditProfile
                                 ->formatStateUsing(fn (?string $state): ?string => $state !== null ? Phone::display($state) : null),
                         ]),
 
-                    Section::make('Keamanan')
+                    Section::make('Keamanan')->icon(Heroicon::OutlinedShieldCheck)
                         ->description('Mengganti kata sandi, PIN, atau email wajib kata sandi saat ini. Kata sandi baru mengeluarkan aplikasi kasir yang memakai akun ini')
                         ->id('keamanan')
                         ->columns(['default' => 1, 'md' => 2])
@@ -99,11 +99,11 @@ class EditProfile extends BaseEditProfile
                             $this->getCurrentPasswordFormComponent(),
                         ]),
 
-                    Section::make('Notifikasi')
+                    Section::make('Notifikasi')->icon(Heroicon::OutlinedBellAlert)
                         ->visible(fn (): bool => $this->getUser() instanceof User && $this->getUser()->hasPermission('report.view'))
                         ->schema([$this->getDailySummaryFormComponent()]),
 
-                    Section::make('Perangkat & sesi')
+                    Section::make('Perangkat & sesi')->icon(Heroicon::OutlinedDevicePhoneMobile)
                         ->description('Tempat akun ini sedang masuk. Keluarkan semua bila ada perangkat yang tidak dikenal')
                         ->id('perangkat')
                         ->afterHeader([

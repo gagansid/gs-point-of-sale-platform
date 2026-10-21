@@ -111,20 +111,22 @@ final class SubscriptionInvoiceResource extends Resource
                     ->description(fn (SubscriptionInvoice $record): string => $record->created_by_admin_id !== null
                         ? 'Dibuat admin'.($record->createdByAdmin !== null ? ' · '.$record->createdByAdmin->name : '')
                         : 'Dibuat owner'),
-                TextColumn::make('kind')->label('Jenis')->badge()->sortable()
+                TextColumn::make('kind')->label('Jenis')->badge()->sortable()->toggleable(isToggledHiddenByDefault: true)
                     ->color(fn (InvoiceKind $state): string => match ($state) {
                         InvoiceKind::Manual => 'warning',
                         InvoiceKind::Addon => 'info',
                         default => 'gray',
                     }),
                 // Paket + add-on (ADR 0025 C2) / judul tagihan manual
-                TextColumn::make('plan_name')->label('Rincian')->state(fn (SubscriptionInvoice $record): string => $record->description())->wrap(),
+                TextColumn::make('plan_name')->label('Rincian')->state(fn (SubscriptionInvoice $record): string => $record->description())->wrap()
+                    ->extraCellAttributes(['class' => 'gs-ta-cell-wide']),
                 TextColumn::make('amount')->label('Total')->alignEnd()->sortable()->formatStateUsing(fn (string $state): string => Money::format($state)),
                 TextColumn::make('created_at')->label('Dibuat')->dateTime('j M Y, H.i')->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('due_at')->label('Jatuh tempo')->date('j M Y')->sortable()
                     ->color(fn (SubscriptionInvoice $record): ?string => $record->isOverdue() ? 'danger' : null)
                     ->description(fn (SubscriptionInvoice $record): ?string => $record->isOverdue() ? 'Lewat jatuh tempo' : null),
                 TextColumn::make('paid_at')->label('Lunas')->dateTime('j M Y, H.i')->placeholder('—')->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->description(fn (SubscriptionInvoice $record): ?string => match ($record->paid_via) {
                         'manual' => 'Transfer manual',
                         'midtrans' => 'Online (Midtrans)',

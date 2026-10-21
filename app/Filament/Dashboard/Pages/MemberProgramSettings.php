@@ -104,7 +104,7 @@ final class MemberProgramSettings extends Page
             ->statePath('data')
             ->disabled(! self::canEdit())
             ->components([
-                Section::make('Program member')
+                Section::make('Program member')->icon(Heroicon::OutlinedUserGroup)
                     ->description('Member berlaku di semua outlet bisnis ini. Data pelanggan disimpan dengan persetujuan mereka')
                     ->schema([
                         Placeholder::make('portal')->label('Halaman member')
@@ -119,23 +119,23 @@ final class MemberProgramSettings extends Page
                             ->columns(2),
                     ]),
 
-                Section::make('Poin')
+                Section::make('Poin')->icon(Heroicon::OutlinedStar)
                     ->description('Poin dihitung dari subtotal setelah diskon, sebelum pajak & service; masuk saat transaksi selesai')
                     ->visible(fn (Get $get): bool => (bool) $get('enabled'))
                     ->columns(3)
                     ->schema([
-                        TextInput::make('earn_amount')->label('Setiap belanja')->prefix('Rp')->numeric()->required()->rules($rules['earn_amount']),
+                        MoneyInput::make('earn_amount')->label('Setiap belanja')->required()->rules($rules['earn_amount']),
                         TextInput::make('earn_points')->label('Dapat poin')->numeric()->required()->rules($rules['earn_points'])->suffix('poin'),
                         TextInput::make('expiry_months')->label('Masa berlaku')->numeric()->required()->rules($rules['expiry_months'])
                             ->suffix('bulan')->helperText('0 = tidak kedaluwarsa'),
-                        TextInput::make('redeem_value')->label('Nilai 1 poin')->prefix('Rp')->numeric()->required()->rules($rules['redeem_value'])
+                        MoneyInput::make('redeem_value')->label('Nilai 1 poin')->required()->rules($rules['redeem_value'])
                             ->helperText('Saat poin dipakai membayar'),
                         TextInput::make('min_redeem_points')->label('Minimal tukar')->numeric()->required()->rules($rules['min_redeem_points'])->suffix('poin'),
                         TextInput::make('max_redeem_percent')->label('Maksimal per transaksi')->numeric()->required()->rules($rules['max_redeem_percent'])
                             ->suffix('% tagihan'),
                     ]),
 
-                Section::make('Diskon member')
+                Section::make('Diskon member')->icon(Heroicon::OutlinedReceiptPercent)
                     ->description('Otomatis untuk setiap transaksi ber-member di outlet yang ikut program, setelah diskon kasir; tidak dihitung ke batas diskon kasir')
                     ->visible(fn (Get $get): bool => (bool) $get('enabled'))
                     ->schema([
@@ -144,14 +144,14 @@ final class MemberProgramSettings extends Page
                     ]),
 
                 // Kasbon member (ADR 0023)
-                Section::make('Kasbon')
+                Section::make('Kasbon')->icon(Heroicon::OutlinedCreditCard)
                     ->description('Member boleh belanja sekarang, bayar nanti, dengan bukti QR/PIN member. Pelunasan tunai masuk kas shift')
                     ->visible(fn (Get $get): bool => (bool) $get('enabled'))
                     ->columns(2)
                     ->schema([
                         Toggle::make('credit_enabled')->label('Aktifkan kasbon')->live()->columnSpanFull()
                             ->helperText('Metode bayar "Kasbon" muncul di kasir saat member terpasang'),
-                        TextInput::make('default_credit_limit')->label('Batas kasbon bawaan')->prefix('Rp')->numeric()->minValue(0)
+                        MoneyInput::make('default_credit_limit')->label('Batas kasbon bawaan')->minValue(0)
                             ->helperText('Per member; bisa diubah per member di menu Member. Kosong = hanya member dengan batas sendiri')
                             ->visible(fn (Get $get): bool => (bool) $get('credit_enabled')),
                     ]),
@@ -223,7 +223,7 @@ final class MemberProgramSettings extends Page
     {
         $percent = fn (Get $get): bool => $get('birthday.type') === DiscountType::Percent->value;
 
-        return Section::make('Voucher ulang tahun')
+        return Section::make('Voucher ulang tahun')->icon(Heroicon::OutlinedGift)
             ->description('Dibuat otomatis untuk member di bulan lahirnya (sekali, berlaku sampai akhir bulan). Butuh tanggal lahir member')
             ->visible(fn (Get $get): bool => (bool) $get('enabled'))
             ->columns(2)
@@ -249,7 +249,7 @@ final class MemberProgramSettings extends Page
     {
         $rules = SaveMemberTiers::fieldRules();
 
-        return Section::make('Tier member')
+        return Section::make('Tier member')->icon(Heroicon::OutlinedTrophy)
             ->description('Naik/turun otomatis dari total belanja 12 bulan terakhir (dievaluasi saat transaksi selesai & setiap hari). Member di bawah tier terendah tanpa tier')
             ->visible(fn (Get $get): bool => (bool) $get('enabled'))
             ->headerActions([
