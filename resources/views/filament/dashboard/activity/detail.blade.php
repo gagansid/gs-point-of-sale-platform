@@ -2,7 +2,7 @@
 @php
     /** @var \App\Models\ActivityLog $log */
     /** @var list<array{field: string, label: string, old: string, new: string}> $changes */
-    $tz = \App\Support\CurrentOutlet::timezone();
+    $tz ??= \App\Support\CurrentOutlet::timezone();
     $when = $log->created_at?->setTimezone($tz)->locale('id');
     $properties = $log->properties;
 @endphp

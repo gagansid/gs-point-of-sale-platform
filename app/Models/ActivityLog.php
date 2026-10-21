@@ -23,7 +23,8 @@ final class ActivityLog extends Activity
         self::addGlobalScope(new TenantScope);
 
         self::creating(function (ActivityLog $log): void {
-            $subjectTenant = $log->subject?->getAttribute('tenant_id');
+            // Data platform (mis. Bank) tidak punya kolom tenant_id: baca atribut mentah agar mode strict tidak melempar
+            $subjectTenant = $log->subject?->getAttributes()['tenant_id'] ?? null;
             $log->tenant_id ??= is_string($subjectTenant) ? $subjectTenant : TenantContext::id();
         });
     }

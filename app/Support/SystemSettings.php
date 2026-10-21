@@ -336,6 +336,8 @@ final class SystemSettings
 
     private function set(string $key, mixed $value, ?Admin $by): void
     {
+        $old = SystemSetting::query()->find($key)?->value;
+
         // Kolom value NOT NULL: null = setelan dihapus (kembali ke nilai bawaan)
         if ($value === null) {
             SystemSetting::query()->whereKey($key)->delete();
@@ -344,5 +346,8 @@ final class SystemSettings
         }
 
         Cache::forget(self::CACHE_PREFIX.$key);
+
+        // Riwayat perubahan admin (Sistem → Riwayat perubahan); rahasia disamarkan
+        PlatformAudit::setting($key, $old, $value, $by);
     }
 }

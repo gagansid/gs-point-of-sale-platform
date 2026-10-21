@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Models\Concerns\LogsChanges;
 use App\Models\Concerns\RecordsAuthor;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
+use Spatie\Activitylog\Contracts\Activity;
 
 /**
  * Master bank platform (Q124, Sistem → Bank). Ditulis lewat App\Actions\Admin\SaveBank / SetBankActive.
@@ -29,7 +31,7 @@ use Illuminate\Support\Facades\Blade;
  */
 final class Bank extends Model
 {
-    use HasUuids, RecordsAuthor;
+    use HasUuids, LogsChanges, RecordsAuthor;
 
     protected $attributes = ['is_active' => true, 'sort_order' => 0, 'color' => '#2d4282', 'text_color' => '#ffffff'];
 
@@ -41,6 +43,21 @@ final class Bank extends Model
     public static function authorModel(): string
     {
         return Admin::class;
+    }
+
+    /** @return list<string> */
+    public static function auditAttributes(): array
+    {
+        return ['code', 'name', 'short_name', 'color', 'text_color', 'logo_path', 'is_active', 'sort_order'];
+    }
+
+    /** Pelaku = super admin login (guard admin; resolver bawaan hanya membaca guard default). */
+    public function tapActivity(Activity $activity, string $eventName): void
+    {
+        $admin = auth('admin')->user();
+        if ($activity instanceof Model && $activity->getAttribute('causer_id') === null && $admin instanceof Admin) {
+            $activity->causer()->associate($admin);
+        }
     }
 
     /** @param  Builder<self>  $query */
