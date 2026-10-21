@@ -132,8 +132,11 @@
                         @if ($pending->isPayable())
                             {{ ($this->payInvoiceAction)(['id' => $pending->id]) }}
                         @endif
-                        {{ ($this->downloadPdfAction)(['id' => $pending->id]) }}
-                        {{ ($this->invoiceDetailAction)(['id' => $pending->id]) }}
+                        {{-- Ikon 32px bergaris (gs-row-actions): sejajar tinggi tombol Bayar --}}
+                        <div class="gs-row-actions is-outlined">
+                            {{ ($this->invoiceDetailAction)(['id' => $pending->id]) }}
+                            {{ ($this->downloadPdfAction)(['id' => $pending->id]) }}
+                        </div>
                     </div>
                 </div>
             @empty
@@ -193,26 +196,26 @@
         <div class="pos-dash-table-wrap">
             <table class="pos-dash-table gs-sub-table">
                 <thead>
-                    <tr><th>Nomor</th><th>Tanggal</th><th>Rincian</th><th>Metode</th><th class="text-right">Total</th><th>Status</th><th class="w-20"></th></tr>
+                    <tr><th>Nomor</th><th class="hidden lg:table-cell">Tanggal</th><th>Rincian</th><th class="hidden lg:table-cell">Metode</th><th class="text-right">Total</th><th>Status</th><th class="gs-actions-cell"></th></tr>
                 </thead>
                 <tbody>
                     @forelse ($invoices as $invoice)
                         <tr wire:key="inv-{{ $invoice->id }}">
                             <td class="font-mono text-xs">{{ $invoice->number }}</td>
-                            <td class="whitespace-nowrap">{{ $date($invoice->created_at) }}</td>
+                            <td class="hidden whitespace-nowrap lg:table-cell">{{ $date($invoice->created_at) }}</td>
                             <td class="gs-cell-wrap">
                                 <div>{{ $invoice->description() }}</div>
                                 @if ($invoice->period_start)
                                     <div class="gs-cell-sub">Periode {{ $date($invoice->period_start) }} – {{ $date($invoice->period_end) }}</div>
                                 @endif
                             </td>
-                            <td class="whitespace-nowrap">{{ $methodLabel($invoice) }}</td>
+                            <td class="hidden whitespace-nowrap lg:table-cell">{{ $methodLabel($invoice) }}</td>
                             <td class="text-right tabular-nums font-medium">{{ $money((string) $invoice->amount) }}</td>
                             <td><x-filament::badge :color="$invoice->statusColor()">{{ $invoice->statusLabel() }}</x-filament::badge></td>
-                            <td class="text-right whitespace-nowrap">
-                                <div class="inline-flex items-center gap-1">
-                                    {{ ($this->downloadPdfAction)(['id' => $invoice->id]) }}
+                            <td class="gs-actions-cell">
+                                <div class="gs-row-actions">
                                     {{ ($this->invoiceDetailAction)(['id' => $invoice->id]) }}
+                                    {{ ($this->downloadPdfAction)(['id' => $invoice->id]) }}
                                 </div>
                             </td>
                         </tr>

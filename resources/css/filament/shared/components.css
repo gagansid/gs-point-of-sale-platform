@@ -3601,11 +3601,13 @@ select.fi-select-input {
     margin-top: 14px;
 }
 
-.gs-due-actions > :first-child:not(:last-child) {
+.gs-due-actions > .fi-btn,
+.gs-due-actions > :first-child:not(.gs-row-actions) {
     flex: 1;
 }
 
-.gs-due-actions > :first-child:not(:last-child) .fi-btn {
+.gs-due-actions > :first-child:not(.gs-row-actions) .fi-btn,
+.gs-due-actions > .fi-btn {
     width: 100%;
 }
 
@@ -4368,5 +4370,32 @@ ul.gs-diff-cell {
     max-width: none;
     overflow: visible;
     text-overflow: clip;
+    white-space: nowrap;
+}
+
+/* Aksi baris di tabel/kartu Blade (gs-row-actions): jarak 2px, rata kiri seperti tabel Filament */
+.gs-row-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+/* Varian bergaris: berdiri sendiri di kartu (mis. tagihan menunggu), tinggi sama dengan tombol 32px */
+.gs-row-actions.is-outlined {
+    gap: 6px;
+}
+
+.gs-row-actions.is-outlined .fi-icon-btn {
+    border: 1px solid var(--field-border);
+    background-color: var(--bg-surface);
+}
+
+.gs-row-actions.is-outlined .fi-icon-btn:hover {
+    border-color: var(--primary);
+}
+
+.gs-sub-table .gs-actions-cell {
+    width: 1%;
+    padding-block: 0;
     white-space: nowrap;
 }
