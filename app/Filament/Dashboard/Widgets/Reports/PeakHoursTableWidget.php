@@ -35,7 +35,7 @@ final class PeakHoursTableWidget extends ReportTableWidget
 
         return $this->totalRow($this->reportTable($table, 'Data jam ramai'), [
             'order_count' => self::sumCount($rows, 'order_count'),
-            'revenue' => Money::format(self::sumMoney($rows, 'revenue')),
+            'revenue' => Money::formatWhole(self::sumMoney($rows, 'revenue')),
         ])
             ->description('Angka yang sama dengan grafik di atas (jam lokal outlet)')
             ->columns([

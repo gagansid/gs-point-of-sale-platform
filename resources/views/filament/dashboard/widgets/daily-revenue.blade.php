@@ -1,6 +1,6 @@
 {{-- Riwayat pendapatan harian (table.md: header bisa diurutkan, angka rata kanan, baris total) --}}
 @php($history = $this->getHistory())
-@php($money = fn (string $v): string => \App\Support\Money::format($v))
+@php($money = fn (string $v): string => \App\Support\Money::formatWhole($v))
 @php($columns = \App\Filament\Dashboard\Widgets\DailyRevenueWidget::COLUMNS)
 
 <x-filament-widgets::widget>

@@ -30,7 +30,7 @@ final class MemberVouchersTableWidget extends ReportTableWidget
 
         return $this->totalRow($this->reportTable($table, 'Pemakaian voucher'), [
             'uses' => self::sumCount($rows, 'uses'),
-            'discount' => Money::format(self::sumMoney($rows, 'discount')),
+            'discount' => Money::formatWhole(self::sumMoney($rows, 'discount')),
         ])
             ->defaultSort('uses', 'desc')
             ->columns([

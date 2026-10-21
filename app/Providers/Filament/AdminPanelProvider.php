@@ -13,6 +13,7 @@ use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\EnsureAdminTwoFactorWhenRequired;
 use App\Support\Domains;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
+use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -59,7 +60,9 @@ final class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('filament.shared.brand-logo', ['tag' => 'Super Admin']))
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/brand/favicon.svg'))
+            // Bawaan selalu terang; gelap hanya bila pengguna memilihnya di menu akun (tersimpan di browser)
             ->darkMode()
+            ->defaultThemeMode(ThemeMode::Light)
             ->maxContentWidth(Width::Full)
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->navigationGroups([

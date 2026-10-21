@@ -36,10 +36,10 @@ final class MemberStatsWidget extends StatsOverviewWidget
         $count = fn (int $n): string => number_format($n, 0, ',', '.');
 
         return [
-            Stat::make('Omzet member', Money::format($s['member_revenue']))
+            Stat::make('Omzet member', Money::formatWhole($s['member_revenue']))
                 ->description($s['member_share'] !== null ? str_replace('.', ',', $s['member_share']).'% dari omzet · '.$count($s['member_orders']).' transaksi' : $count($s['member_orders']).' transaksi')
                 ->icon(Heroicon::OutlinedUserGroup),
-            Stat::make('Non-member', Money::format($s['guest_revenue']))
+            Stat::make('Non-member', Money::formatWhole($s['guest_revenue']))
                 ->description($count($s['guest_orders']).' transaksi')->icon(Heroicon::OutlinedUser),
             Stat::make('Member aktif', $count($s['active_members']))
                 ->description($count($s['repeat_members']).' datang ≥ 2 kali')->icon(Heroicon::OutlinedArrowPath),
@@ -47,15 +47,15 @@ final class MemberStatsWidget extends StatsOverviewWidget
                 ->description('Mendaftar di periode ini')->icon(Heroicon::OutlinedUserPlus),
             Stat::make('Poin', $count($s['points_earned']).' didapat')
                 ->description($count($s['points_redeemed']).' ditukar · '.$count($s['points_expired']).' kedaluwarsa')->icon(Heroicon::OutlinedStar),
-            Stat::make('Utang poin', Money::format($s['points_liability_value']))
+            Stat::make('Utang poin', Money::formatWhole($s['points_liability_value']))
                 ->description($count($s['points_liability']).' poin aktif (saat ini, semua outlet)')->icon(Heroicon::OutlinedScale),
             // Kasbon (ADR 0023)
-            Stat::make('Kasbon', Money::format($s['receivable_total']))
+            Stat::make('Kasbon', Money::formatWhole($s['receivable_total']))
                 ->description($count($s['receivable_members']).' member (saat ini, semua outlet)')->icon(Heroicon::OutlinedBanknotes),
-            Stat::make('Voucher', Money::format($s['voucher_discount']))
+            Stat::make('Voucher', Money::formatWhole($s['voucher_discount']))
                 ->description($count($s['voucher_uses']).' kali dipakai')->icon(Heroicon::OutlinedReceiptPercent),
-            Stat::make('Gratis stempel', Money::format($s['stamp_free_total']))
-                ->description($count($s['stamp_free_count']).' item gratis · diskon member '.Money::format($s['member_discount']))->icon(Heroicon::OutlinedTicket),
+            Stat::make('Gratis stempel', Money::formatWhole($s['stamp_free_total']))
+                ->description($count($s['stamp_free_count']).' item gratis · diskon member '.Money::formatWhole($s['member_discount']))->icon(Heroicon::OutlinedTicket),
         ];
     }
 }

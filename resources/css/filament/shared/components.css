@@ -4422,3 +4422,132 @@ ul.gs-diff-cell {
     padding-block: 0;
     white-space: nowrap;
 }
+
+/* =====================================================================
+ * Toast notifikasi (Q128): satu pola untuk semua status — kartu putih, garis aksen kiri sewarna status, ikon dalam
+ * lingkaran berwarna, judul 13.5px/600 + isi opsional 12.5px; muncul di bawah topbar agar tidak menutupi tombol.
+ * ===================================================================== */
+.fi-no.fi-vertical-align-start {
+    top: calc(var(--topbar-h) + 8px);
+}
+
+.fi-no {
+    gap: 8px;
+    padding-inline: 16px;
+}
+
+.fi-no-notification {
+    --toast-tone: var(--primary);
+    position: relative;
+    width: min(360px, calc(100vw - 32px));
+    gap: 12px;
+    padding: 12px 14px 12px 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-surface);
+    box-shadow: 0 12px 32px rgb(30 38 51 / 0.12), 0 2px 6px rgb(30 38 51 / 0.06);
+}
+
+.fi-no-notification::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--toast-tone);
+}
+
+.fi-no-notification.fi-status-success { --toast-tone: var(--success-500); }
+.fi-no-notification.fi-status-danger { --toast-tone: var(--danger-500); }
+.fi-no-notification.fi-status-warning { --toast-tone: var(--warning-500); }
+.fi-no-notification.fi-status-info { --toast-tone: var(--info-500); }
+
+.fi-no-notification-icon.fi-icon {
+    box-sizing: content-box;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    padding: 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--toast-tone) 12%, transparent);
+    color: var(--toast-tone);
+}
+
+.fi-no-notification-title {
+    color: var(--text);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.fi-no-notification-body {
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    line-height: 1.5;
+}
+
+.fi-no-notification-main {
+    align-self: center;
+}
+
+.fi-no-notification .fi-no-notification-close-btn {
+    color: var(--text-muted);
+}
+
+.dark .fi-no-notification {
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.45);
+}
+
+/* ---------- Layar kecil (Q128): subjudul ringkas, tombol header rapat, tabel bisa digeser ---------- */
+.fi-header-subheading {
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+@media (max-width: 40rem) {
+    .fi-header-heading {
+        font-size: 17px;
+    }
+
+    .fi-header-actions-ctn,
+    .fi-header .fi-ac {
+        gap: 6px;
+    }
+
+    .fi-header .fi-ac .fi-btn {
+        padding-inline: 10px;
+    }
+
+    /* Kartu & section: padding lebih rapat di HP */
+    .fi-section:not(.fi-section-not-contained):not(.fi-divided) > .fi-section-content-ctn > .fi-section-content {
+        padding: 16px;
+    }
+
+    .fi-section:not(.fi-section-not-contained):not(.fi-aside) > .fi-section-header {
+        padding: 12px 16px;
+    }
+}
+
+/* Badge di kepala kartu (paket, tagihan, dokumen) tidak boleh terpotong */
+.gs-plan-hero .fi-badge,
+.gs-due-head .fi-badge,
+.gs-inv-title .fi-badge,
+.gs-plan-hero .fi-badge .fi-badge-label,
+.gs-due-head .fi-badge .fi-badge-label,
+.gs-inv-title .fi-badge .fi-badge-label {
+    flex: none;
+    max-width: none;
+    overflow: visible;
+    white-space: nowrap;
+}
+
+@media (max-width: 40rem) {
+    .gs-plan-name { font-size: 19px; }
+    .gs-due-amount, .gs-pay-summary-amount { font-size: 21px; }
+    .gs-inv-head { flex-direction: column; }
+    .gs-inv-title { justify-items: start; text-align: start; }
+    .gs-inv-amount-box { text-align: start; }
+}

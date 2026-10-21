@@ -34,7 +34,7 @@ final class CategoriesTableWidget extends ReportTableWidget
 
         return $this->totalRow($this->reportTable($table, 'Penjualan per kategori'), [
             'qty' => self::sumCount($rows, 'qty'),
-            'revenue' => Money::format(self::sumMoney($rows, 'revenue')),
+            'revenue' => Money::formatWhole(self::sumMoney($rows, 'revenue')),
             'share' => '100%',
         ])
             ->defaultSort('revenue', 'desc')

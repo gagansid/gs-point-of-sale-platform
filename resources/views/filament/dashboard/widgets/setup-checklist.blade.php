@@ -10,10 +10,11 @@
         <header class="gs-setup-head">
             <div>
                 <h2 class="gs-setup-title">Mulai berjualan</h2>
-                <p class="gs-setup-sub">{{ $done }} dari {{ $total }} langkah selesai. Panduan ini hilang otomatis setelah semuanya selesai.</p>
+                <p class="gs-setup-sub">{{ $done }} dari {{ $total }} langkah selesai · hilang otomatis setelah lengkap atau ada transaksi pertama</p>
             </div>
             <div class="gs-setup-head-actions">
                 {{ $this->applyTemplateAction }}
+                {{ $this->dismissAction }}
             </div>
         </header>
 

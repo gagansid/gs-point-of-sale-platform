@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Enums\OrderStatus;
 use App\Filament\Dashboard\Pages\OutletSettings;
 use App\Filament\Dashboard\Resources\Categories\CategoryResource;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
 use App\Models\Category;
+use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\Tenant;
@@ -28,8 +30,9 @@ final class SetupProgress
                 'key' => 'outlet',
                 'label' => 'Lengkapi profil outlet',
                 'hint' => 'Alamat, pajak, service charge, dan pembulatan',
-                // Dianggap selesai setelah profil salah satu outlet disimpan sekali (diubah sejak dibuat)
-                'done' => Outlet::query()->whereColumn('updated_at', '>', 'created_at')->exists(),
+                // Selesai bila salah satu outlet sudah beralamat atau profilnya pernah disimpan
+                'done' => Outlet::query()->where(fn ($q) => $q->whereNotNull('address')->where('address', '!=', '')
+                    ->orWhereColumn('updated_at', '>', 'created_at'))->exists(),
                 'url' => OutletSettings::getUrl(),
             ],
             [
@@ -64,6 +67,17 @@ final class SetupProgress
     public static function isComplete(Tenant $tenant): bool
     {
         return collect(self::steps($tenant))->every(fn (array $step): bool => $step['done']);
+    }
+
+    /**
+     * Panduan tampil hanya untuk bisnis yang benar-benar baru: belum lengkap, belum disembunyikan owner, dan belum
+     * pernah ada transaksi selesai (bisnis yang sudah berjualan tidak perlu panduan).
+     */
+    public static function shouldShow(Tenant $tenant): bool
+    {
+        return ! TenantPreferences::setupDismissed($tenant)
+            && ! self::isComplete($tenant)
+            && ! Order::query()->where('status', OrderStatus::Completed)->exists();
     }
 
     /** Katalog kosong → template menu boleh dipakai. */

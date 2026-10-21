@@ -1,7 +1,7 @@
 {{-- Target omzet (Q56): progres hari ini & bulan berjalan per outlet --}}
 <x-filament-widgets::widget>
     @php($targets = $this->getTargets())
-    @php($money = fn (?string $v): string => \App\Support\Money::format((string) $v))
+    @php($money = fn (?string $v): string => \App\Support\Money::formatWhole((string) $v))
     @php($pct = fn (string $v): string => str_replace('.', ',', $v).'%')
 
     @if ($targets === [])

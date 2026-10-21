@@ -25,8 +25,8 @@ final class ChannelsTableWidget extends ReportTableWidget
 
         return $this->totalRow($this->reportTable($table, 'Per kanal'), [
             'order_count' => self::sumCount($rows, 'order_count'),
-            'revenue' => Money::format(self::sumMoney($rows, 'revenue')),
-            'online_total' => Money::format(self::sumMoney($rows, 'online_total')),
+            'revenue' => Money::formatWhole(self::sumMoney($rows, 'revenue')),
+            'online_total' => Money::formatWhole(self::sumMoney($rows, 'online_total')),
         ])
             ->description('Kasir vs pesan sendiri dari QR meja')
             ->paginated(false)

@@ -83,7 +83,7 @@ final class LogViewer extends Page implements HasActions, HasSchemas, HasTable
 
     public function getSubheading(): string
     {
-        return 'Log aplikasi di storage/logs: cari error tanpa akses server';
+        return 'Cari error aplikasi tanpa akses server';
     }
 
     /** File terpilih di filter; tidak dikenal (mis. diubah manual) → file terbaru. */

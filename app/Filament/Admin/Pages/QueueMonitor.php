@@ -83,7 +83,7 @@ final class QueueMonitor extends Page implements HasActions, HasSchemas, HasTabl
 
     public function getSubheading(): string
     {
-        return 'Antrean database dijalankan cron setiap menit (queue:work --stop-when-empty)';
+        return 'Email & tugas latar, dijalankan cron setiap menit';
     }
 
     public function table(Table $table): Table

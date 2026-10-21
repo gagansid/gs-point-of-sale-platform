@@ -20,6 +20,7 @@ use App\Support\Domains;
 use App\Support\Features;
 use App\Support\Support;
 use Filament\Actions\Action;
+use Filament\Enums\ThemeMode;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -69,7 +70,9 @@ final class DashboardPanelProvider extends PanelProvider
             ->brandLogo(fn () => view('filament.shared.brand-logo'))
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/brand/favicon.svg'))
+            // Bawaan selalu terang; gelap hanya bila pengguna memilihnya di menu akun (tersimpan di browser)
             ->darkMode()
+            ->defaultThemeMode(ThemeMode::Light)
             ->maxContentWidth(Width::Full)
             ->viteTheme('resources/css/filament/dashboard/theme.css')
             ->navigationGroups([

@@ -114,7 +114,7 @@ abstract class ReportTableWidget extends TableWidget
             ->label($label)
             ->alignEnd()
             ->sortable()
-            ->formatStateUsing(fn (?string $state): string => $state === null ? '–' : Money::format($state))
+            ->formatStateUsing(fn (?string $state): string => $state === null ? '–' : Money::formatWhole($state))
             ->extraAttributes(['class' => 'tabular-nums']);
     }
 

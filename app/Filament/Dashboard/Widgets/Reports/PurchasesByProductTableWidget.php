@@ -30,7 +30,7 @@ final class PurchasesByProductTableWidget extends ReportTableWidget
 
         return $this->totalRow($this->reportTable($table, 'Pembelian per produk'), [
             'qty' => self::sumCount($rows, 'qty'),
-            'total_cost' => Money::format(self::sumMoney($rows, 'total_cost')),
+            'total_cost' => Money::formatWhole(self::sumMoney($rows, 'total_cost')),
         ])
             ->defaultSort('total_cost', 'desc')
             ->columns([

@@ -52,8 +52,8 @@ final class TrendTableWidget extends ReportTableWidget
 
         return $this->totalRow($this->reportTable($table, 'Data tren omzet'), [
             'order_count' => self::sumCount($rows, 'order_count'),
-            'revenue' => Money::format(self::sumMoney($rows, 'revenue')),
-            'previous' => $hasPrevious ? Money::format(self::sumMoney($rows, 'previous')) : '',
+            'revenue' => Money::formatWhole(self::sumMoney($rows, 'revenue')),
+            'previous' => $hasPrevious ? Money::formatWhole(self::sumMoney($rows, 'previous')) : '',
         ])
             ->description('Angka yang sama dengan grafik di atas')
             ->defaultSort('key')

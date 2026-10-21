@@ -3,22 +3,26 @@
 declare(strict_types=1);
 
 use App\Actions\Catalog\ApplyMenuTemplate;
+use App\Actions\Tenant\UpdateTenantPreferences;
 use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Widgets\SetupChecklistWidget;
 use App\Models\Category;
 use App\Models\OptionGroup;
 use App\Models\Outlet;
 use App\Models\Product;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Support\SetupProgress;
 use App\Support\TenantContext;
+use App\Support\TenantPreferences;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
 
 beforeEach(function () {
     Filament::setCurrentPanel('dashboard');
-    $this->outlet = Outlet::factory()->create();
+    // Outlet baru tanpa alamat = langkah profil outlet belum selesai
+    $this->outlet = Outlet::factory()->create(['address' => null]);
     $this->owner = User::factory()->owner()->create(['tenant_id' => $this->outlet->tenant_id]);
     $this->actingAs($this->owner);
     TenantContext::set($this->owner->tenant_id);
@@ -78,4 +82,40 @@ it('tombol template di widget membuat menu; tidak tampil lagi setelah katalog te
 
 it('beranda menampilkan checklist untuk bisnis baru', function () {
     $this->get('/dashboard')->assertOk()->assertSee('Mulai berjualan')->assertSee('Lengkapi profil outlet');
+});
+
+it('owner bisa menyembunyikan panduan; manager tidak', function () {
+    Livewire::test(SetupChecklistWidget::class)->assertActionVisible(TestAction::make('dismiss'));
+
+    $this->actingAs(User::factory()->manager()->forOutlet($this->outlet)->create());
+    Livewire::test(SetupChecklistWidget::class)->assertActionHidden(TestAction::make('dismiss'));
+
+    $this->actingAs($this->owner);
+    Livewire::test(SetupChecklistWidget::class)
+        ->callAction(TestAction::make('dismiss'))
+        ->assertNotified('Panduan disembunyikan');
+    expect(TenantPreferences::setupDismissed($this->owner->tenant->refresh()))->toBeTrue()
+        ->and(SetupProgress::shouldShow($this->owner->tenant))->toBeFalse();
+
+    app(UpdateTenantPreferences::class)->handle($this->owner->tenant, [TenantPreferences::SETUP_DISMISSED => null]);
+    expect(SetupProgress::shouldShow($this->owner->tenant->refresh()))->toBeTrue();
+});
+
+it('panduan tidak tampil untuk bisnis yang sudah punya transaksi selesai', function () {
+    $pos = posSetup();
+    $tenant = Tenant::query()->findOrFail($pos->tenantId);
+    TenantContext::run($tenant->id, function () use ($pos): void {
+        $pos->outlet->forceFill(['address' => null])->saveQuietly();
+        Outlet::query()->whereKey($pos->outlet->id)->update(['updated_at' => $pos->outlet->created_at]);
+    });
+    TenantContext::run($tenant->id, fn () => expect(SetupProgress::shouldShow($tenant))->toBeTrue());
+
+    freshAuth();
+    $this->withToken($pos->token)->postJson('/api/v1/checkout', [
+        'id' => uuid(), 'order_type' => 'takeaway',
+        'items' => [['product_id' => $pos->croissant->id, 'qty' => 1]],
+        'payments' => [['id' => uuid(), 'payment_method_id' => $pos->methods['cash']->id, 'amount' => 30000]],
+    ], apiHeaders())->assertCreated();
+
+    TenantContext::run($tenant->id, fn () => expect(SetupProgress::shouldShow($tenant->refresh()))->toBeFalse());
 });

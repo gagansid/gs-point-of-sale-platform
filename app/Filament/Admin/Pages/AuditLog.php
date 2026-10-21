@@ -57,7 +57,7 @@ final class AuditLog extends Page implements HasTable
 
     public function getSubheading(): string
     {
-        return 'Perubahan setelan platform & master bank oleh tim gs.POS. Nilai rahasia tidak pernah disimpan';
+        return 'Perubahan setelan platform & bank oleh tim gs.POS';
     }
 
     public function table(Table $table): Table
@@ -69,7 +69,7 @@ final class AuditLog extends Page implements HasTable
             ->columns([
                 TextColumn::make('created_at')->label('Waktu')->dateTime('j M Y')->timezone(FilamentTimezone::get())->sortable()
                     ->description(fn (ActivityLog $record): string => (string) $record->created_at?->setTimezone(FilamentTimezone::get())->format('H.i')),
-                TextColumn::make('causer_name')->label('Oleh')->weight('medium')
+                TextColumn::make('causer_name')->label('Oleh')->weight('medium')->visibleFrom('md')
                     ->state(fn (ActivityLog $record): string => $record->causer instanceof Admin ? $record->causer->name : 'Sistem')
                     ->description(fn (ActivityLog $record): string => $record->causer instanceof Admin ? (string) $record->causer->email : 'Otomatis'),
                 TextColumn::make('subject')->label('Data')->weight('medium')->wrap()

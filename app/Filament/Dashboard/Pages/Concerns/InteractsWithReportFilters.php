@@ -269,6 +269,8 @@ trait InteractsWithReportFilters
             ->options(['all' => 'Semua outlet', ...$outlets])
             ->selectablePlaceholder(false)
             ->prefixIcon(Heroicon::OutlinedBuildingStorefront)
+            // HP (2 kolom): selebar penuh agar nama outlet tidak terpotong
+            ->columnSpan(['default' => 2, 'md' => 1])
             ->visible(count($outlets) > 1)
             ->afterStateUpdated(fn (?string $state) => $this->switchReportOutlet($state));
     }
@@ -320,6 +322,7 @@ trait InteractsWithReportFilters
         return Select::make('compare')
             ->label('Bandingkan dengan')
             ->options(ReportPeriod::COMPARES)
+            ->columnSpan(['default' => 2, 'md' => 1])
             ->selectablePlaceholder(false);
     }
 

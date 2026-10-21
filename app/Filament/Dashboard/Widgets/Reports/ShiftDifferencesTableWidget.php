@@ -55,13 +55,13 @@ final class ShiftDifferencesTableWidget extends TableWidget
                 TextColumn::make('openedBy.name')->label('Kasir')->weight('medium'),
                 TextColumn::make('closed_at')->label('Ditutup')->dateTime('j M Y H.i')->sortable(),
                 TextColumn::make('expected_cash')->label('Seharusnya')->alignEnd()->visibleFrom('md')
-                    ->formatStateUsing(fn (?string $state): string => Money::format(Money::fromDb($state))),
+                    ->formatStateUsing(fn (?string $state): string => Money::formatWhole(Money::fromDb($state))),
                 TextColumn::make('actual_cash')->label('Aktual')->alignEnd()->visibleFrom('md')
-                    ->formatStateUsing(fn (?string $state): string => Money::format(Money::fromDb($state))),
+                    ->formatStateUsing(fn (?string $state): string => Money::formatWhole(Money::fromDb($state))),
                 TextColumn::make('difference')->label('Selisih')->alignEnd()->sortable()->badge()
-                    ->formatStateUsing(fn (?string $state): string => Money::format(Money::fromDb($state)))
+                    ->formatStateUsing(fn (?string $state): string => Money::formatWhole(Money::fromDb($state)))
                     ->color(fn (?string $state): string => Money::compare(Money::fromDb($state), '0') === 0 ? 'success' : 'danger')
-                    ->summarize(Sum::make()->label('Total')->formatStateUsing(fn ($state): string => Money::format(Money::fromDb($state)))),
+                    ->summarize(Sum::make()->label('Total')->formatStateUsing(fn ($state): string => Money::formatWhole(Money::fromDb($state)))),
                 TextColumn::make('status')->label('Status')->badge()
                     ->color(fn (ShiftStatus $state): string => $state === ShiftStatus::ForceClosed ? 'danger' : 'gray'),
                 TextColumn::make('closedBy.name')->label('Ditutup oleh')->visibleFrom('lg'),

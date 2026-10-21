@@ -35,9 +35,9 @@ final class ProfitTableWidget extends ReportTableWidget
 
         return $this->totalRow($this->reportTable($table, 'Laba kotor per produk'), [
             'qty' => self::sumCount($rows, 'qty'),
-            'net_sales' => Money::format(self::sumMoney($rows, 'net_sales')),
-            'cogs' => Money::format(self::sumMoney($rows, 'cogs')),
-            'gross_profit' => Money::format(Money::add('0', ...array_map($profit, $costed))),
+            'net_sales' => Money::formatWhole(self::sumMoney($rows, 'net_sales')),
+            'cogs' => Money::formatWhole(self::sumMoney($rows, 'cogs')),
+            'gross_profit' => Money::formatWhole(Money::add('0', ...array_map($profit, $costed))),
         ])
             ->description('Penjualan bersih = setelah diskon order, tanpa pajak & service. Lengkapi Harga modal di menu Produk agar laba akurat.')
             ->defaultSort('gross_profit', 'desc')

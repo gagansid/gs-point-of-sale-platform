@@ -47,7 +47,7 @@ final class ReportTrendChartWidget extends ChartWidget
         [$current] = $this->series();
         $total = Money::add('0', ...array_column($current, 'revenue'));
 
-        return Money::compare($total, '0') === 0 ? 'Belum ada data pada periode ini' : 'Total '.Money::format($total);
+        return Money::compare($total, '0') === 0 ? 'Belum ada data pada periode ini' : 'Total '.Money::formatWhole($total);
     }
 
     protected function getType(): string

@@ -48,7 +48,7 @@ final class ForceCloseShiftAction
                     force: true,
                 ), $action);
 
-                Notification::make()->success()->title('Shift berhasil ditutup')->send();
+                Notification::make()->success()->title('Shift ditutup')->send();
             });
     }
 

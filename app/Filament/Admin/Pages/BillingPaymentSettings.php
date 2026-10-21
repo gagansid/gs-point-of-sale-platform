@@ -64,7 +64,7 @@ final class BillingPaymentSettings extends Page
 
     public function getSubheading(): string
     {
-        return 'Cara owner membayar tagihan langganan: QRIS & VA otomatis (Midtrans) atau transfer manual dengan bukti';
+        return 'Cara owner membayar tagihan langganan';
     }
 
     public function mount(): void

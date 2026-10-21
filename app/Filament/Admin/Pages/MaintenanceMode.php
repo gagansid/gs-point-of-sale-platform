@@ -38,7 +38,7 @@ final class MaintenanceMode extends Page
 
     public function getSubheading(): string
     {
-        return 'Matikan sementara semua halaman & API pelanggan, mis. saat migrasi besar';
+        return 'Tutup sementara halaman & API pelanggan';
     }
 
     public function isEnabled(): bool

@@ -38,6 +38,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $next_plan_id paket yang dijadwalkan berlaku di plan_changes_at (ADR 0024 revisi)
  * @property BillingCycle|null $next_billing_cycle
  * @property CarbonImmutable|null $plan_changes_at
+ * @property array<string, mixed>|null $preferences preferensi owner (Q128), lewat App\Support\TenantPreferences
  */
 final class Tenant extends Model
 {
@@ -60,6 +61,7 @@ final class Tenant extends Model
             'status' => TenantStatus::class,
             'subscription_ends_at' => 'immutable_datetime',
             'limit_overrides' => 'array',
+            'preferences' => 'array',
             'billing_cycle' => BillingCycle::class,
             'next_billing_cycle' => BillingCycle::class,
             'plan_changes_at' => 'immutable_datetime',

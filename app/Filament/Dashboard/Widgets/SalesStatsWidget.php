@@ -68,25 +68,25 @@ final class SalesStatsWidget extends StatsOverviewWidget
         $count = fn (int $n): string => number_format($n, 0, ',', '.');
 
         return [
-            $this->trend(Stat::make('Omzet', Money::format($now['revenue'])), $now['revenue'], $before['revenue'] ?? null, $versus)
+            $this->trend(Stat::make('Omzet', Money::formatWhole($now['revenue'])), $now['revenue'], $before['revenue'] ?? null, $versus)
                 ->icon(Heroicon::OutlinedBanknotes)
                 ->chart(array_map(fn (array $r): float => (float) $r['revenue'], $spark)),
             $this->trend(Stat::make('Transaksi', $count($now['order_count'])), (string) $now['order_count'], isset($before) ? (string) $before['order_count'] : null, $versus)
                 ->icon(Heroicon::OutlinedReceiptPercent)
                 ->url(OrderResource::getUrl('index')),
-            $this->trend(Stat::make('Rata-rata transaksi', Money::format($now['average'])), $now['average'], $before['average'] ?? null, $versus)
+            $this->trend(Stat::make('Rata-rata transaksi', Money::formatWhole($now['average'])), $now['average'], $before['average'] ?? null, $versus)
                 ->icon(Heroicon::OutlinedCalculator),
             $this->trend(Stat::make('Item terjual', $count($now['items_sold'])), (string) $now['items_sold'], isset($before) ? (string) $before['items_sold'] : null, $versus)
                 ->icon(Heroicon::OutlinedCube),
-            $this->trend(Stat::make('Total diskon', Money::format($now['discount_total'])), $now['discount_total'], $before['discount_total'] ?? null, $versus, higherIsBetter: false)
+            $this->trend(Stat::make('Total diskon', Money::formatWhole($now['discount_total'])), $now['discount_total'], $before['discount_total'] ?? null, $versus, higherIsBetter: false)
                 ->icon(Heroicon::OutlinedTag),
-            Stat::make('Pajak & service', Money::format(Money::add($now['tax_total'], $now['service_total'])))
+            Stat::make('Pajak & service', Money::formatWhole(Money::add($now['tax_total'], $now['service_total'])))
                 ->icon(Heroicon::OutlinedBuildingLibrary)
-                ->description('Pajak '.Money::format($now['tax_total']).' · Service '.Money::format($now['service_total']))
+                ->description('Pajak '.Money::formatWhole($now['tax_total']).' · Service '.Money::formatWhole($now['service_total']))
                 ->color('gray'),
             Stat::make('Void', $count($now['void_count']).' transaksi')
                 ->icon(Heroicon::OutlinedNoSymbol)
-                ->description($now['void_count'] > 0 ? Money::format($now['void_total']) : 'Aman')
+                ->description($now['void_count'] > 0 ? Money::formatWhole($now['void_total']) : 'Aman')
                 ->descriptionIcon($now['void_count'] > 0 ? Heroicon::OutlinedExclamationTriangle : Heroicon::OutlinedCheckCircle)
                 ->color($now['void_count'] > 0 ? 'warning' : 'success'),
             Stat::make('Stok habis', $count($outOfStock).' produk')

@@ -55,7 +55,7 @@ final class ProductActions
                     $action->halt();
                 }
 
-                Notification::make()->success()->title('Stok berhasil disesuaikan')->send();
+                Notification::make()->success()->title('Stok disesuaikan')->send();
             });
     }
 

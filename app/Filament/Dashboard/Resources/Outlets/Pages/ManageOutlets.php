@@ -69,7 +69,7 @@ final class ManageOutlets extends ManageRecords
                 ->modalDescription('Pajak, service, pembulatan & batas diskon disalin dari outlet pertama; bisa diubah di Profil outlet')
                 ->modalWidth('xl')
                 ->createAnother(false)
-                ->successNotificationTitle('Outlet berhasil ditambahkan')
+                ->successNotificationTitle('Outlet ditambahkan')
                 ->using(function (array $data, CreateAction $action): Outlet {
                     try {
                         return app(CreateOutlet::class)->handle(

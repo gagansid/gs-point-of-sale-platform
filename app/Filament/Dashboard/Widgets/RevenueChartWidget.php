@@ -46,7 +46,7 @@ final class RevenueChartWidget extends ChartWidget
 
         return Money::compare($total, '0') === 0
             ? 'Belum ada transaksi'
-            : 'Total '.Money::format($total);
+            : 'Total '.Money::formatWhole($total);
     }
 
     protected function getType(): string

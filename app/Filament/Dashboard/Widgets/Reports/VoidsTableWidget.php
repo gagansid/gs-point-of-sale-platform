@@ -50,8 +50,8 @@ final class VoidsTableWidget extends TableWidget
                     ->summarize(Count::make()->label('Jumlah')),
                 TextColumn::make('voided_at')->label('Waktu')->dateTime('j M Y H.i')->sortable(),
                 TextColumn::make('grand_total')->label('Nominal')->alignEnd()->sortable()
-                    ->formatStateUsing(fn (string $state): string => Money::format($state))
-                    ->summarize(Sum::make()->label('Total')->formatStateUsing(fn ($state): string => Money::format(Money::fromDb($state)))),
+                    ->formatStateUsing(fn (string $state): string => Money::formatWhole($state))
+                    ->summarize(Sum::make()->label('Total')->formatStateUsing(fn ($state): string => Money::formatWhole(Money::fromDb($state)))),
                 TextColumn::make('user.name')->label('Kasir')->visibleFrom('lg'),
                 TextColumn::make('voidedBy.name')->label('Di-void oleh'),
                 TextColumn::make('voidApprovedBy.name')->label('Disetujui')->placeholder('Tanpa PIN')->visibleFrom('md'),

@@ -19,9 +19,9 @@
                         </div>
                         <progress class="pos-dash-bar pos-dash-bar--lg mt-2 {{ $i > 0 ? 'pos-dash-bar--alt' : '' }}" max="100" value="{{ (int) $type['share'] }}" aria-label="{{ $type['share'] }}% omzet"></progress>
                         <dl class="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-500 dark:text-gray-400">
-                            <div><dt>Omzet</dt><dd class="tabular-nums pos-dash-text font-medium text-gray-950 dark:text-white">{{ \App\Support\Money::format($type['revenue']) }}</dd></div>
+                            <div><dt>Omzet</dt><dd class="tabular-nums pos-dash-text font-medium text-gray-950 dark:text-white">{{ \App\Support\Money::formatWhole($type['revenue']) }}</dd></div>
                             <div><dt>Transaksi</dt><dd class="tabular-nums pos-dash-text font-medium text-gray-950 dark:text-white">{{ number_format($type['order_count'], 0, ',', '.') }}</dd></div>
-                            <div><dt>Rata-rata</dt><dd class="tabular-nums pos-dash-text font-medium text-gray-950 dark:text-white">{{ \App\Support\Money::format($type['average']) }}</dd></div>
+                            <div><dt>Rata-rata</dt><dd class="tabular-nums pos-dash-text font-medium text-gray-950 dark:text-white">{{ \App\Support\Money::formatWhole($type['average']) }}</dd></div>
                         </dl>
                     </div>
                 @endforeach

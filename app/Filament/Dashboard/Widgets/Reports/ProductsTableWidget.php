@@ -41,7 +41,7 @@ final class ProductsTableWidget extends ReportTableWidget
 
         return $this->totalRow($this->reportTable($table, 'Penjualan per produk'), [
             'qty' => self::sumCount($rows, 'qty'),
-            'revenue' => Money::format(self::sumMoney($rows, 'revenue')),
+            'revenue' => Money::formatWhole(self::sumMoney($rows, 'revenue')),
             'share' => '100%',
         ], 'Total ('.count($rows).' produk)')
             ->defaultSort('revenue', 'desc')

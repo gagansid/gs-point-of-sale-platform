@@ -31,7 +31,7 @@ final class PurchasesBySupplierTableWidget extends ReportTableWidget
         return $this->totalRow($this->reportTable($table, 'Pembelian per supplier'), [
             'receipt_count' => self::sumCount($rows, 'receipt_count'),
             'qty' => self::sumCount($rows, 'qty'),
-            'total_cost' => Money::format(self::sumMoney($rows, 'total_cost')),
+            'total_cost' => Money::formatWhole(self::sumMoney($rows, 'total_cost')),
         ])
             ->description('Stok masuk yang diposting (tanpa yang dibatalkan), menurut tanggal terima')
             ->defaultSort('total_cost', 'desc')

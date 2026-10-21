@@ -52,10 +52,10 @@ final class DiscountsTableWidget extends TableWidget
                 TextColumn::make('user.name')->label('Kasir'),
                 TextColumn::make('approvedBy.name')->label('Disetujui'),
                 TextColumn::make('discount_total')->label('Diskon')->alignEnd()->sortable()
-                    ->formatStateUsing(fn (string $state): string => '−'.Money::format($state))
-                    ->summarize(Sum::make()->label('Total')->formatStateUsing(fn ($state): string => Money::format(Money::fromDb($state)))),
+                    ->formatStateUsing(fn (string $state): string => '−'.Money::formatWhole($state))
+                    ->summarize(Sum::make()->label('Total')->formatStateUsing(fn ($state): string => Money::formatWhole(Money::fromDb($state)))),
                 TextColumn::make('grand_total')->label('Total order')->alignEnd()->sortable()->visibleFrom('md')
-                    ->formatStateUsing(fn (string $state): string => Money::format($state)),
+                    ->formatStateUsing(fn (string $state): string => Money::formatWhole($state)),
             ]);
     }
 }

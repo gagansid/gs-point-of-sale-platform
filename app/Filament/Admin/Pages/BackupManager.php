@@ -52,7 +52,7 @@ final class BackupManager extends Page
 
     public function getSubheading(): string
     {
-        return 'Otomatis: backup 02.00, bersihkan 03.00, pantau 04.00 WIB. Unduh berkala ke tempat lain';
+        return 'Backup otomatis harian 02.00 WIB · unduh berkala ke tempat lain';
     }
 
     public function download(string $name): StreamedResponse
@@ -85,7 +85,7 @@ final class BackupManager extends Page
                 ->modalDescription('Backup dijalankan antrean (cron tiap menit) dan muncul di daftar dalam beberapa menit.')
                 ->action(function (): void {
                     app(ManageBackups::class)->queue();
-                    Notification::make()->success()->title('Backup masuk antrean')->body('Muat ulang halaman ini beberapa menit lagi.')->send();
+                    Notification::make()->success()->title('Backup masuk antrean')->body('Muat ulang halaman ini beberapa menit lagi')->send();
                 }),
         ];
     }

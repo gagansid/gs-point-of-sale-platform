@@ -48,7 +48,7 @@ final class VoidOrderAction
                     $action->halt();
                 }
 
-                Notification::make()->success()->title('Transaksi berhasil dibatalkan')->send();
+                Notification::make()->success()->title('Transaksi dibatalkan')->send();
             });
     }
 

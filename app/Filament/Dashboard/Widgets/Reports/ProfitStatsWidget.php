@@ -33,15 +33,15 @@ final class ProfitStatsWidget extends StatsOverviewWidget
         [$start, $end] = $this->context()->range();
         $totals = app(ReportService::class)->profit($start, $end, $this->context()->filters)['totals'];
         $uncosted = $totals['uncosted_qty'] > 0
-            ? number_format($totals['uncosted_qty'], 0, ',', '.').' item tanpa harga modal ('.Money::format($totals['uncosted_sales']).') tidak dihitung'
+            ? number_format($totals['uncosted_qty'], 0, ',', '.').' item tanpa harga modal ('.Money::formatWhole($totals['uncosted_sales']).') tidak dihitung'
             : null;
 
         return [
-            Stat::make('Penjualan bersih', Money::format($totals['net_sales']))
+            Stat::make('Penjualan bersih', Money::formatWhole($totals['net_sales']))
                 ->description('Setelah diskon, tanpa pajak & service')->icon(Heroicon::OutlinedBanknotes),
-            Stat::make('HPP', Money::format($totals['cogs']))
+            Stat::make('HPP', Money::formatWhole($totals['cogs']))
                 ->description('Harga modal saat transaksi')->icon(Heroicon::OutlinedArchiveBox),
-            Stat::make('Laba kotor', Money::format($totals['gross_profit']))
+            Stat::make('Laba kotor', Money::formatWhole($totals['gross_profit']))
                 ->description($uncosted)->descriptionColor($uncosted !== null ? 'warning' : null)
                 ->color(Money::compare($totals['gross_profit'], '0') < 0 ? 'danger' : null)
                 ->icon(Heroicon::OutlinedScale),

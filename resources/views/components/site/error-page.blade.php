@@ -31,47 +31,82 @@
             --navy: #1b2a55; --primary: #2d4282; --primary-lt: rgb(45 66 130 / 0.08);
             --gray: #8a919e; --mist: #b8c0d4; --text: #1e2633; --muted: #626d7d;
             --border: #e6e7eb; --bg: #f5f7fb;
+            --tone: var(--primary); --tone-lt: rgb(45 66 130 / 0.1);
         }
+        .tone-warning { --tone: #b26b00; --tone-lt: rgb(245 159 0 / 0.14); }
+        .tone-danger { --tone: #c03535; --tone-lt: rgb(214 57 57 / 0.12); }
         * { box-sizing: border-box; }
         body {
-            margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            padding: 24px; background: var(--bg); color: var(--text);
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 18px; padding: 24px; color: var(--text);
+            /* Sama dengan latar halaman masuk: navy bergradasi + pola titik halus */
+            background:
+                radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.07) 1px, transparent 0) 0 0 / 22px 22px,
+                radial-gradient(1200px 600px at 10% 0%, #34508f 0%, transparent 60%),
+                linear-gradient(160deg, #24386f 0%, #1b2a55 55%, #141f40 100%);
             font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
         .card {
-            width: 100%; max-width: 440px; padding: 40px 32px; text-align: center;
-            background: #fff; border: 1px solid var(--border); border-radius: 16px;
-            box-shadow: 0 1px 2px rgb(16 24 40 / 0.04), 0 12px 32px rgb(27 42 85 / 0.06);
+            width: 100%; max-width: 440px; padding: 36px 32px 32px; text-align: center;
+            background: #fff; border-radius: 16px;
+            box-shadow: 0 24px 60px rgb(10 16 35 / 0.35), 0 0 0 1px rgb(255 255 255 / 0.06);
         }
         .logo { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
-        .logo svg { width: 30px; height: 30px; }
+        .logo svg { width: 28px; height: 28px; }
         .logo .frame { stroke: var(--navy); }
         .logo .accent { stroke: var(--gray); }
         .logo .dot { fill: var(--primary); }
-        .word { color: var(--navy); font-family: 'Nunito', ui-rounded, system-ui, sans-serif; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
-        .word span { color: var(--primary); }
+        .word { color: var(--navy); font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+        .word span { color: var(--gray); }
+        .icon {
+            display: grid; place-items: center; width: 56px; height: 56px; margin: 28px auto 0;
+            border-radius: 16px; background: var(--tone-lt); color: var(--tone);
+        }
+        .icon svg { width: 26px; height: 26px; }
         .code {
-            margin: 28px 0 4px; font-size: 64px; line-height: 1; font-weight: 800; letter-spacing: -0.04em;
-            color: var(--primary); font-variant-numeric: tabular-nums;
+            display: inline-block; margin-top: 16px; padding: 3px 10px; border-radius: 999px;
+            background: var(--bg); color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
         }
-        h1 { margin: 12px 0 8px; font-size: 20px; line-height: 1.3; color: var(--navy); }
-        p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.6; }
+        h1 { margin: 12px 0 8px; font-size: 21px; line-height: 1.3; color: var(--navy); letter-spacing: -0.01em; }
+        p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+        .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 28px; }
         .btn {
-            display: inline-block; margin-top: 28px; padding: 11px 20px; border-radius: 10px;
-            background: var(--primary); color: #fff; font-weight: 600; font-size: 14px; text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px;
+            border: 1px solid transparent; border-radius: 10px; font: inherit; font-weight: 600; font-size: 14px;
+            text-decoration: none; cursor: pointer;
         }
-        .btn:hover, .btn:focus-visible { background: var(--navy); }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: var(--navy); }
+        .btn-ghost { background: #fff; border-color: #dcdee3; color: var(--text); }
+        .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
         .btn:focus-visible { outline: 3px solid var(--mist); outline-offset: 2px; }
         .ref {
-            margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);
+            margin-top: 24px; padding-top: 16px; border-top: 1px dashed var(--border);
             color: var(--gray); font-size: 12px;
         }
         .ref code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); word-break: break-all; }
-        .help { margin-top: 12px; font-size: 13px; }
+        .help { margin-top: 6px; font-size: 12.5px; }
+        .foot { color: rgb(184 192 212 / 0.75); font-size: 12px; }
     </style>
 </head>
 <body>
-    <main class="card" role="main">
+    @php
+        $codeNumber = (int) $code;
+        // Ikon garis (Heroicons outline) & nada warna per jenis error
+        $icon = match (true) {
+            $codeNumber === 404 => 'M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z',
+            in_array($codeNumber, [401, 403], true) => 'M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z',
+            in_array($codeNumber, [419, 429], true) => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+            $codeNumber === 503 => 'M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085',
+            default => 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z',
+        };
+        $tone = match (true) {
+            $codeNumber >= 500 && $codeNumber !== 503 => 'tone-danger',
+            in_array($codeNumber, [419, 429, 503], true) => 'tone-warning',
+            default => '',
+        };
+    @endphp
+    <main class="card {{ $tone }}" role="main">
         <a href="{{ url('/') }}" class="logo" aria-label="gs.POS">
             <svg viewBox="9.75 9.75 44.5 44.75" aria-hidden="true">
                 <rect class="frame" x="14" y="14" width="36" height="27" rx="5" fill="none" stroke-width="4.5" />
@@ -82,13 +117,22 @@
             <span class="word"><span>gs</span>.POS</span>
         </a>
 
-        <div class="code" aria-hidden="true">{{ $code }}</div>
+        <div class="icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $icon }}" />
+            </svg>
+        </div>
+        <div class="code">Kode {{ $code }}</div>
         <h1>{{ $title }}</h1>
         <p>{{ $message }}</p>
 
         {{ $slot }}
 
-        <a href="{{ $actionUrl ?? url('/') }}" class="btn">{{ $actionLabel }}</a>
+        <div class="actions">
+            <a href="{{ $actionUrl ?? url('/') }}" class="btn btn-primary">{{ $actionLabel }}</a>
+            {{-- Tanpa JavaScript tombol ini tidak tampil (noscript tidak perlu: tombol utama tetap ada) --}}
+            <button type="button" class="btn btn-ghost" onclick="history.length > 1 ? history.back() : location.assign('{{ url('/') }}')" hidden id="gs-back">Halaman sebelumnya</button>
+        </div>
 
         @if (is_string($requestId) && $requestId !== '')
             <div class="ref">
@@ -97,5 +141,9 @@
             </div>
         @endif
     </main>
+    <div class="foot">gs.POS · Aplikasi kasir untuk kafe &amp; UMKM</div>
+    <script>
+        if (history.length > 1) { document.getElementById('gs-back').hidden = false; }
+    </script>
 </body>
 </html>

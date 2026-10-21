@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Widgets;
 
 use App\Actions\Catalog\ApplyMenuTemplate;
+use App\Actions\Tenant\UpdateTenantPreferences;
 use App\Exceptions\BusinessException;
+use App\Filament\Dashboard\Pages\Home;
 use App\Models\User;
 use App\Support\MenuTemplates;
 use App\Support\SetupProgress;
+use App\Support\TenantPreferences;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -21,7 +24,8 @@ use Filament\Widgets\Widget;
 
 /**
  * Beranda: checklist "Mulai berjualan" untuk bisnis baru (onboarding ADR 0009, S5).
- * Hilang otomatis setelah semua langkah selesai. Template menu hanya saat katalog kosong.
+ * Hilang otomatis setelah semua langkah selesai, setelah ada transaksi selesai, atau disembunyikan owner (Q128).
+ * Template menu hanya saat katalog kosong.
  */
 final class SetupChecklistWidget extends Widget implements HasActions, HasSchemas
 {
@@ -43,7 +47,7 @@ final class SetupChecklistWidget extends Widget implements HasActions, HasSchema
 
         return $user instanceof User
             && $user->hasPermission('product.manage')
-            && ! SetupProgress::isComplete($user->tenant);
+            && SetupProgress::shouldShow($user->tenant);
     }
 
     /**
@@ -54,6 +58,25 @@ final class SetupChecklistWidget extends Widget implements HasActions, HasSchema
         $user = auth()->user();
 
         return $user instanceof User ? SetupProgress::steps($user->tenant) : [];
+    }
+
+    /** Owner menyembunyikan panduan untuk seluruh bisnis (bisa ditampilkan lagi di Pengaturan → Tampilan). */
+    public function dismissAction(): Action
+    {
+        return Action::make('dismiss')
+            ->label('Sembunyikan')
+            ->icon(Heroicon::OutlinedEyeSlash)
+            ->color('gray')
+            ->link()
+            ->visible(fn (): bool => auth()->user()?->can('outlet.settings') ?? false)
+            ->action(function (): void {
+                $user = auth()->user();
+                abort_unless($user instanceof User && $user->can('outlet.settings'), 403);
+                app(UpdateTenantPreferences::class)->handle($user->tenant, [TenantPreferences::SETUP_DISMISSED => true]);
+                Notification::make()->success()->title('Panduan disembunyikan')
+                    ->body('Bisa ditampilkan lagi di Pengaturan → Tampilan')->send();
+                $this->redirect(Home::getUrl(), navigate: true);
+            });
     }
 
     public function applyTemplateAction(): Action
@@ -85,7 +108,7 @@ final class SetupChecklistWidget extends Widget implements HasActions, HasSchema
 
                 Notification::make()->success()
                     ->title("{$count} produk contoh dibuat")
-                    ->body('Ubah nama & harga sesuai menu Anda di menu Produk.')
+                    ->body('Ubah nama & harga sesuai menu Anda di menu Produk')
                     ->send();
             });
     }

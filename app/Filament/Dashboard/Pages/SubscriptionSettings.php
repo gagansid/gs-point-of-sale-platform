@@ -128,7 +128,7 @@ final class SubscriptionSettings extends Page implements HasTable
                     ->copyMessage('Nomor disalin')
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->where(fn (Builder $q) => $q
                         ->where('number', 'like', '%'.$search.'%')->orWhere('title', 'like', '%'.$search.'%')->orWhere('plan_name', 'like', '%'.$search.'%'))),
-                TextColumn::make('created_at')->label('Tanggal')->date('j M Y')->timezone(CurrentOutlet::timezone())->sortable(),
+                TextColumn::make('created_at')->label('Tanggal')->date('j M Y')->timezone(CurrentOutlet::timezone())->sortable()->visibleFrom('md'),
                 TextColumn::make('rincian')->label('Rincian')->wrap()
                     ->state(fn (SubscriptionInvoice $record): string => $record->description())
                     ->description(fn (SubscriptionInvoice $record): ?string => $record->period_start !== null
@@ -136,7 +136,7 @@ final class SubscriptionSettings extends Page implements HasTable
                         : null)
                     ->extraCellAttributes(['class' => 'gs-ta-cell-wide']),
                 TextColumn::make('kind')->label('Jenis')->badge()->color('gray')->sortable()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('payment_method')->label('Metode')->placeholder('—')->sortable()
+                TextColumn::make('payment_method')->label('Metode')->placeholder('—')->sortable()->visibleFrom('md')
                     ->formatStateUsing(fn (?InvoicePaymentMethod $state): string => $state?->getLabel() ?? '—'),
                 MoneyColumn::make('amount')->label('Total')->sortable(),
                 TextColumn::make('due_at')->label('Jatuh tempo')->date('j M Y')->timezone(CurrentOutlet::timezone())->sortable()

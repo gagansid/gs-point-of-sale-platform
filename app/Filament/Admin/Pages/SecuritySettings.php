@@ -58,7 +58,7 @@ final class SecuritySettings extends Page
 
     public function getSubheading(): string
     {
-        return 'Kebijakan login super admin dan pemeriksaan konfigurasi server';
+        return 'Kebijakan login & pemeriksaan server';
     }
 
     /** @return list<array{key: string, label: string, ok: bool, value: string, fix: string}> */

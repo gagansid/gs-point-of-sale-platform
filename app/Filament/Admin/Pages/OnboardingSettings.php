@@ -63,7 +63,7 @@ final class OnboardingSettings extends Page
 
     public function getSubheading(): string
     {
-        return 'Daftar mandiri di halaman depan: trial, perlindungan dari spam, dan notifikasi tim';
+        return 'Daftar mandiri, trial, dan perlindungan spam';
     }
 
     public function mount(): void

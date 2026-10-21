@@ -120,7 +120,7 @@ final class ActivityLogResource extends Resource
             ->columns([
                 TextColumn::make('created_at')->label('Waktu')->dateTime('j M Y')->sortable()
                     ->description(fn (ActivityLog $record): string => (string) $record->created_at?->setTimezone(CurrentOutlet::timezone())->format('H.i')),
-                TextColumn::make('causer_name')->label('Oleh')->weight('medium')
+                TextColumn::make('causer_name')->label('Oleh')->weight('medium')->visibleFrom('md')
                     ->state(fn (ActivityLog $record): string => self::causerName($record))
                     ->description(fn (ActivityLog $record): string => self::causerRole($record)),
                 TextColumn::make('subject_label')->label('Data')

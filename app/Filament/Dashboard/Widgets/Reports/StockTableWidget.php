@@ -36,9 +36,9 @@ final class StockTableWidget extends ReportTableWidget
         $value = Money::add('0', ...array_values(array_filter(array_column($rows, 'stock_value'))));
 
         return $this->totalRow($this->reportTable($table, 'Pergerakan stok'), [
-            'stock_value' => Money::format($value),
+            'stock_value' => Money::formatWhole($value),
         ])
-            ->description(($low > 0 ? "{$low} produk habis/menipis" : 'Semua stok aman').' · nilai stok saat ini '.Money::format($value).' (stok × harga modal)')
+            ->description(($low > 0 ? "{$low} produk habis/menipis" : 'Semua stok aman').' · nilai stok saat ini '.Money::formatWhole($value).' (stok × harga modal)')
             ->defaultSort('product_name', 'asc')
             ->columns([
                 TextColumn::make('product_name')->label('Produk')->searchable()->sortable()->weight('medium'),

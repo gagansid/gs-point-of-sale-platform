@@ -74,7 +74,7 @@ class EditProfile extends BaseEditProfile
 
     public function getSubheading(): string|Htmlable|null
     {
-        return 'Data akun super admin, kata sandi, dan verifikasi dua langkah';
+        return 'Akun, kata sandi, dan verifikasi dua langkah';
     }
 
     public function defaultForm(Schema $schema): Schema

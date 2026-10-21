@@ -1,6 +1,6 @@
 {{-- Rincian finansial (laporan): urutan dari bruto ke omzet diterima, lalu penjualan bersih & void --}}
 @php($s = $this->getSummary())
-@php($money = fn (string $v): string => \App\Support\Money::format($v))
+@php($money = fn (string $v): string => \App\Support\Money::formatWhole($v))
 
 <x-filament-widgets::widget>
     <x-filament::section heading="Rincian finansial" description="Dari penjualan bruto ke omzet yang diterima" icon="heroicon-o-banknotes">

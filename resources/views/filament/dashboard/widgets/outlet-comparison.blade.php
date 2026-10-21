@@ -2,7 +2,7 @@
 <x-filament-widgets::widget>
     @if ($this->isVisible())
         @php($outlets = $this->getOutlets())
-        @php($money = fn (string $v): string => \App\Support\Money::format($v))
+        @php($money = fn (string $v): string => \App\Support\Money::formatWhole($v))
 
         <x-filament::section heading="Perbandingan outlet" description="Kontribusi per outlet" icon="heroicon-o-building-storefront">
             <div class="pos-dash-table-wrap">

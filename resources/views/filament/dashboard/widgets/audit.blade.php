@@ -1,6 +1,6 @@
 {{-- Panel audit: 4 kartu temuan (void, diskon, shift, kas keluar ADR 0017); empty state positif bila tidak ada temuan (empty-state.md) --}}
 @php($audit = $this->getAudit())
-@php($money = fn (?string $v): string => \App\Support\Money::format($v ?? '0.00'))
+@php($money = fn (?string $v): string => \App\Support\Money::formatWhole($v ?? '0.00'))
 @php($time = fn (?string $iso): string => $iso ? \Carbon\CarbonImmutable::parse($iso)->setTimezone(\App\Support\CurrentOutlet::timezone())->locale('id')->translatedFormat('j M, H.i') : '–')
 @php($issues = $audit['void_count'] + $audit['refund_count'] + $audit['discount_count'] + $audit['shift_issue_count'] + $audit['cash_out_count'])
 
