@@ -3,6 +3,12 @@
 @if (app(\App\Services\Security\Turnstile::class)->enabled($audience))
     <div class="auth-turnstile">
         <div class="cf-turnstile" data-sitekey="{{ \App\Services\Security\Turnstile::siteKey() }}" data-language="id" data-theme="light" data-size="flexible"></div>
+        {{-- Panel Filament mode gelap (kelas .dark sudah dipasang di <head>): widget ikut gelap; halaman situs tetap terang --}}
+        <script>
+            if (document.documentElement.classList.contains('dark')) {
+                document.currentScript.previousElementSibling.dataset.theme = 'dark';
+            }
+        </script>
         @error(\App\Services\Security\Turnstile::FIELD) <p class="cashier-field-error">{{ $message }}</p> @enderror
     </div>
     @once

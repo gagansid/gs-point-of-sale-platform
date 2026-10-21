@@ -207,3 +207,97 @@
 .fi-auth-shell :has(> .fi-simple-header) {
     row-gap: 0;
 }
+
+/*
+ * Dark mode (panel Filament): field fokus tetap gelap (bukan putih, teks putih jadi tak terbaca), ring indigo lembut;
+ * tombol utama terang (gaya UI gelap profesional: kontras tinggi, tidak "biru pucat"); tautan indigo terang.
+ * Selektor menyamai spesifisitas aturan terang di atas (.fi-body … :focus-within).
+ */
+.dark .fi-body .fi-auth-shell .fi-input-wrp:not(.fi-disabled):not(:has(.fi-ac-action:focus)):focus-within {
+    background-color: var(--bg-surface);
+    box-shadow: 0 0 0 1px var(--primary), 0 0 0 4px rgb(142 162 224 / 0.18);
+}
+
+.dark .fi-auth-shell .fi-input {
+    color: var(--text);
+    caret-color: var(--primary);
+}
+
+.dark .fi-auth-shell .fi-input::placeholder {
+    color: var(--text-disabled);
+}
+
+/* Isian otomatis browser (Chrome) memaksa latar kuning/putih: tutup dengan warna field gelap */
+.dark .fi-auth-shell .fi-input:-webkit-autofill,
+.dark .fi-auth-shell .fi-input:-webkit-autofill:hover,
+.dark .fi-auth-shell .fi-input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text);
+    box-shadow: 0 0 0 1000px var(--bg-surface-secondary) inset;
+    transition: background-color 9999s ease-out 0s;
+}
+
+.dark .fi-auth-shell .fi-input-wrp .fi-input-wrp-prefix .fi-icon,
+.dark .fi-auth-shell .fi-input-wrp-actions .fi-icon-btn {
+    color: var(--text-muted);
+}
+
+.dark .fi-auth-shell .fi-input-wrp:focus-within .fi-input-wrp-prefix .fi-icon,
+.dark .fi-auth-shell .fi-input-wrp-actions .fi-icon-btn:hover {
+    color: var(--primary);
+}
+
+.dark .fi-auth-shell .fi-simple-header-subheading {
+    color: var(--text-muted);
+}
+
+/* Tombol utama: permukaan terang, teks navy gelap */
+.dark .fi-auth-shell .fi-btn.fi-color-primary,
+.dark .fi-auth-shell .fi-btn:not(.fi-color-gray):not(.fi-outlined):not(.fi-link) {
+    --c-400: none;
+    background-color: #e6ebf4;
+    background-image: none;
+    border: 1px solid #ffffff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.6);
+    color: #0d1422;
+}
+
+.dark .fi-auth-shell .fi-btn.fi-color-primary .fi-icon,
+.dark .fi-auth-shell .fi-btn.fi-color-primary .fi-loading-indicator {
+    color: #0d1422;
+}
+
+.dark .fi-auth-shell .fi-btn.fi-color-primary:hover {
+    background-color: #ffffff;
+}
+
+.dark .fi-auth-shell .fi-btn.fi-color-primary:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.dark .fi-auth-shell .fi-btn.fi-color-primary:disabled,
+.dark .fi-auth-shell .fi-btn.fi-color-primary[aria-busy='true'] {
+    opacity: 0.7;
+}
+
+/* Tautan (Lupa kata sandi?, kembali ke masuk): indigo terang agar terbaca di latar gelap */
+.dark .fi-auth-shell .fi-link,
+.dark .fi-auth-shell a.fi-link,
+.dark .fi-auth-shell .auth-link {
+    color: var(--primary);
+}
+
+.dark .fi-auth-shell .fi-link:hover,
+.dark .fi-auth-shell .auth-link:hover {
+    color: #b9c6ee;
+}
+
+.dark .fi-auth-shell .fi-checkbox-input {
+    background-color: var(--bg-surface-secondary);
+    border-color: var(--field-border);
+}
+
+.dark .fi-auth-shell .fi-checkbox-input:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
