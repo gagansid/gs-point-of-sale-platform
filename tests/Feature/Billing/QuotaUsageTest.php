@@ -59,8 +59,8 @@ it('halaman Langganan owner menampilkan pemakaian vs batas & tanda lewat batas',
 
     Livewire::test(SubscriptionSettings::class)
         ->assertSee('Pemakaian kuota')
-        ->assertSee('3 / 2')
-        ->assertSee('2 / 5')
+        ->assertSeeText('3 / 2')
+        ->assertSeeText('2 / 5')
         ->assertSee('Melebihi paket: tidak bisa menambah sampai di bawah batas')
         ->assertSee('Tanpa batas');
 });
@@ -88,6 +88,6 @@ it('detail bisnis admin menampilkan pemakaian kuota', function () {
     Livewire::test(ViewTenant::class, ['record' => $this->tenant->id])
         ->assertOk()
         ->assertSee('Karyawan aktif')
-        ->assertSee('3 / 2')
+        ->assertSeeText('3 / 2')
         ->assertSee('Melebihi paket');
 });

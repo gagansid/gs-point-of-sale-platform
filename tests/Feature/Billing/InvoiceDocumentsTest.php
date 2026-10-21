@@ -150,3 +150,24 @@ it('email: bukti dikirim → admin; ditolak → owner; lunas → owner sekali de
         ->and($paidMail->rawAttachments[0]['name'])->toBe('kuitansi-'.$invoice->number.'.pdf')
         ->and($paidMail->rawAttachments[0]['data'])->toStartWith('%PDF');
 });
+
+it('riwayat tagihan: tabel bisa dicari, difilter, dan hanya berisi tagihan bisnis sendiri', function () {
+    $paid = docInvoice($this);
+    app(MarkInvoicePaid::class)->handle($paid, 'manual', $this->admin);
+    $pending = docInvoice($this);
+
+    Filament::setCurrentPanel('dashboard');
+    TenantContext::set($this->tenant->id);
+    $this->actingAs($this->owner);
+    CurrentOutlet::set($this->owner);
+
+    Livewire::test(SubscriptionSettings::class)
+        ->assertCanSeeTableRecords([$paid, $pending])
+        ->searchTable($pending->number)
+        ->assertCanSeeTableRecords([$pending])->assertCanNotSeeTableRecords([$paid])
+        ->searchTable(null)
+        ->filterTable('status', 'paid')
+        ->assertCanSeeTableRecords([$paid])->assertCanNotSeeTableRecords([$pending])
+        ->callTableAction('pdf', $paid)
+        ->assertFileDownloaded('kuitansi-'.$paid->number.'.pdf');
+});

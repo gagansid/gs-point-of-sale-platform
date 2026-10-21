@@ -5,7 +5,6 @@
 @php
     $tenant = $this->tenant();
     $pendingInvoices = $this->pendingInvoices();
-    $invoices = $this->invoices();
     $money = fn (string $v): string => \App\Support\Money::format($v);
     $tz = \App\Support\CurrentOutlet::timezone();
     $date = fn ($d): string => $d ? $d->setTimezone($tz)->locale('id')->translatedFormat('j M Y') : '—';
@@ -32,8 +31,6 @@
         ? collect(\App\Models\Feature::options())->only(\App\Support\Features::enabledKeys($tenant))
         : collect();
     $owned = $tenant->activeAddons();
-    $methodLabel = fn (\App\Models\SubscriptionInvoice $i): string => $i->payment_method?->getLabel()
-        ?? match ($i->paid_via) { 'manual' => 'Transfer manual', 'midtrans' => 'Online', default => '—' };
 @endphp
 <x-filament-panels::page>
     <div class="gs-sub-grid">
@@ -192,38 +189,6 @@
         @include('filament.shared.quota-usage', ['rows' => \App\Support\Quotas::usage($tenant)])
     </x-filament::section>
 
-    <x-filament::section :icon="\Filament\Support\Icons\Heroicon::OutlinedClock" heading="Riwayat tagihan" description="24 tagihan terbaru">
-        <div class="pos-dash-table-wrap">
-            <table class="pos-dash-table gs-sub-table">
-                <thead>
-                    <tr><th>Nomor</th><th class="hidden lg:table-cell">Tanggal</th><th>Rincian</th><th class="hidden lg:table-cell">Metode</th><th class="text-right">Total</th><th>Status</th><th class="gs-actions-cell"></th></tr>
-                </thead>
-                <tbody>
-                    @forelse ($invoices as $invoice)
-                        <tr wire:key="inv-{{ $invoice->id }}">
-                            <td class="font-mono text-xs">{{ $invoice->number }}</td>
-                            <td class="hidden whitespace-nowrap lg:table-cell">{{ $date($invoice->created_at) }}</td>
-                            <td class="gs-cell-wrap">
-                                <div>{{ $invoice->description() }}</div>
-                                @if ($invoice->period_start)
-                                    <div class="gs-cell-sub">Periode {{ $date($invoice->period_start) }} – {{ $date($invoice->period_end) }}</div>
-                                @endif
-                            </td>
-                            <td class="hidden whitespace-nowrap lg:table-cell">{{ $methodLabel($invoice) }}</td>
-                            <td class="text-right tabular-nums font-medium">{{ $money((string) $invoice->amount) }}</td>
-                            <td><x-filament::badge :color="$invoice->statusColor()">{{ $invoice->statusLabel() }}</x-filament::badge></td>
-                            <td class="gs-actions-cell">
-                                <div class="gs-row-actions">
-                                    {{ ($this->invoiceDetailAction)(['id' => $invoice->id]) }}
-                                    {{ ($this->downloadPdfAction)(['id' => $invoice->id]) }}
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="7" class="text-center text-gray-500">Belum ada tagihan</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </x-filament::section>
+    {{-- Riwayat tagihan: tabel Filament standar (cari, filter, urut, paginasi) --}}
+    {{ $this->table }}
 </x-filament-panels::page>

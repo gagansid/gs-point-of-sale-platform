@@ -10,11 +10,16 @@ use App\Actions\Billing\StartInvoicePayment;
 use App\Actions\Billing\StopTenantAddon;
 use App\Actions\Billing\SubmitPaymentProof;
 use App\Enums\BillingCycle;
+use App\Enums\InvoiceKind;
 use App\Enums\InvoicePaymentMethod;
 use App\Enums\InvoiceStatus;
 use App\Enums\TenantStatus;
 use App\Exceptions\BusinessException;
+use App\Filament\Shared\Columns\MoneyColumn;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
+use App\Filament\Shared\Filters\DateRangeFilter;
+use App\Filament\Shared\Tables\TableEmptyState;
+use App\Filament\Shared\Tables\TableHeading;
 use App\Models\Addon;
 use App\Models\Plan;
 use App\Models\SubscriptionInvoice;
@@ -40,7 +45,14 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Support\Enums\FontFamily;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -51,9 +63,17 @@ use UnitEnum;
  * (pilih paket & siklus), add-on (tambah prorata, berhenti/lanjutkan; ADR 0025 C2), bayar online (Midtrans vendor)
  * atau transfer manual, riwayat tagihan. Hanya edisi SaaS.
  */
-final class SubscriptionSettings extends Page
+final class SubscriptionSettings extends Page implements HasTable
 {
     use HasIconBreadcrumbs;
+    use InteractsWithTable;
+
+    /**
+     * Tanpa #[Url(as: 'filters')]: filter Riwayat tagihan disimpan di session (persistFiltersInSession).
+     *
+     * @var array<string, mixed>|null
+     */
+    public ?array $tableFilters = null;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
 
@@ -93,10 +113,61 @@ final class SubscriptionSettings extends Page
             ->orderBy('sort_order')->orderBy('price_monthly')->get();
     }
 
-    /** @return Collection<int, SubscriptionInvoice> */
-    public function invoices(): Collection
+    /**
+     * Riwayat tagihan (tabel standar): cari nomor/judul/paket, filter status, jenis, metode & tanggal, paginasi global.
+     * Scope tenant: hanya tagihan bisnis ini.
+     */
+    public function table(Table $table): Table
     {
-        return SubscriptionInvoice::query()->with('items')->latest()->limit(24)->get();
+        $table = $table
+            ->query(fn (): Builder => SubscriptionInvoice::query()->with('items'))
+            ->heading(TableHeading::make('Riwayat tagihan', Heroicon::OutlinedClock))
+            ->defaultSort('created_at', 'desc')
+            ->columns([
+                TextColumn::make('number')->label('Nomor')->fontFamily(FontFamily::Mono)->size('xs')->sortable()->copyable()
+                    ->copyMessage('Nomor disalin')
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query->where(fn (Builder $q) => $q
+                        ->where('number', 'like', '%'.$search.'%')->orWhere('title', 'like', '%'.$search.'%')->orWhere('plan_name', 'like', '%'.$search.'%'))),
+                TextColumn::make('created_at')->label('Tanggal')->date('j M Y')->timezone(CurrentOutlet::timezone())->sortable(),
+                TextColumn::make('rincian')->label('Rincian')->wrap()
+                    ->state(fn (SubscriptionInvoice $record): string => $record->description())
+                    ->description(fn (SubscriptionInvoice $record): ?string => $record->period_start !== null
+                        ? 'Periode '.$record->period_start->setTimezone(CurrentOutlet::timezone())->locale('id')->translatedFormat('j M Y').' – '.$record->period_end?->setTimezone(CurrentOutlet::timezone())->locale('id')->translatedFormat('j M Y')
+                        : null)
+                    ->extraCellAttributes(['class' => 'gs-ta-cell-wide']),
+                TextColumn::make('kind')->label('Jenis')->badge()->color('gray')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('payment_method')->label('Metode')->placeholder('—')->sortable()
+                    ->formatStateUsing(fn (?InvoicePaymentMethod $state): string => $state?->getLabel() ?? '—'),
+                MoneyColumn::make('amount')->label('Total')->sortable(),
+                TextColumn::make('due_at')->label('Jatuh tempo')->date('j M Y')->timezone(CurrentOutlet::timezone())->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('paid_at')->label('Lunas')->date('j M Y')->timezone(CurrentOutlet::timezone())->placeholder('—')->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('status')->label('Status')->badge()->sortable()
+                    ->formatStateUsing(fn (SubscriptionInvoice $record): string => $record->statusLabel())
+                    ->color(fn (SubscriptionInvoice $record): string => $record->statusColor()),
+            ])
+            ->filters([
+                SelectFilter::make('status')->label('Status')->options(InvoiceStatus::class),
+                SelectFilter::make('kind')->label('Jenis')->options(InvoiceKind::class),
+                SelectFilter::make('payment_method')->label('Metode')->options(InvoicePaymentMethod::class),
+                DateRangeFilter::make('created_at', 'Tanggal tagihan', defaultToday: false),
+            ])
+            ->recordAction('detail')
+            ->recordActions([
+                Action::make('detail')->label('Detail')->icon(Heroicon::OutlinedEye)->iconButton()->color('gray')->tooltip('Detail tagihan')
+                    ->modalHeading('Detail tagihan')->modalWidth('3xl')->modalSubmitAction(false)->modalCancelActionLabel('Tutup')
+                    ->extraModalFooterActions(fn (SubscriptionInvoice $record): array => [
+                        Action::make('downloadFromRow')->label('Unduh PDF')->icon(Heroicon::OutlinedArrowDownTray)->color('gray')
+                            ->action(fn (): StreamedResponse => $this->download($record->id)),
+                    ])
+                    ->modalContent(fn (SubscriptionInvoice $record) => view('filament.shared.invoice-detail', ['invoice' => $record, 'audience' => 'owner'])),
+                Action::make('pdf')->label('Unduh PDF')->icon(Heroicon::OutlinedArrowDownTray)->iconButton()->color('gray')
+                    ->tooltip(fn (SubscriptionInvoice $record): string => InvoicePdf::isReceipt($record) ? 'Unduh kuitansi (PDF)' : 'Unduh tagihan (PDF)')
+                    ->action(fn (SubscriptionInvoice $record): StreamedResponse => $this->download($record->id)),
+            ]);
+
+        return TableEmptyState::apply($table, Heroicon::OutlinedDocumentText, 'tagihan', 'Tagihan muncul setelah Anda membuat tagihan perpanjangan, upgrade, atau add-on');
     }
 
     /**
