@@ -1,16 +1,37 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-18 · Branch: `feature/pos`
-> Status: **Program member M1–M7 & self-order S1–S4 selesai** (ADR 0013, ADR 0014); stok I1–I4 (ADR 0015), installer (ADR 0016), **shift bersama per perangkat C1–C4 (ADR 0017)** selesai. Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1412 test lulus (SQLite) + 3 uji E2E Dusk (`./vendor/bin/pest tests/Browser`), Pint & Larastan level 6 bersih; test shift/laporan ADR 0017 juga lulus di MySQL `gspos_test`.
-> Test MySQL `gspos_test` belum dijalankan ulang untuk fitur 11 Okt (lihat L2).
+> Diperbarui: 2026-10-21 · Branch: `feature/pos` (semua di-push)
+> Status: fitur MVP + backlog ADR 0013–0025 selesai; sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
+> pembayaran tagihan (QRIS/VA/transfer manual + bukti), master bank, PDF & email tagihan, Midtrans vendor 2 mode,
+> riwayat perubahan admin, pembersihan bukti transfer (SPEC Q118–Q127). Deploy ditunda atas keputusan pemilik.
+> Kualitas: 1986 test lulus (SQLite), Pint & Larastan level 6 bersih; test pembayaran/bank/audit juga lulus di MySQL
+> `gspos_test`. Paket hosting `dist/hosting` dibangun ulang 2026-10-21 (lihat §2 "Deploy").
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
 ---
 
 ## 1. Sudah dikerjakan
 
-### Rapikan panel /admin (2026-10-19, SPEC Q118–Q121) — belum di-commit
+### Sesi 2026-10-19 – 2026-10-21 (SPEC Q122–Q127) — semua di-push
+| Bagian | Isi |
+|---|---|
+| Halaman masuk (Q122) | Login owner/admin/kasir, daftar, lupa & atur kata sandi seragam (field 44px berikon, panel brand); Cloudflare Turnstile per halaman (Sistem → Keamanan, key terenkripsi); mode gelap panel: field fokus gelap, tombol terang |
+| Data demo | `DemoFullDataSeeder` (lokal/testing): 35 hari transaksi lewat Action di 2 outlet Kopi Senja, stok, PO, transfer, opname, member, kasbon, promo — target omzet & stok realistis |
+| Pembayaran tagihan (Q123) | Owner **Bayar sekarang**: QRIS / VA (Snap Midtrans vendor) atau transfer manual + unggah bukti (disk privat); admin tab **Perlu verifikasi** → Tandai lunas / Tolak bukti. Setelan **Sistem → Pembayaran langganan**: rekening, QRIS statis, petunjuk, **Midtrans 2 mode** (Sandbox/Produksi, key per mode terenkripsi & diuji, cadangan `.env`) |
+| Master bank (Q124) | Tabel `banks` (12 bank diisi migrasi), **Sistem → Bank**: logo vektor otomatis (singkatan + warna) atau unggah PNG/JPG/WEBP |
+| UI dashboard (Q125) | Outlet (kolom alamat, paginasi), Riwayat perubahan (Kolom · Sebelum · Sesudah, tab, Detail), halaman Langganan baru (kartu paket, tagihan, **kuota berupa kartu**, riwayat tagihan = tabel standar dengan cari/filter/paginasi) |
+| Dokumen & email (Q126) | PDF A4 *Tagihan* / *Kuitansi* (cap LUNAS, terbilang) diunduh owner & admin; email bukti dikirim → admin, ditolak → owner, lunas → owner + kuitansi PDF; template email bermerek gs.POS |
+| Audit & pembersihan (Q127) | **Sistem → Riwayat perubahan** (admin): setiap perubahan setelan platform & bank, rahasia disamarkan; `pos:prune-payment-proofs` harian 03.45 WIB (bukti tagihan batal/kedaluwarsa > `POS_BILLING_PROOF_RETENTION_DAYS` hari & unggahan yatim > 1 hari) |
+| Perbaikan | Tab admin Tagihan/Admin error 500 (parameter closure Filament harus bernama `$query`); badge pesanan meja kasir web (`x-on="try …"` = SyntaxError Alpine, bunyi tidak pernah keluar) + test pemindai atribut Alpine |
+
+Env baru (lihat `.env.example`): `POS_BILLING_MIDTRANS_SANDBOX_SERVER_KEY`, `POS_BILLING_MIDTRANS_PRODUCTION_SERVER_KEY`,
+`POS_BILLING_ISSUER_NAME/ADDRESS/EMAIL` (kop PDF), `POS_BILLING_PROOF_RETENTION_DAYS`. Isi penerbit sebelum dipakai.
+
+Catatan untuk tim Flutter: **pembulatan grand total selalu ke atas** (`docs/api/order.md` §Aturan 1, sebelumnya tertulis
+half-up). Pratinjau keranjang memakai `ceil(total / rounding) × rounding` dengan aritmetika desimal, atau `POST /orders/quote`.
+Repo aplikasi tidak tersedia di mesin pengembangan platform; perubahan aplikasi belum dikerjakan.
+
+### Rapikan panel /admin (2026-10-19, SPEC Q118–Q121) — di-push (`a9ed5c5`)
 - Standar UI: Select & DatePicker JS seragam (`FieldDefaults`, ikon kalender bisa diklik, zona waktu WIB di /admin),
   tombol **+ Tambah** di header card (Paket, Add-on, Pengumuman, Admin, Versi aplikasi, Tagihan), judul card berikon,
   footer paginasi, breadcrumb seragam (`Menu › Daftar`, `Grup › Judul`), modal jarak atas = bawah & scroll di dalam,
@@ -225,7 +246,7 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
   (`InvoiceQuote`, `subscription_invoices.kind`), downgrade/ganti siklus dijadwalkan (`tenants.next_plan_id`, `pos:apply-plan-changes` tiap jam). Env baru `POS_BILLING_*`
   (lihat `.env.example`). URL notifikasi Midtrans vendor: `{APP_URL}/webhooks/billing/midtrans`.
 
-### Paket fitur, kuota, add-on (ADR 0025, SPEC Q112–Q113) — selesai 2026-10-18 (belum di-push)
+### Paket fitur, kuota, add-on (ADR 0025, SPEC Q112–Q113) — selesai 2026-10-18, di-push
 - Admin: detail bisnis (paket, jadwal, tagihan, kuota, add-on), filter Paket, **Buat tagihan** / **Tagih add-on** (termasuk
   paket/add-on khusus, email `InvoiceCreated`), **Atur add-on**, menu **Add-on**, widget *Langganan* di Dasbor (lunas, MRR).
 - Fitur & kuota = **master data tabel** `features` / `quotas` (tanpa CRUD, isi lewat migration). `key` dipakai kode.
@@ -239,8 +260,9 @@ menyetor penjualan dan meninggalkan modal Rp200.000 (carry-over).
 
 **Backlog 1–4 selesai** (shift bersama, retur, pecah/gabung bill, resep & paket, PO, promo otomatis, kasbon, langganan).
 
-**Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata; uji Midtrans sandbox (S5 owner & billing
-vendor) menunggu key; integrasi Flutter F9–F13. Belum: utang supplier, cetak PO, laporan per produk dikurangi retur,
+**Berikutnya (lanjut dari sini):** uji installer & deploy di hosting nyata (paket `dist/hosting` 2026-10-21); uji Midtrans
+sandbox (S5 owner & billing vendor: QRIS/VA, webhook, email kuitansi) menunggu key & URL publik; pembulatan ke atas di
+pratinjau Flutter; integrasi Flutter F9–F13. Belum: utang supplier, cetak PO, laporan per produk dikurangi retur,
 WhatsApp ringkasan harian. Revisi bawaan 2026-10-16 selesai: batas retur per outlet, pecah/gabung dengan diskon, upgrade prorata. Flutter **F12**: tampilkan promo (`/catalog`, `/orders/quote`).
 Flutter **F10**: retur (`docs/api/order.md`); **F11**: pecah/gabung bill, status order `merged`.
 
@@ -268,7 +290,7 @@ Data lokal demo: program member **aktif** di "Kopi Senja (Demo)", member "Rina K
 | 0 | Tindak lanjut modul Laporan | Lihat tabel "Perlu diubah / dilanjutkan" di bawah |
 | ✅ | Kasir web (SPEC Q54, W1–W6) | Selesai 2026-10-11: akses per karyawan, login `/cashier`, shift X/Z, layar transaksi, open bill, approval PIN, void, menu Perangkat. Sisa: uji di browser tablet sungguhan & printer thermal; cetak tanpa dialog di luar cakupan |
 | ✅ | Minggu 7 — panel admin | Selesai 2026-10-11 (lihat PROGRESS); sisa OWASP ZAP & uji manual di staging |
-| 3 | Minggu 8 — deploy | cPanel, uji MySQL ulang (fitur 9–10 Okt & migrasi multi-outlet), uji dengan Flutter, pilot |
+| 3 | Minggu 8 — deploy | **Deploy:** paket `dist/hosting/` (zip proyek + `gspos-database.sql` dari DB lokal + `PANDUAN-HOSTING.html`) dibangun ulang 2026-10-21; APP_KEY harus sama dengan lokal (data terenkripsi). Sisa: cPanel nyata, uji MySQL/MariaDB hosting, cron `schedule:run`, uji dengan Flutter, pilot |
 | ✅ | Import produk dari Excel | Selesai 2026-10-11 (`489e114`, Q59) |
 | 2 | Integrasi Flutter | L1 + F1–F2 (repo aplikasi) |
 | Ditunda | Aplikasi tablet | Fase tablet/aplikasi kasir (menu Perangkat sudah ada, Q54) |

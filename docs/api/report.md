@@ -76,7 +76,7 @@ Fitur paket (ADR 0025): `profit`, `options`, `employees`, `heatmap` butuh fitur 
     "discount_total": "0.00",
     "service_total": "3600.00",
     "tax_total": "8316.00",
-    "rounding_total": "-16.00",
+    "rounding_total": "84.00",
     "void_count": 1,
     "void_total": "28000.00",
     "daily": [{ "date": "2026-10-08", "revenue": "83900.00", "order_count": 2 }]

@@ -62,7 +62,13 @@ yang dikirim aplikasi diabaikan.
 ### Aturan
 
 1. **Perhitungan** (`OrderCalculator`, urutan SPEC): harga item → subtotal → diskon order → service →
-   pajak (exclusive/inclusive) → pembulatan ke kelipatan Rp `outlet.rounding` (half-up).
+   pajak (exclusive/inclusive) → pembulatan **selalu ke atas** ke kelipatan Rp `outlet.rounding`
+   (`Money::roundUpTo`, sejak 2026-10-18; tidak pernah mengurangi tagihan, baris pembulatan ≥ 0). Contoh
+   `rounding = 100`: 61.584 → **61.600**, 61.600 → 61.600, 61.501 → 61.600 (bukan 61.500). `rounding = 0` = tanpa
+   pembulatan.
+   **Aplikasi (Flutter):** pratinjau total di keranjang wajib memakai aturan yang sama (`ceil(total / rounding) ×
+   rounding`, aritmetika desimal — bukan `double`), atau lebih aman memakai `POST /orders/quote` saat online.
+   Nominal akhir selalu dari server; nilai dari aplikasi diabaikan.
 2. **Item:** produk harus aktif & tersedia; opsi harus milik grup opsi produk; jumlah pilihan per grup
    sesuai `min_select`–`max_select`. Pelanggaran → `422` per field (`items.N.product_id`, `items.N.option_ids`).
    Total/baris di atas `9999999999999.99` (kapasitas DECIMAL 15,2) → `422` "Total transaksi melebihi batas" (`items`).
