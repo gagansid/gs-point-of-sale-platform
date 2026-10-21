@@ -59,14 +59,16 @@
         .word { color: var(--navy); font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
         .word span { color: var(--gray); }
         .icon {
-            display: grid; place-items: center; width: 56px; height: 56px; margin: 28px auto 0;
-            border-radius: 16px; background: var(--tone-lt); color: var(--tone);
+            display: grid; place-items: center; width: 44px; height: 44px; margin: 28px auto 0;
+            border-radius: 12px; background: var(--tone-lt); color: var(--tone);
         }
-        .icon svg { width: 26px; height: 26px; }
+        .icon svg { width: 22px; height: 22px; }
+        /* Kode error besar & jelas: angka utama halaman, warna mengikuti nada (biru/kuning/merah) */
         .code {
-            display: inline-block; margin-top: 16px; padding: 3px 10px; border-radius: 999px;
-            background: var(--bg); color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+            margin: 14px 0 0; color: var(--tone); font-size: 72px; font-weight: 800; line-height: 1;
+            letter-spacing: -0.04em; font-variant-numeric: tabular-nums;
         }
+        .code-label { margin-top: 6px; color: var(--gray); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
         h1 { margin: 12px 0 8px; font-size: 21px; line-height: 1.3; color: var(--navy); letter-spacing: -0.01em; }
         p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
         .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 28px; }
@@ -122,7 +124,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="{{ $icon }}" />
             </svg>
         </div>
-        <div class="code">Kode {{ $code }}</div>
+        <div class="code">{{ $code }}</div>
+        <div class="code-label">Kode error</div>
         <h1>{{ $title }}</h1>
         <p>{{ $message }}</p>
 
