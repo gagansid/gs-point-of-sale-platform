@@ -108,6 +108,8 @@ return [
         'midtrans_production' => (bool) env('POS_BILLING_MIDTRANS_PRODUCTION', false),
         'bank_info' => env('POS_BILLING_BANK_INFO', 'Transfer ke rekening gs.POS, lalu kirim bukti ke tim kami.'),
         'due_days' => (int) env('POS_BILLING_DUE_DAYS', 3),
+        // Bukti transfer tagihan batal/kedaluwarsa disimpan sekian hari lalu dihapus (pos:prune-payment-proofs)
+        'proof_retention_days' => (int) env('POS_BILLING_PROOF_RETENTION_DAYS', 90),
         // Penerbit di dokumen tagihan (detail tagihan owner & admin)
         'issuer' => [
             'name' => env('POS_BILLING_ISSUER_NAME', 'gs.POS'),
