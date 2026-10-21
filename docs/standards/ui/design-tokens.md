@@ -12,6 +12,11 @@ variabel CSS di `resources/css/filament/{panel}/theme.css` (lihat [filament-them
 | `--brand-gray` | `#8A919E` | Bagian "gs" pada wordmark, aksen sekunder |
 | `--brand-mist` | `#B8C0D4` | Teks sidebar, aksen di latar gelap |
 
+> **Warna per bisnis (SPEC Q128):** owner bisa mengganti warna utama & gaya sidebar di Pengaturan → Bisnis &
+> tampilan. Token `--primary`, `--primary-dk`, `--primary-lt`, `--primary-btn(-hover)`, `--field-focus-ring`,
+> `--sidebar-*` & palet Filament `primary` di-override per request oleh `App\Support\TenantAppearance` (warna pilihan
+> = shade 600). Komponen baru **wajib** memakai token/var palet, bukan hex navy langsung, agar ikut berubah.
+
 ## 2. Warna semantik (palet Filament)
 
 | Peran Filament | Hex dasar | Dipakai untuk |

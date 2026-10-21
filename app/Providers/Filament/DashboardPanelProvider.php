@@ -13,12 +13,14 @@ use App\Http\Controllers\Web\EmailVerificationController;
 use App\Http\Controllers\Web\ReceiptController;
 use App\Http\Controllers\Web\SwitchOutletController;
 use App\Http\Controllers\Web\TableQrController;
+use App\Http\Middleware\Filament\ApplyTenantAppearance;
 use App\Http\Middleware\Filament\SetDashboardTenant;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Domains;
 use App\Support\Features;
 use App\Support\Support;
+use App\Support\TenantAppearance;
 use Filament\Actions\Action;
 use Filament\Enums\ThemeMode;
 use Filament\Facades\Filament;
@@ -67,7 +69,7 @@ final class DashboardPanelProvider extends PanelProvider
             ->colors(Theme::colors())
             ->font('Plus Jakarta Sans')
             ->brandName('gs.POS')
-            ->brandLogo(fn () => view('filament.shared.brand-logo'))
+            ->brandLogo(fn () => view('filament.dashboard.brand'))
             ->brandLogoHeight('2rem')
             ->favicon(asset('images/brand/favicon.svg'))
             // Bawaan selalu terang; gelap hanya bila pengguna memilihnya di menu akun (tersimpan di browser)
@@ -159,9 +161,16 @@ final class DashboardPanelProvider extends PanelProvider
                         .view('filament.dashboard.announcements')->render()
                     : '';
             })
+            // Tampilan bisnis (Q128): token warna gs.POS per tenant (palet Filament di ApplyTenantAppearance)
+            ->renderHook(PanelsRenderHook::HEAD_END, function (): string {
+                $user = Filament::auth()->user();
+
+                return $user instanceof User ? (string) TenantAppearance::css($user->tenant) : '';
+            })
             // Persistent: juga berjalan di request Livewire (aksi tabel, simpan form)
             ->authMiddleware([
                 SetDashboardTenant::class,
+                ApplyTenantAppearance::class,
             ], isPersistent: true);
     }
 }

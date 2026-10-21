@@ -4,7 +4,7 @@
 > Status: fitur MVP + backlog ADR 0013–0025 selesai; sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
 > pembayaran tagihan (QRIS/VA/transfer manual + bukti), master bank, PDF & email tagihan, Midtrans vendor 2 mode,
 > riwayat perubahan admin, pembersihan bukti transfer (SPEC Q118–Q127). Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1986 test lulus (SQLite), Pint & Larastan level 6 bersih; test pembayaran/bank/audit juga lulus di MySQL
+> Kualitas: 1994 test lulus (SQLite), Pint & Larastan level 6 bersih; test pembayaran/bank/audit juga lulus di MySQL
 > `gspos_test`. Paket hosting `dist/hosting` dibangun ulang 2026-10-21 (lihat §2 "Deploy").
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
@@ -12,7 +12,7 @@
 
 ## 1. Sudah dikerjakan
 
-### Sesi 2026-10-19 – 2026-10-21 (SPEC Q122–Q127) — semua di-push
+### Sesi 2026-10-19 – 2026-10-21 (SPEC Q122–Q128) — semua di-push
 | Bagian | Isi |
 |---|---|
 | Halaman masuk (Q122) | Login owner/admin/kasir, daftar, lupa & atur kata sandi seragam (field 44px berikon, panel brand); Cloudflare Turnstile per halaman (Sistem → Keamanan, key terenkripsi); mode gelap panel: field fokus gelap, tombol terang |
@@ -22,6 +22,7 @@
 | UI dashboard (Q125) | Outlet (kolom alamat, paginasi), Riwayat perubahan (Kolom · Sebelum · Sesudah, tab, Detail), halaman Langganan baru (kartu paket, tagihan, **kuota berupa kartu**, riwayat tagihan = tabel standar dengan cari/filter/paginasi) |
 | Dokumen & email (Q126) | PDF A4 *Tagihan* / *Kuitansi* (cap LUNAS, terbilang) diunduh owner & admin; email bukti dikirim → admin, ditolak → owner, lunas → owner + kuitansi PDF; template email bermerek gs.POS |
 | Audit & pembersihan (Q127) | **Sistem → Riwayat perubahan** (admin): setiap perubahan setelan platform & bank, rahasia disamarkan; `pos:prune-payment-proofs` harian 03.45 WIB (bukti tagihan batal/kedaluwarsa > `POS_BILLING_PROOF_RETENTION_DAYS` hari & unggahan yatim > 1 hari) |
+| UI & tampilan bisnis (Q128) | Rupiah bulat di laporan, panduan awal pintar, bawaan terang, toast seragam, layar kecil, halaman error baru; audit menu owner/admin; **Pengaturan → Bisnis & tampilan** (owner): logo, warna utama 8 preset/bebas, sidebar berwarna/terang, mode bawaan |
 | Perbaikan | Tab admin Tagihan/Admin error 500 (parameter closure Filament harus bernama `$query`); badge pesanan meja kasir web (`x-on="try …"` = SyntaxError Alpine, bunyi tidak pernah keluar) + test pemindai atribut Alpine |
 
 Env baru (lihat `.env.example`): `POS_BILLING_MIDTRANS_SANDBOX_SERVER_KEY`, `POS_BILLING_MIDTRANS_PRODUCTION_SERVER_KEY`,

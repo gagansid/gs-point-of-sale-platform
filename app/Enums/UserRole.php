@@ -75,6 +75,8 @@ enum UserRole: string implements HasColor, HasLabel
         'promo.manage',
         // Paket langganan & tagihan SaaS (ADR 0024)
         'billing.manage',
+        // Profil bisnis & tampilan dashboard (Q128)
+        'business.settings',
     ];
 
     /**
