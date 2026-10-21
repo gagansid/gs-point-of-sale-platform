@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
  */
 final class LoginWebCashier
 {
-    public const INVALID = 'Data login salah.';
+    public const INVALID = 'Akun atau kata sandi salah';
 
     /**
      * @param  string|null  $business  slug tenant; null = login dengan email

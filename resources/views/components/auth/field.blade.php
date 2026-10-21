@@ -24,6 +24,7 @@
             </button>
         @endif
     </div>
-    @if ($hint) <p class="auth-field-hint">{{ $hint }}</p> @endif
+    {{-- Petunjuk diganti pesan error agar tidak bertumpuk --}}
+    @if ($hint && ! $message) <p class="auth-field-hint">{{ $hint }}</p> @endif
     @if ($message) <p id="{{ $id }}-error" class="cashier-field-error">{{ $message }}</p> @endif
 </div>

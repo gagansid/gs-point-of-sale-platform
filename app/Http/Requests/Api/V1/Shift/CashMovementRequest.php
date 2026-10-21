@@ -46,8 +46,20 @@ final class CashMovementRequest extends FormRequest
     }
 
     /** @return array<string, string> */
+    public static function fieldMessages(): array
+    {
+        return ['note.required_if' => 'Tulis catatan untuk alasan Lainnya'];
+    }
+
+    /** @return array<string, string> */
     public function attributes(): array
     {
         return self::fieldAttributes();
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return self::fieldMessages();
     }
 }

@@ -120,7 +120,7 @@ it('owner login dengan email; boleh walau kolom akses nonaktif', function () {
 });
 
 it('pesan umum untuk kata sandi salah, username/kode bisnis tidak dikenal', function (array $body) {
-    cashierLogin($this, $body)->assertSessionHasErrors(['login' => 'Data login salah.']);
+    cashierLogin($this, $body)->assertSessionHasErrors(['login' => 'Akun atau kata sandi salah']);
     $this->assertGuest(WebCashier::GUARD);
 })->with([
     'kata sandi salah' => [['password' => 'salah-123']],
@@ -137,7 +137,7 @@ it('tanpa akses kasir web: ditolak dengan pesan khusus setelah kata sandi benar'
     $this->budi->forceFill(['web_cashier_access' => false])->save();
 
     cashierLogin($this, [])->assertSessionHasErrors(['login' => 'Akun Anda belum diberi akses kasir web. Hubungi owner.']);
-    cashierLogin($this, ['password' => 'salah-123'])->assertSessionHasErrors(['login' => 'Data login salah.']);
+    cashierLogin($this, ['password' => 'salah-123'])->assertSessionHasErrors(['login' => 'Akun atau kata sandi salah']);
     $this->assertGuest(WebCashier::GUARD);
 });
 
@@ -153,7 +153,7 @@ it('isolasi tenant: username tenant lain dengan kode bisnis ini gagal', function
     TenantContext::run($other->tenant_id, fn () => User::factory()->cashier()->forOutlet($other)
         ->create(['username' => 'sari', 'password' => 'rahasia-123', 'web_cashier_access' => true]));
 
-    cashierLogin($this, ['login' => 'sari'])->assertSessionHasErrors(['login' => 'Data login salah.']);
+    cashierLogin($this, ['login' => 'sari'])->assertSessionHasErrors(['login' => 'Akun atau kata sandi salah']);
 });
 
 it('throttle: 5 percobaan gagal per menit', function () {
@@ -254,4 +254,11 @@ it('pesan kasir tampil sebagai toast kanan atas, bukan alert di dalam halaman', 
         ->assertSee('data-toasts', false)
         ->assertSeeInOrder(['window.cashierToast(', 'Shift berhasil dibuka', "'success'"], false)
         ->assertDontSee('site-alert-success', false);
+});
+
+it('pesan validasi tidak menyebut nama field internal (mode/username)', function () {
+    cashierLogin($this, ['business' => ''])->assertSessionHasErrors(['business' => 'Masukkan kode bisnis Anda']);
+
+    $errors = session('errors')->getBag('default')->all();
+    expect(implode(' ', $errors))->not->toContain('mode')->not->toContain('bernilai');
 });

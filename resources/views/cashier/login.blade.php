@@ -17,14 +17,19 @@
 
         <x-auth.field name="business" label="Kode bisnis" icon="store" data-mode="username" :value="$business"
             autocomplete="organization" autocapitalize="none" spellcheck="false" placeholder="mis. kopi-senja"
+            hint="Kode dari owner, sama dengan di aplikasi kasir"
             :autofocus="$mode === 'username' && blank($business)" />
 
         <div class="cashier-field">
             <label for="login"><span data-mode="username">Username</span><span data-mode="email">Alamat email</span></label>
             <div class="auth-input has-icon">
-                <x-site.icon name="user" class="auth-input-icon" />
+                {{-- Ikon & placeholder mengikuti tab (CSS data-mode + skrip kecil di bawah) --}}
+                <x-site.icon name="user" class="auth-input-icon" data-mode="username" />
+                <x-site.icon name="mail" class="auth-input-icon" data-mode="email" />
                 <input id="login" name="login" type="text" value="{{ old('login') }}" autocomplete="username" autocapitalize="none"
-                    spellcheck="false" placeholder="Username atau email" @if ($mode === 'email' || filled($business)) autofocus @endif
+                    spellcheck="false" placeholder="{{ $mode === 'email' ? 'nama@bisnis.com' : 'mis. sari' }}"
+                    data-placeholder-username="mis. sari" data-placeholder-email="nama@bisnis.com"
+                    @if ($mode === 'email' || filled($business)) autofocus @endif
                     @error('login') aria-invalid="true" aria-describedby="login-error" @enderror>
             </div>
             @error('login') <p id="login-error" class="cashier-field-error">{{ $message }}</p> @enderror
@@ -37,5 +42,16 @@
         <button type="submit" class="cashier-auth-btn">Masuk</button>
     </form>
 
-    <p class="cashier-auth-foot">Belum bisa masuk? Minta owner mengaktifkan akses kasir web untuk akun Anda.</p>
+    <p class="cashier-auth-foot">Belum punya akses? Minta owner mengaktifkan kasir web untuk akun Anda.</p>
+
+    <script>
+        // Placeholder & keyboard field login mengikuti tab Username / Email
+        document.querySelectorAll('input[name="mode"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                var login = document.getElementById('login');
+                login.placeholder = login.dataset['placeholder' + (radio.value === 'email' ? 'Email' : 'Username')];
+                login.inputMode = radio.value === 'email' ? 'email' : 'text';
+            });
+        });
+    </script>
 </x-cashier.auth>

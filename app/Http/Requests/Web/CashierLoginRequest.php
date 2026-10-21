@@ -30,6 +30,12 @@ final class CashierLoginRequest extends FormRequest
         return ['business' => 'kode bisnis', 'login' => $this->input('mode') === 'username' ? 'username' : 'email', 'password' => 'kata sandi'];
     }
 
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['business.required_if' => 'Masukkan kode bisnis Anda'];
+    }
+
     public function business(): ?string
     {
         return $this->input('mode') === 'username' ? (string) $this->input('business') : null;

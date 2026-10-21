@@ -138,7 +138,7 @@ final class ShiftController extends Controller
         abort_unless(self::user()->can('shift.operate'), 403);
         $data = $request->validate(
             ['id' => ['required', 'uuid'], ...CashMovementRequest::fieldRules()],
-            [],
+            CashMovementRequest::fieldMessages(),
             CashMovementRequest::fieldAttributes(),
         );
 
