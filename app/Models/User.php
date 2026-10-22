@@ -215,13 +215,13 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     public function canManageEmployee(self $employee): bool
     {
         return $employee->tenant_id === $this->tenant_id
-            && ($this->role === UserRole::Owner || ($employee->isNot($this) && $employee->role->rank() < $this->role->rank()));
+            && ($this->hasPermission('access.manage') || ($employee->isNot($this) && $employee->role->rank() < $this->role->rank()));
     }
 
     /** Boleh memberikan role ini ke karyawan (ADR 0026): owner semua; lainnya hanya role di bawahnya. */
     public function canAssignRole(UserRole $role): bool
     {
-        return $this->role === UserRole::Owner || $role->rank() < $this->role->rank();
+        return $this->hasPermission('access.manage') || $role->rank() < $this->role->rank();
     }
 
     /** Link lupa kata sandi berbahasa Indonesia (bawaan Laravel: bahasa Inggris). */
@@ -259,13 +259,14 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
 
     /**
      * Boleh memakai kasir web (Q54): akun aktif yang bisa bertransaksi, dan diberi akses di menu
-     * Karyawan. Pengelola karyawan (user.manage, owner) selalu boleh agar tidak bisa terkunci sendiri.
+     * Karyawan. Owner (access.manage) selalu boleh agar tidak bisa terkunci sendiri; Kelola karyawan yang didelegasikan
+     * (ADR 0026) tetap mengikuti toggle.
      */
     public function canUseWebCashier(): bool
     {
         return $this->is_active
             && $this->hasPermission('order.create')
-            && ($this->hasPermission('user.manage') || $this->web_cashier_access);
+            && ($this->hasPermission('access.manage') || $this->web_cashier_access);
     }
 
     public function isPinLocked(): bool

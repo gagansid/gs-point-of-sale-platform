@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Actions\Outlet\CreateOutlet;
 use App\Actions\User\Data\EmployeeData;
 use App\Actions\User\SaveEmployee;
 use App\Actions\User\SetEmployeeActive;
@@ -11,15 +12,18 @@ use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Pages\Home;
 use App\Filament\Dashboard\Pages\Reports;
 use App\Filament\Dashboard\Pages\SubscriptionSettings;
+use App\Filament\Dashboard\Resources\ActivityLogs\Pages\ListActivityLogs;
 use App\Filament\Dashboard\Resources\Employees\EmployeeResource;
 use App\Filament\Dashboard\Resources\Orders\OrderResource;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
+use App\Models\ActivityLog;
 use App\Models\RolePermission;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\RolePermissions;
 use App\Support\TenantContext;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Hak akses per bisnis (ADR 0026): owner mengatur permission manager/supervisor/kasir; bawaan = UserRole::permissions().
@@ -177,5 +181,59 @@ describe('user.manage didelegasikan ke manager', function () {
 
         freshAuth();
         $this->withToken(userToken($this->manager))->putJson("/api/v1/users/{$this->owner->id}", ['name' => 'Diubah'], apiHeaders())->assertForbidden();
+    });
+});
+
+describe('perbaikan review', function () {
+    it('Riwayat perubahan: log "Diubah" hak akses tetap menyebut role', function () {
+        rpSetRole($this, UserRole::Manager, ['order.create']);
+        rpSetRole($this, UserRole::Manager, ['order.create', 'order.void']);
+
+        $updated = ActivityLog::query()->where('subject_type', RolePermission::class)->where('event', 'updated')->sole();
+        expect($updated->properties['role'])->toBe('manager');
+
+        rpActAs($this, $this->owner);
+        Livewire\Livewire::test(ListActivityLogs::class)
+            ->assertSee('Role Manager')->assertDontSee('Role —');
+    });
+
+    it('Tambah outlet didelegasikan: pembuat langsung memegang outlet barunya', function () {
+        rpSetRole($this, UserRole::Manager, [...UserRole::Manager->grantedPermissions(), 'outlet.manage']);
+        rpActAs($this, $this->manager);
+
+        $outlet = app(CreateOutlet::class)->handle('JKT09', 'Cabang Baru', null, 'Asia/Jakarta', null, $this->manager);
+
+        expect($this->manager->canAccessOutlet($outlet->id))->toBeTrue()
+            ->and($this->owner->canAccessOutlet($outlet->id))->toBeTrue();
+    });
+
+    it('Kelola karyawan didelegasikan tidak melewati toggle Akses kasir web; owner selalu boleh', function () {
+        rpSetRole($this, UserRole::Manager, [...UserRole::Manager->grantedPermissions(), 'user.manage']);
+        $this->manager->forceFill(['web_cashier_access' => false])->save();
+
+        expect($this->manager->fresh()->canUseWebCashier())->toBeFalse()
+            ->and($this->owner->forceFill(['web_cashier_access' => false])->canUseWebCashier())->toBeTrue();
+    });
+
+    it('menyimpan hak akses role yang sama berulang tetap satu baris', function () {
+        rpSetRole($this, UserRole::Cashier, ['order.create']);
+        rpSetRole($this, UserRole::Cashier, ['order.create', 'order.reprint']);
+
+        expect(RolePermission::query()->where('role', 'cashier')->count())->toBe(1);
+    });
+
+    it('job queue membaca ulang hak akses (cache statis dikosongkan tiap job)', function () {
+        expect($this->manager->can('product.manage'))->toBeTrue(); // cache tenant terisi
+
+        // Diubah langsung di DB (seperti dari request lain), cache proses ini masih lama
+        RolePermission::query()->create(['role' => UserRole::Manager, 'permissions' => ['order.create']]);
+        $managerId = $this->manager->id;
+
+        // Job closure diserialisasi: hasil dikirim balik lewat cache (driver array di test, satu proses)
+        dispatch(function () use ($managerId): void {
+            Cache::put('rp-job-can', User::query()->findOrFail($managerId)->can('product.manage'));
+        });
+
+        expect(Cache::get('rp-job-can'))->toBeFalse();
     });
 });

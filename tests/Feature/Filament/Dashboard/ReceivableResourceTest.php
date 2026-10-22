@@ -128,3 +128,18 @@ it('isolasi tenant: kasbon tenant lain tidak terlihat', function () {
 
     Livewire::test(ListReceivables::class)->assertCanNotSeeTableRecords([$foreign])->assertDontSee('Member Tetangga');
 });
+
+it('batas Lama = hari kalender zona outlet, sama dengan kolom umur', function () {
+    $late = Member::factory()->create(['name' => 'Malam']);
+    // 22 Sep 20.00 WIB; dilihat 22 Okt 08.00 WIB = 30 hari kalender walau belum 30×24 jam
+    receivableAt($late, '2026-09-22 13:00:00', ReceivableEntryType::Charge, '10000.00');
+    Carbon::setTestNow('2026-10-22 01:00:00');
+
+    $row = ReceivableResource::getEloquentQuery()->whereKey($late->id)->sole();
+    expect(ReceivableResource::ageDays($row))->toBe(30)
+        ->and(ReceivableResource::overdue(Member::query())->whereKey($late->id)->exists())->toBeTrue();
+
+    // Sehari lebih muda (29 hari) belum Lama
+    Carbon::setTestNow('2026-10-21 01:00:00');
+    expect(ReceivableResource::overdue(Member::query())->whereKey($late->id)->exists())->toBeFalse();
+});

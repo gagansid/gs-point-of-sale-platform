@@ -342,7 +342,7 @@ final class ActivityLogResource extends Resource
     {
         $properties = $record->properties;
 
-        return UserRole::tryFrom((string) ($properties['attributes']['role'] ?? $properties['old']['role'] ?? ''));
+        return UserRole::tryFrom((string) ($properties['role'] ?? $properties['attributes']['role'] ?? $properties['old']['role'] ?? ''));
     }
 
     /**

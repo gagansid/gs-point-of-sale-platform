@@ -10,6 +10,7 @@ use App\Models\Outlet;
 use App\Models\OutletPaymentMethod;
 use App\Models\ProductStock;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Support\Quotas;
 use App\Support\TenantContext;
 use Illuminate\Support\Facades\DB;
@@ -28,11 +29,11 @@ final class CreateOutlet
     /**
      * @throws BusinessException OUTLET_LIMIT_REACHED / VALIDATION_ERROR
      */
-    public function handle(string $code, string $name, ?string $address, string $timezone, ?Outlet $copyMenuFrom = null): Outlet
+    public function handle(string $code, string $name, ?string $address, string $timezone, ?Outlet $copyMenuFrom = null, ?User $by = null): Outlet
     {
         $code = Str::upper(trim($code));
 
-        return DB::transaction(function () use ($code, $name, $address, $timezone, $copyMenuFrom): Outlet {
+        return DB::transaction(function () use ($code, $name, $address, $timezone, $copyMenuFrom, $by): Outlet {
             // Kunci baris tenant: dua penambahan bersamaan tidak melewati batas outlet
             $tenant = Tenant::query()->lockForUpdate()->findOrFail(TenantContext::idOrFail());
             self::ensureWithinLimit($tenant);
@@ -59,6 +60,12 @@ final class CreateOutlet
 
             if ($copyMenuFrom !== null) {
                 self::copyMenu($copyMenuFrom, $outlet);
+            }
+
+            // Tambah outlet bisa didelegasikan (ADR 0026): pembuat tanpa outlet.access_all langsung memegang outlet barunya
+            if ($by !== null && ! $by->hasPermission('outlet.access_all')) {
+                $by->outlets()->syncWithoutDetaching([$outlet->id]);
+                $by->forgetOutletIds();
             }
 
             return $outlet;

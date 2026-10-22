@@ -126,10 +126,12 @@ final class ReceivableResource extends Resource
      */
     public static function overdue(Builder $query): Builder
     {
-        $cutoff = CarbonImmutable::now()->subDays(self::OVERDUE_DAYS)->format('Y-m-d H:i:s');
+        // Hari kalender di zona outlet, sama dengan kolom umur (ageDays): umur ≥ N hari ⇔ sejak < awal hari (hari ini − N + 1)
+        $tz = CurrentOutlet::timezone();
+        $cutoff = CarbonImmutable::now($tz)->startOfDay()->subDays(self::OVERDUE_DAYS - 1)->utc()->format('Y-m-d H:i:s');
 
         return $query->where('receivable_balance', '>', 0)
-            ->where(self::outstandingSinceQuery(), '<=', $cutoff);
+            ->where(self::outstandingSinceQuery(), '<', $cutoff);
     }
 
     /**

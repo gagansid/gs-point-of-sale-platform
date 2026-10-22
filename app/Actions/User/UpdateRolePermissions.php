@@ -49,15 +49,14 @@ final class UpdateRolePermissions
         }
 
         DB::transaction(function () use ($role, $permissions): void {
-            $row = RolePermission::query()->where('role', $role->value)->lockForUpdate()->first();
-
             if ($permissions === null) {
-                $row?->delete();
+                RolePermission::query()->where('role', $role->value)->first()?->delete();
 
                 return;
             }
 
-            ($row ?? new RolePermission(['role' => $role]))->fill(['permissions' => UserRole::normalize($permissions)])->save();
+            // updateOrCreate → createOrFirst: dua simpan pertama yang bersamaan tidak gagal karena unique(tenant_id, role)
+            RolePermission::query()->updateOrCreate(['role' => $role->value], ['permissions' => UserRole::normalize($permissions)]);
         });
 
         RolePermissions::flush();

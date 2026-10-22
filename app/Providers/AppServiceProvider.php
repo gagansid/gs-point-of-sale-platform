@@ -14,6 +14,8 @@ use App\Models\User;
 use App\Services\Report\CachedReportService;
 use App\Services\Report\ReportService;
 use App\Support\CurrentOutlet;
+use App\Support\Features;
+use App\Support\RolePermissions;
 use App\Support\TenantContext;
 use App\Support\TrustedProxies;
 use Dedoc\Scramble\Scramble;
@@ -31,6 +33,7 @@ use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -73,6 +76,12 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureTenancy(): void
     {
+        // Worker queue berumur panjang: paket & hak akses dibaca ulang tiap job (cache statis per request)
+        Queue::before(function (): void {
+            Features::flush();
+            RolePermissions::flush();
+        });
+
         // Job queue yang dikirim dari request tenant berjalan di tenant yang sama
         Context::hydrated(function (ContextRepository $context): void {
             $tenantId = $context->get('tenant_id');
