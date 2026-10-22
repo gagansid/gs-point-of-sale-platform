@@ -6202,3 +6202,137 @@
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* Standar kontrol semua halaman kasir (mengikuti Transaksi): tinggi --pos-btn-h, radius --pos-radius,
+   garis abu tipis, satu garis fokus + halo lembut (tanpa outline ganda) */
+.cashier-body .site-field :is(input:not([type='checkbox']):not([type='radio']):not([type='hidden']), select),
+.cashier-body .cashier-select {
+    height: var(--pos-btn-h);
+    min-height: var(--pos-btn-h);
+    padding-top: 0;
+    padding-bottom: 0;
+    border: 1px solid var(--site-border);
+    border-radius: var(--pos-radius);
+    font-size: 14px;
+}
+
+.cashier-body .site-field textarea {
+    border: 1px solid var(--site-border);
+    border-radius: var(--pos-radius);
+}
+
+.cashier-body .site-field :is(input, select, textarea):focus-visible,
+.cashier-body .cashier-select:focus-visible {
+    border-color: var(--site-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.14);
+}
+
+.cashier-body .site-field :is(input, select, textarea)[aria-invalid='true'] {
+    border-color: #d63939;
+}
+
+/* Checkbox standar: baris 40px bergaris, kotak 18px dengan centang sendiri */
+.pos-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: var(--pos-btn-h);
+    padding: 0 12px;
+    border: 1px solid var(--site-border);
+    border-radius: var(--pos-radius);
+    background: #ffffff;
+    color: var(--site-navy);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pos-check:has(input:checked) {
+    border-color: rgb(45 66 130 / 0.35);
+    background: var(--site-primary-lt);
+}
+
+.pos-check small {
+    margin-left: auto;
+    color: var(--site-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.pos-check input[type='checkbox'] {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    border: 1.5px solid #c4c8cf;
+    border-radius: 5px;
+    background: #ffffff no-repeat center / 12px;
+    appearance: none;
+    cursor: pointer;
+}
+
+.pos-check input[type='checkbox']:checked {
+    border-color: var(--site-primary);
+    background-color: var(--site-primary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m4.5 12.75 6 6 9-13.5'/%3E%3C/svg%3E");
+}
+
+.pos-check input[type='checkbox']:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.18);
+}
+
+/* Form cari sebaris dengan label di atas (Retur): tombol sejajar dasar field */
+.pos-search-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.pos-search-row .pos-field {
+    flex: 1;
+}
+
+/* Kartu sempit di tengah (Retur cari, Buka shift) */
+.pos-narrow {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+}
+
+.pos-table td.is-actions {
+    text-align: right;
+}
+
+.pos-table td.is-actions .pos-inline-pay {
+    justify-content: flex-end;
+}
+
+.pos-table td.pos-receipt-name {
+    white-space: normal;
+}
+
+.pos-cell-sub {
+    display: block;
+    color: var(--site-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.pos-form .cashier-tabs {
+    margin-bottom: 0;
+}
+
+.pos-qty button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pos-table .pos-qty {
+    display: inline-flex;
+}
+
+.cashier-body .pos-field .pos-search-field input {
+    padding-left: 38px;
+}

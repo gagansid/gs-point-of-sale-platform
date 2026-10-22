@@ -1,6 +1,13 @@
 {{-- /cashier/shift: buka shift (carry-over kas awal) atau X-report + kas masuk/keluar + tutup shift (Q54, ADR 0017). --}}
 @php($money = fn (?string $v): string => $v === null ? '–' : \App\Support\Money::format($v))
 <x-cashier.layout title="Shift" active="shift">
+    <div class="pos-page">
+    <header class="pos-page-head">
+        <div>
+            <h1>{{ $shift === null ? 'Buka shift' : 'Shift berjalan' }}</h1>
+            <p>{{ $shift === null ? 'Belum ada shift terbuka di browser ini. Hitung uang di laci untuk memulai.' : 'Pantau X-report, catat kas masuk/keluar, lalu tutup shift saat selesai bertugas.' }}</p>
+        </div>
+    </header>
     @if ($shift === null)
         <section class="cashier-card cashier-narrow">
             <h1>Buka shift</h1>
@@ -198,4 +205,5 @@
             </div>
         </div>
     @endif
+    </div>
 </x-cashier.layout>

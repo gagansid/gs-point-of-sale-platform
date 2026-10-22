@@ -64,17 +64,17 @@
                                 <th class="is-secondary">Kode</th>
                                 <th class="is-secondary">No. HP</th>
                                 <th class="num">Kasbon</th>
-                                <th>Pelunasan</th>
+                                <th class="num">Pelunasan</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($members as $member)
                                 <tr>
-                                    <td class="is-strong">{{ $member->name }}</td>
+                                    <td>{{ $member->name }}</td>
                                     <td class="is-code is-secondary">{{ $member->code }}</td>
                                     <td class="is-secondary">{{ $member->phone ? $member->maskedPhone() : '—' }}</td>
-                                    <td class="num is-danger">{{ $money($member->receivable_balance) }}</td>
-                                    <td>
+                                    <td class="num is-strong">{{ $money($member->receivable_balance) }}</td>
+                                    <td class="is-actions">
                                         {{-- Nominal tampil "213.100", terkirim sebagai angka murni lewat hidden "amount" (data-money) --}}
                                         <form method="POST" action="{{ route('cashier.receivables.pay', $member->id) }}" class="pos-inline-pay" novalidate
                                             data-confirm-title="Catat pelunasan?" data-confirm-ok="Lunasi" data-confirm-icon="cash"
