@@ -1,7 +1,7 @@
 # Catatan Lanjut Pengerjaan
 
 > Diperbarui: 2026-10-22 · Branch: `feature/pos` (semua di-push)
-> Status: fitur MVP + backlog ADR 0013–0025 selesai; sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
+> Status: fitur MVP + backlog ADR 0013–0025 selesai; 2026-10-22 halaman kasir web dirapikan (Q131); sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
 > pembayaran tagihan (QRIS/VA/transfer manual + bukti), master bank, PDF & email tagihan, Midtrans vendor 2 mode,
 > riwayat perubahan admin, pembersihan bukti transfer (SPEC Q118–Q127). Deploy ditunda atas keputusan pemilik.
 > Kualitas: 1994 test lulus (SQLite), Pint & Larastan level 6 bersih; test pembayaran/bank/audit juga lulus di MySQL
@@ -11,6 +11,21 @@
 ---
 
 ## 1. Sudah dikerjakan
+
+### Rapikan halaman kasir web (2026-10-22, SPEC Q131) — di-push
+| Halaman | Isi |
+|---|---|
+| Semua | Kelas bersama `.pos-page`, `.pos-card`, `.pos-table`, `.pos-badge`, `.pos-empty`, `.pos-field`, `.pos-check` di akhir `resources/css/app.css`; semua kontrol 40px / radius 10px / satu garis fokus; kelas lama `.cashier-card/.cashier-table/.cashier-qty/...` dihapus |
+| Input uang | `<x-cashier.money name="…">` (`resources/views/components/cashier/money.blade.php`): tampil `25.000`, hidden input bernama field asli; halaman non-Livewire tidak memuat Alpine, jadi pakai `data-money` (JS di layout, event `money:change`) |
+| Riwayat & detail | Statistik shift, tab status, cari nomor/meja (`?status=`, `?q=`), baris diklik; detail gaya *Pembayaran berhasil*, stepper pecah bill, dialog void/gabung |
+| Retur | Kepala halaman, stepper qty, checkbox standar, dialog konfirmasi |
+| Shift | Kas awal/kas masuk-keluar/kas dihitung/disetor berformat rupiah, selisih langsung tampil, X/Z-report dengan statistik & sub-kartu, rekap Z-report dengan tombol Buka shift baru |
+| Kasbon | Statistik, kolom terpisah, pelunasan rata kanan + tombol Penuh, error validasi tampil |
+| Pesanan meja | Dua kolom berbadge jumlah, chip meja, item & catatan, tombol seukuran (Tolak garis merah, Terima) |
+
+Konfirmasi: form dengan `data-confirm-title/-text/-ok/-icon/-tone` (ikon `lock`, `logout`, `cash`, `merge`, `warning`;
+`{amount}` = nominal field uang di form itu). Stepper `[data-stepper]`, baris klik `tr[data-href]`.
+Catatan: kelas `.pos-empty` juga dipakai keranjang Transaksi, jadi gaya keadaan kosong halaman dibatasi `.pos-page .pos-empty`.
 
 ### Sesi 2026-10-19 – 2026-10-22 (SPEC Q122–Q129) — semua di-push
 | Bagian | Isi |

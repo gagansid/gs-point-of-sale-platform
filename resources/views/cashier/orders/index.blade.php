@@ -1,4 +1,4 @@
-{{-- /cashier/orders: transaksi shift terbuka di browser ini. Gaya halaman kasir Q130. --}}
+{{-- /cashier/orders: transaksi shift terbuka di browser ini. Gaya halaman kasir Q131. --}}
 @php($money = fn (string $v): string => \App\Support\Money::format($v))
 @php($filters = ['all' => 'Semua', 'completed' => 'Selesai', 'unpaid' => 'Menunggu bayar', 'voided' => 'Void'])
 <x-cashier.layout title="Riwayat" active="orders">

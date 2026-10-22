@@ -121,12 +121,16 @@
             return { fromRaw, parse };
         })();
 
-        // Form biasa (tanpa Livewire/Alpine): <span data-money> berisi input teks + hidden [data-money-raw] bernama field asli
+        // Form biasa (tanpa Livewire/Alpine): <span data-money> berisi input teks + hidden [data-money-raw] bernama field asli.
+        // Setiap perubahan memicu event "money:change" (detail.raw) pada <span> agar skrip halaman bisa menghitung ulang.
+        window.posMoneyFormat = posMoneyFormat;
         (() => {
             const sync = (box, raw) => {
                 box.querySelector('[data-money-raw]').value = raw;
                 box.querySelector('input[type="text"]').value = posMoneyFormat.fromRaw(raw);
+                box.dispatchEvent(new CustomEvent('money:change', { bubbles: true, detail: { raw } }));
             };
+            window.posMoneySet = sync;
             document.querySelectorAll('[data-money]').forEach((box) => sync(box, box.querySelector('[data-money-raw]').value));
             document.addEventListener('input', (event) => {
                 const box = event.target.closest('[data-money]');
@@ -134,6 +138,7 @@
                 const { raw, display } = posMoneyFormat.parse(event.target.value);
                 event.target.value = display;
                 box.querySelector('[data-money-raw]').value = raw;
+                box.dispatchEvent(new CustomEvent('money:change', { bubbles: true, detail: { raw, typed: true } }));
             });
             // Tombol isi cepat (mis. "Penuh"): mengisi field uang di form yang sama
             document.addEventListener('click', (event) => {

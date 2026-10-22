@@ -938,185 +938,10 @@
     margin-bottom: 16px;
 }
 
-.cashier-card {
-    margin-bottom: 16px;
-    padding: 20px;
-    border: 1px solid var(--site-border);
-    border-radius: 12px;
-    background: #ffffff;
-}
-
-.cashier-card h1,
-.cashier-card h2 {
-    margin: 0 0 6px;
-    color: var(--site-navy);
-    font-size: 18px;
-    font-weight: 800;
-}
-
-.cashier-card h3 {
-    margin: 20px 0 8px;
-    color: var(--site-navy);
-    font-size: 14px;
-    font-weight: 700;
-}
-
-.cashier-card-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.cashier-narrow {
-    max-width: 520px;
-    margin-right: auto;
-    margin-left: auto;
-}
-
-.cashier-grid-2 {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 16px;
-    align-items: start;
-}
-
 .cashier-muted {
     margin: 0 0 16px;
     color: var(--site-muted);
     font-size: 13.5px;
-}
-
-/* Shift bersama (ADR 0017): keterangan kecil di rekap, bagian lipat (koreksi kas awal), kas awal carry-over */
-.cashier-muted-inline {
-    color: var(--site-muted);
-    font-size: 12.5px;
-}
-
-.cashier-details > summary {
-    color: var(--site-navy);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.cashier-details[open] > summary {
-    margin-bottom: 12px;
-}
-
-.cashier-narrow .cashier-details {
-    margin-top: 16px;
-}
-
-/* Retur (ADR 0018): qty per baris & form cari nomor transaksi sebaris */
-.cashier-qty {
-    width: 84px;
-    height: var(--pos-btn-h, 40px);
-    padding: 0 8px;
-    border: 1px solid #dcdee3;
-    border-radius: 8px;
-    font: inherit;
-    text-align: right;
-}
-
-.cashier-inline-search {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-}
-
-.cashier-inline-pay {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-}
-
-.cashier-inline-pay .cashier-select {
-    width: auto;
-    height: var(--pos-btn-h, 40px);
-}
-
-.cashier-inline-search .site-field {
-    flex: 1;
-    margin: 0;
-}
-
-.cashier-dl.cashier-carry {
-    margin-bottom: 16px;
-    font-size: 16px;
-}
-
-/* Pesanan meja di kasir web (ADR 0014) */
-.cashier-count {
-    display: inline-flex;
-    min-width: 24px;
-    height: 24px;
-    padding: 0 8px;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    background: var(--site-primary-lt);
-    color: var(--site-navy);
-    font-size: 13px;
-    vertical-align: middle;
-}
-
-.cashier-self-order {
-    display: grid;
-    gap: 8px;
-    padding: 14px 0;
-    border-top: 1px solid var(--site-border);
-}
-
-.cashier-self-order header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 10px;
-}
-
-.cashier-self-order header .cashier-muted {
-    margin: 0 0 0 auto;
-}
-
-.cashier-self-order ul {
-    margin: 0;
-    padding-left: 18px;
-    font-size: 14px;
-}
-
-.cashier-self-order > .cashier-muted {
-    margin: 0;
-}
-
-.cashier-self-order footer,
-.cashier-inline-form {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-}
-
-.cashier-self-order footer > span {
-    margin-right: auto;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-.cashier-self-order .site-btn {
-    min-height: 40px;
-}
-
-.cashier-inline-form input {
-    flex: 1 1 180px;
-    height: 40px;
-    padding: 0 12px;
-    border: 1px solid #dcdee3;
-    border-radius: 10px;
-    font: inherit;
-    font-size: 14px;
 }
 
 .cashier-nav-badge {
@@ -1132,75 +957,6 @@
     color: #ffffff;
     font-size: 12px;
     font-weight: 700;
-}
-
-.cashier-negative {
-    color: #b42318;
-}
-
-.cashier-dl {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 6px 16px;
-    margin: 0;
-    font-size: 14px;
-}
-
-.cashier-dl dt {
-    color: var(--site-muted);
-}
-
-.cashier-dl dd {
-    margin: 0;
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-}
-
-.cashier-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-.cashier-table th,
-.cashier-table td {
-    padding: 8px 6px;
-    border-bottom: 1px solid var(--site-border);
-    text-align: left;
-}
-
-.cashier-table th {
-    color: var(--site-muted);
-    font-size: 12.5px;
-    font-weight: 600;
-}
-
-.cashier-table .num {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-}
-
-.cashier-badge {
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--site-bg);
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.cashier-badge.is-completed {
-    background: #ecfdf3;
-    color: #067647;
-}
-
-.cashier-badge.is-open {
-    background: #fffaeb;
-    color: #b54708;
-}
-
-.cashier-badge.is-voided {
-    background: #fef3f2;
-    color: #b42318;
 }
 
 @media (max-width: 720px) {
@@ -5353,7 +5109,7 @@
 }
 
 /* ==========================================================================
-   Halaman kasir web selain Transaksi (Q130): satu sistem visual dengan layar Transaksi.
+   Halaman kasir web selain Transaksi (Q131): satu sistem visual dengan layar Transaksi.
    Kontrol setinggi --pos-btn-h, radius --pos-radius, satu garis fokus, kartu berbayang lembut.
    ========================================================================== */
 .pos-page {
@@ -6335,4 +6091,458 @@
 
 .cashier-body .pos-field .pos-search-field input {
     padding-left: 38px;
+}
+
+/* Tombol selebar kartu */
+.cashier-body .pos-btn-block {
+    width: 100%;
+}
+
+/* Tombol garis merah (Tolak) */
+.cashier-body .pos-btn-outline-danger {
+    border: 1px solid #fecdca;
+    background: #ffffff;
+    color: #b42318;
+}
+
+.cashier-body .pos-btn-outline-danger:hover {
+    border-color: #fda29b;
+    background: #fef3f2;
+}
+
+.pos-badge svg {
+    width: 13px;
+    height: 13px;
+    margin-right: 4px;
+}
+
+.pos-card-sub {
+    margin: 2px 0 0;
+    color: var(--site-muted);
+    font-size: 13px;
+}
+
+.pos-field-hint {
+    color: var(--site-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.pos-narrow.is-wide {
+    max-width: 720px;
+}
+
+/* Input Rupiah besar (kas awal, kas dihitung) */
+.cashier-body .pos-page .pos-money.is-large {
+    height: 56px;
+    padding: 0 14px;
+}
+
+.cashier-body .pos-page .pos-money.is-large .pos-money-prefix {
+    font-size: 16px;
+}
+
+.cashier-body .pos-page .pos-money.is-large input[type='text'] {
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.cashier-body .pos-page .pos-money:has(input[aria-invalid='true']) {
+    border-color: #d63939;
+}
+
+/* Buka shift dengan kas awal carry-over */
+.pos-open-carry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--pos-radius);
+    background: var(--site-bg);
+}
+
+.pos-open-carry small {
+    display: block;
+    color: var(--site-muted);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.pos-open-carry strong {
+    color: var(--site-navy);
+    font-size: 24px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Bagian lipat (koreksi kas awal) */
+.pos-disclosure > summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
+    border-top: 1px solid var(--site-border);
+    color: var(--site-navy);
+    font-size: 14px;
+    font-weight: 700;
+    list-style: none;
+    cursor: pointer;
+}
+
+.pos-card.pos-disclosure > summary {
+    border-top: 0;
+}
+
+.pos-disclosure > summary::-webkit-details-marker {
+    display: none;
+}
+
+.pos-disclosure > summary::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    margin-left: auto;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%236b7280'%3E%3Cpath fill-rule='evenodd' d='M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat center / 16px;
+    transition: transform 150ms;
+}
+
+.pos-disclosure[open] > summary {
+    border-bottom: 1px solid var(--site-border);
+}
+
+.pos-disclosure[open] > summary::after {
+    transform: rotate(180deg);
+}
+
+.pos-disclosure > summary svg {
+    width: 18px;
+    height: 18px;
+    color: var(--site-primary);
+}
+
+/* Selisih tutup shift: hijau pas, kuning lebih, merah kurang */
+.pos-diff {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--pos-radius);
+    font-size: 13px;
+}
+
+.pos-diff[hidden] {
+    display: none;
+}
+
+.pos-diff strong {
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-diff.is-ok {
+    background: #ecfdf3;
+    color: #067647;
+}
+
+.pos-diff.is-over {
+    background: #fffaeb;
+    color: #b54708;
+}
+
+.pos-diff.is-short {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+/* Rekap shift (X/Z-report) */
+.pos-recap-body {
+    display: grid;
+    gap: 16px;
+}
+
+.pos-mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.pos-mini-stats > div {
+    padding: 10px 12px;
+    border-radius: var(--pos-radius);
+    background: var(--site-bg);
+}
+
+.pos-mini-stats small {
+    display: block;
+    color: var(--site-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pos-mini-stats strong {
+    color: var(--site-navy);
+    font-size: 17px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-mini-stats .is-primary {
+    background: var(--site-primary-lt);
+}
+
+.pos-section {
+    border: 1px solid var(--site-border);
+    border-radius: var(--pos-radius);
+    overflow: hidden;
+}
+
+.pos-section h3 {
+    margin: 0;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--site-border);
+    background: #fbfcfe;
+    color: var(--site-navy);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.pos-section.is-table .pos-table th {
+    background: #ffffff;
+}
+
+.pos-dl {
+    display: grid;
+    margin: 0;
+    padding: 4px 14px;
+    font-size: 14px;
+}
+
+.pos-dl > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 7px 0;
+}
+
+.pos-dl > div + div {
+    border-top: 1px dashed var(--site-border);
+}
+
+.pos-dl dt {
+    color: var(--site-muted);
+}
+
+.pos-dl dt small {
+    display: block;
+    font-size: 12px;
+}
+
+.pos-dl dd {
+    margin: 0;
+    color: var(--site-navy);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.pos-dl dd.is-text {
+    font-weight: 500;
+    white-space: normal;
+}
+
+.pos-dl .is-total dt,
+.pos-dl .is-total dd {
+    color: var(--site-navy);
+    font-weight: 800;
+}
+
+.pos-dl .is-danger dd {
+    color: #b42318;
+}
+
+.pos-dl .is-success dd {
+    color: #067647;
+}
+
+.pos-dl .is-warning dd {
+    color: #b54708;
+}
+
+/* Pesanan meja: dua kolom, kartu pesanan */
+.pos-board {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.pos-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    margin-left: 6px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: var(--site-bg);
+    color: var(--site-muted);
+    font-size: 12.5px;
+    font-weight: 700;
+    vertical-align: 2px;
+}
+
+.pos-count.is-alert {
+    background: #d92d20;
+    color: #ffffff;
+}
+
+.pos-ticket {
+    display: grid;
+    gap: 8px;
+    padding: 14px 16px;
+}
+
+.pos-ticket + .pos-ticket {
+    border-top: 1px solid var(--site-border);
+}
+
+.pos-ticket-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.pos-table-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: var(--site-navy);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.pos-table-chip svg {
+    width: 15px;
+    height: 15px;
+}
+
+.pos-ticket-name {
+    color: var(--site-navy);
+    font-size: 15px;
+}
+
+.pos-ticket-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 13px;
+}
+
+.pos-ticket-number {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+}
+
+.pos-ticket-items {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: var(--pos-radius);
+    background: var(--site-bg);
+    list-style: none;
+    font-size: 14px;
+}
+
+.pos-ticket-items li {
+    display: flex;
+    gap: 8px;
+}
+
+.pos-ticket-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.pos-ticket-note svg {
+    width: 15px;
+    height: 15px;
+}
+
+.pos-ticket-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 4px;
+}
+
+.pos-ticket-total {
+    color: var(--site-navy);
+    font-size: 16px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-ticket-total small {
+    display: block;
+    color: var(--site-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.pos-ticket-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.pos-ticket-actions .site-btn {
+    min-width: 108px;
+}
+
+.pos-reject-form {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+}
+
+.cashier-body .pos-reject-form input {
+    flex: 1;
+    min-width: 0;
+    height: var(--pos-btn-h);
+    padding: 0 12px;
+    border: 1px solid var(--site-border);
+    border-radius: var(--pos-radius);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+}
+
+.cashier-body .pos-reject-form input:focus-visible {
+    border-color: var(--site-primary);
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.14);
+}
+
+@media (max-width: 900px) {
+    .pos-board {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }

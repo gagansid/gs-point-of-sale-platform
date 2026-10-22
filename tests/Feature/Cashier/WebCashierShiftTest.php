@@ -94,3 +94,19 @@ it('riwayat: kosong tanpa transaksi', function () {
     $this->post(route('cashier.shift.store'), ['opening_cash' => '0']);
     $this->get(route('cashier.orders'))->assertOk()->assertSee('Belum ada transaksi');
 });
+
+it('form shift memakai input rupiah berformat dengan nama field asli (hidden) dan nilai lama dipertahankan', function () {
+    // Buka shift: kas awal besar; nilai lama setelah gagal validasi tetap terisi
+    $this->from(route('cashier.shift'))->post(route('cashier.shift.store'), ['opening_cash' => '-5'])->assertSessionHasErrors('opening_cash');
+    $this->get(route('cashier.shift'))->assertOk()
+        ->assertSee('<input type="hidden" name="opening_cash" value="-5" data-money-raw>', false)
+        ->assertSee('pos-money is-large', false);
+
+    // Shift berjalan: kas keluar & tutup shift memakai input rupiah; tidak ada lagi input number untuk nominal
+    $this->post(route('cashier.shift.store'), ['opening_cash' => '150000']);
+    $page = $this->get(route('cashier.shift'))->assertOk();
+    foreach (['amount', 'actual_cash', 'cash_deposited', 'opening_cash'] as $field) {
+        $page->assertSee('<input type="hidden" name="'.$field.'" value="" data-money-raw>', false);
+    }
+    $page->assertDontSee('type="number"', false)->assertSee('data-confirm-title="Tutup shift?"', false);
+});

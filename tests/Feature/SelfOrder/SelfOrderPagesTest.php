@@ -107,7 +107,7 @@ it('kasir web: menu Pesanan meja → terima & tolak; bayar dari layar Transaksi;
     Livewire::test(SelfOrderBadge::class)->assertSee('2');
 
     Livewire::test(SelfOrders::class)
-        ->assertSee('Andi')->assertSee('Budi')->assertSee('1× Croissant')
+        ->assertSee('Andi')->assertSee('Budi')->assertSeeInOrder(['1×', 'Croissant'])
         ->call('accept', $a->id)
         ->assertDispatched('cashier-toast')
         ->call('startReject', $b->id)

@@ -1,4 +1,4 @@
-{{-- /cashier/receivables: member yang punya kasbon & pelunasan (ADR 0023). Gaya halaman kasir Q130. --}}
+{{-- /cashier/receivables: member yang punya kasbon & pelunasan (ADR 0023). Gaya halaman kasir Q131. --}}
 @php($money = fn (string $v): string => \App\Support\Money::format($v))
 <x-cashier.layout title="Kasbon" active="receivables">
     <div class="pos-page">
@@ -75,17 +75,13 @@
                                     <td class="is-secondary">{{ $member->phone ? $member->maskedPhone() : '—' }}</td>
                                     <td class="num is-strong">{{ $money($member->receivable_balance) }}</td>
                                     <td class="is-actions">
-                                        {{-- Nominal tampil "213.100", terkirim sebagai angka murni lewat hidden "amount" (data-money) --}}
+                                        {{-- Nominal tampil "213.100", terkirim angka murni lewat hidden "amount" (x-cashier.money) --}}
                                         <form method="POST" action="{{ route('cashier.receivables.pay', $member->id) }}" class="pos-inline-pay" novalidate
                                             data-confirm-title="Catat pelunasan?" data-confirm-ok="Lunasi" data-confirm-icon="cash"
                                             data-confirm-text="Pelunasan kasbon {{ $member->name }} sebesar Rp{amount} akan dicatat.">
                                             @csrf
                                             <input type="hidden" name="id" value="{{ \Illuminate\Support\Str::uuid7() }}">
-                                            <span class="pos-money is-compact" data-money>
-                                                <span class="pos-money-prefix">Rp</span>
-                                                <input type="text" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Nominal pelunasan {{ $member->name }}">
-                                                <input type="hidden" name="amount" value="{{ (int) $member->receivable_balance }}" data-money-raw>
-                                            </span>
+                                            <x-cashier.money name="amount" size="compact" :value="(string) (int) $member->receivable_balance" :label="'Nominal pelunasan '.$member->name" />
                                             <button type="button" class="site-btn site-btn-outline pos-btn-sm" data-money-fill="{{ (int) $member->receivable_balance }}" title="Isi nominal sebesar sisa kasbon">Penuh</button>
                                             <select name="payment_method_id" class="pos-select" aria-label="Metode bayar">
                                                 @foreach ($methods as $method)

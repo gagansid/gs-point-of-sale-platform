@@ -1,4 +1,4 @@
-{{-- /cashier/refunds/{order}: pilih item & qty yang diretur (ADR 0018). Nilai final dihitung server. Gaya halaman kasir Q130. --}}
+{{-- /cashier/refunds/{order}: pilih item & qty yang diretur (ADR 0018). Nilai final dihitung server. Gaya halaman kasir Q131. --}}
 @php($money = fn (?string $v): string => $v === null ? '–' : \App\Support\Money::format($v))
 <x-cashier.layout title="Retur {{ $order->order_number }}" active="orders">
     <div class="pos-page">

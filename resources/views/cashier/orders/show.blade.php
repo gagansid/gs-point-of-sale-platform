@@ -1,4 +1,4 @@
-{{-- /cashier/orders/{id}: detail order (gaya "Pembayaran berhasil" sebagai halaman), struk, retur, void, pecah/gabung. Q130. --}}
+{{-- /cashier/orders/{id}: detail order (gaya "Pembayaran berhasil" sebagai halaman), struk, retur, void, pecah/gabung. Q131. --}}
 @php
     $money = fn (?string $v): string => $v === null ? '–' : \App\Support\Money::format($v);
     $positive = fn (?string $v): bool => $v !== null && \App\Support\Money::isPositive($v);
