@@ -71,6 +71,16 @@ final class SelfOrder extends Model
         return $this->belongsTo(Member::class);
     }
 
+    /**
+     * Kasir yang menerima/menolak.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function handler(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'handled_by');
+    }
+
     public function itemCount(): int
     {
         return (int) array_sum(array_column($this->items, 'qty'));

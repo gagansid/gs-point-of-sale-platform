@@ -93,7 +93,10 @@ Semua tabel memakai pola yang sama dengan Produk (dijaga `tests/Feature/Filament
 | Produk | Semua · Favorit · Aktif · Habis · Stok menipis | lihat di bawah | Tandai habis/tersedia, Hapus |
 | Kategori | Semua · Aktif · Nonaktif | — (atur urutan kasir) | Hapus |
 | Grup opsi | Semua · Aktif · Nonaktif | Aturan (wajib/opsional), Pemakaian | Hapus |
-| Penjualan | Semua · Selesai · Open bill · Void | Tanggal, tipe, kasir | — |
+| Penjualan | Semua · Selesai · Open bill · Menunggu bayar · Void · Diretur | Tanggal, tipe, kanal, kasir | — |
+| Pesanan meja | Semua · Menunggu kasir · Diterima · Ditolak · Kedaluwarsa (tanpa angka) | Tanggal, meja, ditangani | — |
+| Riwayat stok | Semua · Masuk · Keluar · Penyesuaian & opname (tanpa angka) | Tanggal, produk, jenis, oleh | — |
+| Kasbon | Semua · Belum lunas · Lama · Melebihi batas · Lunas | — | — |
 | Shift | Semua · Buka · Ditutup · Ada selisih | Tanggal dibuka | — |
 | Tenant (`/admin`) | Semua · Aktif · Trial · Suspended · Segera berakhir | Jenis usaha | — |
 | Paket (`/admin`) | Semua · Aktif · Nonaktif | Tampil, Periode, Memuat fitur, Dipakai bisnis | — |

@@ -44,6 +44,8 @@ final class ListOrders extends ListRecords
             'open' => self::statusTab('Open bill', OrderStatus::Open),
             'awaiting' => self::statusTab('Menunggu bayar', OrderStatus::AwaitingPayment),
             'voided' => self::statusTab('Void', OrderStatus::Voided),
+            // Retur sebagian/penuh (ADR 0018); tanggal tetap tanggal order, bukan tanggal retur
+            'refunded' => Tab::make('Diretur')->modifyQueryUsing(fn (Builder $query): Builder => $query->where('refunded_total', '>', 0)),
         ];
     }
 

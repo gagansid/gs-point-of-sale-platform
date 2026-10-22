@@ -9,7 +9,7 @@ use App\Support\Money;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-/** Laporan › Stok: pembelian (stok masuk diposting) per supplier pada periode (ADR 0015, Q83). */
+/** Laporan › Pembelian: stok masuk diposting per supplier pada periode (ADR 0015, Q83). */
 final class PurchasesBySupplierTableWidget extends ReportTableWidget
 {
     protected function rows(): array

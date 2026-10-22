@@ -9,7 +9,7 @@ use App\Support\Money;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-/** Laporan › Stok: pembelian per produk — qty, nilai, rata-rata harga beli (ADR 0015, Q83). */
+/** Laporan › Pembelian: pembelian per produk — qty, nilai, rata-rata harga beli (ADR 0015, Q83). */
 final class PurchasesByProductTableWidget extends ReportTableWidget
 {
     protected function rows(): array

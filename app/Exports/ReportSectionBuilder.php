@@ -212,17 +212,16 @@ final class ReportSectionBuilder
                         [2], ['Total', array_sum(array_column($m['vouchers'], 'uses')), Money::add('0', ...array_column($m['vouchers'], 'discount'))]),
                 ];
             })(),
-            ReportTab::Stock => (function () use ($start, $end, $filters, $count): array {
-                $rows = $this->reports->stock($start, $end, $filters);
+            ReportTab::Stock => [$this->section('Pergerakan stok', ['Produk', 'Terjual', 'Kembali (void)', 'Penyesuaian', 'Stok masuk', 'Opname', 'Transfer', 'Perubahan', 'Stok kini', 'Nilai stok', 'Status'],
+                array_map(fn (array $r): array => [
+                    $r['product_name'], $count($r['sold']), $r['void_return'], $r['adjustment'], $r['purchased'], $r['opname'], $r['transfer'], $r['net_change'],
+                    $r['stock'] ?? '-', $r['stock_value'] ?? '-', $r['stock'] === null ? 'Tidak dilacak' : ($r['is_low'] ? 'Habis/menipis' : 'Aman'),
+                ], $this->reports->stock($start, $end, $filters)), [9])],
+            ReportTab::Purchases => (function () use ($start, $end, $filters): array {
                 $purchases = $this->reports->purchases($start, $end, $filters);
                 $t = $purchases['totals'];
 
                 return [
-                    $this->section('Pergerakan stok', ['Produk', 'Terjual', 'Kembali (void)', 'Penyesuaian', 'Stok masuk', 'Opname', 'Transfer', 'Perubahan', 'Stok kini', 'Nilai stok', 'Status'],
-                        array_map(fn (array $r): array => [
-                            $r['product_name'], $count($r['sold']), $r['void_return'], $r['adjustment'], $r['purchased'], $r['opname'], $r['transfer'], $r['net_change'],
-                            $r['stock'] ?? '-', $r['stock_value'] ?? '-', $r['stock'] === null ? 'Tidak dilacak' : ($r['is_low'] ? 'Habis/menipis' : 'Aman'),
-                        ], $rows), [9]),
                     $this->section('Pembelian per supplier', ['Supplier', 'Dokumen', 'Qty', 'Nilai beli'],
                         array_map(fn (array $r): array => [$r['supplier_name'], $r['receipt_count'], $r['qty'], $r['total_cost']], $purchases['suppliers']),
                         [3], ['Total', $t['receipt_count'], $t['qty'], $t['total_cost']]),

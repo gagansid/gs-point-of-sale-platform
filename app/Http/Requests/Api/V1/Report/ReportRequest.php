@@ -51,7 +51,7 @@ final class ReportRequest extends FormRequest
         'stock' => ReportTab::Stock,
         'members' => ReportTab::Members,
         'channels' => ReportTab::OrderTypes,
-        'purchases' => ReportTab::Stock,
+        'purchases' => ReportTab::Purchases,
     ];
 
     public function authorize(): bool

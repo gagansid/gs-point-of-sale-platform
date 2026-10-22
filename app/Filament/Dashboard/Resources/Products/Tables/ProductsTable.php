@@ -139,6 +139,7 @@ final class ProductsTable
                 EditAction::make()->iconButton()->tooltip('Ubah'),
                 ActionGroup::make([
                     ProductActions::adjustStock(),
+                    ProductActions::stockHistory(),
                     ProductActions::markSoldOut(),
                     ProductActions::markAvailable(),
                     ProductActions::delete(),

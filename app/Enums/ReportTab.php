@@ -29,6 +29,8 @@ enum ReportTab: string
     case Outlets = 'outlets';
     case Discounts = 'discounts';
     case Stock = 'stock';
+    // Stok masuk per supplier & produk (ADR 0015, Q83); dulu bagian tab Stok
+    case Purchases = 'purchases';
     case Members = 'members';
 
     public function label(): string
@@ -47,6 +49,7 @@ enum ReportTab: string
             self::Outlets => 'Outlet',
             self::Discounts => 'Diskon & void',
             self::Stock => 'Stok',
+            self::Purchases => 'Pembelian',
             self::Members => 'Member',
         };
     }
@@ -67,6 +70,7 @@ enum ReportTab: string
             self::Outlets => 'heroicon-o-building-storefront',
             self::Discounts => 'heroicon-o-shield-check',
             self::Stock => 'heroicon-o-archive-box',
+            self::Purchases => 'heroicon-o-truck',
             self::Members => 'heroicon-o-user-group',
         };
     }
@@ -80,6 +84,8 @@ enum ReportTab: string
         return match ($this) {
             self::Profit, self::Options, self::Employees, self::Time, self::Outlets => 'advanced_reports',
             self::Members => 'member',
+            // Pembelian dari stok masuk = fitur paket "stock" (ADR 0025)
+            self::Purchases => 'stock',
             default => null,
         };
     }

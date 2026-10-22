@@ -17,6 +17,7 @@ use App\Models\Order;
 use App\Models\Outlet;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Money;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\ViewAction;
 use Filament\Support\Icons\Heroicon;
@@ -45,8 +46,12 @@ final class OrdersTable
                 TextColumn::make('table_label')->label('Meja')->placeholder('—')->searchable()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('member_name')->label('Member')->placeholder('—')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')->label('Status')->badge()->sortable()
-                    // Dibayar online lalu di-void: owner mengembalikan dana manual lewat Midtrans (ADR 0014)
-                    ->description(fn (Order $record): ?string => $record->refund_required ? 'Perlu refund manual' : null),
+                    // Dibayar online lalu di-void: owner mengembalikan dana manual lewat Midtrans (ADR 0014); retur ADR 0018
+                    ->description(fn (Order $record): ?string => match (true) {
+                        $record->refund_required => 'Perlu refund manual',
+                        Money::isPositive($record->refunded_total) => 'Diretur '.Money::format($record->refunded_total),
+                        default => null,
+                    }),
                 MoneyColumn::make('grand_total')->label('Total')->sortable()
                     ->color(fn (Order $record): ?string => $record->status === OrderStatus::Voided ? 'gray' : null),
                 // Audit: tersembunyi bawaan, tampilkan lewat pilih kolom

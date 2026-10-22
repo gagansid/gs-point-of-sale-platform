@@ -8,24 +8,19 @@ use App\Actions\Member\AdjustMemberPoints;
 use App\Actions\Member\AnonymizeMember;
 use App\Actions\Member\ChangeMemberPassword;
 use App\Actions\Member\Data\MemberData;
-use App\Actions\Member\PayReceivable;
 use App\Actions\Member\SaveMember;
 use App\Actions\Member\SetMemberActive;
-use App\Actions\Member\SetMemberCreditLimit;
 use App\Actions\Member\SetMemberPin;
-use App\Enums\PaymentCategory;
+use App\Filament\Dashboard\Resources\Members\Actions\ReceivableActions;
 use App\Filament\Dashboard\Resources\Members\Pages\ManageMembers;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
-use App\Filament\Shared\Forms\MoneyInput;
 use App\Filament\Shared\Layout;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Http\Requests\Api\V1\Member\MemberRequest;
 use App\Models\Member;
 use App\Models\MemberPointEntry;
 use App\Models\MemberSetting;
-use App\Models\PaymentMethod;
-use App\Models\ReceivableEntry;
 use App\Models\StampProgram;
 use App\Models\User;
 use App\Services\Member\StampCards;
@@ -51,7 +46,6 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
-use Illuminate\Support\Str;
 use UnitEnum;
 
 /**
@@ -175,47 +169,10 @@ final class MemberResource extends Resource
                             'entries' => MemberPointEntry::query()->with('user:id,name')->where('member_id', $record->id)->latest()->limit(100)->get(),
                         ]))
                         ->modalSubmitAction(false)->modalCancelActionLabel('Tutup'),
-                    Action::make('receivables')->label('Riwayat kasbon')->icon(Heroicon::OutlinedBanknotes)
-                        ->visible(fn (Member $record): bool => MemberSetting::current()->credit_enabled || Money::isPositive($record->receivable_balance))
-                        ->modalHeading(fn (Member $record): string => 'Kasbon · '.$record->name)
-                        ->modalContent(fn (Member $record) => view('filament.dashboard.members.receivables', [
-                            'member' => $record,
-                            'entries' => ReceivableEntry::query()->with(['user:id,name', 'paymentMethod:id,name'])->where('member_id', $record->id)->latest()->limit(100)->get(),
-                        ]))
-                        ->modalSubmitAction(false)->modalCancelActionLabel('Tutup'),
-                    Action::make('creditLimit')->label('Batas kasbon')->icon(Heroicon::OutlinedScale)
-                        ->visible(fn (Member $record): bool => MemberSetting::current()->credit_enabled && self::canEdit($record))
-                        ->modalHeading(fn (Member $record): string => 'Batas kasbon · '.$record->name)
-                        ->fillForm(fn (Member $record): array => ['credit_limit' => $record->credit_limit])
-                        ->schema([
-                            MoneyInput::make('credit_limit')->label('Batas')
-                                ->helperText(fn (): string => 'Kosong = batas bawaan '.(MemberSetting::current()->default_credit_limit !== null ? Money::format(MemberSetting::current()->default_credit_limit) : '(tidak ada)').'; 0 = tidak boleh kasbon'),
-                        ])
-                        ->action(function (Member $record, array $data): void {
-                            abort_unless(self::canEdit($record), 403);
-                            app(SetMemberCreditLimit::class)->handle($record, filled($data['credit_limit'] ?? null) ? (string) $data['credit_limit'] : null);
-                            Notification::make()->success()->title('Batas kasbon disimpan')->send();
-                        }),
-                    Action::make('payReceivable')->label('Catat pelunasan')->icon(Heroicon::OutlinedCheckBadge)
-                        ->visible(fn (Member $record): bool => Money::isPositive($record->receivable_balance) && (auth()->user()?->can('member.manage') ?? false))
-                        ->modalHeading(fn (Member $record): string => 'Pelunasan kasbon · '.$record->name)
-                        ->modalDescription(fn (Member $record): string => 'Kasbon '.Money::format($record->receivable_balance).'. Dicatat di luar laci kasir; untuk tunai di kasir pakai menu Kasbon di kasir web')
-                        ->fillForm(fn (Member $record): array => ['amount' => $record->receivable_balance])
-                        ->schema([
-                            MoneyInput::make('amount')->label('Nominal')->required(),
-                            Select::make('payment_method_id')->label('Metode')->required()->native(false)
-                                ->options(fn (): array => PaymentMethod::query()->where('is_active', true)
-                                    ->whereNotIn('category', [PaymentCategory::Points, PaymentCategory::Online, PaymentCategory::Receivable])
-                                    ->orderBy('sort_order')->pluck('name', 'id')->all()),
-                            TextInput::make('note')->label('Catatan')->maxLength(255),
-                        ])
-                        ->action(function (Member $record, array $data, Action $action): void {
-                            $user = auth()->user();
-                            abort_unless($user instanceof User && $user->can('member.manage'), 403);
-                            self::orNotify(fn () => app(PayReceivable::class)->handle($user, $record, null, (string) Str::uuid7(),
-                                Money::of((string) $data['amount']), (string) $data['payment_method_id'], $data['note'] ?? null), $action);
-                            Notification::make()->success()->title('Pelunasan dicatat')->send();
-                        }),
+                    // Kasbon (ADR 0023): sama dengan Pelanggan → Kasbon
+                    ReceivableActions::history(),
+                    ReceivableActions::creditLimit(),
+                    ReceivableActions::pay(),
                     Action::make('stamps')->label('Kartu stempel')->icon(Heroicon::OutlinedTicket)
                         ->visible(fn (): bool => StampProgram::query()->where('is_active', true)->exists())
                         ->modalHeading(fn (Member $record): string => 'Kartu stempel · '.$record->name)

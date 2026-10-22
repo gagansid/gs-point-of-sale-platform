@@ -61,7 +61,7 @@ final class VoucherResource extends Resource
 
     protected static ?string $pluralModelLabel = 'voucher';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     protected static bool $isGloballySearchable = false;
 

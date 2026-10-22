@@ -17,7 +17,10 @@
 ```
 
 Meniru gs-task-tracker: sidebar setinggi layar di kiri, topbar dimulai di kanan sidebar.
-Topbar hanya berisi ☰, pencarian global (kiri), dan menu akun (kanan). **Pemilih outlet** `/dashboard`
+Topbar hanya berisi ☰, pencarian global (kiri), dan di kanan: lonceng peringatan (`/dashboard` saja,
+`App\Support\DashboardAlerts`, view `filament/dashboard/alerts`, tombol bergaya sama dengan tombol tema; badge merah
+jumlah peringatan, dropdown "Perlu perhatian" berisi ikon warna makna + judul + keterangan, kosong = "Semua aman"),
+tombol tema, dan menu akun. **Pemilih outlet** `/dashboard`
 (SPEC Q41) ada di atas menu sidebar, di bawah logo — hanya bila user memegang lebih dari satu outlet aktif;
 sidebar ciut = ikon outlet saja (`PanelsRenderHook::SIDEBAR_NAV_START`, view `filament/dashboard/outlet-switcher`).
 Kerangka diterapkan lewat `App\Filament\Shared\Layout::apply()` di kedua panel. Grup menu
@@ -32,15 +35,19 @@ Urutan dan grup menu tetap. Ikon Heroicons outline (lihat [components/icon.md](c
 | — | Beranda | `home` | `report.view` |
 | Transaksi | Penjualan | `receipt-percent` | `order.view_all` |
 | Transaksi | Shift | `clock` | `shift.view_all` |
+| Transaksi | Pesanan meja | `device-phone-mobile` | `order.view_all` + fitur `self_order` |
 | Katalog | Produk | `cube` | `product.manage` |
 | Katalog | Kategori | `tag` | `product.manage` |
 | Katalog | Grup Opsi | `adjustments-horizontal` | `product.manage` |
-| Katalog | Stok | `archive-box` | `stock.adjust` |
+| Stok | Riwayat stok | `queue-list` | `stock.adjust` + fitur `stock` |
+| Pelanggan | Kasbon | `banknotes` | `member.view` (+ kasbon aktif atau masih ada sisa) |
 | Laporan | Laporan | `chart-bar` | `report.view` |
 | Pengaturan | Karyawan | `users` | `user.manage` |
 | Pengaturan | Perangkat | `device-tablet` | `device.manage` |
 | Pengaturan | Metode Pembayaran | `credit-card` | `payment_method.manage` |
 | Pengaturan | Pengaturan Outlet | `building-storefront` | `outlet.settings` |
+
+Tabel di atas memuat menu inti; daftar lengkap per grup ada di `docs/SPEC.md` § Panel dashboard owner.
 
 Menu tanpa permission disembunyikan (`canAccess()` / `canViewAny()` memakai `can()`), bukan
 ditampilkan lalu ditolak.

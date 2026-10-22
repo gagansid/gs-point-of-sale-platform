@@ -31,6 +31,7 @@ use App\Filament\Dashboard\Widgets\Reports\ProfitStatsWidget;
 use App\Filament\Dashboard\Widgets\Reports\ProfitTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\PurchasesByProductTableWidget;
 use App\Filament\Dashboard\Widgets\Reports\PurchasesBySupplierTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\PurchaseStatsWidget;
 use App\Filament\Dashboard\Widgets\Reports\ReportStatsWidget;
 use App\Filament\Dashboard\Widgets\Reports\ReportTrendChartWidget;
 use App\Filament\Dashboard\Widgets\Reports\ShiftDifferencesTableWidget;
@@ -226,10 +227,8 @@ final class Reports extends Page
             ReportTab::OrderTypes => [OrderTypesWidget::class, ChannelsTableWidget::class],
             ReportTab::Outlets => [OutletComparisonWidget::class],
             ReportTab::Discounts => [VoidsTableWidget::class, DiscountsTableWidget::class, ShiftDifferencesTableWidget::class],
-            // Pembelian dari stok masuk = fitur paket "stock" (ADR 0025)
-            ReportTab::Stock => Features::enabled('stock')
-                ? [StockTableWidget::class, PurchasesBySupplierTableWidget::class, PurchasesByProductTableWidget::class]
-                : [StockTableWidget::class],
+            ReportTab::Stock => [StockTableWidget::class],
+            ReportTab::Purchases => [PurchaseStatsWidget::class, PurchasesBySupplierTableWidget::class, PurchasesByProductTableWidget::class],
         };
     }
 

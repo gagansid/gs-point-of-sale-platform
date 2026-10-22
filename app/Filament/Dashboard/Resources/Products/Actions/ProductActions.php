@@ -9,6 +9,7 @@ use App\Actions\Product\DeleteProduct;
 use App\Actions\Product\SetProductAvailability;
 use App\Actions\Product\SetProductFavorite;
 use App\Exceptions\BusinessException;
+use App\Filament\Dashboard\Resources\StockMovements\StockMovementResource;
 use App\Filament\Shared\Layout;
 use App\Models\Product;
 use App\Models\User;
@@ -57,6 +58,16 @@ final class ProductActions
 
                 Notification::make()->success()->title('Stok disesuaikan')->send();
             });
+    }
+
+    /** Kartu stok produk ini (Stok → Riwayat stok, terfilter produk). */
+    public static function stockHistory(): Action
+    {
+        return Action::make('stockHistory')
+            ->label('Riwayat stok')
+            ->icon(Heroicon::OutlinedQueueList)
+            ->visible(fn (Product $record): bool => $record->track_stock && StockMovementResource::canViewAny())
+            ->url(fn (Product $record): string => StockMovementResource::urlForProduct($record));
     }
 
     /**

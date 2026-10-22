@@ -15,6 +15,7 @@ use App\Actions\Stock\SendStockTransfer;
 use App\Enums\ReportTab;
 use App\Exports\ReportSectionBuilder;
 use App\Filament\Dashboard\Widgets\Reports\PurchasesBySupplierTableWidget;
+use App\Filament\Dashboard\Widgets\Reports\PurchaseStatsWidget;
 use App\Filament\Dashboard\Widgets\Reports\StockTableWidget;
 use App\Models\Outlet;
 use App\Models\Product;
@@ -92,7 +93,7 @@ it('pembelian per supplier & produk: hanya yang diposting, tanpa yang dibatalkan
     expect(app(ReportService::class)->purchases(CarbonImmutable::parse('2026-10-01 00:00'), CarbonImmutable::parse('2026-10-05 00:00'))['totals']['qty'])->toBe(0);
 });
 
-it('dashboard & export: widget tampil, export tab Stok memuat pembelian; API purchases hanya report.view', function () {
+it('dashboard & export: widget tampil, tab Pembelian terpisah dari Stok; API purchases hanya report.view', function () {
     Filament::setCurrentPanel('dashboard');
     $this->actingAs($this->owner);
     CurrentOutlet::set($this->owner, $this->pos->outlet->id);
@@ -101,8 +102,12 @@ it('dashboard & export: widget tampil, export tab Stok memuat pembelian; API pur
     Livewire::test(StockTableWidget::class, ['pageFilters' => $range])->assertSee('Stok masuk')->assertSee('Rp153.600');
     Livewire::test(PurchasesBySupplierTableWidget::class, ['pageFilters' => $range])->assertSee('PT Roti')->assertSee('Rp120.000');
 
-    $titles = array_map(fn ($s) => $s->title, app(ReportSectionBuilder::class)->build([ReportTab::Stock], ReportContext::fromInput($range, $this->owner), 1000));
-    expect($titles)->toBe(['Pergerakan stok', 'Pembelian per supplier', 'Pembelian per produk']);
+    Livewire::test(PurchaseStatsWidget::class, ['pageFilters' => $range])->assertSee('Nilai beli')->assertSee('Rp120.000');
+
+    $titles = fn (ReportTab $tab): array => array_map(fn ($s) => $s->title, app(ReportSectionBuilder::class)->build([$tab], ReportContext::fromInput($range, $this->owner), 1000));
+    expect($titles(ReportTab::Stock))->toBe(['Pergerakan stok'])
+        ->and($titles(ReportTab::Purchases))->toBe(['Pembelian per supplier', 'Pembelian per produk'])
+        ->and(ReportTab::visibleTabs($this->owner))->toContain(ReportTab::Stock, ReportTab::Purchases);
 
     freshAuth();
     $this->withToken(userToken($this->owner))->getJson('/api/v1/reports/purchases?from=2026-10-12&to=2026-10-12', apiHeaders())

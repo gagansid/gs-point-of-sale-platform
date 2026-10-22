@@ -17,6 +17,7 @@ use App\Http\Middleware\Filament\ApplyTenantAppearance;
 use App\Http\Middleware\Filament\SetDashboardTenant;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\DashboardAlerts;
 use App\Support\Domains;
 use App\Support\Features;
 use App\Support\Support;
@@ -159,6 +160,14 @@ final class DashboardPanelProvider extends PanelProvider
                     ? view('filament.dashboard.subscription-banner', ['tenant' => $user->tenant])->render()
                         // Pengumuman super admin ke semua tenant
                         .view('filament.dashboard.announcements')->render()
+                    : '';
+            })
+            // Lonceng peringatan di kiri tombol tema (topbar): pesanan meja menunggu, restok, shift lupa ditutup, kasbon lama
+            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, function (): string {
+                $user = Filament::auth()->user();
+
+                return $user instanceof User && $user->role->hasFullDashboard()
+                    ? view('filament.dashboard.alerts', ['alerts' => DashboardAlerts::for($user)])->render()
                     : '';
             })
             // Tampilan bisnis (Q128): token warna gs.POS per tenant (palet Filament di ApplyTenantAppearance)

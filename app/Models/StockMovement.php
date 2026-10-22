@@ -9,6 +9,7 @@ use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * Riwayat perubahan stok. Hanya ditambah, tidak pernah diubah atau dihapus.
@@ -23,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $qty_after
  * @property string|null $reason
  * @property string|null $reference_id
+ * @property Carbon $created_at
  */
 final class StockMovement extends Model
 {
@@ -43,6 +45,12 @@ final class StockMovement extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /** @return BelongsTo<Outlet, $this> */
+    public function outlet(): BelongsTo
+    {
+        return $this->belongsTo(Outlet::class);
     }
 
     /** @return BelongsTo<User, $this> */
