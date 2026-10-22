@@ -17,7 +17,7 @@ Pilihan yang ditimbang:
 | Pilihan | Ringkas | Diputuskan |
 |---|---|---|
 | **A. Matriks per role, diatur owner** | 4 role tetap; owner mencentang permission manager/supervisor/kasir | ✅ |
-| B. A + pengecualian per karyawan | Fleksibel, sulit diaudit | ❌ (bisa menyusul) |
+| B. A + pengecualian per karyawan | Fleksibel; diaudit lewat Riwayat perubahan & badge "Hak akses khusus" | ✅ (tambahan 2026-10-22) |
 | C. Role kustom | Mengubah enum role di API, Flutter, login PIN/kata sandi | ❌ |
 
 ## Keputusan
@@ -36,6 +36,16 @@ Pilihan yang ditimbang:
 | Delegasi `user.manage` | Non-owner hanya mengelola & memberi role **di bawah dirinya** (`UserRole::rank()`): tidak bisa menyentuh owner, sesama manager, atau dirinya sendiri (`SaveEmployee::ensureCanManage`, `UserPolicy::update`) → `FORBIDDEN` |
 | Verifikasi email | Supervisor/kasir yang diberi akses dashboard tetap wajib email terverifikasi (Q46), berdasarkan cara login role |
 | API | Policy (`ProductPolicy`, `UserPolicy`, …) tetap hanya memakai permission, tanpa `dashboard.access`, agar aplikasi kasir tidak ikut tertutup |
+
+### Pengecualian per karyawan (opsi B, 2026-10-22)
+
+| Topik | Keputusan |
+|---|---|
+| Penyimpanan | `users.permissions_granted` & `users.permissions_revoked` (JSON, NULL = ikuti role): **selisih** terhadap hak akses role di bisnis itu, sehingga perubahan role tetap berlaku untuk izin lain |
+| Hasil | Hak akses role + tambahan (dilengkapi IMPLIES) − dicabut; izin yang dasarnya dicabut ikut gugur, berantai (`RolePermissions::applyOverrides`). Owner tidak terpengaruh; izin khusus owner tidak pernah bisa ditambahkan |
+| Mengatur | Action `SetEmployeePermissions`, hanya `access.manage` (owner) — pengelola karyawan non-owner tidak bisa menaikkan hak akses. Sama dengan role / "Ikuti role" = pengecualian dihapus. Ganti role = pengecualian dihapus |
+| UI | Karyawan → aksi **Hak akses** (modal, kartu centang sama dengan halaman Hak akses, tombol *Ikuti role*); kolom Role diberi keterangan *Hak akses khusus*; halaman Hak akses menampilkan jumlah karyawan berpengecualian per role |
+| Audit | Riwayat perubahan → Karyawan: *Izin tambahan* / *Izin dicabut* berlabel Bahasa Indonesia |
 
 ## Konsekuensi
 

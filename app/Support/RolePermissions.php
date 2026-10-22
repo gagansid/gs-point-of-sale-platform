@@ -44,6 +44,43 @@ final class RolePermissions
             : in_array($permission, self::granted($role, $tenantId), true);
     }
 
+    /**
+     * Hak akses role + pengecualian karyawan (ADR 0026, opsi B): tambahan dilengkapi izin tersiratnya, lalu yang dicabut
+     * dibuang beserta izin yang bergantung padanya. Izin khusus owner tidak pernah bisa ditambahkan.
+     *
+     * @param  list<string>  $granted  hak akses role
+     * @param  list<string>  $add
+     * @param  list<string>  $remove
+     * @return list<string>
+     */
+    public static function applyOverrides(array $granted, array $add, array $remove): array
+    {
+        if ($add === [] && $remove === []) {
+            return $granted;
+        }
+
+        $set = array_flip([...$granted, ...UserRole::normalize($add)]);
+
+        foreach ($remove as $permission) {
+            unset($set[$permission]);
+        }
+
+        // Izin yang butuh izin lain (IMPLIES) gugur bila dasarnya dicabut, mis. member.manage tanpa member.view;
+        // diulang sampai stabil untuk rantai report.view → report.view_shift → report.view_own
+        do {
+            $dropped = false;
+
+            foreach (UserRole::IMPLIES as $permission => $implied) {
+                if (isset($set[$permission]) && array_diff($implied, array_keys($set)) !== []) {
+                    unset($set[$permission]);
+                    $dropped = true;
+                }
+            }
+        } while ($dropped);
+
+        return array_values(array_filter(UserRole::PERMISSIONS, fn (string $p): bool => isset($set[$p])));
+    }
+
     /** Bisnis ini sudah mengubah hak akses role tersebut (bukan bawaan). */
     public static function isCustomized(UserRole $role, string $tenantId): bool
     {

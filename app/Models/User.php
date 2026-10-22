@@ -43,6 +43,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property int $pin_failed_attempts
  * @property CarbonImmutable|null $pin_locked_until
  * @property UserRole $role
+ * @property list<string>|null $permissions_granted izin tambahan di atas role (ADR 0026, opsi B)
+ * @property list<string>|null $permissions_revoked izin role yang dicabut untuk karyawan ini
  * @property CarbonImmutable|null $email_verified_at
  * @property string|null $username
  * @property bool $is_active
@@ -66,6 +68,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             'is_active',
             'web_cashier_access',
             'phone',
+            // Pengecualian hak akses per karyawan (ADR 0026)
+            'permissions_granted',
+            'permissions_revoked',
         ];
     }
 
@@ -128,6 +133,8 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             'password' => 'hashed',
             'pin' => 'hashed',
             'role' => UserRole::class,
+            'permissions_granted' => 'array',
+            'permissions_revoked' => 'array',
             'is_active' => 'boolean',
             'web_cashier_access' => 'boolean',
             'daily_summary_email' => 'boolean',
@@ -148,8 +155,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     {
         $role = $this->getAttribute('role');
 
-        // Hak akses per bisnis (ADR 0026): pengaturan owner, atau bawaan role
-        return $role instanceof UserRole && RolePermissions::allows($role, $this->getAttribute('tenant_id'), $permission);
+        // Hak akses per bisnis & pengecualian karyawan (ADR 0026)
+        return $role instanceof UserRole && UserRole::isPermission($permission)
+            && in_array($permission, $this->grantedPermissions(), true);
     }
 
     /**
@@ -161,7 +169,34 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     {
         $role = $this->getAttribute('role');
 
-        return $role instanceof UserRole ? RolePermissions::granted($role, $this->getAttribute('tenant_id')) : [];
+        if (! $role instanceof UserRole) {
+            return [];
+        }
+
+        $granted = RolePermissions::granted($role, $this->getAttribute('tenant_id'));
+
+        return $role->isConfigurable()
+            ? RolePermissions::applyOverrides($granted, $this->permissionOverride('permissions_granted'), $this->permissionOverride('permissions_revoked'))
+            : $granted;
+    }
+
+    /** Karyawan ini punya pengecualian hak akses (badge "Khusus" di Karyawan). */
+    public function hasPermissionOverrides(): bool
+    {
+        return $this->permissionOverride('permissions_granted') !== [] || $this->permissionOverride('permissions_revoked') !== [];
+    }
+
+    /**
+     * Daftar pengecualian dari atribut mentah: aman untuk model yang dimuat sebagian kolom (strict mode).
+     *
+     * @return list<string>
+     */
+    public function permissionOverride(string $column): array
+    {
+        $raw = $this->getAttributes()[$column] ?? null;
+        $list = is_string($raw) ? json_decode($raw, true) : $raw;
+
+        return is_array($list) ? array_values(array_filter($list, is_string(...))) : [];
     }
 
     /**

@@ -8,9 +8,11 @@ use App\Actions\User\Data\EmployeeData;
 use App\Actions\User\SaveEmployee;
 use App\Actions\User\SendEmployeeVerification;
 use App\Actions\User\SetEmployeeActive;
+use App\Actions\User\SetEmployeePermissions;
 use App\Actions\User\UnlockEmployeePin;
 use App\Enums\UserRole;
 use App\Exceptions\BusinessException;
+use App\Filament\Dashboard\Pages\AccessSettings;
 use App\Filament\Dashboard\Resources\Employees\Pages\ManageEmployees;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
@@ -195,7 +197,9 @@ final class EmployeeResource extends Resource
                 TextColumn::make('username')->label('Username')->placeholder('—')->searchable()->sortable()
                     ->formatStateUsing(fn (string $state): string => '@'.$state)
                     ->toggleable(),
-                TextColumn::make('role')->label('Role')->badge()->sortable(),
+                TextColumn::make('role')->label('Role')->badge()->sortable()
+                    // Pengecualian hak akses per karyawan (ADR 0026)
+                    ->description(fn (User $record): ?string => $record->hasPermissionOverrides() ? 'Hak akses khusus' : null),
                 IconColumn::make('web_cashier')->label('Kasir web')->boolean()->alignCenter()
                     ->state(fn (User $record): bool => $record->canUseWebCashier())->toggleable(),
                 TextColumn::make('outlets.name')->label('Outlet')->badge()->color('gray')
@@ -234,6 +238,7 @@ final class EmployeeResource extends Resource
                         $action,
                     )),
                 ActionGroup::make([
+                    self::permissionsAction(),
                     Action::make('resendVerification')->label('Kirim ulang verifikasi')->icon(Heroicon::OutlinedEnvelope)
                         ->visible(fn (User $record): bool => $record->email !== null && ! $record->hasVerifiedEmail()
                             && self::canManage($record))
@@ -329,6 +334,35 @@ final class EmployeeResource extends Resource
         $user = auth()->user();
 
         return $user instanceof User ? $user : null;
+    }
+
+    /**
+     * Hak akses satu karyawan (ADR 0026, opsi B; owner/access.manage): centang sama seperti Pengaturan → Hak akses,
+     * disimpan sebagai selisih terhadap role-nya. "Ikuti role" menghapus pengecualian.
+     */
+    private static function permissionsAction(): Action
+    {
+        return Action::make('permissions')->label('Hak akses')->icon(Heroicon::OutlinedShieldCheck)
+            ->visible(fn (User $record): bool => $record->role->isConfigurable() && (self::actor()?->can('access.manage') ?? false))
+            ->modalHeading(fn (User $record): string => 'Hak akses · '.$record->name)
+            ->modalDescription(fn (User $record): string => 'Bawaan mengikuti role '.$record->role->getLabel().' di Pengaturan → Hak akses. Ubah centang untuk menambah atau mencabut izin khusus karyawan ini')
+            ->modalWidth('4xl')
+            ->modalSubmitActionLabel('Simpan')
+            ->fillForm(fn (User $record): array => ['permissions' => AccessSettings::groupState($record->grantedPermissions())])
+            ->schema(AccessSettings::permissionSections('permissions'))
+            ->extraModalFooterActions(fn (Action $action, User $record): array => [
+                $action->makeModalSubmitAction('followRole', ['follow_role' => true])->label('Ikuti role')->color('gray')
+                    ->visible($record->hasPermissionOverrides()),
+            ])
+            ->action(function (User $record, array $data, array $arguments, Action $action): void {
+                $by = self::actor();
+                abort_unless($by !== null, 403);
+                $permissions = ($arguments['follow_role'] ?? false) ? null : AccessSettings::flattenState($data['permissions'] ?? []);
+                self::orNotify(fn () => app(SetEmployeePermissions::class)->handle($by, $record, $permissions), $action);
+                Notification::make()->success()
+                    ->title($record->refresh()->hasPermissionOverrides() ? 'Hak akses khusus disimpan' : 'Hak akses mengikuti role')
+                    ->send();
+            });
     }
 
     /** Pengelola boleh mengubah karyawan ini (owner semua; lainnya role di bawahnya), ADR 0026. */

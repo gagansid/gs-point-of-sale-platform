@@ -69,6 +69,11 @@ final class SaveEmployee
                 self::ensureAnotherActiveOwner($user);
             }
 
+            // Ganti role = pengecualian hak akses dihapus (relatif terhadap role lama, ADR 0026)
+            if ($roleChanged) {
+                $user->forceFill(['permissions_granted' => null, 'permissions_revoked' => null]);
+            }
+
             $user->fill([
                 'name' => $data->name,
                 'role' => $data->role,

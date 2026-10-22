@@ -7,6 +7,7 @@ namespace App\Filament\Dashboard\Pages;
 use App\Actions\User\UpdateRolePermissions;
 use App\Enums\UserRole;
 use App\Exceptions\BusinessException;
+use App\Filament\Dashboard\Resources\Employees\EmployeeResource;
 use App\Filament\Shared\Actions\SettingsFormActions;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Models\User;
@@ -103,7 +104,7 @@ final class AccessSettings extends Page
         try {
             DB::transaction(function () use ($state, $user): void {
                 foreach (PermissionCatalog::roles() as $role) {
-                    $chosen = self::chosen($state, $role);
+                    $chosen = self::flattenState($state[$role->value] ?? []);
                     // Sama dengan bawaan → simpan sebagai bawaan (status "Bawaan", ikut perubahan bawaan versi berikutnya)
                     $isDefault = UserRole::normalize($chosen) === UserRole::normalize($role->grantedPermissions());
                     app(UpdateRolePermissions::class)->handle($user, $role, $isDefault ? null : $chosen);
@@ -135,6 +136,12 @@ final class AccessSettings extends Page
             ->badgeColor(fn (): string => RolePermissions::isCustomized($role, TenantContext::idOrFail()) ? 'warning' : 'gray')
             ->schema([
                 Actions::make([
+                    // Pengecualian per karyawan (opsi B) tidak ikut berubah oleh centang role
+                    Action::make("overrides_{$key}")->link()->color('warning')->icon(Heroicon::OutlinedUserCircle)
+                        ->label(fn (): string => self::overrideCount($role).' karyawan '.mb_strtolower($role->getLabel()).' punya hak akses khusus')
+                        ->tooltip('Diatur per karyawan di Pengaturan → Karyawan (aksi Hak akses); tidak berubah oleh centang di sini')
+                        ->url(EmployeeResource::getUrl())
+                        ->visible(fn (): bool => self::overrideCount($role) > 0),
                     Action::make("reset_{$key}")->label('Kembalikan bawaan')->icon(Heroicon::OutlinedArrowUturnLeft)->color('gray')
                         ->visible(fn (): bool => RolePermissions::isCustomized($role, TenantContext::idOrFail()))
                         ->requiresConfirmation()
@@ -150,18 +157,64 @@ final class AccessSettings extends Page
                             $livewire->fillForm();
                         }),
                 ])->key("reset-{$key}")->alignEnd(),
-                ...array_map(fn (string $group, array $meta): Section => Section::make($meta['title'])
-                    ->icon($meta['icon'])
-                    ->description($meta['description'])
-                    ->compact()
-                    ->schema([
-                        CheckboxList::make("{$key}.{$group}")->hiddenLabel()
-                            ->options(array_map(fn (array $p): string => $p[0], $meta['permissions']))
-                            ->descriptions(array_map(fn (array $p): string => $p[1], $meta['permissions']))
-                            ->columns(['default' => 1, 'md' => 2])
-                            ->bulkToggleable(),
-                    ]), array_keys(PermissionCatalog::groups()), PermissionCatalog::groups()),
+                ...self::permissionSections($key),
             ]);
+    }
+
+    private static function overrideCount(UserRole $role): int
+    {
+        return User::query()->where('role', $role->value)
+            ->where(fn ($q) => $q->whereNotNull('permissions_granted')->orWhereNotNull('permissions_revoked'))
+            ->count();
+    }
+
+    /**
+     * Kartu centang per kelompok menu (dipakai juga modal Hak akses karyawan). State: "{$statePath}.{kelompok}".
+     *
+     * @return list<Section>
+     */
+    public static function permissionSections(string $statePath): array
+    {
+        return array_map(fn (string $group, array $meta): Section => Section::make($meta['title'])
+            ->icon($meta['icon'])
+            ->description($meta['description'])
+            ->compact()
+            ->schema([
+                CheckboxList::make("{$statePath}.{$group}")->hiddenLabel()
+                    ->options(array_map(fn (array $p): string => $p[0], $meta['permissions']))
+                    ->descriptions(array_map(fn (array $p): string => $p[1], $meta['permissions']))
+                    ->columns(['default' => 1, 'md' => 2])
+                    ->bulkToggleable(),
+            ]), array_keys(PermissionCatalog::groups()), array_values(PermissionCatalog::groups()));
+    }
+
+    /**
+     * Daftar permission → state form per kelompok.
+     *
+     * @param  list<string>  $granted
+     * @return array<string, list<string>>
+     */
+    public static function groupState(array $granted): array
+    {
+        return array_map(fn (array $meta): array => array_values(array_intersect(array_keys($meta['permissions']), $granted)), PermissionCatalog::groups());
+    }
+
+    /**
+     * State form per kelompok → daftar permission.
+     *
+     * @return list<string>
+     */
+    public static function flattenState(mixed $state): array
+    {
+        $chosen = [];
+
+        foreach ((array) $state as $permissions) {
+            foreach ((array) $permissions as $permission) {
+                $chosen[] = (string) $permission;
+            }
+        }
+
+        return $chosen;
     }
 
     /** Isi form dari hak akses yang berlaku (pengaturan owner atau bawaan), per role per kelompok. */
@@ -171,31 +224,10 @@ final class AccessSettings extends Page
         $state = [];
 
         foreach (PermissionCatalog::roles() as $role) {
-            $granted = RolePermissions::granted($role, $tenantId);
-
-            foreach (PermissionCatalog::groups() as $group => $meta) {
-                $state[$role->value][$group] = array_values(array_intersect(array_keys($meta['permissions']), $granted));
-            }
+            $state[$role->value] = self::groupState(RolePermissions::granted($role, $tenantId));
         }
 
         $this->accessForm()->fill($state);
-    }
-
-    /**
-     * @param  array<string, mixed>  $state
-     * @return list<string>
-     */
-    private static function chosen(array $state, UserRole $role): array
-    {
-        $chosen = [];
-
-        foreach ((array) ($state[$role->value] ?? []) as $permissions) {
-            foreach ((array) $permissions as $permission) {
-                $chosen[] = (string) $permission;
-            }
-        }
-
-        return $chosen;
     }
 
     private function accessForm(): Schema

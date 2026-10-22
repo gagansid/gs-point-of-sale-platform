@@ -90,6 +90,7 @@ final class ActivityLogResource extends Resource
         'cash_float' => 'Modal laci tetap', 'auto_lock_minutes' => 'Kunci layar otomatis (menit)', 'cash_out_approval_limit' => 'Batas kas keluar tanpa PIN', 'refund_max_days' => 'Batas retur (hari)',
         'email' => 'Email', 'username' => 'Username', 'role' => 'Role', 'web_cashier_access' => 'Akses kasir web',
         'is_available' => 'Tersedia', 'permissions' => 'Hak akses',
+        'permissions_granted' => 'Izin tambahan', 'permissions_revoked' => 'Izin dicabut',
     ];
 
     private const MONEY_FIELDS = ['price', 'cost_price', 'price_delta', 'daily_sales_target', 'monthly_sales_target', 'cash_float', 'cash_out_approval_limit'];
@@ -430,6 +431,10 @@ final class ActivityLogResource extends Resource
             $field === 'category' => PaymentCategory::tryFrom((string) $value)?->getLabel() ?? (string) $value,
             $field === 'discount_limits' && is_array($value) => 'Kasir '.($value['cashier'] ?? 0).'%, Supervisor '.($value['supervisor'] ?? 0).'%',
             $field === 'permissions' && is_array($value) => count($value).' izin',
+            // Pengecualian hak akses karyawan (ADR 0026): label izin, bukan kode
+            in_array($field, ['permissions_granted', 'permissions_revoked'], true) && is_array($value) => $value === [] ? '—'
+                : ($full ? implode(', ', array_map(fn (mixed $p): string => PermissionCatalog::label((string) $p), $value))
+                    : mb_strimwidth(implode(', ', array_map(fn (mixed $p): string => PermissionCatalog::label((string) $p), $value)), 0, 60, '…')),
             is_array($value) => (string) json_encode($value),
             default => $full ? (string) $value : mb_strimwidth((string) $value, 0, 60, '…'),
         };
