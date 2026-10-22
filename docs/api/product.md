@@ -42,6 +42,8 @@ Seluruh katalog untuk aplikasi kasir dalam satu respons.
 - Produk yang **tidak dijual di outlet perangkat tidak dikirim** (berbeda dengan habis); kategori tanpa produk yang dijual
   di outlet itu juga tidak dikirim (Q42).
 - `option_groups[].options[].is_available: false` → opsi habis di outlet perangkat: tampilkan abu-abu, tidak bisa dipilih (Q43).
+- `options[].is_default: true` → opsi terpilih saat produk dibuka (diatur owner). Grup wajib tanpa bawaan: pilih opsi tersedia
+  pertama; opsional tanpa bawaan: kosong; opsi habis tidak dipilih otomatis (Q129).
 - `payment_methods` hanya metode yang aktif di bisnis **dan** di outlet perangkat (Q44).
 - `cost_price` hanya dikirim untuk user dengan `product.manage`.
 - `is_favorite: true` → tampilkan di tab **Favorit** layar kasir (ditandai owner/manager di dashboard).
@@ -65,7 +67,7 @@ Seluruh katalog untuk aplikasi kasir dalam satu respons.
     }],
     "option_groups": [{
       "id": "…", "name": "Ukuran", "min_select": 1, "max_select": 1,
-      "options": [{ "id": "…", "name": "Large", "price_delta": "5000.00", "sort_order": 1, "is_available": true }]
+      "options": [{ "id": "…", "name": "Large", "price_delta": "5000.00", "sort_order": 1, "is_default": false, "is_available": true }]
     }],
     "payment_methods": [{ "id": "…", "name": "Debit", "category": "debit", "requires_reference": true, "is_active": true }]
   },
@@ -185,7 +187,7 @@ Test: `tests/Feature/Api/V1/Product/CategoryTest.php`
   "max_select": 1,
   "is_active": true,
   "options": [
-    { "id": "…opsi lama", "name": "Regular", "price_delta": 0 },
+    { "id": "…opsi lama", "name": "Regular", "price_delta": 0, "is_default": true },
     { "name": "Large", "price_delta": 5000 }
   ]
 }
@@ -193,6 +195,8 @@ Test: `tests/Feature/Api/V1/Product/CategoryTest.php`
 
 - `0 ≤ min_select ≤ max_select ≤ 20`, `max_select ≥ 1`, 1–50 opsi, nama opsi unik dalam grup.
 - `price_delta` ≥ 0, maks. `999999999.99`.
+- `is_default` opsional (boolean); jumlah bawaan maks. `max_select`, selain itu `VALIDATION_ERROR`
+  ("Pilih satu opsi bawaan saja"). Bila tidak dikirim di PUT, nilai lama dipertahankan (Q129).
 - PUT menyinkronkan opsi: ber-`id` diubah, tanpa `id` ditambah, yang tidak dikirim dihapus.
   `id` opsi milik grup lain diperlakukan sebagai opsi baru (tidak bisa diambil alih).
 - `is_active` default `true`; di PUT bila tidak dikirim tetap memakai nilai lama. Grup nonaktif tidak

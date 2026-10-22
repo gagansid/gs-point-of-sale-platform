@@ -124,11 +124,11 @@ final class DemoTenantSeeder extends Seeder
         $saveGroup = app(SaveOptionGroup::class);
         $size = $saveGroup->handle(null, OptionGroupData::fromArray([
             'name' => 'Ukuran', 'min_select' => 1, 'max_select' => 1,
-            'options' => [['name' => 'Regular', 'price_delta' => 0], ['name' => 'Large', 'price_delta' => 5000]],
+            'options' => [['name' => 'Regular', 'price_delta' => 0, 'is_default' => true], ['name' => 'Large', 'price_delta' => 5000]],
         ]))['group'];
         $sugar = $saveGroup->handle(null, OptionGroupData::fromArray([
-            'name' => 'Gula', 'min_select' => 0, 'max_select' => 1,
-            'options' => [['name' => 'Normal'], ['name' => 'Less sugar'], ['name' => 'Tanpa gula']],
+            'name' => 'Gula', 'min_select' => 1, 'max_select' => 1,
+            'options' => [['name' => 'Normal', 'is_default' => true], ['name' => 'Less sugar'], ['name' => 'Tanpa gula']],
         ]))['group'];
 
         $saveProduct = app(SaveProduct::class);

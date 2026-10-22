@@ -12,7 +12,7 @@ use App\Support\WebCashier;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Livewire;
 
-/** Dialog item kasir web: bawaan opsi opsional (opsi gratis pertama), ketuk opsi, stepper qty. */
+/** Dialog item kasir web: opsi bawaan diatur owner (Q129), ketuk opsi, stepper qty. */
 beforeEach(function () {
     $this->pos = posSetup(openShift: false);
     $device = webCashierLogin($this, $this->pos, $this->pos->cashier);
@@ -25,9 +25,10 @@ beforeEach(function () {
     $option = fn (OptionGroup $group, string $name, string $price): Option => Option::factory()
         ->create(['option_group_id' => $group->id, 'tenant_id' => $this->pos->tenantId, 'name' => $name, 'price_delta' => $price]);
 
-    // Opsional pilih satu: opsi gratis pertama jadi bawaan
+    // Opsional pilih satu dengan bawaan "Normal" (diatur owner)
     $this->sugar = OptionGroup::factory()->create(['name' => 'Gula', 'min_select' => 0, 'max_select' => 1]);
     $this->normal = $option($this->sugar, 'Normal', '0.00');
+    $this->normal->update(['is_default' => true]);
     $this->less = $option($this->sugar, 'Less sugar', '0.00');
     // Opsional berbayar: tidak pernah terpilih otomatis
     $this->topping = OptionGroup::factory()->create(['name' => 'Topping', 'min_select' => 0, 'max_select' => 2]);
@@ -37,7 +38,7 @@ beforeEach(function () {
     $this->pos->coffee->optionGroups()->attach([$this->sugar->id => ['sort_order' => 1], $this->topping->id => ['sort_order' => 2]]);
 });
 
-it('bawaan: wajib = opsi pertama, opsional gratis = "Normal", tanpa pilihan "Tidak dipilih"', function () {
+it('bawaan: wajib tanpa bawaan = opsi pertama, opsi bawaan terpilih, opsional tanpa bawaan kosong', function () {
     Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->coffee->id)
         ->assertSet("pickOptions.{$this->pos->size->id}", $this->pos->regular->id)
         ->assertSet("pickOptions.{$this->sugar->id}", $this->normal->id)

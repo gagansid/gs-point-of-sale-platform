@@ -40,6 +40,7 @@ use App\Services\Order\CalculationResult;
 use App\Support\CurrentOutlet;
 use App\Support\Features;
 use App\Support\Money;
+use App\Support\OptionDefaults;
 use App\Support\Phone;
 use App\Support\WebCashier;
 use Illuminate\Contracts\View\View;
@@ -189,6 +190,14 @@ final class PointOfSale extends Component
     public ?string $completedOrderId = null;
 
     public ?string $completedChange = null;
+
+    /**
+     * Ringkasan transaksi selesai untuk dialog sukses (Q129): nomor, total, dibayar, kembalian, metode, item, waktu.
+     *
+     * @var array<string, mixed>|null
+     */
+    #[Locked]
+    public ?array $completedSummary = null;
 
     public function mount(): void
     {
@@ -751,6 +760,7 @@ final class PointOfSale extends Component
 
         $this->completedOrderId = $order->id;
         $this->completedChange = $order->change_total;
+        $this->completedSummary = self::summaryOf($order);
         $this->resetOrder();
     }
 
@@ -1261,7 +1271,7 @@ final class PointOfSale extends Component
 
     public function newOrder(): void
     {
-        $this->reset('completedOrderId', 'completedChange');
+        $this->reset('completedOrderId', 'completedChange', 'completedSummary');
     }
 
     public function remaining(): string
@@ -1294,20 +1304,37 @@ final class PointOfSale extends Component
 
     // ---------- Bantuan ----------
 
+    /** @return array<string, mixed> */
+    private static function summaryOf(Order $order): array
+    {
+        $order->loadMissing(['payments.method', 'items']);
+        $tz = CurrentOutlet::timezone();
+
+        return [
+            'number' => $order->order_number,
+            'total' => (string) $order->grand_total,
+            'paid' => (string) $order->paid_total,
+            'change' => (string) $order->change_total,
+            // Tunai: uang yang diterima (bukan nominal terpakai) agar kembalian terbaca: diterima − total = kembalian
+            'methods' => $order->payments->map(fn ($p): array => [
+                'name' => (string) ($p->method->name ?? $p->category->getLabel()).(Money::compare((string) ($p->tendered ?? '0'), (string) $p->amount) > 0 ? ' (diterima)' : ''),
+                'amount' => Money::compare((string) ($p->tendered ?? '0'), (string) $p->amount) > 0 ? (string) $p->tendered : (string) $p->amount,
+            ])->values()->all(),
+            'items' => (int) $order->items->sum('qty'),
+            'type' => $order->order_type->getLabel(),
+            'table' => $order->table_label,
+            'member' => $order->member_name,
+            'at' => ($order->completed_at ?? now())->setTimezone($tz)->locale('id')->translatedFormat('j M Y, H.i'),
+        ];
+    }
+
     private function openPicker(Product $product): void
     {
         $this->closePicker();
         $this->pickProductId = $product->id;
 
         foreach ($this->pickerGroups() as $group) {
-            $available = $group->options->filter(fn ($o): bool => (bool) $o->getAttribute('is_available'));
-            // Wajib pilih satu: opsi tersedia pertama. Opsional pilih satu (mis. Gula): opsi gratis pertama
-            // ("Normal") sebagai bawaan; opsi berbayar tidak pernah terpilih otomatis.
-            $default = $group->min_select >= 1
-                ? $available->first()?->id
-                : $available->first(fn ($o): bool => ! Money::isPositive((string) $o->price_delta))?->id;
-
-            $this->pickOptions[$group->id] = $group->max_select === 1 ? ($default ?? '') : [];
+            $this->pickOptions[$group->id] = OptionDefaults::for($group);
         }
     }
 

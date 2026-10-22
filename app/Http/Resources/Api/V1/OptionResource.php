@@ -18,6 +18,8 @@ final class OptionResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'price_delta' => $this->price_delta,
+            // Terpilih otomatis saat produk dibuka (Q129)
+            'is_default' => (bool) $this->is_default,
             'sort_order' => $this->sort_order,
             // Habis di outlet device (ADR 0011 / Q43); diisi GetCatalog, bawaan tersedia
             'is_available' => (bool) ($this->resource->getAttributes()['is_available'] ?? true),

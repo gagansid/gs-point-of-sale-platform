@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $option_group_id
  * @property string $name
  * @property string $price_delta
+ * @property bool $is_default terpilih otomatis saat produk dibuka (Q129)
  * @property int $sort_order
  */
 final class Option extends Model
@@ -33,14 +34,15 @@ final class Option extends Model
         return [
             'name',
             'price_delta',
+            'is_default',
         ];
     }
 
-    protected $fillable = ['option_group_id', 'name', 'price_delta', 'sort_order'];
+    protected $fillable = ['option_group_id', 'name', 'price_delta', 'is_default', 'sort_order'];
 
     protected function casts(): array
     {
-        return ['price_delta' => 'decimal:2', 'sort_order' => 'integer'];
+        return ['price_delta' => 'decimal:2', 'is_default' => 'boolean', 'sort_order' => 'integer'];
     }
 
     /** @return BelongsTo<OptionGroup, $this> */

@@ -419,10 +419,12 @@
                         </div>
                     </div>
                     @can('order.discount')
+                        {{-- Input Rupiah sama dengan dialog bayar (pemisah ribuan, satu garis fokus, tanpa panah angka) --}}
                         <label class="pos-modal-field">Diskon item
-                            <span class="pos-money is-compact">
+                            <span class="pos-money is-compact" x-data="posMoney" x-modelable="raw" wire:model="pickDiscount">
                                 <span class="pos-money-prefix">Rp</span>
-                                <input type="number" min="0" step="any" inputmode="decimal" wire:model="pickDiscount" placeholder="0">
+                                <input type="text" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Diskon item (Rupiah)"
+                                    x-bind:value="display" x-on:input.stop="type($event)" x-on:change.stop>
                             </span>
                         </label>
                     @endcan
@@ -623,18 +625,53 @@
         </div>
     @endif
 
-    {{-- Transaksi selesai --}}
+    {{-- Transaksi selesai (Q129): tanda sukses, kembalian menonjol, ringkasan pembayaran, cetak struk / transaksi baru --}}
     @if ($completedOrderId)
+        @php($sum = $completedSummary)
+        @php($hasChange = $completedChange && \App\Support\Money::isPositive($completedChange))
         <div class="pos-modal" role="dialog" aria-modal="true" aria-labelledby="done-title">
             <div class="pos-modal-card pos-done">
-                <h2 id="done-title">Transaksi berhasil</h2>
-                @if ($completedChange && \App\Support\Money::isPositive($completedChange))
-                    <p class="pos-change-big">Kembalian {{ $money($completedChange) }}</p>
+                <div class="pos-done-mark" aria-hidden="true">@svg('heroicon-o-check', ['aria-hidden' => 'true'])</div>
+                <h2 id="done-title">Pembayaran berhasil</h2>
+                @if ($sum)
+                    <p class="pos-done-meta"><span class="pos-done-number">{{ $sum['number'] }}</span> · {{ $sum['at'] }}</p>
                 @endif
-                <div class="pos-actions">
-                    <a href="{{ route('cashier.orders.receipt', ['order' => $completedOrderId, 'print' => 1]) }}" target="_blank" rel="noopener" class="site-btn site-btn-outline">Cetak struk</a>
-                    <button type="button" class="site-btn site-btn-primary site-btn-lg" wire:click="newOrder" autofocus>Transaksi baru</button>
+
+                @if ($hasChange)
+                    <div class="pos-done-change">
+                        <span>Kembalian</span>
+                        <strong>{{ $money($completedChange) }}</strong>
+                    </div>
+                @else
+                    <div class="pos-done-change is-exact">
+                        <span>Uang pas</span>
+                        <strong>Tanpa kembalian</strong>
+                    </div>
+                @endif
+
+                @if ($sum)
+                    <dl class="pos-done-lines">
+                        <div><dt>Total belanja</dt><dd>{{ $money($sum['total']) }}</dd></div>
+                        @foreach ($sum['methods'] as $method)
+                            <div wire:key="done-m-{{ $loop->index }}"><dt>{{ $method['name'] }}</dt><dd>{{ $money($method['amount']) }}</dd></div>
+                        @endforeach
+                        <div class="is-muted"><dt>{{ $sum['type'] }}{{ $sum['table'] ? ' · '.$sum['table'] : '' }}</dt><dd>{{ $sum['items'] }} item</dd></div>
+                        @if ($sum['member'])
+                            <div class="is-muted"><dt>Member</dt><dd>{{ $sum['member'] }}</dd></div>
+                        @endif
+                    </dl>
+                @endif
+
+                <div class="pos-done-actions">
+                    <a href="{{ route('cashier.orders.receipt', ['order' => $completedOrderId, 'print' => 1]) }}" target="_blank" rel="noopener" class="site-btn site-btn-outline">
+                        @svg('heroicon-o-printer', ['aria-hidden' => 'true']) Cetak struk
+                    </a>
+                    {{-- Fokus otomatis (dialog dirender Livewire, atribut autofocus saja tidak cukup): Enter = transaksi baru --}}
+                    <button type="button" class="site-btn site-btn-primary" wire:click="newOrder" autofocus x-data x-init="$nextTick(() => $el.focus())">
+                        @svg('heroicon-o-plus', ['aria-hidden' => 'true']) Transaksi baru
+                    </button>
                 </div>
+                <p class="pos-done-hint">Tekan Enter untuk transaksi baru</p>
             </div>
         </div>
     @endif

@@ -27,6 +27,7 @@ final class OptionGroupRequest extends FormRequest
             'options.*.id' => ['nullable', 'uuid'],
             'options.*.name' => ['required', 'string', 'max:100', 'distinct'],
             'options.*.price_delta' => ['nullable', 'decimal:0,2', 'min:0', 'max:'.Money::MAX_PRICE],
+            'options.*.is_default' => ['sometimes', 'boolean'],
             // ADR 0020: bahan opsi (tidak dikirim = tidak diubah)
             'options.*.components' => ['sometimes', 'array', 'max:10'],
             'options.*.components.*.component_id' => ['required', 'uuid'],
@@ -44,6 +45,7 @@ final class OptionGroupRequest extends FormRequest
             'options' => 'opsi',
             'options.*.name' => 'nama opsi',
             'options.*.price_delta' => 'tambahan harga',
+            'options.*.is_default' => 'opsi bawaan',
         ];
     }
 }

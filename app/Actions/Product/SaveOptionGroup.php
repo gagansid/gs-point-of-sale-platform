@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Actions\Product;
 
 use App\Actions\Product\Data\OptionGroupData;
+use App\Enums\ErrorCode;
 use App\Enums\ProductKind;
+use App\Exceptions\BusinessException;
 use App\Models\Option;
 use App\Models\OptionComponent;
 use App\Models\OptionGroup;
@@ -15,7 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Membuat/mengubah grup opsi sekaligus opsinya: opsi ber-id diubah, tanpa id dibuat,
- * opsi lama yang tidak dikirim dihapus (soft delete; snapshot order tetap utuh).
+ * opsi lama yang tidak dikirim dihapus (soft delete; snapshot order tetap utuh). Opsi bawaan (Q129) maks. sejumlah
+ * maksimal pilihan grup.
  */
 final class SaveOptionGroup
 {
@@ -26,6 +29,14 @@ final class SaveOptionGroup
     {
         if ($group === null && ($existing = Idempotency::existing(OptionGroup::class, $data->id)) !== null) {
             return ['group' => $existing->load('options'), 'replayed' => true];
+        }
+
+        // Bawaan tidak boleh melebihi jumlah maksimal pilihan (pilih-satu = maks. 1 bawaan), Q129
+        $defaults = count(array_filter($data->options, fn (array $o): bool => $o['is_default'] === true));
+        if ($defaults > $data->maxSelect) {
+            throw BusinessException::of(ErrorCode::ValidationError,
+                $data->maxSelect === 1 ? 'Pilih satu opsi bawaan saja' : "Opsi bawaan maksimal {$data->maxSelect}",
+                ['options' => ['Opsi bawaan melebihi maksimal pilihan']]);
         }
 
         $group = DB::transaction(function () use ($group, $data): OptionGroup {
@@ -55,6 +66,7 @@ final class SaveOptionGroup
                     'name' => $input['name'],
                     'price_delta' => $input['price_delta'],
                     'sort_order' => $order,
+                    ...($input['is_default'] !== null ? ['is_default' => $input['is_default']] : []),
                 ])->save();
 
                 if ($input['components'] !== null) {

@@ -1,6 +1,6 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-21 · Branch: `feature/pos` (semua di-push)
+> Diperbarui: 2026-10-22 · Branch: `feature/pos` (semua di-push)
 > Status: fitur MVP + backlog ADR 0013–0025 selesai; sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
 > pembayaran tagihan (QRIS/VA/transfer manual + bukti), master bank, PDF & email tagihan, Midtrans vendor 2 mode,
 > riwayat perubahan admin, pembersihan bukti transfer (SPEC Q118–Q127). Deploy ditunda atas keputusan pemilik.
@@ -12,7 +12,7 @@
 
 ## 1. Sudah dikerjakan
 
-### Sesi 2026-10-19 – 2026-10-21 (SPEC Q122–Q128) — semua di-push
+### Sesi 2026-10-19 – 2026-10-22 (SPEC Q122–Q129) — semua di-push
 | Bagian | Isi |
 |---|---|
 | Halaman masuk (Q122) | Login owner/admin/kasir, daftar, lupa & atur kata sandi seragam (field 44px berikon, panel brand); Cloudflare Turnstile per halaman (Sistem → Keamanan, key terenkripsi); mode gelap panel: field fokus gelap, tombol terang |
@@ -23,6 +23,7 @@
 | Dokumen & email (Q126) | PDF A4 *Tagihan* / *Kuitansi* (cap LUNAS, terbilang) diunduh owner & admin; email bukti dikirim → admin, ditolak → owner, lunas → owner + kuitansi PDF; template email bermerek gs.POS |
 | Audit & pembersihan (Q127) | **Sistem → Riwayat perubahan** (admin): setiap perubahan setelan platform & bank, rahasia disamarkan; `pos:prune-payment-proofs` harian 03.45 WIB (bukti tagihan batal/kedaluwarsa > `POS_BILLING_PROOF_RETENTION_DAYS` hari & unggahan yatim > 1 hari) |
 | UI & tampilan bisnis (Q128) | Rupiah bulat di laporan, panduan awal pintar, bawaan terang, toast seragam, layar kecil, halaman error baru; audit menu owner/admin; **Pengaturan → Bisnis & tampilan** (owner): logo, warna utama 8 preset/bebas, sidebar berwarna/terang, mode bawaan |
+| Opsi bawaan & kasir (Q129) | Owner mengatur opsi **Bawaan** per grup (Gula/Es wajib dengan bawaan Normal, Tambahan opsional); kasir web & self-order memilihnya otomatis (`OptionDefaults`); diskon item berformat rupiah; dialog **Pembayaran berhasil** baru (kembalian besar, uang diterima, Enter = transaksi baru) |
 | Perbaikan | Tab admin Tagihan/Admin error 500 (parameter closure Filament harus bernama `$query`); badge pesanan meja kasir web (`x-on="try …"` = SyntaxError Alpine, bunyi tidak pernah keluar) + test pemindai atribut Alpine |
 
 Env baru (lihat `.env.example`): `POS_BILLING_MIDTRANS_SANDBOX_SERVER_KEY`, `POS_BILLING_MIDTRANS_PRODUCTION_SERVER_KEY`,

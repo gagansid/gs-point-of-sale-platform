@@ -6,8 +6,10 @@ namespace App\Filament\Dashboard\Resources\OptionGroups\Pages;
 
 use App\Actions\Product\Data\OptionGroupData;
 use App\Actions\Product\SaveOptionGroup;
+use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Resources\OptionGroups\OptionGroupResource;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,7 +27,15 @@ final class CreateOptionGroup extends CreateRecord
 
     protected function handleRecordCreation(array $data): Model
     {
-        return app(SaveOptionGroup::class)->handle(null, OptionGroupData::fromArray([...$data, 'options' => array_values($data['options'] ?? [])]))['group'];
+        try {
+            return app(SaveOptionGroup::class)->handle(null, OptionGroupData::fromArray([...$data, 'options' => array_values($data['options'] ?? [])]))['group'];
+        } catch (BusinessException $e) {
+            // Mis. opsi bawaan melebihi maksimal pilihan (Q129): tetap di form dengan pesan
+            Notification::make()->danger()->title($e->getMessage())->send();
+            $this->halt();
+
+            throw $e;
+        }
     }
 
     protected function getCreatedNotificationTitle(): string

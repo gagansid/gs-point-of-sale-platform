@@ -5003,16 +5003,31 @@
     height: 48px;
 }
 
-.cashier-body .pos-modal .pos-money.is-compact input[type='number'] {
+/* Diskon item: satu kotak (garis & halo fokus hanya di pembungkus), angka 16px rata kanan */
+.cashier-body .pos-modal .pos-money.is-compact input[type='text'] {
     flex: 1;
     min-width: 0;
     height: 100%;
     padding: 0 0 0 8px;
     border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--site-navy);
     font-size: 16px;
     font-weight: 600;
     text-align: right;
+    outline: none;
     box-shadow: none;
+}
+
+.cashier-body .pos-modal .pos-money.is-compact input[type='text']:focus,
+.cashier-body .pos-modal .pos-money.is-compact input[type='text']:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.cashier-body .pos-modal .pos-money.is-compact .pos-money-prefix {
+    font-size: 15px;
 }
 
 .pos-pick-actions {
@@ -5194,4 +5209,145 @@
 
 .pos-pay-status > span {
     white-space: nowrap;
+}
+
+/* ---------- Kasir web: dialog pembayaran berhasil (Q129) ---------- */
+.pos-modal-card.pos-done {
+    width: min(420px, calc(100vw - 32px));
+    padding: 28px 28px 20px;
+    text-align: center;
+}
+
+.pos-done-mark {
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 14px;
+    border-radius: 999px;
+    background: #ecfdf3;
+    box-shadow: 0 0 0 8px #f6fef9;
+    color: #067647;
+}
+
+.pos-done-mark svg {
+    width: 28px;
+    height: 28px;
+    stroke-width: 2.2;
+}
+
+.pos-done h2 {
+    margin: 0;
+    color: var(--site-navy);
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.pos-done-meta {
+    margin: 4px 0 0;
+    color: var(--site-muted);
+    font-size: 13px;
+}
+
+.pos-done-number {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+}
+
+.pos-done-change {
+    display: grid;
+    gap: 2px;
+    margin: 18px 0 14px;
+    padding: 14px 16px;
+    border-radius: var(--pos-radius);
+    background: #ecfdf3;
+}
+
+.pos-done-change span {
+    color: #067647;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.pos-done-change strong {
+    color: #05603a;
+    font-size: 30px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+}
+
+.pos-done-change.is-exact {
+    background: #f5f7fb;
+}
+
+.pos-done-change.is-exact span {
+    color: var(--site-muted);
+}
+
+.pos-done-change.is-exact strong {
+    color: var(--site-navy);
+    font-size: 18px;
+}
+
+.pos-done-lines {
+    display: grid;
+    gap: 7px;
+    margin: 0 0 18px;
+    padding: 12px 2px 0;
+    border-top: 1px dashed var(--site-border);
+    font-size: 14px;
+    text-align: start;
+}
+
+.pos-done-lines > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pos-done-lines dt {
+    color: var(--site-text, #1e2633);
+}
+
+.pos-done-lines dd {
+    margin: 0;
+    color: var(--site-navy);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-done-lines > div.is-muted dt,
+.pos-done-lines > div.is-muted dd {
+    color: var(--site-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.pos-done-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 10px;
+}
+
+.pos-done-actions .site-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 48px;
+    border-radius: var(--pos-radius);
+}
+
+.pos-done-actions .site-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.pos-done-hint {
+    margin: 10px 0 0;
+    color: var(--site-mist, #9aa2b1);
+    font-size: 12px;
 }

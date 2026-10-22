@@ -12,7 +12,7 @@ use App\Support\Money;
 final readonly class OptionGroupData
 {
     /**
-     * @param  list<array{id: string|null, name: string, price_delta: string, components: list<array{component_id: string, qty: int}>|null}>  $options
+     * @param  list<array{id: string|null, name: string, price_delta: string, is_default: bool|null, components: list<array{component_id: string, qty: int}>|null}>  $options
      */
     public function __construct(
         public ?string $id,
@@ -32,6 +32,8 @@ final readonly class OptionGroupData
                 'id' => filled($option['id'] ?? null) ? (string) $option['id'] : null,
                 'name' => trim((string) $option['name']),
                 'price_delta' => Money::of((string) ($option['price_delta'] ?? '0')),
+                // null = tidak dikirim (klien lama): nilai tersimpan tidak diubah
+                'is_default' => array_key_exists('is_default', $option) ? (bool) $option['is_default'] : null,
                 'components' => self::components($option),
             ];
         }

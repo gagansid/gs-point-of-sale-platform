@@ -45,7 +45,7 @@ final class OptionGroupForm
                             ->columnSpan(['md' => 2]),
                         TextInput::make('min_select')
                             ->label('Minimal pilihan')
-                            ->helperText('0 = boleh tidak dipilih, 1 = wajib pilih')
+                            ->helperText('0 = opsional (mis. Tambahan), 1 = wajib pilih (mis. Ukuran, Gula)')
                             ->integer()->minValue(0)->maxValue(20)->default(0)->required(),
                         TextInput::make('max_select')
                             ->label('Maksimal pilihan')
@@ -60,7 +60,7 @@ final class OptionGroupForm
 
                 Section::make('Opsi')->icon(Heroicon::OutlinedListBullet)
                     ->key('optionsSection')
-                    ->description('Urutan baris = urutan tampil di aplikasi kasir')
+                    ->description('Urutan baris = urutan tampil di kasir. Bawaan = terpilih otomatis saat produk dibuka (pilih-satu: satu bawaan)')
                     ->headerActions([
                         Action::make('addOption')
                             ->label('Tambah opsi')
@@ -70,7 +70,7 @@ final class OptionGroupForm
                             // Tambah baris kosong di akhir; kunci acak sama seperti tombol tambah Repeater
                             ->action(fn (Get $get, Set $set) => $set('options', [
                                 ...($get('options') ?? []),
-                                (string) Str::uuid() => ['id' => null, 'name' => null, 'price_delta' => '0', 'component_id' => null, 'component_qty' => null],
+                                (string) Str::uuid() => ['id' => null, 'name' => null, 'price_delta' => '0', 'component_id' => null, 'component_qty' => null, 'is_default' => false],
                             ])),
                     ])
                     ->schema([
@@ -82,6 +82,8 @@ final class OptionGroupForm
                                 // ADR 0020: bahan yang dipakai opsi, mis. Extra shot = 18 gram kopi
                                 TableColumn::make('Bahan (opsional)')->width('220px'),
                                 TableColumn::make('Jumlah')->width('110px'),
+                                // Q129: terpilih otomatis di kasir & self-order
+                                TableColumn::make('Bawaan')->width('90px')->alignCenter(),
                             ])
                             ->compact()
                             ->schema([
@@ -93,6 +95,8 @@ final class OptionGroupForm
                                         ->get(['id', 'name', 'unit'])->mapWithKeys(fn (Product $p): array => [$p->id => $p->name.' ('.$p->unit.')'])->all()),
                                 TextInput::make('component_qty')->hiddenLabel()->integer()->minValue(1)->maxValue(1000000)->placeholder('18')
                                     ->requiredWith('component_id'),
+                                Toggle::make('is_default')->hiddenLabel()->default(false)->inline(false)
+                                    ->extraFieldWrapperAttributes(['class' => 'gs-cell-center']),
                             ])
                             ->minItems(1)
                             ->maxItems(50)

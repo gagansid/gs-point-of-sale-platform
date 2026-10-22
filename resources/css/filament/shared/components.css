@@ -4734,3 +4734,9 @@ ul.gs-diff-cell {
     font-size: 10px;
     font-weight: 600;
 }
+
+/* Sel repeater tabel rata tengah (mis. toggle "Bawaan" grup opsi) */
+.gs-cell-center {
+    display: flex;
+    justify-content: center;
+}

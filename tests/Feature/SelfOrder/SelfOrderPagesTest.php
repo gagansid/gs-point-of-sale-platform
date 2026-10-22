@@ -48,6 +48,8 @@ it('HP: halaman QR menampilkan menu; pilih opsi wajib, kirim pesanan, status men
     orderPage($this)
         ->call('addProduct', $this->pos->coffee->id)
         ->assertSet('pickProductId', $this->pos->coffee->id)
+        ->assertSet("pickOptions.{$this->pos->size->id}", $this->pos->regular->id)
+        ->set("pickOptions.{$this->pos->size->id}", '')
         ->call('savePick')->assertSet('pickError', 'Pilih 1 Ukuran')
         ->set("pickOptions.{$this->pos->size->id}", $this->pos->large->id)
         ->set('pickQty', 2)

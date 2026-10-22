@@ -225,16 +225,17 @@ final class DemoFullDataSeeder extends Seeder
             return OptionGroup::query()->where('name', $name)->first()
                 ?? $saveGroup->handle(null, OptionGroupData::fromArray(['name' => $name, 'min_select' => $min, 'max_select' => $max, 'options' => $options]))['group'];
         };
-        $this->groups['Ukuran'] = $group('Ukuran', 1, 1, [['name' => 'Regular', 'price_delta' => 0], ['name' => 'Large', 'price_delta' => 5000]]);
-        $this->groups['Gula'] = $group('Gula', 0, 1, [['name' => 'Normal'], ['name' => 'Less sugar'], ['name' => 'Tanpa gula']]);
-        $this->groups['Es'] = $group('Level Es', 0, 1, [['name' => 'Normal ice'], ['name' => 'Less ice'], ['name' => 'Tanpa es']]);
+        // Pilihan wajib dengan bawaan (Q129); Tambahan tetap opsional
+        $this->groups['Ukuran'] = $group('Ukuran', 1, 1, [['name' => 'Regular', 'price_delta' => 0, 'is_default' => true], ['name' => 'Large', 'price_delta' => 5000]]);
+        $this->groups['Gula'] = $group('Gula', 1, 1, [['name' => 'Normal', 'is_default' => true], ['name' => 'Less sugar'], ['name' => 'Tanpa gula']]);
+        $this->groups['Es'] = $group('Level Es', 1, 1, [['name' => 'Normal ice', 'is_default' => true], ['name' => 'Less ice'], ['name' => 'Tanpa es']]);
         $this->groups['Tambahan'] = $group('Tambahan', 0, 3, [
             ['name' => 'Extra shot espresso', 'price_delta' => 6000, 'components' => [['component_id' => $this->p['Biji Kopi House Blend']->id, 'qty' => 18]]],
             ['name' => 'Ganti susu oat', 'price_delta' => 7000, 'components' => [['component_id' => $this->p['Susu Oat']->id, 'qty' => 150]]],
             ['name' => 'Sirup vanilla', 'price_delta' => 4000, 'components' => [['component_id' => $this->p['Sirup Vanilla']->id, 'qty' => 15]]],
             ['name' => 'Sirup hazelnut', 'price_delta' => 4000, 'components' => [['component_id' => $this->p['Sirup Hazelnut']->id, 'qty' => 15]]],
         ]);
-        $this->groups['Pedas'] = $group('Level Pedas', 0, 1, [['name' => 'Tidak pedas'], ['name' => 'Sedang'], ['name' => 'Pedas']]);
+        $this->groups['Pedas'] = $group('Level Pedas', 1, 1, [['name' => 'Tidak pedas', 'is_default' => true], ['name' => 'Sedang'], ['name' => 'Pedas']]);
 
         $drink = [$this->groups['Ukuran']->id, $this->groups['Gula']->id, $this->groups['Es']->id, $this->groups['Tambahan']->id];
         $hot = [$this->groups['Gula']->id, $this->groups['Tambahan']->id];

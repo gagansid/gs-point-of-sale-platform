@@ -60,6 +60,19 @@ it('membuat grup opsi beserta opsinya', function () {
     expect($group->options->pluck('price_delta', 'name')->all())->toBe(['Regular' => '0.00', 'Large' => '5000.00']);
 });
 
+it('owner mengatur opsi bawaan; dua bawaan pada pilih-satu ditolak tanpa menyimpan', function () {
+    $form = fn (bool $both): array => ['name' => 'Gula', 'min_select' => 1, 'max_select' => 1, 'options' => [
+        ['id' => null, 'name' => 'Normal', 'price_delta' => '0', 'is_default' => true],
+        ['id' => null, 'name' => 'Less', 'price_delta' => '0', 'is_default' => $both],
+    ]];
+
+    Livewire::test(CreateOptionGroup::class)->fillForm($form(true))->call('create')->assertNotified('Pilih satu opsi bawaan saja');
+    expect(OptionGroup::query()->count())->toBe(0);
+
+    Livewire::test(CreateOptionGroup::class)->fillForm($form(false))->call('create')->assertHasNoFormErrors();
+    expect(OptionGroup::query()->sole()->options()->pluck('is_default', 'name')->all())->toBe(['Normal' => true, 'Less' => false]);
+});
+
 it('validasi grup opsi: maksimal tidak boleh lebih kecil dari minimal', function () {
     Livewire::test(CreateOptionGroup::class)
         ->fillForm(['name' => 'X', 'min_select' => 3, 'max_select' => 1, 'options' => [['id' => null, 'name' => 'A', 'price_delta' => '0']]])

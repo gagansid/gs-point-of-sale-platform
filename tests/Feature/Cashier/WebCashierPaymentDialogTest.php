@@ -56,6 +56,18 @@ it('tunai: uang diterima kurang ditolak; cukup → kembalian & selesai', functio
     expect(Order::query()->count())->toBe(1);
 });
 
+it('dialog sukses: ringkasan nomor, total, uang diterima tunai & kembalian; transaksi baru mengosongkan', function () {
+    $page = Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)->call('openPayment')
+        ->set('payments.0.tendered', '50000')->call('pay')
+        ->assertSee('Pembayaran berhasil')->assertSee('Tunai (diterima)')->assertDontSee('Dibayar');
+
+    $summary = $page->get('completedSummary');
+    expect($summary)->toMatchArray(['number' => Order::query()->sole()->order_number, 'total' => '28000.00', 'change' => '22000.00', 'items' => 1])
+        ->and($summary['methods'])->toBe([['name' => 'Tunai (diterima)', 'amount' => '50000.00']]);
+
+    $page->call('newOrder')->assertSet('completedSummary', null)->assertDontSee('Pembayaran berhasil');
+});
+
 it('non-tunai (QRIS): nominal = tagihan langsung siap tanpa uang diterima', function () {
     $page = Livewire::test(PointOfSale::class)->call('addProduct', $this->pos->croissant->id)->call('openPayment')
         ->call('setMethod', 0, $this->pos->methods['qris']->id);

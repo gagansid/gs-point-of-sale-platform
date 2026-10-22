@@ -22,6 +22,7 @@ use App\Models\Product;
 use App\Models\SelfOrder;
 use App\Services\Order\CalculationResult;
 use App\Support\Features;
+use App\Support\OptionDefaults;
 use App\Support\SelfOrderContext;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -167,8 +168,9 @@ final class OrderPage extends Component
         $this->pickQty = 1;
         $this->pickProductId = $product->id;
 
+        // Opsi bawaan dari owner (Q129), sama dengan kasir web
         foreach ($this->pickerGroups() as $group) {
-            $this->pickOptions[$group->id] = $group->max_select === 1 ? '' : [];
+            $this->pickOptions[$group->id] = OptionDefaults::for($group);
         }
     }
 

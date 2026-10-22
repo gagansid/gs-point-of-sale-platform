@@ -58,7 +58,9 @@ final class ApplyMenuTemplate
                     'name' => $name,
                     'min_select' => $group['min'],
                     'max_select' => $group['max'],
-                    'options' => array_map(fn (array $option): array => ['name' => $option[0], 'price_delta' => (string) $option[1]], $group['options']),
+                    // Grup pilih-satu: opsi pertama jadi bawaan (Q129), bisa diganti owner
+                    'options' => array_map(fn (array $option, int $i): array => ['name' => $option[0], 'price_delta' => (string) $option[1],
+                        'is_default' => $group['max'] === 1 && $i === 0], $group['options'], array_keys($group['options'])),
                 ]))['group']->id;
             }
 
