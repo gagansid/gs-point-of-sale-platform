@@ -17,7 +17,9 @@ use App\Http\Resources\Api\V1\ReceiptResource;
 use App\Models\Order;
 use App\Models\User;
 use App\Support\CurrentOutlet;
+use App\Support\Money;
 use App\Support\WebCashier;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -28,18 +30,61 @@ use Symfony\Component\HttpFoundation\Response;
 /** Riwayat transaksi kasir web: order shift terbuka browser ini yang boleh dilihat user (Q21). */
 final class OrderController extends Controller
 {
+    /** Filter status Riwayat → status order. */
+    private const FILTERS = [
+        'completed' => [OrderStatus::Completed],
+        'unpaid' => [OrderStatus::Open, OrderStatus::AwaitingPayment],
+        'voided' => [OrderStatus::Voided],
+    ];
+
     public function index(Request $request): View
     {
         $shift = ShiftController::openShift($request);
+        $search = mb_substr(trim($request->string('q')->toString()), 0, 30);
+        $filter = array_key_exists($request->string('status')->toString(), self::FILTERS) ? $request->string('status')->toString() : 'all';
 
-        $orders = $shift === null ? collect() : VisibleOrders::query(self::user())
-            ->where('shift_id', $shift->id)
-            ->with('user:id,name')
+        $base = fn () => VisibleOrders::query(self::user())->where('shift_id', $shift?->id);
+        $orders = $shift === null ? collect() : $base()
+            ->when($filter !== 'all', fn ($q) => $q->whereIn('status', self::FILTERS[$filter]))
+            ->when($search !== '', fn ($q) => $q->where(fn ($q) => $q
+                ->where('order_number', 'like', '%'.addcslashes($search, '%_\\').'%')
+                ->orWhere('table_label', 'like', '%'.addcslashes($search, '%_\\').'%')))
+            ->with(['user:id,name', 'payments.method:id,name'])
             ->latest()
             ->limit(200)
             ->get();
 
-        return view('cashier.orders.index', ['shift' => $shift, 'orders' => $orders, 'timezone' => CurrentOutlet::timezone()]);
+        return view('cashier.orders.index', [
+            'shift' => $shift,
+            'orders' => $orders,
+            'search' => $search,
+            'filter' => $filter,
+            'stats' => $shift === null ? null : self::stats($base()),
+            'timezone' => CurrentOutlet::timezone(),
+        ]);
+    }
+
+    /**
+     * Kartu statistik shift (tidak ikut cari/filter): transaksi & omzet = order selesai, rata-rata per transaksi, void.
+     *
+     * @param  Builder<Order>  $query
+     * @return array{count: int, revenue: string, average: string, voided: int}
+     */
+    private static function stats(Builder $query): array
+    {
+        $row = $query->toBase()->selectRaw(
+            'SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS done, SUM(CASE WHEN status = ? THEN grand_total ELSE 0 END) AS revenue, SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS voided',
+            [OrderStatus::Completed->value, OrderStatus::Completed->value, OrderStatus::Voided->value],
+        )->first();
+        $count = (int) ($row->done ?? 0);
+        $revenue = Money::fromDb($row->revenue ?? '0');
+
+        return [
+            'count' => $count,
+            'revenue' => $revenue,
+            'average' => $count > 0 ? Money::div($revenue, $count) : '0.00',
+            'voided' => (int) ($row->voided ?? 0),
+        ];
     }
 
     /** Detail order + form void. */

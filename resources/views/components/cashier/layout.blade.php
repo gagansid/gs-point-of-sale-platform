@@ -75,6 +75,8 @@
             <span class="cashier-confirm-icon" data-confirm-icon-slot="lock" aria-hidden="true">@svg('heroicon-o-lock-closed')</span>
             <span class="cashier-confirm-icon is-danger" data-confirm-icon-slot="logout" aria-hidden="true">@svg('heroicon-o-arrow-right-start-on-rectangle')</span>
             <span class="cashier-confirm-icon" data-confirm-icon-slot="cash" aria-hidden="true">@svg('heroicon-o-banknotes')</span>
+            <span class="cashier-confirm-icon" data-confirm-icon-slot="merge" aria-hidden="true">@svg('heroicon-o-square-2-stack')</span>
+            <span class="cashier-confirm-icon is-danger" data-confirm-icon-slot="warning" aria-hidden="true">@svg('heroicon-o-exclamation-triangle')</span>
             <h2 id="cashier-confirm-title" data-confirm-title></h2>
             <p data-confirm-text></p>
             <div class="cashier-confirm-actions">
@@ -264,6 +266,22 @@
                 pending = null;
             });
         })();
+
+        // Stepper qty − n + (form biasa): [data-stepper] berisi input number + tombol [data-step], dibatasi min/max input
+        document.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-stepper] [data-step]');
+            if (! button) return;
+            const input = button.closest('[data-stepper]').querySelector('input');
+            const next = (Number(input.value) || 0) + Number(button.dataset.step);
+            input.value = Math.min(Number(input.max || Infinity), Math.max(Number(input.min || 0), next));
+        });
+
+        // Baris tabel yang bisa diklik (tr[data-href]); klik pada tautan/tombol di dalamnya tetap berjalan sendiri
+        document.addEventListener('click', (event) => {
+            const row = event.target.closest('tr[data-href]');
+            if (! row || event.target.closest('a, button, input, select, label')) return;
+            window.location.href = row.dataset.href;
+        });
 
         // Konfirmasi dua langkah tanpa dialog bawaan browser (bisa diblokir browser tertanam):
         // klik pertama mengganti label tombol, klik kedua dalam 5 detik baru mengirim form.

@@ -5385,7 +5385,7 @@
 /* Kartu statistik ringkas */
 .pos-stats {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 12px;
 }
 
@@ -5624,7 +5624,7 @@
 }
 
 /* Keadaan kosong: ikon, judul, kalimat, aksi */
-.pos-empty {
+.pos-page .pos-empty {
     display: grid;
     justify-items: center;
     gap: 6px;
@@ -5632,7 +5632,7 @@
     text-align: center;
 }
 
-.pos-empty-icon {
+.pos-page .pos-empty-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -5644,17 +5644,17 @@
     color: var(--site-primary);
 }
 
-.pos-empty-icon svg {
+.pos-page .pos-empty-icon svg {
     width: 26px;
     height: 26px;
 }
 
-.pos-empty strong {
+.pos-page .pos-empty strong {
     color: var(--site-navy);
     font-size: 15px;
 }
 
-.pos-empty p {
+.pos-page .pos-empty p {
     margin: 0 0 6px;
     color: var(--site-muted);
     font-size: 13.5px;
@@ -5723,5 +5723,482 @@
 
     .pos-inline-pay .pos-select {
         width: 112px;
+    }
+}
+
+/* Ikon di tombol halaman kasir */
+.pos-page .site-btn {
+    gap: 8px;
+}
+
+.pos-page .site-btn svg {
+    flex: none;
+    width: 18px;
+    height: 18px;
+}
+
+.pos-stat.is-success .pos-stat-icon {
+    background: #ecfdf3;
+    color: #067647;
+}
+
+/* Tab filter status (gaya segmented Transaksi) */
+.pos-tabs {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border-radius: var(--pos-radius);
+    background: var(--site-bg);
+}
+
+.pos-tabs a {
+    display: inline-flex;
+    align-items: center;
+    height: calc(var(--pos-btn-h) - 6px);
+    padding: 0 12px;
+    border-radius: calc(var(--pos-radius) - 3px);
+    color: var(--site-muted);
+    font-size: 13.5px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.pos-tabs a:hover {
+    color: var(--site-navy);
+}
+
+.pos-tabs a.is-active {
+    background: #ffffff;
+    color: var(--site-navy);
+    box-shadow: 0 1px 3px rgb(27 42 85 / 0.12);
+}
+
+/* Badge status seragam */
+.pos-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: #f2f4f7;
+    color: #475467;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pos-badge.is-completed {
+    background: #ecfdf3;
+    color: #067647;
+}
+
+.pos-badge.is-open {
+    background: #eff4ff;
+    color: #2d4282;
+}
+
+.pos-badge.is-awaiting_payment {
+    background: #fffaeb;
+    color: #b54708;
+}
+
+.pos-badge.is-voided {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+/* Tabel: baris bisa diklik, waktu tabular, aksi ikon 32px bergaris */
+.pos-table.is-clickable tbody tr {
+    cursor: pointer;
+}
+
+.pos-table td a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.pos-table .num-tabular {
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-row-actions {
+    display: inline-flex;
+    gap: 6px;
+}
+
+.pos-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--site-border);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--site-muted);
+}
+
+.pos-icon-btn:hover {
+    border-color: rgb(45 66 130 / 0.35);
+    background: var(--site-primary-lt);
+    color: var(--site-primary);
+}
+
+.pos-icon-btn svg {
+    width: 17px;
+    height: 17px;
+}
+
+/* Detail transaksi */
+.pos-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 2px;
+    color: var(--site-muted);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.pos-back:hover {
+    color: var(--site-primary);
+}
+
+.pos-back svg {
+    width: 14px;
+    height: 14px;
+}
+
+.pos-head-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.pos-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.pos-detail.is-single {
+    grid-template-columns: minmax(0, 520px);
+    justify-content: center;
+}
+
+.pos-detail-side {
+    display: grid;
+    gap: 16px;
+}
+
+.pos-receipt {
+    padding: 24px 20px 20px;
+}
+
+/* Ringkasan tetap terlihat saat kolom aksi di kanan di-scroll */
+@media (min-width: 901px) {
+    .pos-detail:not(.is-single) .pos-receipt {
+        position: sticky;
+        top: 84px;
+    }
+}
+
+.pos-receipt-head {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    padding-bottom: 16px;
+    text-align: center;
+}
+
+.pos-receipt-mark {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 6px;
+    border-radius: 999px;
+    background: #fffaeb;
+    box-shadow: 0 0 0 8px #fffcf5;
+    color: #b54708;
+}
+
+.pos-receipt-mark.is-completed {
+    background: #ecfdf3;
+    box-shadow: 0 0 0 8px #f6fef9;
+    color: #067647;
+}
+
+.pos-receipt-mark.is-voided {
+    background: #fef3f2;
+    box-shadow: 0 0 0 8px #fffbfa;
+    color: #b42318;
+}
+
+.pos-receipt-mark svg {
+    width: 26px;
+    height: 26px;
+    stroke-width: 2.2;
+}
+
+.pos-receipt-number {
+    margin: 0;
+    color: var(--site-navy);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.pos-receipt-meta {
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 13px;
+}
+
+.pos-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+.pos-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--site-bg);
+    color: var(--site-navy);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.pos-chip svg {
+    width: 14px;
+    height: 14px;
+    color: var(--site-muted);
+}
+
+.pos-receipt-items,
+.pos-split-items {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pos-receipt-items li,
+.pos-split-items li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 1px dashed var(--site-border);
+    font-size: 14px;
+}
+
+.pos-split-items li {
+    align-items: center;
+    border-top-style: solid;
+}
+
+.pos-receipt-qty {
+    min-width: 28px;
+    color: var(--site-navy);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-receipt-name {
+    flex: 1;
+    min-width: 0;
+    color: var(--site-text, #1e2633);
+}
+
+.pos-receipt-name small {
+    display: block;
+    color: var(--site-muted);
+    font-size: 12.5px;
+}
+
+.pos-receipt-name small.is-note {
+    font-style: italic;
+}
+
+.pos-receipt-amount {
+    color: var(--site-navy);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-receipt-lines {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    padding: 12px 0;
+    border-top: 1px dashed var(--site-border);
+    font-size: 14px;
+}
+
+.pos-receipt-lines > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.pos-receipt-lines dt {
+    color: var(--site-muted);
+}
+
+.pos-receipt-lines dd {
+    margin: 0;
+    color: var(--site-navy);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.pos-receipt-lines .is-total {
+    margin-top: 4px;
+}
+
+.pos-receipt-lines .is-total dt,
+.pos-receipt-lines .is-total dd {
+    color: var(--site-navy);
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.pos-receipt-lines.is-payments dt {
+    color: var(--site-text, #1e2633);
+}
+
+.pos-receipt-lines .is-muted dt,
+.pos-receipt-lines .is-muted dd {
+    color: var(--site-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.pos-receipt-lines .is-danger dt,
+.pos-receipt-lines .is-danger dd {
+    color: #b42318;
+}
+
+.pos-receipt .pos-callout {
+    margin-top: 4px;
+}
+
+/* Form di kartu: label di atas, kontrol 40px, satu garis fokus */
+.pos-card-body {
+    margin: 0;
+    padding: 16px;
+}
+
+.pos-form {
+    display: grid;
+    gap: 14px;
+}
+
+.pos-hint {
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 13.5px;
+}
+
+.pos-field {
+    display: grid;
+    gap: 6px;
+    color: var(--site-navy);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.cashier-body .pos-field input:not([type='hidden']) {
+    width: 100%;
+    height: var(--pos-btn-h);
+    padding: 0 12px;
+    border: 1px solid var(--site-border);
+    border-radius: var(--pos-radius);
+    background: #ffffff;
+    color: var(--site-navy);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 120ms, box-shadow 120ms;
+}
+
+.cashier-body .pos-field input:focus-visible {
+    border-color: var(--site-primary);
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.14);
+}
+
+.cashier-body .pos-field .pos-select {
+    font-weight: 500;
+}
+
+.pos-field-error {
+    color: #b42318;
+    font-size: 12.5px;
+    font-weight: 500;
+}
+
+.pos-field-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.pos-approver {
+    display: grid;
+    gap: 10px;
+    padding: 12px;
+    border-radius: var(--pos-radius);
+    background: var(--site-bg);
+}
+
+.pos-approver-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--site-navy);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.pos-approver-title svg {
+    width: 16px;
+    height: 16px;
+    color: var(--site-primary);
+}
+
+/* Stepper qty − n + dengan input (pecah bill, retur) */
+.cashier-body .pos-qty input {
+    width: 36px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--site-navy);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.cashier-body .pos-qty input::-webkit-outer-spin-button,
+.cashier-body .pos-qty input::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+@media (max-width: 900px) {
+    .pos-detail {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

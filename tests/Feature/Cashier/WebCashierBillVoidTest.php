@@ -129,7 +129,7 @@ it('void: kasir butuh PIN supervisor; alasan wajib; order kembali ke riwayat seb
     ]))['order'];
     TenantContext::forget();
 
-    $this->get(route('cashier.orders.show', $order->id))->assertOk()->assertSee('Void order')->assertSee('Sari');
+    $this->get(route('cashier.orders.show', $order->id))->assertOk()->assertSee('Void transaksi')->assertSee('Sari');
     $this->post(route('cashier.orders.void', $order->id), ['reason' => ''])->assertSessionHasErrors('reason');
     $this->post(route('cashier.orders.void', $order->id), ['reason' => 'Salah input'])->assertSessionHasErrors('cashier');
     $this->post(route('cashier.orders.void', $order->id), ['reason' => 'Salah input', 'approver_user_id' => $this->pos->cashier->id, 'approver_pin' => '123456'])
@@ -141,6 +141,34 @@ it('void: kasir butuh PIN supervisor; alasan wajib; order kembali ke riwayat seb
     $order = Order::allTenants()->findOrFail($order->id);
     expect($order->status)->toBe(OrderStatus::Voided)
         ->and($order->void_approved_by)->toBe($this->pos->supervisor->id);
+});
+
+it('riwayat: statistik shift, filter status, dan cari nomor/meja; order tenant lain tidak tampil', function () {
+    $checkout = fn (array $extra = []) => app(CheckoutOrder::class)->handle($this->pos->cashier, $this->pos->webDevice, CheckoutData::fromArray([
+        'id' => uuid(), 'order_type' => 'takeaway', 'items' => [['product_id' => $this->pos->croissant->id, 'qty' => 1]],
+        'payments' => [['id' => uuid(), 'payment_method_id' => $this->pos->methods['cash']->id, 'amount' => 100000]],
+    ] + $extra))['order'];
+    $paid = $checkout();
+    $voided = $checkout();
+    $voided->forceFill(['status' => OrderStatus::Voided, 'table_label' => 'Teras 7'])->save();
+    $foreign = posSetup();
+    $foreignOrder = TenantContext::run($foreign->tenantId, fn () => app(CheckoutOrder::class)->handle($foreign->cashier, $foreign->device, CheckoutData::fromArray([
+        'id' => uuid(), 'order_type' => 'takeaway', 'items' => [['product_id' => $foreign->croissant->id, 'qty' => 1]],
+        'payments' => [['id' => uuid(), 'payment_method_id' => $foreign->methods['cash']->id, 'amount' => 100000]],
+    ]))['order']);
+    TenantContext::forget();
+
+    // Statistik tidak ikut filter: 1 selesai Rp28.000, 1 void
+    $this->get(route('cashier.orders', ['status' => 'completed']))->assertOk()
+        ->assertViewHas('stats', ['count' => 1, 'revenue' => '28000.00', 'average' => '28000.00', 'voided' => 1])
+        ->assertSee($paid->order_number)->assertDontSee($voided->order_number)->assertDontSee($foreignOrder->id);
+
+    $this->get(route('cashier.orders', ['status' => 'voided']))->assertSee($voided->order_number)->assertDontSee($paid->order_number);
+    $this->get(route('cashier.orders', ['q' => 'teras']))->assertSee($voided->order_number)->assertDontSee($paid->order_number);
+    $this->get(route('cashier.orders', ['q' => $paid->order_number]))->assertSee($paid->order_number)->assertDontSee($voided->order_number);
+    // Status tak dikenal = semua; pola LIKE di-escape
+    $this->get(route('cashier.orders', ['status' => 'xyz']))->assertViewHas('filter', 'all')->assertSee($paid->order_number)->assertSee($voided->order_number);
+    $this->get(route('cashier.orders', ['q' => '%']))->assertSee('Transaksi tidak ditemukan');
 });
 
 it('void & detail order tenant lain 404', function () {

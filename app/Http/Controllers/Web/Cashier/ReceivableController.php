@@ -40,7 +40,7 @@ final class ReceivableController extends Controller
             // Kartu statistik: seluruh member berkasbon (tidak ikut filter pencarian)
             'stats' => [
                 'count' => $owing()->count(),
-                'total' => Money::of((string) ($owing()->sum('receivable_balance') ?: '0')),
+                'total' => Money::fromDb($owing()->sum('receivable_balance')),
             ],
             'enabled' => MemberSetting::current()->credit_enabled,
             'methods' => PaymentMethod::query()->activeAt(CurrentOutlet::getOrFail()->id)
