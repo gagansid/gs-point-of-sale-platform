@@ -74,6 +74,7 @@
         <form method="dialog">
             <span class="cashier-confirm-icon" data-confirm-icon-slot="lock" aria-hidden="true">@svg('heroicon-o-lock-closed')</span>
             <span class="cashier-confirm-icon is-danger" data-confirm-icon-slot="logout" aria-hidden="true">@svg('heroicon-o-arrow-right-start-on-rectangle')</span>
+            <span class="cashier-confirm-icon" data-confirm-icon-slot="cash" aria-hidden="true">@svg('heroicon-o-banknotes')</span>
             <h2 id="cashier-confirm-title" data-confirm-title></h2>
             <p data-confirm-text></p>
             <div class="cashier-confirm-actions">
@@ -87,9 +88,9 @@
     <div class="cashier-toasts" data-toasts aria-live="polite"></div>
 
     <script>
-        // Input nominal Rupiah (x-modelable + wire:model): tampil "113.100,5", nilai Livewire "113100.5".
+        // Input nominal Rupiah: tampil "113.100,5", nilai terkirim "113100.5".
         // Titik = ribuan, koma = desimal (maks. 2 digit), sama dengan format Rp di layar & struk.
-        document.addEventListener('alpine:init', () => {
+        const posMoneyFormat = (() => {
             const group = (digits) => digits.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
             // "113100.00" → "113.100"; "113100.5" → "113.100,5"
@@ -100,6 +101,52 @@
                 return group(int) + (cents ? ',' + cents : '');
             };
 
+            // Ketikan "113.100,5" → { raw: "113100.5", display: "113.100,5" }; kosong → raw ""
+            const parse = (text) => {
+                const cleaned = text.replace(/[^\d,]/g, '');
+                const [int, ...rest] = cleaned.split(',');
+                const hasComma = cleaned.includes(',');
+                const dec = rest.join('').slice(0, 2);
+                const intDigits = int.replace(/^0+(?=\d)/, '');
+                if (intDigits === '' && ! hasComma) return { raw: '', display: '' };
+
+                return {
+                    raw: (intDigits || '0') + (dec ? '.' + dec : ''),
+                    display: group(intDigits || '0') + (hasComma ? ',' + dec : ''),
+                };
+            };
+
+            return { fromRaw, parse };
+        })();
+
+        // Form biasa (tanpa Livewire/Alpine): <span data-money> berisi input teks + hidden [data-money-raw] bernama field asli
+        (() => {
+            const sync = (box, raw) => {
+                box.querySelector('[data-money-raw]').value = raw;
+                box.querySelector('input[type="text"]').value = posMoneyFormat.fromRaw(raw);
+            };
+            document.querySelectorAll('[data-money]').forEach((box) => sync(box, box.querySelector('[data-money-raw]').value));
+            document.addEventListener('input', (event) => {
+                const box = event.target.closest('[data-money]');
+                if (! box || event.target.type !== 'text') return;
+                const { raw, display } = posMoneyFormat.parse(event.target.value);
+                event.target.value = display;
+                box.querySelector('[data-money-raw]').value = raw;
+            });
+            // Tombol isi cepat (mis. "Penuh"): mengisi field uang di form yang sama
+            document.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-money-fill]');
+                const box = button?.form?.querySelector('[data-money]');
+                if (! box) return;
+                sync(box, button.dataset.moneyFill);
+                box.querySelector('input[type="text"]').focus();
+            });
+        })();
+
+        document.addEventListener('alpine:init', () => {
+            const { fromRaw, parse } = posMoneyFormat;
+
+            // x-modelable + wire:model: nilai Livewire "113100.5"
             window.Alpine.data('posMoney', () => ({
                 raw: '',
                 display: '',
@@ -112,15 +159,7 @@
                     });
                 },
                 type(event) {
-                    const cleaned = event.target.value.replace(/[^\d,]/g, '');
-                    const [int, ...rest] = cleaned.split(',');
-                    const hasComma = cleaned.includes(',');
-                    const dec = rest.join('').slice(0, 2);
-                    const intDigits = int.replace(/^0+(?=\d)/, '');
-                    const empty = intDigits === '' && ! hasComma;
-
-                    this.typed = empty ? '' : (intDigits || '0') + (dec ? '.' + dec : '');
-                    this.display = empty ? '' : group(intDigits || '0') + (hasComma ? ',' + dec : '');
+                    ({ raw: this.typed, display: this.display } = parse(event.target.value));
                     event.target.value = this.display;
                     this.raw = this.typed;
                 },
@@ -202,7 +241,9 @@
                     event.preventDefault();
                     pending = form;
                     dialog.querySelector('[data-confirm-title]').textContent = form.dataset.confirmTitle;
-                    dialog.querySelector('[data-confirm-text]').textContent = form.dataset.confirmText ?? '';
+                    // {amount} = nominal yang sedang diketik di field uang form ini (mis. pelunasan kasbon)
+                    const amount = form.querySelector('[data-money] input[type="text"]')?.value || '0';
+                    dialog.querySelector('[data-confirm-text]').textContent = (form.dataset.confirmText ?? '').replace('{amount}', amount);
                     const ok = dialog.querySelector('[data-confirm-ok]');
                     ok.textContent = form.dataset.confirmOk ?? 'Lanjut';
                     ok.classList.toggle('pos-btn-danger', form.dataset.confirmTone === 'danger');

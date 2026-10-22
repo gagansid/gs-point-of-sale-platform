@@ -30,13 +30,18 @@ final class ReceivableController extends Controller
         abort_unless(self::user()->can('member.view'), 403);
         $search = mb_substr(trim($request->string('q')->toString()), 0, 50);
 
-        $members = Member::query()->whereNull('anonymized_at')->where('receivable_balance', '>', 0)
-            ->when($search !== '', fn ($q) => $q->search($search))
+        $owing = fn () => Member::query()->whereNull('anonymized_at')->where('receivable_balance', '>', 0);
+        $members = $owing()->when($search !== '', fn ($q) => $q->search($search))
             ->orderByDesc('receivable_balance')->limit(50)->get();
 
         return view('cashier.receivables.index', [
             'members' => $members,
             'search' => $search,
+            // Kartu statistik: seluruh member berkasbon (tidak ikut filter pencarian)
+            'stats' => [
+                'count' => $owing()->count(),
+                'total' => Money::of((string) ($owing()->sum('receivable_balance') ?: '0')),
+            ],
             'enabled' => MemberSetting::current()->credit_enabled,
             'methods' => PaymentMethod::query()->activeAt(CurrentOutlet::getOrFail()->id)
                 ->whereNotIn('category', [PaymentCategory::Points, PaymentCategory::Online, PaymentCategory::Receivable])

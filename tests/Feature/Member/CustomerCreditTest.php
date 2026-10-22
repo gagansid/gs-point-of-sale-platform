@@ -154,3 +154,29 @@ it('kasir web: halaman kasbon & pelunasan', function () {
 
     expect($this->member->refresh()->receivable_balance)->toBe('0.00');
 });
+
+it('kasir web: statistik kasbon menghitung semua member berkasbon, tidak ikut pencarian; tenant lain tidak terhitung', function () {
+    creditSale($this);
+    TenantContext::run($this->pos->tenantId, fn () => Member::factory()->create(['name' => 'Bayu'])->forceFill(['receivable_balance' => '12000.00'])->save());
+    $foreign = posSetup();
+    TenantContext::run($foreign->tenantId, fn () => Member::factory()->create(['name' => 'Asing'])->forceFill(['receivable_balance' => '99000.00'])->save());
+    webCashierLogin($this, $this->pos, $this->pos->cashier);
+
+    $this->get(route('cashier.receivables', ['q' => 'Rina']))->assertOk()
+        ->assertViewHas('stats', ['count' => 2, 'total' => '40000.00'])
+        ->assertSee('Rina')->assertDontSee('Bayu')->assertDontSee('Asing');
+
+    $this->get(route('cashier.receivables', ['q' => 'tidak-ada']))->assertOk()->assertSee('Member tidak ditemukan');
+});
+
+it('kasir web: nominal pelunasan kosong ditolak dengan pesan, saldo tetap', function () {
+    creditSale($this);
+    webCashierLogin($this, $this->pos, $this->pos->cashier);
+    TenantContext::run($this->pos->tenantId, fn () => Shift::factory()->forDevice($this->pos->webDevice, $this->pos->cashier)->create());
+
+    $this->from(route('cashier.receivables'))->post(route('cashier.receivables.pay', $this->member->id), [
+        'id' => (string) Str::uuid7(), 'amount' => '', 'payment_method_id' => $this->pos->methods['cash']->id,
+    ])->assertRedirect(route('cashier.receivables'))->assertSessionHasErrors('amount');
+
+    expect($this->member->refresh()->receivable_balance)->toBe('28000.00');
+});
