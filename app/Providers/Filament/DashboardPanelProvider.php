@@ -83,9 +83,12 @@ final class DashboardPanelProvider extends PanelProvider
                 NavigationGroup::make('Katalog')->collapsible(false),
                 // Stok masuk, supplier, opname, transfer (ADR 0015)
                 NavigationGroup::make('Stok')->collapsible(false),
+                // Member & program loyalitas (ADR 0013), kasbon (ADR 0023), promo (ADR 0022)
                 NavigationGroup::make('Pelanggan')->collapsible(false),
-                NavigationGroup::make('Laporan')->collapsible(false),
+                // Setelan toko; Laporan tanpa grup (di bawah Beranda)
                 NavigationGroup::make('Pengaturan')->collapsible(false),
+                // Langganan gs.POS & riwayat perubahan (audit)
+                NavigationGroup::make('Akun')->collapsible(false),
             ])
             // Menu Kasir (Q55): tab baru ke kasir web, masuk ulang dengan kata sandi atau PIN
             ->navigationItems([

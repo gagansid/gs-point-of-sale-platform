@@ -49,7 +49,7 @@ final class PaymentGatewaySettings extends Page
 
     protected static ?string $slug = 'settings/online-payment';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 5;
 
     /** @var array<string, mixed>|null */
     public ?array $data = [];

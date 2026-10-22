@@ -56,7 +56,7 @@ final class StampProgramResource extends Resource
 
     protected static ?string $pluralModelLabel = 'kartu stempel';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     protected static bool $isGloballySearchable = false;
 

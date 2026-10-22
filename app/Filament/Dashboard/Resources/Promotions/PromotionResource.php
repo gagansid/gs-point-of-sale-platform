@@ -62,7 +62,7 @@ final class PromotionResource extends Resource
 
     protected static ?string $pluralModelLabel = 'promo';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 6;
 
     protected static bool $isGloballySearchable = false;
 

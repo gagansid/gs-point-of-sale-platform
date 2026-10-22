@@ -54,7 +54,7 @@ final class PaymentMethodResource extends Resource
 
     protected static ?string $pluralModelLabel = 'metode pembayaran';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     protected static bool $isGloballySearchable = false;
 

@@ -75,9 +75,9 @@ final class SubscriptionSettings extends Page implements HasTable
      */
     public ?array $tableFilters = null;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRocketLaunch;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
+    protected static string|UnitEnum|null $navigationGroup = 'Akun';
 
     protected static ?string $navigationLabel = 'Langganan';
 
@@ -85,7 +85,7 @@ final class SubscriptionSettings extends Page implements HasTable
 
     protected static ?string $slug = 'settings/subscription';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.dashboard.pages.subscription';
 

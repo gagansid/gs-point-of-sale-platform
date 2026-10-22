@@ -98,7 +98,10 @@ final class Reports extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Laporan';
+    protected static string|UnitEnum|null $navigationGroup = null;
+
+    /** Tepat di bawah Beranda (Dashboard bawaan Filament = -2) */
+    protected static ?int $navigationSort = -1;
 
     protected static ?string $navigationLabel = 'Laporan';
 

@@ -30,24 +30,22 @@ tidak bisa diciutkan (`NavigationGroup::make(...)->collapsible(false)`).
 
 Urutan dan grup menu tetap. Ikon Heroicons outline (lihat [components/icon.md](components/icon.md)).
 
-| Grup | Menu | Ikon | Permission |
+Urutan grup: (tanpa grup) → Transaksi → Katalog → Stok → Pelanggan → Pengaturan → Akun. Satu ikon untuk satu menu
+(tidak ada ikon kembar dalam panel). Grup berisi satu menu tidak dipakai — menu itu tampil tanpa grup.
+
+| Grup | Menu (urutan) | Ikon | Permission |
 |---|---|---|---|
 | — | Beranda | `home` | `report.view` |
-| Transaksi | Penjualan | `receipt-percent` | `order.view_all` |
-| Transaksi | Shift | `clock` | `shift.view_all` |
-| Transaksi | Pesanan meja | `device-phone-mobile` | `order.view_all` + fitur `self_order` |
-| Katalog | Produk | `cube` | `product.manage` |
-| Katalog | Kategori | `tag` | `product.manage` |
-| Katalog | Grup Opsi | `adjustments-horizontal` | `product.manage` |
-| Stok | Riwayat stok | `queue-list` | `stock.adjust` + fitur `stock` |
-| Pelanggan | Kasbon | `banknotes` | `member.view` (+ kasbon aktif atau masih ada sisa) |
-| Laporan | Laporan | `chart-bar` | `report.view` |
-| Pengaturan | Karyawan | `users` | `user.manage` |
-| Pengaturan | Perangkat | `device-tablet` | `device.manage` |
-| Pengaturan | Metode Pembayaran | `credit-card` | `payment_method.manage` |
-| Pengaturan | Pengaturan Outlet | `building-storefront` | `outlet.settings` |
+| — | Laporan | `chart-bar` | `report.view` / `report.view_shift` |
+| Transaksi | Kasir · Penjualan · Pesanan meja · Shift | `computer-desktop` · `receipt-percent` · `device-phone-mobile` · `clock` | web cashier · `order.view_all` · `order.view_all` + `self_order` · `shift.view_all` |
+| Katalog | Produk · Kategori · Grup opsi | `cube` · `tag` · `adjustments-horizontal` | `product.manage` |
+| Stok | Purchase order · Stok masuk · Transfer · Stok opname · Riwayat stok · Supplier (alur: pesan → terima → pindah → hitung → riwayat, master terakhir) | `shopping-cart` · `arrow-down-tray` · `arrows-right-left` · `clipboard-document-check` · `queue-list` · `truck` | `purchase.manage` · `stock.receive` · `stock.transfer` · `stock.opname` · `stock.adjust` · `supplier.manage` (+ fitur `stock`) |
+| Pelanggan | Member · Kasbon · Program member · Kartu stempel · Voucher · Promo | `user-group` · `banknotes` · `star` · `ticket` · `gift` · `sparkles` | `member.*` (+ fitur `member`) · `promo.manage` |
+| Pengaturan | Bisnis & tampilan · Outlet · Karyawan · Perangkat · Metode pembayaran · Pembayaran online · Meja & QR | `swatch` · `building-storefront` · `users` · `device-tablet` · `credit-card` · `globe-alt` · `qr-code` | per menu (`outlet.*`, `user.manage`, `device.manage`, `payment_method.manage`, `payment_gateway.manage`, `table.manage`) |
+| Akun | Langganan · Riwayat perubahan | `rocket-launch` · `clipboard-document-list` | owner · `audit.view` |
 
-Tabel di atas memuat menu inti; daftar lengkap per grup ada di `docs/SPEC.md` § Panel dashboard owner.
+Profil outlet (`settings/outlet`) dibuka dari daftar Outlet, tidak tampil di menu. URL tidak mengikuti grup: memindah menu
+antar grup tidak mengubah slug.
 
 Menu tanpa permission disembunyikan (`canAccess()` / `canViewAny()` memakai `can()`), bukan
 ditampilkan lalu ditolak.

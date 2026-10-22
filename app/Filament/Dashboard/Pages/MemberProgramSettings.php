@@ -52,9 +52,9 @@ final class MemberProgramSettings extends Page
 {
     use HasIconBreadcrumbs;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedGift;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedStar;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
+    protected static string|UnitEnum|null $navigationGroup = 'Pelanggan';
 
     protected static ?string $navigationLabel = 'Program member';
 
@@ -62,7 +62,7 @@ final class MemberProgramSettings extends Page
 
     protected static ?string $slug = 'settings/member-program';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 3;
 
     /** @var array<string, mixed>|null */
     public ?array $data = [];

@@ -50,7 +50,7 @@ final class ActivityLogResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
+    protected static string|UnitEnum|null $navigationGroup = 'Akun';
 
     protected static ?string $navigationLabel = 'Riwayat perubahan';
 
@@ -58,7 +58,7 @@ final class ActivityLogResource extends Resource
 
     protected static ?string $pluralModelLabel = 'riwayat perubahan';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 2;
 
     protected static bool $isGloballySearchable = false;
 

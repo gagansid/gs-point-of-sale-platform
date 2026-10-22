@@ -51,7 +51,7 @@ final class VoucherResource extends Resource
 
     protected static ?string $slug = 'vouchers';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedReceiptPercent;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedGift;
 
     protected static string|UnitEnum|null $navigationGroup = 'Pelanggan';
 
@@ -61,7 +61,7 @@ final class VoucherResource extends Resource
 
     protected static ?string $pluralModelLabel = 'voucher';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
 
     protected static bool $isGloballySearchable = false;
 

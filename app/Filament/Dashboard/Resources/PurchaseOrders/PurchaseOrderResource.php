@@ -57,7 +57,7 @@ final class PurchaseOrderResource extends Resource
 
     protected static ?string $slug = 'stock/purchase-orders';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;
 
     protected static string|UnitEnum|null $navigationGroup = 'Stok';
 
