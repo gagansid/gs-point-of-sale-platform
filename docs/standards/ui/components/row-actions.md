@@ -11,6 +11,9 @@
 
 `[👁] [✎] [⋯]` — tombol ikon 26×26px, ikon 14px, jarak 2px, rata tengah di kolom terakhir.
 
+Menu `⋯` (dan semua dropdown lain: menu akun, pemilih outlet): item 32px (`--control-h`), teks 13px
+(`--control-font`), ikon 16px — sama dengan ikon status tabel, bukan bawaan Filament 20px/14px (`components.css`).
+
 ## Varian
 
 Warna netral (`gray`/muted) saat diam; **berwarna hanya saat hover**, sesuai pola `gs-task-tracker`:

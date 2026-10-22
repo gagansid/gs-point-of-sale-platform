@@ -1625,6 +1625,26 @@
     height: 16px;
 }
 
+/* ---------- Item dropdown (⋯ aksi baris, menu akun, pemilih outlet): selaras kontrol lain ----------
+   Bawaan Filament ikon 20px & teks 14px terlalu besar di samping ikon tabel (14–16px). Panel di-teleport ke <body>,
+   jadi berlaku untuk semua dropdown: item 32px, teks 13px, ikon 16px (ukuran ikon status tabel). */
+.fi-dropdown-list-item {
+    gap: 8px;
+    min-height: var(--control-h);
+    padding: 6px 10px;
+    font-size: var(--control-font);
+}
+
+.fi-dropdown-list-item .fi-dropdown-list-item-label {
+    font-size: var(--control-font);
+}
+
+.fi-dropdown-list-item > .fi-icon,
+.fi-dropdown-list-item .fi-dropdown-list-item-image {
+    width: 16px;
+    height: 16px;
+}
+
 /* ---------- Tombol aksi baris: 32px seperti kontrol lain (L6), ikon garis 14px, abu ---------- */
 .fi-ta-cell .fi-ta-actions .fi-icon-btn,
 .fi-ta-cell .fi-ta-actions .fi-dropdown-trigger .fi-icon-btn,
