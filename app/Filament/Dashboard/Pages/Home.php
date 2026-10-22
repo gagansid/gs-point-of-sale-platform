@@ -24,6 +24,7 @@ use App\Services\Report\ReportService;
 use App\Support\CurrentOutlet;
 use App\Support\ExportThrottle;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
@@ -67,7 +68,10 @@ final class Home extends Dashboard
 
     protected static ?string $title = 'Beranda';
 
-    /** Beranda = ringkasan bisnis (report.view); supervisor diarahkan ke Laporan (Q50). */
+    /**
+     * Beranda = ringkasan bisnis (dashboard.access + report.view). Tanpa itu diarahkan ke Laporan (supervisor, Q50)
+     * atau menu pertama yang boleh dibuka (hak akses per bisnis, ADR 0026).
+     */
     public static function shouldRegisterNavigation(): bool
     {
         return self::canViewReports();
@@ -75,8 +79,14 @@ final class Home extends Dashboard
 
     public function mount(): void
     {
-        if (! self::canViewReports() && Reports::canAccess()) {
-            $this->redirect(Reports::getUrl());
+        if (self::canViewReports()) {
+            return;
+        }
+
+        $url = Reports::canAccess() ? Reports::getUrl() : self::firstMenuUrl();
+
+        if ($url !== null) {
+            $this->redirect($url);
         }
     }
 
@@ -95,6 +105,10 @@ final class Home extends Dashboard
     /** @return array<class-string> */
     public function getWidgets(): array
     {
+        if (! self::canViewReports()) {
+            return [];
+        }
+
         // SetupChecklistWidget dirender terpisah di atas filter (content())
         return [
             SalesStatsWidget::class,
@@ -205,7 +219,25 @@ final class Home extends Dashboard
 
     private static function canViewReports(): bool
     {
-        return self::user()?->can('report.view') ?? false;
+        $user = self::user();
+
+        return $user !== null && $user->hasFullDashboard() && $user->can('report.view');
+    }
+
+    /** Menu sidebar pertama yang boleh dibuka (selain Beranda). */
+    private static function firstMenuUrl(): ?string
+    {
+        foreach (Filament::getNavigation() as $group) {
+            foreach ($group->getItems() as $item) {
+                $url = $item->getUrl();
+
+                if ($url !== null && $url !== self::getUrl() && ! $item->shouldOpenUrlInNewTab()) {
+                    return $url;
+                }
+            }
+        }
+
+        return null;
     }
 
     private static function user(): ?User

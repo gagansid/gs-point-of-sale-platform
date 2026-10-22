@@ -94,7 +94,7 @@ final class SubscriptionSettings extends Page implements HasTable
         $user = auth()->user();
 
         // Tetap bisa dibuka saat hanya-baca: justru untuk memperpanjang
-        return Edition::isSaas() && $user instanceof User && $user->hasPermission('billing.manage');
+        return Edition::isSaas() && $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('billing.manage');
     }
 
     public function tenant(): Tenant

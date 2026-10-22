@@ -69,7 +69,7 @@ final class OutletSettings extends Page
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasPermission('outlet.settings');
+        return $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('outlet.settings');
     }
 
     public function mount(): void

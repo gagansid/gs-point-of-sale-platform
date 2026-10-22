@@ -106,10 +106,8 @@ class AppServiceProvider extends ServiceProvider
                 return null;
             }
 
-            // Data rusak (role kosong/tidak dikenal) = ditolak, bukan error
-            $role = $user->getAttribute('role');
-
-            if (! $role instanceof UserRole || ! $role->allows($ability)) {
+            // Data rusak (role kosong/tidak dikenal) = ditolak, bukan error; hak akses per bisnis (ADR 0026)
+            if (! $user->hasPermission($ability)) {
                 return false;
             }
 

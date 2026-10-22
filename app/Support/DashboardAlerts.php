@@ -34,7 +34,7 @@ final class DashboardAlerts
      */
     public static function for(User $user): array
     {
-        if (! $user->role->hasFullDashboard()) {
+        if (! $user->hasFullDashboard()) {
             return [];
         }
 

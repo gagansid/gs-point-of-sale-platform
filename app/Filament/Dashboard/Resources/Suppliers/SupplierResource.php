@@ -53,7 +53,7 @@ final class SupplierResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('stock') && $user->role->hasFullDashboard() && $user->hasPermission('supplier.manage');
+        return $user instanceof User && Features::enabled('stock') && $user->hasFullDashboard() && $user->hasPermission('supplier.manage');
     }
 
     public static function canCreate(): bool

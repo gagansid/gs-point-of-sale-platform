@@ -34,7 +34,7 @@ Ringkasan dari `CLAUDE.md` + `docs/SPEC.md`. Pelanggaran = PR ditolak.
 1. **Logika bisnis hanya di `app/Actions`.** Controller & Filament hanya memanggil Action.
 2. **Nominal order hanya dihitung `OrderCalculator`.** Nilai nominal dari client diabaikan.
 3. **Setiap model bisnis memakai `BelongsToTenant`.** Query lintas tenant hanya di panel `/admin`.
-4. **Cek permission, bukan role.** `$user->can('order.void')`; pemetaan hanya di `UserRole::permissions()`.
+4. **Cek permission, bukan role.** `$user->can('order.void')`; bawaan hanya di `UserRole::permissions()`, yang berlaku per bisnis lewat `RolePermissions` (ADR 0026).
 5. **ID `orders`/`payments` dari client = idempotency key.** Request ulang → data lama + `meta.idempotent_replay: true`.
 6. **Semua respons API lewat `ApiResponse`**, error bisnis lewat `BusinessException`, kode error hanya dari daftar resmi.
 7. **Uang `DECIMAL(15,2)` di DB, string `"62000.00"` di JSON.** Tidak pernah `float`.
@@ -111,7 +111,7 @@ Untuk perubahan UI: buka panel di browser, cek light & dark mode, cek lebar mobi
 | Menambah use case bisnis | `app/Actions/{Domain}/{VerbNoun}.php` |
 | Menambah perhitungan bersama | `app/Services/{Name}.php` |
 | Menambah endpoint | `routes/api.php` + `Http/Controllers/Api/V1/{Domain}Controller.php` + `Http/Requests/Api/V1/{Domain}/{Verb}{Noun}Request.php` + `Http/Resources/Api/V1/{Noun}Resource.php` |
-| Menambah permission | `UserRole::permissions()` + tabel permission di `docs/SPEC.md` |
+| Menambah permission | `UserRole::PERMISSIONS` + bawaan di `UserRole::permissions()` (+ `OWNER_ONLY`/`IMPLIES` bila perlu) + tabel permission di `docs/SPEC.md` |
 | Menambah error code | Tabel error code di `docs/SPEC.md` **dulu** (PR terpisah/disetujui), lalu `App\Enums\ErrorCode` |
 | Menambah status/tipe | `app/Enums/{Name}.php` (dengan label & warna untuk UI) |
 | Menambah menu dashboard owner | `app/Filament/Dashboard/Resources` atau `Pages` |

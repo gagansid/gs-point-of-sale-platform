@@ -59,7 +59,7 @@ final class OutletResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && ($user->hasPermission('outlet.manage') || $user->hasPermission('outlet.settings'));
+        return $user instanceof User && $user->hasFullDashboard() && ($user->hasPermission('outlet.manage') || $user->hasPermission('outlet.settings'));
     }
 
     public static function canCreate(): bool

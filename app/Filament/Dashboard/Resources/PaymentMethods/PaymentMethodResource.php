@@ -62,7 +62,7 @@ final class PaymentMethodResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasPermission('payment_method.manage');
+        return $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('payment_method.manage');
     }
 
     public static function canCreate(): bool

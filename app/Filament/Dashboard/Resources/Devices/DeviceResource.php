@@ -64,7 +64,7 @@ final class DeviceResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasPermission('device.manage');
+        return $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('device.manage');
     }
 
     public static function canCreate(): bool

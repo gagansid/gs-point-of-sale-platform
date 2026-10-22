@@ -67,7 +67,7 @@ final class StockOpnameResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('stock') && $user->role->hasFullDashboard() && $user->hasPermission('stock.opname');
+        return $user instanceof User && Features::enabled('stock') && $user->hasFullDashboard() && $user->hasPermission('stock.opname');
     }
 
     public static function canCreate(): bool

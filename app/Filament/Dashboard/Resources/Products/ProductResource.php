@@ -10,6 +10,7 @@ use App\Filament\Dashboard\Resources\Products\Pages\ListProducts;
 use App\Filament\Dashboard\Resources\Products\Schemas\ProductForm;
 use App\Filament\Dashboard\Resources\Products\Tables\ProductsTable;
 use App\Models\Product;
+use App\Models\User;
 use App\Support\CurrentOutlet;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -40,6 +41,14 @@ final class ProductResource extends Resource
     protected static ?string $pluralModelLabel = 'produk';
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    /** Menu dashboard: akses panel penuh (dashboard.access) + permission menu dari policy (ADR 0026). */
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
+    }
 
     /** @return Builder<Product> */
     public static function getEloquentQuery(): Builder

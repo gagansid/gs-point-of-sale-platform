@@ -94,7 +94,7 @@ final class ActivityLogResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasPermission('audit.view');
+        return $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('audit.view');
     }
 
     public static function canCreate(): bool

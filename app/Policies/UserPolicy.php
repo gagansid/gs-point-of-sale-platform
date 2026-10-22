@@ -27,9 +27,10 @@ final class UserPolicy
         return $user->can('user.manage');
     }
 
+    /** Non-owner hanya karyawan dengan role di bawahnya (ADR 0026). */
     public function update(User $user, User $model): bool
     {
-        return $this->owns($user, $model) && $user->can('user.manage');
+        return $this->owns($user, $model) && $user->can('user.manage') && $user->canManageEmployee($model);
     }
 
     /** Karyawan tidak dihapus: dinonaktifkan agar riwayat transaksi tetap utuh. */

@@ -43,6 +43,11 @@ final class SaveEmployee
         }
 
         $isNew = $employee === null;
+
+        if ($by !== null) {
+            self::ensureCanManage($by, $employee, $data->role);
+        }
+
         self::ensureCredentials($employee, $data);
         $outletIds = self::resolveOutlets($employee, $data, $by);
 
@@ -206,6 +211,19 @@ final class SaveEmployee
 
         if ($others === 0) {
             throw BusinessException::of(ErrorCode::LastOwnerRequired);
+        }
+    }
+
+    /**
+     * Pengelola karyawan non-owner (user.manage didelegasikan, ADR 0026) hanya mengatur karyawan dan memberi role
+     * di bawah dirinya: tidak bisa menyentuh owner, sesama manager, atau dirinya sendiri.
+     *
+     * @throws BusinessException FORBIDDEN
+     */
+    public static function ensureCanManage(User $by, ?User $employee, UserRole $role): void
+    {
+        if (! $by->canAssignRole($role) || ($employee !== null && ! $by->canManageEmployee($employee))) {
+            throw BusinessException::of(ErrorCode::Forbidden, 'Anda hanya bisa mengatur karyawan dengan role di bawah Anda');
         }
     }
 }

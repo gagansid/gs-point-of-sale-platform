@@ -77,7 +77,7 @@ final class MemberResource extends Resource
         $user = auth()->user();
 
         // Supervisor masuk dashboard hanya untuk Laporan (Q50); member dicari/didaftar dari kasir
-        return $user instanceof User && Features::enabled('member') && $user->role->hasFullDashboard() && $user->hasPermission('member.view');
+        return $user instanceof User && Features::enabled('member') && $user->hasFullDashboard() && $user->hasPermission('member.view');
     }
 
     public static function canCreate(): bool

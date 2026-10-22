@@ -24,7 +24,7 @@ final class ReceiptController extends Controller
         $user = Filament::auth()->user();
         abort_unless($user instanceof User, 403);
         // Cetak ulang dari dashboard = bagian menu Penjualan (akses panel penuh, Q50)
-        abort_unless($user->role->hasFullDashboard(), 403);
+        abort_unless($user->hasFullDashboard(), 403);
 
         // Query tenant-scoped (fail-closed): order tenant/outlet lain → 404
         $model = Order::query()->with(['items.options', 'payments.method', 'user', 'outlet'])->findOrFail($order);

@@ -22,6 +22,7 @@ use App\Models\Outlet;
 use App\Models\User;
 use App\Rules\SecurePin;
 use App\Support\CurrentOutlet;
+use App\Support\RolePermissions;
 use BackedEnum;
 use Closure;
 use Filament\Actions\Action;
@@ -70,6 +71,14 @@ final class EmployeeResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
+    /** Menu dashboard: akses panel penuh (dashboard.access) + permission menu dari policy (ADR 0026). */
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
+    }
+
     public static function form(Schema $schema): Schema
     {
         $usesPassword = fn (Get $get): bool => self::role($get)?->canUsePasswordLogin() ?? false;
@@ -80,7 +89,8 @@ final class EmployeeResource extends Resource
             Hidden::make('has_password')->dehydrated(false),
             TextInput::make('name')->label('Nama')->required()->maxLength(100)->autofocus()
                 ->helperText('Tampil di layar pilih kasir & struk'),
-            Select::make('role')->label('Role')->options(UserRole::class)->required()->native(false)->live()
+            // Non-owner pengelola karyawan hanya memberi role di bawah dirinya (ADR 0026)
+            Select::make('role')->label('Role')->options(fn (): array => self::assignableRoles())->required()->native(false)->live()
                 ->default(UserRole::Cashier->value)
                 // Menambah: akses kasir web mengikuti bawaan role (Q54); mengubah: pilihan owner tetap
                 ->afterStateUpdated(function (Get $get, Set $set, string $operation): void {
@@ -147,15 +157,15 @@ final class EmployeeResource extends Resource
                 ->columnSpanFull()
                 ->helperText('Karyawan hanya bisa login & bertransaksi di perangkat outlet yang dipilih')
                 ->visible(fn (Get $get): bool => count(self::assignableOutlets()) > 1
-                    && ! (self::role($get)?->allows('outlet.access_all') ?? false)),
+                    && ! self::roleAllows($get, 'outlet.access_all')),
             // Kasir web (Q54): cadangan bila kasir/tablet tidak ada. Owner selalu boleh → disembunyikan
             Toggle::make('web_cashier_access')->label('Akses kasir web')
                 ->default(UserRole::Cashier->defaultWebCashierAccess())
                 ->helperText(fn (Get $get): string => self::role($get)?->canUsePasswordLogin() ?? false
                     ? 'Boleh bertransaksi di kasir web dengan email & kata sandi'
                     : 'Boleh bertransaksi di kasir web dengan kode bisnis, username & kata sandi')
-                ->visible(fn (Get $get): bool => ! (self::role($get)?->allows('user.manage') ?? false)
-                    && (self::role($get)?->allows('order.create') ?? false))
+                ->visible(fn (Get $get): bool => ! self::roleAllows($get, 'user.manage')
+                    && self::roleAllows($get, 'order.create'))
                 ->columnSpanFull(),
             // Tanggal dibuat & diubah (audit)
             AuditInfo::make(),
@@ -213,6 +223,7 @@ final class EmployeeResource extends Resource
             ])
             ->recordActions([
                 EditAction::make()->iconButton()->tooltip('Ubah')->modalWidth('2xl')
+                    ->visible(fn (User $record): bool => self::canManage($record))
                     ->mutateRecordDataUsing(fn (array $data, User $record): array => [
                         ...$data,
                         'has_pin' => $record->pin !== null,
@@ -225,7 +236,7 @@ final class EmployeeResource extends Resource
                 ActionGroup::make([
                     Action::make('resendVerification')->label('Kirim ulang verifikasi')->icon(Heroicon::OutlinedEnvelope)
                         ->visible(fn (User $record): bool => $record->email !== null && ! $record->hasVerifiedEmail()
-                            && (auth()->user()?->can('user.manage') ?? false))
+                            && self::canManage($record))
                         ->action(function (User $record): void {
                             try {
                                 app(SendEmployeeVerification::class)->handle($record);
@@ -235,7 +246,7 @@ final class EmployeeResource extends Resource
                             }
                         }),
                     Action::make('unlockPin')->label('Buka kunci PIN')->icon(Heroicon::OutlinedLockOpen)
-                        ->visible(fn (User $record): bool => $record->isPinLocked() && (auth()->user()?->can('user.manage') ?? false))
+                        ->visible(fn (User $record): bool => $record->isPinLocked() && self::canManage($record))
                         ->action(function (User $record): void {
                             app(UnlockEmployeePin::class)->handle($record);
                             Notification::make()->success()->title('Kunci PIN dibuka')->send();
@@ -318,6 +329,33 @@ final class EmployeeResource extends Resource
         $user = auth()->user();
 
         return $user instanceof User ? $user : null;
+    }
+
+    /** Pengelola boleh mengubah karyawan ini (owner semua; lainnya role di bawahnya), ADR 0026. */
+    private static function canManage(User $record): bool
+    {
+        $user = self::actor();
+
+        return $user !== null && $user->can('user.manage') && $user->canManageEmployee($record);
+    }
+
+    /** @return array<string, string> */
+    private static function assignableRoles(): array
+    {
+        $user = self::actor();
+
+        return collect(UserRole::cases())
+            ->filter(fn (UserRole $role): bool => $user?->canAssignRole($role) ?? false)
+            ->mapWithKeys(fn (UserRole $role): array => [$role->value => $role->getLabel()])
+            ->all();
+    }
+
+    /** Permission role terpilih di bisnis ini (pengaturan owner atau bawaan), untuk pratinjau form. */
+    private static function roleAllows(Get $get, string $permission): bool
+    {
+        $role = self::role($get);
+
+        return $role !== null && RolePermissions::allows($role, self::actor()?->tenant_id, $permission);
     }
 
     private static function role(Get $get): ?UserRole

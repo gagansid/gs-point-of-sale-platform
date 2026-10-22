@@ -72,7 +72,7 @@ final class PromotionResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('promotions') && $user->role->hasFullDashboard() && $user->hasPermission('promo.manage');
+        return $user instanceof User && Features::enabled('promotions') && $user->hasFullDashboard() && $user->hasPermission('promo.manage');
     }
 
     public static function canCreate(): bool

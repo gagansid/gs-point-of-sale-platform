@@ -45,7 +45,7 @@ final class OrderResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->role->hasFullDashboard() && parent::canViewAny();
+        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
     }
 
     public static function canCreate(): bool

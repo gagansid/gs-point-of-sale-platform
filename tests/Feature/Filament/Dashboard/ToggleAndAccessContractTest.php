@@ -244,8 +244,8 @@ describe('izin menu katalog & promo per role', function () {
         $user = User::factory()->role($role)->forOutlet(Outlet::query()->findOrFail($this->pos->outlet->id))->create();
         $this->actingAs($user);
 
-        $catalog = $role->hasFullDashboard() && $role->allows('product.manage');
-        $promo = $role->hasFullDashboard() && $role->allows('promo.manage');
+        $catalog = $role->allows('dashboard.access') && $role->allows('product.manage');
+        $promo = $role->allows('dashboard.access') && $role->allows('promo.manage');
 
         expect(CategoryResource::canViewAny())->toBe($catalog)
             ->and(CategoryResource::canCreate())->toBe($catalog)

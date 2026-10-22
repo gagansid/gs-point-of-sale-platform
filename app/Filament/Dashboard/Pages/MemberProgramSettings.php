@@ -71,7 +71,7 @@ final class MemberProgramSettings extends Page
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('member') && $user->hasPermission('member.settings');
+        return $user instanceof User && $user->hasFullDashboard() && Features::enabled('member') && $user->hasPermission('member.settings');
     }
 
     public function mount(): void

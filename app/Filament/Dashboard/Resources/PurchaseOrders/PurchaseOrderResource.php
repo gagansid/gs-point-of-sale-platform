@@ -77,7 +77,7 @@ final class PurchaseOrderResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('stock') && $user->hasPermission('purchase.manage');
+        return $user instanceof User && $user->hasFullDashboard() && Features::enabled('stock') && $user->hasPermission('purchase.manage');
     }
 
     public static function canCreate(): bool

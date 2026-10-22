@@ -169,7 +169,7 @@ final class DashboardPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, function (): string {
                 $user = Filament::auth()->user();
 
-                return $user instanceof User && $user->role->hasFullDashboard()
+                return $user instanceof User && $user->hasFullDashboard()
                     ? view('filament.dashboard.alerts', ['alerts' => DashboardAlerts::for($user)])->render()
                     : '';
             })

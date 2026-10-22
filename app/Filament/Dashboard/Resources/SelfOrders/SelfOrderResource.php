@@ -60,7 +60,7 @@ final class SelfOrderResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('self_order') && $user->role->hasFullDashboard() && $user->hasPermission('order.view_all');
+        return $user instanceof User && Features::enabled('self_order') && $user->hasFullDashboard() && $user->hasPermission('order.view_all');
     }
 
     public static function canCreate(): bool

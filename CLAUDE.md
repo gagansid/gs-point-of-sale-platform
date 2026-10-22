@@ -44,7 +44,9 @@ php artisan test            # Pest
 
 - Role tenant: `owner`, `manager`, `supervisor`, `cashier` (enum `App\Enums\UserRole`).
 - JANGAN mengecek role langsung (`$user->role === ...`). Selalu pakai permission:
-  `$user->can('order.void')`. Pemetaan role -> permission hanya di `UserRole::permissions()`.
+  `$user->can('order.void')`. Pemetaan **bawaan** role -> permission hanya di `UserRole::permissions()`;
+  owner bisa mengubahnya per bisnis (ADR 0026), yang berlaku dibaca lewat `App\Support\RolePermissions`.
+- Menu `/dashboard` = `$user->hasFullDashboard()` (`dashboard.access`) + permission menu. Jangan cek role untuk akses panel.
 - Aksi dengan PIN approval (void, diskon di atas batas) wajib menyimpan `approved_by`
   dan menolak jika approver = pelaku (`SELF_APPROVAL_NOT_ALLOWED`).
 - Super admin memakai tabel `admins` dan guard terpisah.

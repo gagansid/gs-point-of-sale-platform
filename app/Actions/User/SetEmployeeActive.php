@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Aktifkan/nonaktifkan karyawan. Nonaktif = semua sesi langsung putus & tidak bisa login.
- * Tidak bisa menonaktifkan diri sendiri maupun owner aktif terakhir.
+ * Tidak bisa menonaktifkan diri sendiri maupun owner aktif terakhir; non-owner hanya karyawan di bawah role-nya.
  */
 final class SetEmployeeActive
 {
@@ -22,6 +22,10 @@ final class SetEmployeeActive
      */
     public function handle(User $employee, bool $active, User $by): User
     {
+        if (! $employee->is($by)) {
+            SaveEmployee::ensureCanManage($by, $employee, $employee->role);
+        }
+
         if (! $active && $employee->is($by)) {
             throw BusinessException::of(ErrorCode::ValidationError, 'Tidak bisa menonaktifkan akun sendiri', [
                 'is_active' => ['Tidak bisa menonaktifkan akun sendiri'],

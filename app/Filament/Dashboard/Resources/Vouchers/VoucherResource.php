@@ -69,7 +69,7 @@ final class VoucherResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('member') && $user->role->hasFullDashboard() && $user->hasPermission('member.settings');
+        return $user instanceof User && Features::enabled('member') && $user->hasFullDashboard() && $user->hasPermission('member.settings');
     }
 
     public static function canCreate(): bool

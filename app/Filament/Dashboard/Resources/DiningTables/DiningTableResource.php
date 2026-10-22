@@ -64,7 +64,7 @@ final class DiningTableResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('self_order') && $user->role->hasFullDashboard() && $user->hasPermission('table.manage');
+        return $user instanceof User && Features::enabled('self_order') && $user->hasFullDashboard() && $user->hasPermission('table.manage');
     }
 
     public static function canCreate(): bool

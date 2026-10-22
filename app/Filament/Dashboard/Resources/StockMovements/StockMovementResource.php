@@ -57,7 +57,7 @@ final class StockMovementResource extends Resource
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('stock') && $user->role->hasFullDashboard() && $user->hasPermission('stock.adjust');
+        return $user instanceof User && Features::enabled('stock') && $user->hasFullDashboard() && $user->hasPermission('stock.adjust');
     }
 
     public static function canCreate(): bool

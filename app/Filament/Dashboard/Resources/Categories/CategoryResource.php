@@ -15,6 +15,7 @@ use App\Filament\Shared\Layout;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Category;
+use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -51,6 +52,14 @@ final class CategoryResource extends Resource
     protected static ?string $modelLabel = 'kategori';
 
     protected static ?string $pluralModelLabel = 'kategori';
+
+    /** Menu dashboard: akses panel penuh (dashboard.access) + permission menu dari policy (ADR 0026). */
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
+    }
 
     public static function form(Schema $schema): Schema
     {

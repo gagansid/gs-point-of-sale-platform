@@ -9,6 +9,7 @@ use App\Models\Concerns\BelongsToTenant;
 use App\Models\Concerns\LogsChanges;
 use App\Models\Concerns\RecordsAuthor;
 use App\Notifications\ResetUserPassword;
+use App\Support\RolePermissions;
 use Carbon\CarbonImmutable;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
@@ -147,7 +148,45 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     {
         $role = $this->getAttribute('role');
 
-        return $role instanceof UserRole && $role->allows($permission);
+        // Hak akses per bisnis (ADR 0026): pengaturan owner, atau bawaan role
+        return $role instanceof UserRole && RolePermissions::allows($role, $this->getAttribute('tenant_id'), $permission);
+    }
+
+    /**
+     * Permission yang berlaku untuk user ini (untuk /auth/me; app menyembunyikan menu).
+     *
+     * @return list<string>
+     */
+    public function grantedPermissions(): array
+    {
+        $role = $this->getAttribute('role');
+
+        return $role instanceof UserRole ? RolePermissions::granted($role, $this->getAttribute('tenant_id')) : [];
+    }
+
+    /**
+     * Panel /dashboard penuh (Beranda & menu sesuai permission). Tanpa ini, pemegang report.view_shift hanya melihat
+     * menu Laporan (bawaan supervisor, Q50); owner bisa memberikannya ke role lain (ADR 0026).
+     */
+    public function hasFullDashboard(): bool
+    {
+        return $this->hasPermission('dashboard.access');
+    }
+
+    /**
+     * Boleh mengelola karyawan ini (ADR 0026): owner semua karyawan; pengelola karyawan lain hanya role di bawahnya
+     * dan bukan dirinya sendiri (cegah naik hak setelah user.manage didelegasikan).
+     */
+    public function canManageEmployee(self $employee): bool
+    {
+        return $employee->tenant_id === $this->tenant_id
+            && ($this->role === UserRole::Owner || ($employee->isNot($this) && $employee->role->rank() < $this->role->rank()));
+    }
+
+    /** Boleh memberikan role ini ke karyawan (ADR 0026): owner semua; lainnya hanya role di bawahnya. */
+    public function canAssignRole(UserRole $role): bool
+    {
+        return $this->role === UserRole::Owner || $role->rank() < $this->role->rank();
     }
 
     /** Link lupa kata sandi berbahasa Indonesia (bawaan Laravel: bahasa Inggris). */
@@ -169,16 +208,18 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     /** Syarat akses panel selain verifikasi email (untuk membedakan pesan login). */
     public function canAccessPanelIgnoringVerification(Panel $panel): bool
     {
-        return $panel->getId() === 'dashboard' && $this->is_active && $this->role->canAccessDashboard();
+        return $panel->getId() === 'dashboard' && $this->is_active
+            && ($this->hasPermission('dashboard.access') || $this->hasPermission('report.view_shift'));
     }
 
     /**
-     * Pengguna dashboard terbatas (tanpa report.view, mis. supervisor) wajib email terverifikasi (Q46).
-     * Owner/manager tidak diblokir: owner baru daftar mandiri harus tetap bisa masuk (Q31).
+     * Role yang login dengan PIN/username (supervisor, kasir) wajib email terverifikasi untuk dashboard (Q46), juga
+     * bila owner memberi mereka akses dashboard (ADR 0026). Owner/manager tidak diblokir: owner baru daftar mandiri
+     * harus tetap bisa masuk (Q31).
      */
     public function needsVerifiedEmailForDashboard(): bool
     {
-        return ! $this->role->hasFullDashboard() && ! $this->hasVerifiedEmail();
+        return ! $this->role->canUsePasswordLogin() && ! $this->hasVerifiedEmail();
     }
 
     /**

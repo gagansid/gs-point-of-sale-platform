@@ -30,3 +30,4 @@ template: `docs/templates/adr.md`.
 | [0023](0023-customer-credit.md) | Kasbon member: bukti QR/PIN, batas kredit, void/retur, pelunasan masuk kas shift | Diterima |
 | [0024](0024-subscription-plans-billing.md) | Paket langganan & tagihan SaaS: fitur per paket, Midtrans vendor / manual, pengingat | Diterima |
 | [0025](0025-plan-features-quotas-addons.md) | Katalog fitur, kuota, dan add-on paket langganan; gerbang fitur di API | Diterima |
+| [0026](0026-tenant-role-permissions.md) | Hak akses role per bisnis: owner mengatur permission manager/supervisor/kasir, `dashboard.access` | Diterima |

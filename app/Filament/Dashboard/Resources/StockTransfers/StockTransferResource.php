@@ -68,7 +68,7 @@ final class StockTransferResource extends Resource
         $user = auth()->user();
 
         // Butuh minimal 2 outlet aktif di bisnis
-        return $user instanceof User && Features::enabled('stock') && $user->role->hasFullDashboard() && $user->hasPermission('stock.transfer')
+        return $user instanceof User && Features::enabled('stock') && $user->hasFullDashboard() && $user->hasPermission('stock.transfer')
             && Outlet::query()->active()->count() > 1;
     }
 

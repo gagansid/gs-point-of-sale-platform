@@ -11,6 +11,7 @@ use App\Filament\Dashboard\Resources\OptionGroups\Schemas\OptionGroupForm;
 use App\Filament\Dashboard\Resources\OptionGroups\Tables\OptionGroupsTable;
 use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Models\OptionGroup;
+use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -38,6 +39,14 @@ final class OptionGroupResource extends Resource
     protected static ?string $modelLabel = 'grup opsi';
 
     protected static ?string $pluralModelLabel = 'grup opsi';
+
+    /** Menu dashboard: akses panel penuh (dashboard.access) + permission menu dari policy (ADR 0026). */
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
+    }
 
     public static function form(Schema $schema): Schema
     {

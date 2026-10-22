@@ -66,7 +66,7 @@ final class ReceivableResource extends Resource
     {
         $user = auth()->user();
 
-        if (! $user instanceof User || ! Features::enabled('member') || ! $user->role->hasFullDashboard() || ! $user->hasPermission('member.view')) {
+        if (! $user instanceof User || ! Features::enabled('member') || ! $user->hasFullDashboard() || ! $user->hasPermission('member.view')) {
             return false;
         }
 

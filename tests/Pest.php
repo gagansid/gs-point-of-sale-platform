@@ -16,6 +16,7 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Features;
+use App\Support\RolePermissions;
 use App\Support\TenantContext;
 use App\Support\WebCashier;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -87,6 +88,8 @@ function freshAuth(): void
     CurrentOutlet::forget();
     // Paket tenant di-cache per request (ADR 0024)
     Features::flush();
+    // Hak akses per bisnis di-cache per request (ADR 0026)
+    RolePermissions::flush();
 }
 
 /**
