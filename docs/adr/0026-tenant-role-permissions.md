@@ -43,4 +43,7 @@ Pilihan yang ditimbang:
   `RolePermissions` / `$user->can()` (CLAUDE.md, AGENTS.md).
 - Aplikasi Flutter tidak perlu diubah: daftar `permissions` di `/auth/me` sudah mengikuti pengaturan owner. Menu di
   aplikasi baru berubah setelah aplikasi memuat ulang `/auth/me`.
-- Halaman **Pengaturan → Hak akses** (langkah 2) memakai Action yang sama dan dicatat di Riwayat perubahan.
+- Halaman **Pengaturan → Hak akses** (`access.manage`): tab Manager · Supervisor · Kasir (badge Bawaan/Diubah), kartu
+  per kelompok menu (`App\Support\PermissionCatalog`, label Bahasa Indonesia), Pilih semua, **Kembalikan bawaan**.
+  Pilihan yang sama dengan bawaan disimpan sebagai bawaan (tanpa baris). Riwayat perubahan menampilkan izin yang
+  *Diberi* / *Dicabut*, bukan JSON.

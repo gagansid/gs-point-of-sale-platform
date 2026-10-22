@@ -533,7 +533,7 @@ Panel Filament; owner hanya melihat data bisnisnya sendiri lewat `TenantContext`
 | Katalog | Produk · Kategori · Grup opsi | Produk (import Excel, sesuaikan stok, **riwayat stok**, stok menipis), kategori, grup opsi | O, M |
 | Stok | Purchase order · Stok masuk · Transfer · Stok opname · **Riwayat stok** · Supplier | Dokumen stok (ADR 0015, 0021); Riwayat stok = kartu stok `stock_movements` per produk & outlet dengan stok akhir dan dokumen asal, hanya baca (Q14, Q130) | O, M (`stock`) |
 | Pelanggan | Member · **Kasbon** · Program member · Kartu stempel · Voucher · Promo | Member & program loyalitas (ADR 0013), kasbon semua member: saldo, batas, umur sejak saldo naik dari nol, pelunasan (ADR 0023, Q130), promo (ADR 0022) | O, M |
-| Pengaturan | Bisnis & tampilan · Outlet · Karyawan · Perangkat · Metode pembayaran · Pembayaran online · Meja & QR | Setelan toko per izin & fitur paket | O (sebagian M) |
+| Pengaturan | Bisnis & tampilan · Outlet · Karyawan · **Hak akses** · Perangkat · Metode pembayaran · Pembayaran online · Meja & QR | Setelan toko per izin & fitur paket; Hak akses = centang permission per role, kembali ke bawaan, tercatat di Riwayat perubahan (ADR 0026) | O (sebagian M sesuai hak akses) |
 | Akun | Langganan · Riwayat perubahan | Langganan gs.POS, riwayat perubahan data (audit) | O; riwayat juga M (katalog) |
 
 ## Panel maintenance (`/admin`)

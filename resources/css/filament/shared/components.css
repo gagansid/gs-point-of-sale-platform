@@ -1584,6 +1584,47 @@
     font-weight: 500;
 }
 
+/* Tab form tanpa kartu (Tabs::contained(false), mis. Pengaturan → Hak akses): sama dengan tab kartu (gs-card-tab) —
+   rata kiri, garis bawah 2px primary, tanpa latar pill (tabs.md) */
+.fi-sc-tabs > .fi-tabs:not(.fi-contained) {
+    justify-content: flex-start;
+    gap: 24px;
+    margin-inline: 0;
+    padding: 0;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.fi-sc-tabs > .fi-tabs:not(.fi-contained) .fi-tabs-item {
+    gap: 6px;
+    margin-bottom: -1px;
+    padding: 8px 0;
+    border-bottom: 2px solid transparent;
+    background: none;
+    color: var(--text-muted);
+}
+
+.fi-sc-tabs > .fi-tabs:not(.fi-contained) .fi-tabs-item:hover {
+    background: none;
+    color: var(--text);
+}
+
+.fi-sc-tabs > .fi-tabs:not(.fi-contained) .fi-tabs-item.fi-active {
+    border-bottom-color: var(--primary);
+    background: none;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.fi-sc-tabs > .fi-tabs:not(.fi-contained) .fi-tabs-item .fi-icon {
+    width: 16px;
+    height: 16px;
+}
+
 /* ---------- Tombol aksi baris: 32px seperti kontrol lain (L6), ikon garis 14px, abu ---------- */
 .fi-ta-cell .fi-ta-actions .fi-icon-btn,
 .fi-ta-cell .fi-ta-actions .fi-dropdown-trigger .fi-icon-btn,

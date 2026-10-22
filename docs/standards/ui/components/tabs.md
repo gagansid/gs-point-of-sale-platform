@@ -7,7 +7,7 @@
 | Jenis | Filament | Contoh |
 |---|---|---|
 | Tab daftar (filter cepat) | `ListRecords::getTabs()` | Penjualan: Semua · Open bill · Selesai · Void |
-| Tab form | `Tabs::make()` | Pengaturan Outlet: Umum · Pajak & service · Struk |
+| Tab form | `Tabs::make()->contained(false)` | Pengaturan → Hak akses: Manager · Supervisor · Kasir (badge Bawaan/Diubah); gaya garis bawah sama dengan tab kartu (`components.css`) |
 | Tab laporan | Halaman kustom + `Tabs` | Ringkasan · Per produk · Per metode bayar |
 
 **Tidak** dipakai untuk langkah berurutan (pakai `Wizard`), atau jika hanya ada 1 tab.

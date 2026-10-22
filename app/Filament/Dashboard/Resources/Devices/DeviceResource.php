@@ -56,7 +56,7 @@ final class DeviceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'perangkat';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     protected static bool $isGloballySearchable = false;
 

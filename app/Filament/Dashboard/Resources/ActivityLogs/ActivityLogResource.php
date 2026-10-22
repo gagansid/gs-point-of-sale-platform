@@ -20,9 +20,11 @@ use App\Models\Outlet;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductStock;
+use App\Models\RolePermission;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Money;
+use App\Support\PermissionCatalog;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Resources\Resource;
@@ -73,6 +75,8 @@ final class ActivityLogResource extends Resource
         PaymentMethod::class => ['Metode bayar', 'payment_method.manage'],
         Outlet::class => ['Outlet', 'outlet.settings'],
         User::class => ['Karyawan', 'user.manage'],
+        // Hak akses role (ADR 0026)
+        RolePermission::class => ['Hak akses', 'access.manage'],
     ];
 
     private const FIELDS = [
@@ -85,7 +89,7 @@ final class ActivityLogResource extends Resource
         'discount_limits' => 'Batas diskon', 'daily_sales_target' => 'Target harian', 'monthly_sales_target' => 'Target bulanan',
         'cash_float' => 'Modal laci tetap', 'auto_lock_minutes' => 'Kunci layar otomatis (menit)', 'cash_out_approval_limit' => 'Batas kas keluar tanpa PIN', 'refund_max_days' => 'Batas retur (hari)',
         'email' => 'Email', 'username' => 'Username', 'role' => 'Role', 'web_cashier_access' => 'Akses kasir web',
-        'is_available' => 'Tersedia',
+        'is_available' => 'Tersedia', 'permissions' => 'Hak akses',
     ];
 
     private const MONEY_FIELDS = ['price', 'cost_price', 'price_delta', 'daily_sales_target', 'monthly_sales_target', 'cash_float', 'cash_out_approval_limit'];
@@ -214,8 +218,8 @@ final class ActivityLogResource extends Resource
                 ->when($types !== [], fn (Builder $w) => $w->orWhereIn('subject_type', $types));
 
             // Nama data saat ini (log perubahan hanya menyimpan kolom yang berubah); tetap dalam tenant aktif
-            // (ProductStock tidak punya kolom name; nama produk & outlet sudah ada di properties)
-            foreach (array_diff(array_keys(self::SUBJECTS), [ProductStock::class]) as $type) {
+            // (ProductStock & RolePermission tidak punya kolom name; nama produk & outlet sudah ada di properties)
+            foreach (array_diff(array_keys(self::SUBJECTS), [ProductStock::class, RolePermission::class]) as $type) {
                 $q->orWhere(fn (Builder $w) => $w->where('subject_type', $type)
                     ->whereIn('subject_id', $type::query()->withoutGlobalScope(SoftDeletingScope::class)
                         ->whereRaw('LOWER(name) LIKE ?', [$term])->select('id')));
@@ -236,6 +240,10 @@ final class ActivityLogResource extends Resource
 
         if ($record->subject_type === ProductStock::class) {
             return ($properties['product'] ?? '—').' · '.($properties['outlet'] ?? '—');
+        }
+
+        if ($record->subject_type === RolePermission::class) {
+            return 'Role '.(self::loggedRole($record)?->getLabel() ?? '—');
         }
 
         $name = $properties['attributes']['name'] ?? $properties['old']['name'] ?? null;
@@ -292,6 +300,13 @@ final class ActivityLogResource extends Resource
         $rows = [];
         foreach ($record->event === 'deleted' ? $old : $new as $field => $value) {
             $field = (string) $field;
+
+            if ($field === 'permissions' && $record->subject_type === RolePermission::class) {
+                $rows[] = self::permissionChange($record, $old, $new, $full);
+
+                continue;
+            }
+
             $rows[] = [
                 'field' => $field,
                 'label' => self::FIELDS[$field] ?? $field,
@@ -319,6 +334,38 @@ final class ActivityLogResource extends Resource
         }
 
         return $values === [] ? ['—'] : $values;
+    }
+
+    /** Role pada log hak akses (nilai baru, atau lama bila dihapus/kembali ke bawaan). */
+    private static function loggedRole(ActivityLog $record): ?UserRole
+    {
+        $properties = $record->properties;
+
+        return UserRole::tryFrom((string) ($properties['attributes']['role'] ?? $properties['old']['role'] ?? ''));
+    }
+
+    /**
+     * Hak akses: "Sebelum" = izin yang dicabut, "Sesudah" = izin yang diberikan, dibanding sebelumnya. Dibuat =
+     * dibanding bawaan role; dihapus = kembali ke bawaan.
+     *
+     * @param  array<mixed>  $old
+     * @param  array<mixed>  $new
+     * @return array{field: string, label: string, old: string, new: string}
+     */
+    private static function permissionChange(ActivityLog $record, array $old, array $new, bool $full): array
+    {
+        $defaults = self::loggedRole($record)?->grantedPermissions() ?? [];
+        $before = $record->event === 'created' ? $defaults : array_map('strval', (array) ($old['permissions'] ?? []));
+        $after = $record->event === 'deleted' ? $defaults : array_map('strval', (array) ($new['permissions'] ?? []));
+        $labels = fn (array $permissions): string => $permissions === [] ? '—'
+            : ($full ? implode(', ', array_map(PermissionCatalog::label(...), $permissions)) : mb_strimwidth(implode(', ', array_map(PermissionCatalog::label(...), $permissions)), 0, 60, '…'));
+
+        return [
+            'field' => 'permissions',
+            'label' => $record->event === 'deleted' ? 'Hak akses (kembali ke bawaan)' : 'Hak akses',
+            'old' => ($removed = array_values(array_diff($before, $after))) === [] ? '—' : 'Dicabut: '.$labels($removed),
+            'new' => ($added = array_values(array_diff($after, $before))) === [] ? '—' : 'Diberi: '.$labels($added),
+        ];
     }
 
     private static function causerName(ActivityLog $record): string
@@ -382,6 +429,7 @@ final class ActivityLogResource extends Resource
             $field === 'role' => UserRole::tryFrom((string) $value)?->getLabel() ?? (string) $value,
             $field === 'category' => PaymentCategory::tryFrom((string) $value)?->getLabel() ?? (string) $value,
             $field === 'discount_limits' && is_array($value) => 'Kasir '.($value['cashier'] ?? 0).'%, Supervisor '.($value['supervisor'] ?? 0).'%',
+            $field === 'permissions' && is_array($value) => count($value).' izin',
             is_array($value) => (string) json_encode($value),
             default => $full ? (string) $value : mb_strimwidth((string) $value, 0, 60, '…'),
         };
