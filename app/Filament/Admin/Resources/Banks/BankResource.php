@@ -37,7 +37,7 @@ use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 /**
- * Sistem → Bank (Q124): master bank untuk rekening transfer manual tagihan langganan. Logo vektor otomatis dari singkatan
+ * Langganan → Bank (Q124): master bank untuk rekening transfer manual tagihan langganan. Logo vektor otomatis dari singkatan
  * & warna merek, atau unggah logo (PNG/JPG/WEBP). Bank tidak dihapus, hanya dinonaktifkan.
  */
 final class BankResource extends Resource
@@ -50,7 +50,7 @@ final class BankResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingLibrary;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Sistem';
+    protected static string|UnitEnum|null $navigationGroup = 'Langganan';
 
     protected static ?string $navigationLabel = 'Bank';
 
@@ -58,7 +58,7 @@ final class BankResource extends Resource
 
     protected static ?string $pluralModelLabel = 'bank';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
 
     protected static bool $isGloballySearchable = false;
 

@@ -11,7 +11,7 @@ use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 
-/** Sistem → Admin: kelola akun super admin. */
+/** Pengaturan → Admin: kelola akun super admin. */
 beforeEach(function () {
     Filament::setCurrentPanel('admin');
     $this->me = Admin::factory()->withTwoFactor()->create(['password' => 'Rahasia-Admin-1!']);

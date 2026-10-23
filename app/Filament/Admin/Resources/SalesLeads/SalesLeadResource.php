@@ -175,14 +175,14 @@ final class SalesLeadResource extends Resource
     private static function createTenantAction(): Action
     {
         return Action::make('createTenant')
-            ->label('Buat tenant')
+            ->label('Buat bisnis')
             ->icon(Heroicon::OutlinedBuildingStorefront)
             ->iconButton()
-            ->tooltip('Buat tenant dari lead ini')
+            ->tooltip('Buat bisnis dari lead ini')
             ->visible(fn (SalesLead $record): bool => $record->status !== SalesLeadStatus::Won)
-            ->modalHeading(fn (SalesLead $record): string => 'Buat tenant: '.$record->business_name)
+            ->modalHeading(fn (SalesLead $record): string => 'Buat bisnis: '.$record->business_name)
             ->modalDescription('Owner menerima email "Atur kata sandi" (berlaku 3 hari). Lead otomatis ditandai Berhasil.')
-            ->modalSubmitActionLabel('Buat tenant & kirim undangan')
+            ->modalSubmitActionLabel('Buat bisnis & kirim undangan')
             ->modalWidth('2xl')
             ->fillForm(fn (SalesLead $record): array => [
                 'business_name' => $record->business_name,
@@ -230,7 +230,7 @@ final class SalesLeadResource extends Resource
                 }
 
                 Notification::make()->success()
-                    ->title('Tenant '.$tenant->name.' dibuat')
+                    ->title('Bisnis '.$tenant->name.' dibuat')
                     ->body('Undangan atur kata sandi dikirim ke '.$data['owner_email'].'.')
                     ->send();
             });

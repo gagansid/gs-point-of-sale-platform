@@ -15,7 +15,7 @@ use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
 /**
- * Sistem → Maintenance: matikan sementara semua halaman & API (mis. saat migrasi besar). Admin yang
+ * Sistem → Pemeliharaan: matikan sementara semua halaman & API (mis. saat migrasi besar). Admin yang
  * mengaktifkan langsung diarahkan ke URL secret sehingga browsernya tetap bisa membuka panel.
  */
 final class MaintenanceMode extends Page
@@ -34,7 +34,7 @@ final class MaintenanceMode extends Page
 
     protected static ?string $slug = 'maintenance';
 
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 3;
 
     public function getSubheading(): string
     {

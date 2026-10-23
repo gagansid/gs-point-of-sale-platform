@@ -28,7 +28,7 @@ use Illuminate\Validation\Rules\Password;
 use UnitEnum;
 
 /**
- * Sistem → Admin: akun super admin (tanpa akun default; akun pertama dari `php artisan pos:create-admin`).
+ * Pengaturan → Admin: akun super admin (tanpa akun default; akun pertama dari `php artisan pos:create-admin`).
  * Tambah, ubah, reset 2FA admin lain, hapus. Aksi sensitif minta kata sandi admin yang sedang login.
  */
 final class AdminResource extends Resource
@@ -39,7 +39,7 @@ final class AdminResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Sistem';
+    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?string $navigationLabel = 'Admin';
 
@@ -47,7 +47,7 @@ final class AdminResource extends Resource
 
     protected static ?string $pluralModelLabel = 'admin';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 3;
 
     protected static bool $isGloballySearchable = false;
 

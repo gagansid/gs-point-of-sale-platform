@@ -19,7 +19,7 @@ final class CashierLoginRequest extends FormRequest
             'business' => ['required_if:mode,username', 'nullable', 'string', 'max:100'],
             'login' => ['required', 'string', 'max:150'],
             'password' => ['required', 'string', 'max:255'],
-            // Cloudflare Turnstile bila diaktifkan admin untuk login kasir web (Sistem → Keamanan)
+            // Cloudflare Turnstile bila diaktifkan admin untuk login kasir web (Pengaturan → Keamanan)
             Turnstile::FIELD => [new TurnstilePassed(Turnstile::CASHIER)],
         ];
     }

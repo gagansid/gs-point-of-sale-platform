@@ -79,7 +79,7 @@ final class TenantForm
                             ->helperText('Kosongkan bila tanpa batas. Setelah tanggal ini bisnis otomatis hanya-baca (bisa login & lihat data, tidak bisa transaksi)')
                             ->native(false)
                             ->displayFormat('j M Y')
-                            // Lama trial dari Sistem → Pendaftaran (ADR 0009)
+                            // Lama trial dari Pengaturan → Pendaftaran (ADR 0009)
                             ->default(fn () => now()->addDays(app(SystemSettings::class)->trialDays()))
                             ->minDate(fn (string $operation) => $operation === 'create' ? today() : null),
                     ]),

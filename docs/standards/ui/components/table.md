@@ -98,7 +98,7 @@ Semua tabel memakai pola yang sama dengan Produk (dijaga `tests/Feature/Filament
 | Riwayat stok | Semua · Masuk · Keluar · Penyesuaian & opname (tanpa angka) | Tanggal, produk, jenis, oleh | — |
 | Kasbon | Semua · Belum lunas · Lama · Melebihi batas · Lunas | — | — |
 | Shift | Semua · Buka · Ditutup · Ada selisih | Tanggal dibuka | — |
-| Tenant (`/admin`) | Semua · Aktif · Trial · Suspended · Segera berakhir | Jenis usaha | — |
+| Bisnis (`/admin`) | Semua · Aktif · Trial · Suspended · Segera berakhir | Jenis usaha | — |
 | Paket (`/admin`) | Semua · Aktif · Nonaktif | Tampil, Periode, Memuat fitur, Dipakai bisnis | — |
 | Add-on (`/admin`) | Semua · Aktif · Nonaktif | Jenis, Fitur, Kuota, Tampil, Dipakai bisnis | — |
 | Tagihan (`/admin`) | Semua · per status · Lewat jatuh tempo | Status, Bisnis, Jenis, Paket, Siklus, Dibayar via, Dibuat oleh, Lewat jatuh tempo, Tanggal dibuat/jatuh tempo/lunas, Total min–maks | — |

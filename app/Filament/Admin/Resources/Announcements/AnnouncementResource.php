@@ -97,7 +97,7 @@ final class AnnouncementResource extends Resource
                 ])->tooltip('Aksi lain'),
             ]);
 
-        return TableEmptyState::apply($table, Heroicon::OutlinedMegaphone, 'pengumuman', 'Pengumuman tampil sebagai banner untuk semua tenant');
+        return TableEmptyState::apply($table, Heroicon::OutlinedMegaphone, 'pengumuman', 'Pengumuman tampil sebagai banner untuk semua bisnis');
     }
 
     /** @param array<string, mixed> $data */

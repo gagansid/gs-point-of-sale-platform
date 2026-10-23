@@ -11,7 +11,7 @@ use Throwable;
 
 /**
  * Cloudflare Turnstile di halaman login (anti-bot / credential stuffing). Aktif per halaman login (super admin,
- * owner + daftar + lupa kata sandi, kasir web) lewat Sistem → Keamanan, dan hanya bila kunci TURNSTILE_* terisi.
+ * owner + daftar + lupa kata sandi, kasir web) lewat Pengaturan → Keamanan, dan hanya bila kunci TURNSTILE_* terisi.
  * Verifikasi fail-closed: Cloudflare tidak bisa dihubungi = ditolak (pengguna diminta mencoba lagi).
  */
 final class Turnstile
@@ -36,7 +36,7 @@ final class Turnstile
 
     public function __construct(private readonly SystemSettings $settings) {}
 
-    /** Kunci diisi di Sistem → Keamanan, atau .env (TURNSTILE_SITE_KEY / TURNSTILE_SECRET_KEY) sebagai cadangan. */
+    /** Kunci diisi di Pengaturan → Keamanan, atau .env (TURNSTILE_SITE_KEY / TURNSTILE_SECRET_KEY) sebagai cadangan. */
     public static function configured(): bool
     {
         return self::siteKey() !== '' && self::secretKey() !== '';

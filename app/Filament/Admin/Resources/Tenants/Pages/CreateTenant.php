@@ -20,7 +20,7 @@ final class CreateTenant extends CreateRecord
 
     protected static bool $canCreateAnother = false;
 
-    protected static ?string $title = 'Tambah tenant';
+    protected static ?string $title = 'Tambah bisnis';
 
     protected static ?string $breadcrumb = 'Tambah';
 
@@ -36,7 +36,7 @@ final class CreateTenant extends CreateRecord
 
     protected function getCreatedNotificationTitle(): string
     {
-        return 'Tenant berhasil ditambahkan';
+        return 'Bisnis berhasil ditambahkan';
     }
 
     protected function getRedirectUrl(): string

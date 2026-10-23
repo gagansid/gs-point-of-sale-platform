@@ -1,4 +1,4 @@
-{{-- Sistem → Pendaftaran: ringkasan pendaftar mandiri + pendaftar terbaru (OnboardingSettings::overview). --}}
+{{-- Pengaturan → Pendaftaran: ringkasan pendaftar mandiri + pendaftar terbaru (OnboardingSettings::overview). --}}
 @php
     $num = fn (int $n): string => number_format($n, 0, ',', '.');
 @endphp
@@ -34,7 +34,7 @@
 
     <x-filament::section icon="heroicon-o-user-plus" heading="Pendaftar terbaru" description="Daftar sendiri dari halaman depan (bukan dibuat admin/sales)">
         <x-slot name="afterHeader">
-            <x-filament::link :href="$allUrl" size="sm">Semua tenant</x-filament::link>
+            <x-filament::link :href="$allUrl" size="sm">Semua bisnis</x-filament::link>
         </x-slot>
         @if ($recent->isEmpty())
             <p class="gs-detail-empty">Belum ada pendaftar mandiri</p>

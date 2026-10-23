@@ -41,7 +41,7 @@ use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 /**
- * Pelanggan → Paket (ADR 0024, Q108): paket langganan SaaS, harga, kuota, fitur, status aktif, dan periode
+ * Langganan → Paket (ADR 0024, Q108): paket langganan SaaS, harga, kuota, fitur, status aktif, dan periode
  * penjualan opsional (promo: bisa dipilih owner sampai tanggal tertentu; kosong = tanpa batas waktu).
  */
 final class PlanResource extends Resource
@@ -52,7 +52,7 @@ final class PlanResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Pelanggan';
+    protected static string|UnitEnum|null $navigationGroup = 'Langganan';
 
     protected static ?string $navigationLabel = 'Paket';
 
@@ -60,7 +60,7 @@ final class PlanResource extends Resource
 
     protected static ?string $pluralModelLabel = 'paket';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
 
     protected static bool $isGloballySearchable = false;
 

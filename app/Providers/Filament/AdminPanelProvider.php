@@ -11,9 +11,12 @@ use App\Filament\Shared\FieldDefaults;
 use App\Filament\Shared\Layout;
 use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\EnsureAdminTwoFactorWhenRequired;
+use App\Models\Admin;
+use App\Support\AdminAlerts;
 use App\Support\Domains;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Enums\ThemeMode;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -22,6 +25,7 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Enums\Width;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -48,7 +52,7 @@ final class AdminPanelProvider extends PanelProvider
             ->login(Login::class)
             ->profile(EditProfile::class, isSimple: false)
             // 2FA aplikasi authenticator. Route & middleware selalu terdaftar ("wajib"); keputusan
-            // wajib/tidak diambil per request oleh middleware dari setelan Sistem → Keamanan
+            // wajib/tidak diambil per request oleh middleware dari setelan Pengaturan → Keamanan
             ->multiFactorAuthentication(
                 [AppAuthentication::make()->recoverable()->brandName('gs.POS Admin')],
                 isRequired: true,
@@ -66,8 +70,14 @@ final class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->navigationGroups([
+                // Bisnis pelanggan & calon pelanggan
                 NavigationGroup::make('Pelanggan')->collapsible(false),
+                // Yang dijual (paket, add-on), tagihan, dan cara bayar langganan
+                NavigationGroup::make('Langganan')->collapsible(false),
                 NavigationGroup::make('Aplikasi')->collapsible(false),
+                // Setelan platform & akun admin
+                NavigationGroup::make('Pengaturan')->collapsible(false),
+                // Operasional teknis: backup, antrean, pemeliharaan, log, audit
                 NavigationGroup::make('Sistem')->collapsible(false),
             ])
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
@@ -89,6 +99,11 @@ final class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            // Lonceng peringatan di kiri tombol tema (Q135): bukti transfer, tagihan lewat jatuh tempo, calon pelanggan baru,
+            // job gagal, backup usang, mode pemeliharaan — tampilan sama dengan panel /dashboard
+            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): string => Filament::auth()->user() instanceof Admin
+                ? view('filament.shared.alerts', ['alerts' => AdminAlerts::all()])->render()
+                : '');
     }
 }

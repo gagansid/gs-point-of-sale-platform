@@ -453,6 +453,11 @@
     color: var(--danger-700);
 }
 
+.gs-alerts-icon.is-info {
+    background: var(--primary-lt);
+    color: var(--primary);
+}
+
 .dark .gs-alerts-icon.is-warning { color: var(--warning-300); }
 .dark .gs-alerts-icon.is-danger { color: var(--danger-300); }
 

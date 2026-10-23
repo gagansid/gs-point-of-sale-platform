@@ -36,7 +36,7 @@ final class BackupManager extends Page
 
     protected static ?string $slug = 'backups';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 1;
 
     /** Zip backup berisi hash kata sandi & PIN: wajib terenkripsi di production. */
     public function isEncrypted(): bool

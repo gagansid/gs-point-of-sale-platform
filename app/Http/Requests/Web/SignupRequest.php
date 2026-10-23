@@ -55,7 +55,7 @@ final class SignupRequest extends FormRequest
         return ['email.unique' => 'Email ini sudah terdaftar. Silakan masuk atau gunakan email lain.'];
     }
 
-    /** Domain email yang diblokir admin (Sistem → Pendaftaran), termasuk subdomainnya. */
+    /** Domain email yang diblokir admin (Pengaturan → Pendaftaran), termasuk subdomainnya. */
     private function allowedDomain(string $attribute, mixed $value, Closure $fail): void
     {
         $domain = mb_strtolower((string) str((string) $value)->afterLast('@'));

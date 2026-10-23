@@ -15,7 +15,7 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 /**
- * Job di antrean (Dasbor & Sistem → Queue): yang sedang diproses, menunggu, atau terjadwal — admin tahu pekerjaan apa
+ * Job di antrean (Dasbor & Sistem → Antrean): yang sedang diproses, menunggu, atau terjadwal — admin tahu pekerjaan apa
  * yang sedang berjalan (backup, email). Hanya nama job; isi data job tidak ditampilkan. Tanpa polling (shared hosting):
  * tombol Muat ulang; cron memproses antrean tiap menit.
  */

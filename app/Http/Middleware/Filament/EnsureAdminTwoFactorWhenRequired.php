@@ -10,7 +10,7 @@ use Filament\Auth\MultiFactor\Http\Middleware\EnsureMultiFactorAuthenticationIsE
 use Illuminate\Http\Request;
 
 /**
- * Pengganti middleware wajib-2FA Filament yang membaca setelan Sistem → Keamanan SETIAP request.
+ * Pengganti middleware wajib-2FA Filament yang membaca setelan Pengaturan → Keamanan SETIAP request.
  *
  * Filament menentukan route & middleware 2FA saat registrasi route; dengan route cache
  * (php artisan optimize) perubahan setelan tidak akan berlaku. Karena itu panel selalu

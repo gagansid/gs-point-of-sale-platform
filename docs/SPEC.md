@@ -540,17 +540,17 @@ Panel Filament; owner hanya melihat data bisnisnya sendiri lewat `TenantContext`
 
 Memakai tabel `admins` dan guard sendiri. Tidak pernah bisa diakses akun tenant.
 
-| Menu | Fungsi |
-|---|---|
-| Tenant | Buat tenant + owner pertama, ubah status, atur `subscription_ends_at`, statistik pemakaian |
-| Versi Aplikasi | Atur `min_version` dan `latest_version` Flutter |
-| Pengumuman | Banner ke semua tenant |
-| Maintenance Mode | `php artisan down` dengan secret bypass untuk admin |
-| Backup | Daftar backup, backup manual, unduh file |
-| Log Viewer | Membaca log Laravel tanpa SSH |
-| Queue | Daftar job gagal, jalankan ulang |
-| Admin | Kelola akun super admin |
-| Keamanan | On/off wajib 2FA untuk semua super admin (konfirmasi kata sandi, ADR 0006); 2FA pribadi diatur di profil |
+| Grup | Menu | Fungsi |
+|---|---|---|
+| — | Dasbor | Ringkasan bisnis pelanggan, langganan, aktivitas platform (D1–D4) |
+| Topbar | Lonceng peringatan | Mode pemeliharaan, bukti transfer menunggu, tagihan lewat jatuh tempo, calon pelanggan baru, job gagal, backup usang (Q135) |
+| Pelanggan | Bisnis | Buat bisnis + owner pertama, ubah status, paket & add-on, tagihan, statistik pemakaian (model `tenants`) |
+| Pelanggan | Calon pelanggan | Lead dari halaman depan → buat bisnis trial + undangan owner |
+| Langganan | Paket · Add-on · Tagihan | Katalog paket & add-on (ADR 0024–0025), semua tagihan lintas bisnis (Perlu verifikasi, Lewat jatuh tempo) |
+| Langganan | Pembayaran langganan · Bank | Rekening, QRIS statis, Midtrans vendor (Q123); master bank (Q124) |
+| Aplikasi | Versi aplikasi · Pengumuman | `min_version`/`latest_version` Flutter; banner ke semua bisnis |
+| Pengaturan | Pendaftaran · Keamanan · Admin | Daftar mandiri & trial; wajib 2FA (ADR 0006), Turnstile, pemeriksaan konfigurasi; akun super admin |
+| Sistem | Backup · Antrean · Pemeliharaan · Log · Riwayat perubahan | Backup & unduh; job gagal; `php artisan down` dengan secret bypass; log tanpa SSH; audit setelan platform |
 
 ## Keamanan
 
@@ -801,5 +801,6 @@ ditambahkan ke tabel ini dengan status `Terbuka`.
 | Q132 | Susunan menu owner | Laporan tanpa grup tepat di bawah Beranda (grup 1-menu dihapus); Transaksi: Kasir · Penjualan · Pesanan meja · Shift; Stok mengikuti alur Purchase order → Stok masuk → Transfer → Stok opname → Riwayat stok → Supplier; Program member pindah ke Pelanggan; Pengaturan hanya setelan toko; grup baru **Akun** (Langganan, Riwayat perubahan); ikon unik per menu (Voucher `gift`, Program member `star`, Purchase order `shopping-cart`, Langganan `rocket-launch`). Slug/URL tetap. | Diterima | `docs/standards/ui/layout.md` §2 |
 | Q133 | Hak akses per bisnis | ADR 0026. Owner mengatur permission role manager/supervisor/kasir (tabel `role_permissions`, bawaan `UserRole::permissions()`). Khusus owner: `billing.manage`, `access.manage`, `outlet.access_all`; lainnya bisa didelegasikan (termasuk Karyawan, Outlet, Bisnis & tampilan, Pembayaran online). Permission baru `dashboard.access` (panel penuh) menggantikan cek role; supervisor/kasir bisa diberi. Pengelola karyawan non-owner hanya mengatur role di bawahnya (`FORBIDDEN`). | Diterima | ADR 0026 |
 | Q134 | Hak akses per karyawan | ADR 0026 opsi B. Owner bisa menambah/mencabut izin satu karyawan di atas hak akses role-nya (Karyawan → Hak akses). Disimpan sebagai selisih (`users.permissions_granted/revoked`); izin khusus owner tidak bisa ditambahkan; ganti role menghapus pengecualian; tercatat di Riwayat perubahan. | Diterima | ADR 0026 |
+| Q135 | Susunan menu & lonceng admin | Panel `/admin`: grup Pelanggan (Bisnis, Calon pelanggan) · **Langganan** (Paket, Add-on, Tagihan, Pembayaran langganan, Bank) · Aplikasi · **Pengaturan** (Pendaftaran, Keamanan, Admin) · Sistem (Backup, Antrean, Pemeliharaan, Log, Riwayat perubahan); istilah UI "Tenant" → **Bisnis** (model/URL tetap). Lonceng peringatan admin (`AdminAlerts`, view bersama dengan owner). Tautan tab langsung `?tab=` di semua daftar bertab (`HasCardTabs`), dipakai lonceng owner & admin. Konvensi menu kedua panel dijaga test. | Diterima | `docs/standards/ui/layout.md` §3 |
 | Q26 | Diskon produk | Belum ada promo/harga coret di level produk; diskon tetap lewat kasir (item & order, batas role + PIN, Q18). Promo produk masuk backlog. | Diterima | — |
 | Q23 | Pengakuan omzet | Laporan memakai `completed_at` (order selesai); void dilaporkan terpisah berdasarkan `voided_at`; rentang tanggal lokal outlet, maks. 366 hari. | Diterima | `docs/api/report.md` |

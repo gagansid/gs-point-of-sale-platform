@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Tambah/ubah bank (Sistem → Bank). Kode unik huruf kecil; warna hex; logo hanya gambar raster di folder `banks/`
+ * Tambah/ubah bank (Langganan → Bank). Kode unik huruf kecil; warna hex; logo hanya gambar raster di folder `banks/`
  * (SVG unggahan tidak diterima: bisa memuat skrip). Logo lama dihapus saat diganti.
  */
 final class SaveBank

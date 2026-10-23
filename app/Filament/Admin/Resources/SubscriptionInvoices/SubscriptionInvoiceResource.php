@@ -51,7 +51,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
 /**
- * Pelanggan → Tagihan (ADR 0024, Q110): semua tagihan langganan lintas tenant, filter lengkap, detail, tandai lunas
+ * Langganan → Tagihan (ADR 0024, Q110): semua tagihan langganan lintas tenant, filter lengkap, detail, tandai lunas
  * (transfer manual), batalkan, dan tagihan manual admin (biaya bebas / add-on harga khusus, CreateManualInvoice).
  */
 final class SubscriptionInvoiceResource extends Resource
@@ -62,7 +62,7 @@ final class SubscriptionInvoiceResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentCurrencyDollar;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Pelanggan';
+    protected static string|UnitEnum|null $navigationGroup = 'Langganan';
 
     protected static ?string $navigationLabel = 'Tagihan';
 
@@ -70,7 +70,7 @@ final class SubscriptionInvoiceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'tagihan';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 3;
 
     protected static bool $isGloballySearchable = false;
 

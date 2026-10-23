@@ -1,4 +1,4 @@
-{{-- Lonceng peringatan di topbar (App\Support\DashboardAlerts): hitungan langsung dari data, tautan ke menu terkait --}}
+{{-- Lonceng peringatan di topbar kedua panel (App\Support\DashboardAlerts / AdminAlerts): hitungan langsung dari data, tautan ke menu terkait --}}
 @php
     /** @var list<array{key: string, icon: string, color: string, title: string, description: string, url: string}> $alerts */
     $count = count($alerts);

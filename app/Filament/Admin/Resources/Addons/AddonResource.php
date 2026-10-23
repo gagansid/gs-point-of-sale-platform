@@ -38,7 +38,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
-/** Pelanggan → Add-on (ADR 0025 C1): fitur atau tambahan kuota yang dijual di atas paket; status aktif, filter. */
+/** Langganan → Add-on (ADR 0025 C1): fitur atau tambahan kuota yang dijual di atas paket; status aktif, filter. */
 final class AddonResource extends Resource
 {
     protected static ?string $model = Addon::class;
@@ -47,7 +47,7 @@ final class AddonResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPuzzlePiece;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Pelanggan';
+    protected static string|UnitEnum|null $navigationGroup = 'Langganan';
 
     protected static ?string $navigationLabel = 'Add-on';
 
@@ -55,7 +55,7 @@ final class AddonResource extends Resource
 
     protected static ?string $pluralModelLabel = 'add-on';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 2;
 
     protected static bool $isGloballySearchable = false;
 

@@ -10,7 +10,7 @@ use Illuminate\Foundation\MaintenanceModeManager;
 use Livewire\Livewire;
 
 /**
- * Sistem → Maintenance. Driver "cache" + store array agar test tidak menulis storage/framework/down
+ * Sistem → Pemeliharaan. Driver "cache" + store array agar test tidak menulis storage/framework/down
  * (yang akan mematikan aplikasi lokal bila test berhenti di tengah).
  */
 beforeEach(function () {

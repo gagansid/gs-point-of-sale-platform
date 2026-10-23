@@ -1,4 +1,4 @@
-{{-- Cloudflare Turnstile (Sistem → Keamanan, per halaman login). Tidak dirender bila tidak aktif. --}}
+{{-- Cloudflare Turnstile (Pengaturan → Keamanan, per halaman login). Tidak dirender bila tidak aktif. --}}
 @props(['audience'])
 @if (app(\App\Services\Security\Turnstile::class)->enabled($audience))
     <div class="auth-turnstile">

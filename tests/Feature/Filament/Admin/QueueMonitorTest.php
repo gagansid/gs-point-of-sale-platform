@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 
-/** Sistem → Queue: job gagal (lihat, ulangi, hapus) & jadwal cron. */
+/** Sistem → Antrean: job gagal (lihat, ulangi, hapus) & jadwal cron. */
 beforeEach(function () {
     Filament::setCurrentPanel('admin');
     $this->actingAs(Admin::factory()->withTwoFactor()->create(), 'admin');

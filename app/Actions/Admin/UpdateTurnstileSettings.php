@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Sistem → Keamanan: kunci Cloudflare Turnstile (site key + secret terenkripsi; cadangan .env) dan on/off per halaman
+ * Pengaturan → Keamanan: kunci Cloudflare Turnstile (site key + secret terenkripsi; cadangan .env) dan on/off per halaman
  * login (super admin, owner & lupa kata sandi, kasir web). Secret baru diuji ke Cloudflare sebelum disimpan.
  * Mengaktifkan butuh kunci; mematikan selalu boleh.
  */

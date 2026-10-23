@@ -32,7 +32,7 @@ final class TenantInfolist
         return $schema
             ->columns(1)
             ->components([
-                Section::make('Detail tenant')->icon(Heroicon::OutlinedBuildingStorefront)
+                Section::make('Detail bisnis')->icon(Heroicon::OutlinedBuildingStorefront)
                     ->columns(3)
                     ->schema([
                         TextEntry::make('name')->label('Nama bisnis')->weight('semibold'),

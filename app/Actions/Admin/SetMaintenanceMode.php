@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
 /**
- * Sistem → Maintenance: `php artisan down` dengan secret bypass (SPEC panel admin). Selama aktif, semua
+ * Sistem → Pemeliharaan: `php artisan down` dengan secret bypass (SPEC panel admin). Selama aktif, semua
  * halaman & API membalas 503 (API: MAINTENANCE); admin yang membuka URL secret mendapat cookie bypass.
  */
 final class SetMaintenanceMode

@@ -12,7 +12,7 @@ use App\Support\SystemSettings;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Sistem → Pembayaran langganan → Midtrans: mode aktif (sandbox/dev atau produksi) dan server key per mode, tersimpan
+ * Langganan → Pembayaran langganan → Midtrans: mode aktif (sandbox/dev atau produksi) dan server key per mode, tersimpan
  * terenkripsi (cadangan .env). Key baru dicek formatnya (sandbox `SB-Mid-server-…`, produksi `Mid-server-…`) lalu diuji
  * ke Midtrans sebelum disimpan. Mode tanpa key = pembayaran online nonaktif (owner hanya transfer manual). Key tidak pernah dicatat.
  */

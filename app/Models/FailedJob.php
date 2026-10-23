@@ -8,7 +8,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Baris tabel failed_jobs (queue driver database) untuk halaman Sistem → Queue. Hanya-baca;
+ * Baris tabel failed_jobs (queue driver database) untuk halaman Sistem → Antrean. Hanya-baca;
  * ulangi/hapus lewat App\Actions\Admin\ManageFailedJobs (perintah artisan bawaan).
  *
  * @property int $id

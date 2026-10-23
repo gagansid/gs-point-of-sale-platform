@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Notification;
 /**
  * Daftar mandiri di gspos.id/register (ADR 0009, SPEC Q30–Q32): tenant trial + outlet + owner
  * (belum terverifikasi) + metode bayar bawaan lewat CreateTenantWithOwner, lalu kirim link verifikasi.
- * Setelan Sistem → Pendaftaran: batas per hari, paket selama trial, email notifikasi tim.
+ * Setelan Pengaturan → Pendaftaran: batas per hari, paket selama trial, email notifikasi tim.
  */
 final class RegisterTenant
 {
@@ -44,7 +44,7 @@ final class RegisterTenant
             throw BusinessException::of(ErrorCode::Forbidden, 'Pendaftaran sedang ditutup. Hubungi tim sales gs.POS.');
         }
 
-        // Batas pendaftar per hari (anti-spam, Sistem → Pendaftaran); hari = zona waktu platform
+        // Batas pendaftar per hari (anti-spam, Pengaturan → Pendaftaran); hari = zona waktu platform
         $limit = $this->settings->signupDailyLimit();
         if ($limit > 0 && self::signupsToday() >= $limit) {
             throw BusinessException::of(ErrorCode::TooManyRequests, 'Kuota pendaftaran hari ini sudah penuh. Coba lagi besok atau hubungi tim sales gs.POS.', ['email' => ['Kuota pendaftaran hari ini sudah penuh']]);

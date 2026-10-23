@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Blade;
 use Spatie\Activitylog\Contracts\Activity;
 
 /**
- * Master bank platform (Q124, Sistem → Bank). Ditulis lewat App\Actions\Admin\SaveBank / SetBankActive.
+ * Master bank platform (Q124, Langganan → Bank). Ditulis lewat App\Actions\Admin\SaveBank / SetBankActive.
  * Logo: unggahan (disk public) bila ada, selain itu logo vektor dari singkatan & warna merek (komponen x-bank-logo).
  *
  * @property string $id

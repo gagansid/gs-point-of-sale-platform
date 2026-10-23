@@ -170,7 +170,7 @@ final class DashboardPanelProvider extends PanelProvider
                 $user = Filament::auth()->user();
 
                 return $user instanceof User && $user->hasFullDashboard()
-                    ? view('filament.dashboard.alerts', ['alerts' => DashboardAlerts::for($user)])->render()
+                    ? view('filament.shared.alerts', ['alerts' => DashboardAlerts::for($user)])->render()
                     : '';
             })
             // Tampilan bisnis (Q128): token warna gs.POS per tenant (palet Filament di ApplyTenantAppearance)

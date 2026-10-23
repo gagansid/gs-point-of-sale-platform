@@ -35,7 +35,7 @@ use LogicException;
 use UnitEnum;
 
 /**
- * Sistem → Pembayaran langganan (Q123): rekening & QRIS statis untuk transfer manual tagihan langganan, petunjuk
+ * Langganan → Pembayaran langganan (Q123): rekening & QRIS statis untuk transfer manual tagihan langganan, petunjuk
  * untuk owner, dan Midtrans vendor (QRIS/VA otomatis): mode sandbox/produksi + server key per mode.
  */
 final class BillingPaymentSettings extends Page
@@ -44,7 +44,7 @@ final class BillingPaymentSettings extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Sistem';
+    protected static string|UnitEnum|null $navigationGroup = 'Langganan';
 
     protected static ?string $navigationLabel = 'Pembayaran langganan';
 
@@ -52,7 +52,7 @@ final class BillingPaymentSettings extends Page
 
     protected static ?string $slug = 'billing-payment';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     /** @var array<string, mixed>|null */
     public ?array $data = [];
@@ -87,7 +87,7 @@ final class BillingPaymentSettings extends Page
             ->components([
                 Section::make('Rekening transfer manual')
                     ->icon(Heroicon::OutlinedBuildingLibrary)
-                    ->description('Tampil ke owner saat memilih Transfer manual. Maks. '.SystemSettings::BILLING_ACCOUNTS_MAX.' rekening. Daftar bank & logo di Sistem → Bank')
+                    ->description('Tampil ke owner saat memilih Transfer manual. Maks. '.SystemSettings::BILLING_ACCOUNTS_MAX.' rekening. Daftar bank & logo di Langganan → Bank')
                     ->columnSpanFull()
                     ->schema([
                         Repeater::make('accounts')->hiddenLabel()

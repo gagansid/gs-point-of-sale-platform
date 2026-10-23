@@ -28,16 +28,16 @@ final class TenantStatusActions
             ->visible(fn (Tenant $record): bool => $record->status !== TenantStatus::Suspended)
             ->requiresConfirmation()
             ->modalIcon(Heroicon::OutlinedExclamationTriangle)
-            ->modalHeading('Tangguhkan tenant')
+            ->modalHeading('Tangguhkan bisnis')
             ->modalDescription(fn (Tenant $record): HtmlString => Layout::confirmText(
                 'Yakin ingin menangguhkan <strong>'.e($record->name).'</strong>?',
-                'Semua karyawan tenant ini langsung tidak bisa memakai aplikasi kasir dan dashboard sampai diaktifkan kembali.',
+                'Semua karyawan bisnis ini langsung tidak bisa memakai aplikasi kasir dan dashboard sampai diaktifkan kembali.',
             ))
-            ->modalSubmitActionLabel('Tangguhkan tenant')
+            ->modalSubmitActionLabel('Tangguhkan bisnis')
             ->action(function (Tenant $record): void {
                 app(ChangeTenantStatus::class)->handle($record, TenantStatus::Suspended, self::admin());
 
-                Notification::make()->success()->title('Tenant ditangguhkan')->send();
+                Notification::make()->success()->title('Bisnis ditangguhkan')->send();
             });
     }
 
@@ -49,16 +49,16 @@ final class TenantStatusActions
             ->color('success')
             ->visible(fn (Tenant $record): bool => $record->status !== TenantStatus::Active)
             ->requiresConfirmation()
-            ->modalHeading('Aktifkan tenant')
+            ->modalHeading('Aktifkan bisnis')
             ->modalDescription(fn (Tenant $record): HtmlString => Layout::confirmText(
                 'Yakin ingin mengaktifkan <strong>'.e($record->name).'</strong>?',
                 'Pastikan masa langganan sudah diperpanjang bila sebelumnya berakhir.',
             ))
-            ->modalSubmitActionLabel('Aktifkan tenant')
+            ->modalSubmitActionLabel('Aktifkan bisnis')
             ->action(function (Tenant $record): void {
                 app(ChangeTenantStatus::class)->handle($record, TenantStatus::Active, self::admin());
 
-                Notification::make()->success()->title('Tenant diaktifkan')->send();
+                Notification::make()->success()->title('Bisnis diaktifkan')->send();
             });
     }
 

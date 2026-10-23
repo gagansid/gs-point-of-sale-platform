@@ -47,9 +47,9 @@ describe('panel admin', function () {
             ->assertCountTableRecords(1);
     });
 
-    it('judul "Daftar Tenant" dan tombol tambah berada di header card tabel', function () {
+    it('judul "Daftar Bisnis" dan tombol tambah berada di header card tabel', function () {
         Livewire::test(ListTenants::class)
-            ->assertSee('Daftar Tenant')
+            ->assertSee('Daftar Bisnis')
             ->assertActionExists(TestAction::make('create')->table());
     });
 
@@ -63,7 +63,7 @@ describe('panel admin', function () {
         $first = array_values($breadcrumbs)[0];
 
         expect($first)->toBeInstanceOf(HtmlString::class)
-            ->and($first->toHtml())->toContain('<svg')->toContain('Tenant')
+            ->and($first->toHtml())->toContain('<svg')->toContain('Bisnis')
             ->and(implode(' ', array_map(fn ($label) => $label instanceof HtmlString ? $label->toHtml() : e($label), $breadcrumbs)))
             ->not->toContain('<b>Kopi</b>');
     });

@@ -185,7 +185,7 @@ final class SystemSettings
     }
 
     /**
-     * Setelan lanjutan pendaftaran (Sistem → Pendaftaran).
+     * Setelan lanjutan pendaftaran (Pengaturan → Pendaftaran).
      *
      * @param  list<string>  $blockedDomains
      * @param  list<string>  $notifyEmails
@@ -200,7 +200,7 @@ final class SystemSettings
     }
 
     /**
-     * Rekening gs.POS untuk transfer manual (bank dari master Sistem → Bank; nama bank tersimpan sebagai cadangan).
+     * Rekening gs.POS untuk transfer manual (bank dari master Langganan → Bank; nama bank tersimpan sebagai cadangan).
      *
      * @return list<array{bank_id: string|null, bank: string, number: string, holder: string}>
      */

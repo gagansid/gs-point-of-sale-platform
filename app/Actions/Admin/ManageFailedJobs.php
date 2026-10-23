@@ -8,7 +8,7 @@ use App\Models\FailedJob;
 use Illuminate\Support\Facades\Artisan;
 
 /**
- * Job gagal (Sistem → Queue): ulangi atau hapus lewat perintah artisan bawaan agar perilakunya sama
+ * Job gagal (Sistem → Antrean): ulangi atau hapus lewat perintah artisan bawaan agar perilakunya sama
  * dengan `php artisan queue:retry` / `queue:forget` / `queue:flush`.
  */
 final class ManageFailedJobs

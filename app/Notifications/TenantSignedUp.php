@@ -13,7 +13,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * Pendaftar baru di gspos.id/register → email tim (Sistem → Pendaftaran → Email notifikasi). Lewat antrean database;
+ * Pendaftar baru di gspos.id/register → email tim (Pengaturan → Pendaftaran → Email notifikasi). Lewat antrean database;
  * data disalin sebagai teks agar antrean tidak memuat ulang model ber-tenant.
  */
 final class TenantSignedUp extends Notification implements ShouldQueue

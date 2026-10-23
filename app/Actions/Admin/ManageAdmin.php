@@ -14,7 +14,7 @@ use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Kelola akun super admin dari panel (Sistem → Admin). Membuat akun memakai CreateAdmin.
+ * Kelola akun super admin dari panel (Pengaturan → Admin). Membuat akun memakai CreateAdmin.
  * Pengaman: tidak bisa menghapus/mereset 2FA diri sendiri, dan minimal satu admin tersisa.
  */
 final class ManageAdmin

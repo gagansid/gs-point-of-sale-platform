@@ -18,7 +18,7 @@ final class DashboardLoginRequest extends FormRequest
             'password' => ['required', 'string', 'max:255'],
             'remember' => ['sometimes', 'boolean'],
             'next' => ['nullable', 'string', 'max:500'],
-            // Cloudflare Turnstile bila diaktifkan admin untuk login owner (Sistem → Keamanan)
+            // Cloudflare Turnstile bila diaktifkan admin untuk login owner (Pengaturan → Keamanan)
             Turnstile::FIELD => [new TurnstilePassed(Turnstile::OWNER)],
         ];
     }

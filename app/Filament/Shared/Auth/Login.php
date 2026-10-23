@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Login panel Filament bergaya halaman masuk lain (x-auth.layout): latar navy + panel brand, field 44px berikon,
- * tombol mata tanpa border, versi aplikasi, dan Cloudflare Turnstile (on/off per halaman di Sistem → Keamanan).
+ * tombol mata tanpa border, versi aplikasi, dan Cloudflare Turnstile (on/off per halaman di Pengaturan → Keamanan).
  * Turnstile hanya diperiksa di langkah kata sandi; langkah kode 2FA tidak meminta verifikasi ulang.
  */
 abstract class Login extends BaseLogin

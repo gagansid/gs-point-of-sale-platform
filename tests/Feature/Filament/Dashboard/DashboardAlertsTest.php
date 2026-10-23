@@ -55,7 +55,9 @@ it('restok: produk habis & menipis di outlet aktif', function () {
     expect($alert)->not->toBeNull()
         ->and($alert['title'])->toBe('2 produk perlu restok')
         ->and($alert['description'])->toBe('1 habis · 1 menipis')
-        ->and($alert['color'])->toBe('danger');
+        ->and($alert['color'])->toBe('danger')
+        // Tautan membuka tab yang tepat (HasCardTabs ?tab=)
+        ->and($alert['url'])->toEndWith('?tab=sold_out');
 
     $this->get(Home::getUrl())->assertOk()->assertSee('2 produk perlu restok')->assertSee('gs-alerts-badge', false);
 });

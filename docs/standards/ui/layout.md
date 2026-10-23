@@ -53,17 +53,22 @@ ditampilkan lalu ditolak.
 
 ## 3. Navigasi `/admin`
 
-| Grup | Menu | Ikon |
+Urutan grup: (tanpa grup) → Pelanggan → Langganan → Aplikasi → Pengaturan → Sistem. Konvensi sama dengan §2 (ikon
+unik, tanpa grup berisi satu menu), dijaga `tests/Feature/Filament/NavigationConventionsTest.php` untuk kedua panel.
+Istilah UI **Bisnis** (model & URL tetap `tenants`).
+
+| Grup | Menu (urutan) | Ikon |
 |---|---|---|
-| — | Beranda | `home` |
-| Pelanggan | Tenant | `building-office-2` |
-| Aplikasi | Versi Aplikasi | `device-phone-mobile` |
-| Aplikasi | Pengumuman | `megaphone` |
-| Sistem | Maintenance Mode | `wrench-screwdriver` |
-| Sistem | Backup | `circle-stack` |
-| Sistem | Log Viewer | `document-text` |
-| Sistem | Queue | `queue-list` |
-| Sistem | Admin | `shield-check` |
+| — | Dasbor | `home` |
+| Pelanggan | Bisnis · Calon pelanggan | `building-office-2` · `chat-bubble-left-right` |
+| Langganan | Paket · Add-on · Tagihan · Pembayaran langganan · Bank (yang dijual, tagihan, cara bayar) | `rectangle-stack` · `puzzle-piece` · `document-currency-dollar` · `banknotes` · `building-library` |
+| Aplikasi | Versi aplikasi · Pengumuman | `device-phone-mobile` · `megaphone` |
+| Pengaturan | Pendaftaran · Keamanan · Admin (setelan platform & akun admin) | `user-plus` · `shield-check` · `user-group` |
+| Sistem | Backup · Antrean · Pemeliharaan · Log · Riwayat perubahan (operasional teknis) | `circle-stack` · `queue-list` · `wrench-screwdriver` · `document-magnifying-glass` · `clipboard-document-list` |
+
+Topbar `/admin` juga memakai **lonceng peringatan** (`App\Support\AdminAlerts`, view bersama `filament/shared/alerts`):
+mode pemeliharaan aktif, bukti transfer menunggu verifikasi, tagihan lewat jatuh tempo, calon pelanggan baru (edisi
+SaaS), job antrean gagal, backup terakhir > 24 jam / belum ada. Tautan membuka tab yang tepat (`?tab=`, §tabs).
 
 ## 4. Anatomi halaman
 
@@ -80,9 +85,9 @@ Aturan:
 - Maksimal **satu** tombol primary per halaman. Aksi lain `gray`/outline.
 - Aksi berbahaya (`Void`, `Hapus`, `Cabut akses`) selalu `danger` + konfirmasi, tidak pernah primary.
 - Judul halaman = **breadcrumb** 15px seperti gs-task-tracker: item pertama berikon menu dalam kotak 30px primary
-  lembut, item terakhir tebal (`🏢 Tenant › Daftar`, `📦 Produk › Americano › Ubah`). Trait `HasIconBreadcrumbs`
+  lembut, item terakhir tebal (`🏢 Bisnis › Daftar`, `📦 Produk › Americano › Ubah`). Trait `HasIconBreadcrumbs`
   dipasang di semua halaman. Seragam: halaman daftar (ListRecords & ManageRecords) **`Menu › Daftar`**, tambah
-  `Menu › Tambah`, halaman custom **`Grup menu › Judul`** (`Sistem › Keamanan`), tanpa grup (Beranda/Dasbor) cukup
+  `Menu › Tambah`, halaman custom **`Grup menu › Judul`** (`Pengaturan › Keamanan`), tanpa grup (Beranda/Dasbor) cukup
   ikon + judul. Subjudul singkat (`getSubheading()`) di bawah breadcrumb untuk halaman setelan. H1 tetap ada untuk
   pembaca layar dan tampil di HP (< 640px), tempat breadcrumb disembunyikan Filament.
 - Halaman setelan/ringkasan admin (Pendaftaran, Keamanan): baris kartu KPI (`gs-kpi-grid`, 4 kolom ≥ 1280px) di atas

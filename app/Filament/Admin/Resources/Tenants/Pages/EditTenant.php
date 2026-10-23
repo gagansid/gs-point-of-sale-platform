@@ -46,6 +46,6 @@ final class EditTenant extends EditRecord
 
     protected function getSavedNotificationTitle(): string
     {
-        return 'Tenant berhasil diperbarui';
+        return 'Bisnis berhasil diperbarui';
     }
 }

@@ -35,7 +35,7 @@ use LogicException;
 use UnitEnum;
 
 /**
- * Sistem → Pendaftaran (ADR 0009): ringkasan pendaftar mandiri, pendaftar terbaru, dan setelan: buka/tutup daftar
+ * Pengaturan → Pendaftaran (ADR 0009): ringkasan pendaftar mandiri, pendaftar terbaru, dan setelan: buka/tutup daftar
  * sendiri + pesan saat ditutup, batas per hari, lama trial & paket selama trial, domain email diblokir, email tim.
  */
 final class OnboardingSettings extends Page
@@ -44,7 +44,7 @@ final class OnboardingSettings extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserPlus;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Sistem';
+    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?int $navigationSort = 1;
 

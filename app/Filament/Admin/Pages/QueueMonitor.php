@@ -29,7 +29,7 @@ use Illuminate\Database\Eloquent\Collection;
 use UnitEnum;
 
 /**
- * Sistem → Queue: antrean (driver database, dijalankan cron `queue:work --stop-when-empty` tiap menit), tabel job
+ * Sistem → Antrean: antrean (driver database, dijalankan cron `queue:work --stop-when-empty` tiap menit), tabel job
  * yang sedang diproses/menunggu (QueuedJobsWidget), dan job gagal: lihat error, ulangi, hapus.
  */
 final class QueueMonitor extends Page implements HasActions, HasSchemas, HasTable
@@ -51,7 +51,7 @@ final class QueueMonitor extends Page implements HasActions, HasSchemas, HasTabl
 
     protected static ?string $slug = 'queue';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 2;
 
     public static function getNavigationBadge(): ?string
     {

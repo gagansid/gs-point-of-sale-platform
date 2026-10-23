@@ -28,7 +28,9 @@ bawah 2px primary pada tab aktif.
 
 ## Perilaku & state
 
-- Tab aktif tersimpan di URL (`?activeTab=`) agar bisa dibagikan/di-refresh.
+- Tab daftar (`HasCardTabs`) disimpan di **session**, tidak ditulis ke URL. Tautan langsung ke satu tab memakai
+  `?tab={kunci}` yang dibaca sekali saat halaman dibuka (mis. dari lonceng peringatan: `/invoices?tab=verify`,
+  `/products?tab=low_stock`); kunci yang tidak dikenal diabaikan.
 - Tab daftar bekerja sebagai filter, sehingga filter lain tetap berlaku.
 - Form bertab: tab yang berisi field error diberi penanda merah (bawaan Filament).
 

@@ -64,7 +64,7 @@ it('buat tenant dari lead: tenant trial, owner diundang, lead Berhasil', functio
     Livewire::test(ListSalesLeads::class)
         ->callAction(TestAction::make('createTenant')->table($lead))
         ->assertHasNoFormErrors()
-        ->assertNotified('Tenant Kopi Pagi dibuat');
+        ->assertNotified('Bisnis Kopi Pagi dibuat');
 
     $tenant = Tenant::query()->where('name', 'Kopi Pagi')->sole();
     $owner = User::allTenants()->where('tenant_id', $tenant->id)->sole();

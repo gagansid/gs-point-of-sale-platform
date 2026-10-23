@@ -1,4 +1,4 @@
-{{-- Sistem → Keamanan (section.md, notification.md): 2FA, pemeriksaan konfigurasi, admin, perlindungan bawaan. --}}
+{{-- Pengaturan → Keamanan (section.md, notification.md): 2FA, pemeriksaan konfigurasi, admin, perlindungan bawaan. --}}
 @php
     $checks = $this->checklist();
     $passed = count(array_filter($checks, fn (array $c): bool => $c['ok']));
@@ -67,7 +67,7 @@
                     <li class="gs-check is-ok"><span class="gs-check-icon"><x-filament::icon icon="heroicon-o-check-circle" /></span><span class="gs-check-body"><span class="gs-check-label">Batas percobaan login</span><span class="gs-check-fix">{{ $this->loginRateLimit() }}× per menit per IP & perangkat</span></span></li>
                     <li class="gs-check is-ok"><span class="gs-check-icon"><x-filament::icon icon="heroicon-o-check-circle" /></span><span class="gs-check-body"><span class="gs-check-label">Token CSRF & cookie terenkripsi</span><span class="gs-check-fix">Semua form panel & halaman depan</span></span></li>
                     <li class="gs-check is-ok"><span class="gs-check-icon"><x-filament::icon icon="heroicon-o-check-circle" /></span><span class="gs-check-body"><span class="gs-check-label">Konfirmasi kata sandi</span><span class="gs-check-fix">Ubah kebijakan 2FA & maintenance</span></span></li>
-                    <li class="gs-check is-ok"><span class="gs-check-icon"><x-filament::icon icon="heroicon-o-check-circle" /></span><span class="gs-check-body"><span class="gs-check-label">Guard admin terpisah</span><span class="gs-check-fix">Akun tenant tidak bisa membuka /admin</span></span></li>
+                    <li class="gs-check is-ok"><span class="gs-check-icon"><x-filament::icon icon="heroicon-o-check-circle" /></span><span class="gs-check-body"><span class="gs-check-label">Guard admin terpisah</span><span class="gs-check-fix">Akun bisnis (owner & karyawan) tidak bisa membuka /admin</span></span></li>
                     <li class="gs-check is-ok"><span class="gs-check-icon"><x-filament::icon icon="heroicon-o-check-circle" /></span><span class="gs-check-body"><span class="gs-check-label">Honeypot & throttle daftar</span><span class="gs-check-fix">Halaman daftar & kontak sales</span></span></li>
                 </ul>
             </x-filament::section>

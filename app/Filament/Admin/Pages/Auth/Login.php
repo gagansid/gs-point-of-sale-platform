@@ -22,7 +22,7 @@ final class Login extends SharedLogin
             'app' => 'Super Admin',
             'heading' => 'Pusat kendali platform gs.POS',
             'text' => 'Kelola bisnis pelanggan, paket langganan, tagihan, dan kesehatan sistem.',
-            'points' => [['users', 'Tenant & calon pelanggan'], ['receipt', 'Paket, add-on, dan tagihan'], ['shield', 'Keamanan & verifikasi dua langkah']],
+            'points' => [['users', 'Bisnis & calon pelanggan'], ['receipt', 'Paket, add-on, dan tagihan'], ['shield', 'Keamanan & verifikasi dua langkah']],
         ];
     }
 }

@@ -23,8 +23,8 @@ use Filament\Tables\Table;
 use UnitEnum;
 
 /**
- * Menu Tenant (SPEC: Panel maintenance). Tenant tidak dihapus dari panel; gunakan status
- * "Ditangguhkan" agar data transaksi tetap utuh.
+ * Pelanggan → Bisnis (SPEC: Panel maintenance; model Tenant). Bisnis tidak dihapus dari panel; gunakan status
+ * "Ditangguhkan" agar data transaksi tetap utuh. Label UI "Bisnis" (Q135), slug & kode tetap `tenants`.
  */
 final class TenantResource extends Resource
 {
@@ -34,11 +34,13 @@ final class TenantResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Pelanggan';
 
-    protected static ?string $navigationLabel = 'Tenant';
+    protected static ?int $navigationSort = 1;
 
-    protected static ?string $modelLabel = 'tenant';
+    protected static ?string $navigationLabel = 'Bisnis';
 
-    protected static ?string $pluralModelLabel = 'tenant';
+    protected static ?string $modelLabel = 'bisnis';
+
+    protected static ?string $pluralModelLabel = 'bisnis';
 
     protected static ?string $recordTitleAttribute = 'name';
 

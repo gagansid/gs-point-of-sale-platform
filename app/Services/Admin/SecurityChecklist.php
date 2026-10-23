@@ -9,7 +9,7 @@ use App\Services\Security\Turnstile;
 use App\Support\SystemSettings;
 
 /**
- * Pemeriksaan keamanan konfigurasi untuk Sistem → Keamanan (docs/standards/security.md). Hanya membaca config &
+ * Pemeriksaan keamanan konfigurasi untuk Pengaturan → Keamanan (docs/standards/security.md). Hanya membaca config &
  * data; tidak mengubah apa pun. Item `ok = false` menampilkan langkah perbaikan.
  */
 final class SecurityChecklist

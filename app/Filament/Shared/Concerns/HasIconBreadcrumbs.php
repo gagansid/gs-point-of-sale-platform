@@ -17,7 +17,7 @@ use function Filament\Support\generate_icon_html;
 
 /**
  * Breadcrumb sebagai judul halaman seperti gs-task-tracker (layout.md §4):
- * item pertama diberi ikon menu (mis. "🏢 Tenant › Daftar"). Halaman tanpa breadcrumb: ManageRecords
+ * item pertama diberi ikon menu (mis. "🏢 Bisnis › Daftar"). Halaman tanpa breadcrumb: ManageRecords
  * "Menu › Daftar", halaman custom "Grup › Judul", beranda cukup ikon + judul.
  *
  * Halaman satu data: "Menu › Detail/Ubah › Nama data" (bawaan Filament: "Menu › Nama data › Lihat").
@@ -81,7 +81,7 @@ trait HasIconBreadcrumbs
 
     /**
      * Seragam semua halaman: daftar resource (ManageRecords) "Menu › Daftar" seperti ListRecords; halaman custom
-     * "Grup menu › Judul" (mis. "Sistem › Keamanan"); tanpa grup (Dasbor) cukup judul.
+     * "Grup menu › Judul" (mis. "Pengaturan › Keamanan"); tanpa grup (Dasbor) cukup judul.
      *
      * @return array<int|string, string|Htmlable>
      */

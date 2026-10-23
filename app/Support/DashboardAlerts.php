@@ -21,7 +21,7 @@ use Carbon\CarbonImmutable;
 /**
  * Peringatan di topbar panel /dashboard (lonceng): hal yang perlu ditindak owner/manager, dihitung langsung dari data
  * (tanpa tabel notifikasi, tanpa job). Setiap jenis hanya untuk user yang boleh membuka menu tujuannya; outlet
- * mengikuti pemilih outlet sidebar (ADR 0010). Langganan & verifikasi email sudah tampil sebagai banner; "perlu refund
+ * mengikuti pemilih outlet sidebar (ADR 0010); tautan membuka tab yang tepat lewat `?tab=` (HasCardTabs). Langganan & verifikasi email sudah tampil sebagai banner; "perlu refund
  * manual" tampil di daftar Penjualan (belum ada penanda selesai, jadi bukan peringatan).
  */
 final class DashboardAlerts
@@ -45,7 +45,7 @@ final class DashboardAlerts
             $pending = SelfOrder::query()->whereIn('outlet_id', $outletIds)->where('status', SelfOrderStatus::Pending)->count();
             if ($pending > 0) {
                 $alerts[] = self::alert('self_orders', 'heroicon-o-device-phone-mobile', 'warning',
-                    self::count($pending).' pesanan meja menunggu kasir', 'Belum diterima atau ditolak di kasir', SelfOrderResource::getUrl());
+                    self::count($pending).' pesanan meja menunggu kasir', 'Belum diterima atau ditolak di kasir', SelfOrderResource::getUrl('index', ['tab' => SelfOrderStatus::Pending->value]));
             }
         }
 
@@ -57,7 +57,7 @@ final class DashboardAlerts
                 $alerts[] = self::alert('stock', 'heroicon-o-archive-box', $soldOut > 0 ? 'danger' : 'warning',
                     self::count($soldOut + $low).' produk perlu restok'.$where,
                     collect([$soldOut > 0 ? self::count($soldOut).' habis' : null, $low > 0 ? self::count($low).' menipis' : null])->filter()->implode(' · '),
-                    ProductResource::getUrl());
+                    ProductResource::getUrl('index', ['tab' => $soldOut > 0 ? 'sold_out' : 'low_stock']));
             }
         }
 
@@ -66,7 +66,7 @@ final class DashboardAlerts
                 ->where('opened_at', '<=', CarbonImmutable::now()->subHours(self::STALE_SHIFT_HOURS))->count();
             if ($stale > 0) {
                 $alerts[] = self::alert('shifts', 'heroicon-o-clock', 'warning',
-                    self::count($stale).' shift belum ditutup', 'Terbuka lebih dari '.self::STALE_SHIFT_HOURS.' jam', ShiftResource::getUrl());
+                    self::count($stale).' shift belum ditutup', 'Terbuka lebih dari '.self::STALE_SHIFT_HOURS.' jam', ShiftResource::getUrl('index', ['tab' => 'open']));
             }
         }
 
@@ -74,7 +74,7 @@ final class DashboardAlerts
             $overdue = ReceivableResource::overdue(Member::query())->count();
             if ($overdue > 0) {
                 $alerts[] = self::alert('receivables', 'heroicon-o-banknotes', 'warning',
-                    self::count($overdue).' member kasbon lama', 'Belum lunas '.ReceivableResource::OVERDUE_DAYS.' hari atau lebih', ReceivableResource::getUrl());
+                    self::count($overdue).' member kasbon lama', 'Belum lunas '.ReceivableResource::OVERDUE_DAYS.' hari atau lebih', ReceivableResource::getUrl('index', ['tab' => 'overdue']));
             }
         }
 

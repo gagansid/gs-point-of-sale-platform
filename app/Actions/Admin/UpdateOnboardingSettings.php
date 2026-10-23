@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Sistem → Pendaftaran (ADR 0009 + rapikan admin 2026-10-19): lama trial & paket selama trial, buka/tutup daftar
+ * Pengaturan → Pendaftaran (ADR 0009 + rapikan admin 2026-10-19): lama trial & paket selama trial, buka/tutup daftar
  * sendiri dan pesan saat ditutup, batas pendaftar per hari, domain email yang diblokir, email tim yang diberi tahu.
  * Tenant yang sudah ada tidak berubah; setelan hanya berlaku untuk pendaftar setelahnya.
  */

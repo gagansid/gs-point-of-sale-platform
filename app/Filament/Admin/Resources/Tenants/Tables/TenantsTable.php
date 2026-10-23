@@ -101,6 +101,6 @@ final class TenantsTable
             ->recordUrl(fn (Tenant $record): string => TenantResource::getUrl('view', ['record' => $record]))
             ->defaultSort('created_at', 'desc');
 
-        return TableEmptyState::apply($table, Heroicon::OutlinedBuildingOffice2, 'tenant', 'Tambahkan bisnis pelanggan pertama beserta owner-nya');
+        return TableEmptyState::apply($table, Heroicon::OutlinedBuildingOffice2, 'bisnis', 'Tambahkan bisnis pelanggan pertama beserta owner-nya');
     }
 }

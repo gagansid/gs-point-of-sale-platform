@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Sistem → Pembayaran langganan (Q123): rekening gs.POS (bank dari master, maks. 5), gambar QRIS statis (disk public), petunjuk transfer
+ * Langganan → Pembayaran langganan (Q123): rekening gs.POS (bank dari master, maks. 5), gambar QRIS statis (disk public), petunjuk transfer
  * manual. Gambar QRIS lama dihapus saat diganti/dihapus.
  */
 final class UpdateBillingPaymentSettings

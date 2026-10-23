@@ -1,5 +1,5 @@
 {{--
-    Detail tagihan langganan bergaya dokumen invoice (modal admin Pelanggan → Tagihan & owner Pengaturan → Langganan):
+    Detail tagihan langganan bergaya dokumen invoice (modal admin Langganan → Tagihan & owner Pengaturan → Langganan):
     kop (logo, nomor, status), penerbit & penerima, ringkasan tanggal, rincian baris, total, alur pembayaran & bukti
     transfer (Q123), catatan. $audience: 'admin' (tampil pembuat & catatan internal) | 'owner'.
 --}}

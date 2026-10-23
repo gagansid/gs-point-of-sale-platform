@@ -1,4 +1,4 @@
-{{-- Sistem → Queue: kartu ringkas antrean, job di antrean (QueuedJobsWidget), job gagal (tabel halaman). --}}
+{{-- Sistem → Antrean: kartu ringkas antrean, job di antrean (QueuedJobsWidget), job gagal (tabel halaman). --}}
 @php
     $stats = $this->stats();
     $cron = $this->scheduler();

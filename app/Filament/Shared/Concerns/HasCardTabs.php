@@ -18,6 +18,9 @@ use Filament\View\PanelsRenderHook;
  * `public ?string $activeTab = null;` di class-nya sendiri (tanpa #[Url]). Deklarasi di trait
  * tidak cukup: PHP mengabaikan properti trait yang identik dengan properti induk.
  *
+ * Tautan langsung ke satu tab (mis. dari lonceng peringatan): `?tab={kunci}` dibaca sekali saat halaman dibuka lalu
+ * disimpan di session; tidak pernah ditulis balik ke URL. Kunci yang tidak dikenal diabaikan.
+ *
  * Markup: resources/views/filament/shared/card-tabs.blade.php, dirender lewat render hook
  * TablesRenderHook::HEADER_AFTER di App\Filament\Shared\Layout.
  */
@@ -35,6 +38,15 @@ trait HasCardTabs
 
     public function getDefaultActiveTab(): string|int|null
     {
+        // Tautan langsung ?tab= (hanya saat halaman dibuka, bukan request Livewire berikutnya)
+        $linked = request()->query('tab');
+
+        if (is_string($linked) && array_key_exists($linked, $this->getCachedTabs())) {
+            session()->put($this->getActiveTabSessionKey(), $linked);
+
+            return $linked;
+        }
+
         $remembered = session()->get($this->getActiveTabSessionKey());
 
         // Hanya kunci tab yang dikenal; nilai session lain diabaikan

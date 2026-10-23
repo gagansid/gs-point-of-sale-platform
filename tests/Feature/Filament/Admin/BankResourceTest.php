@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
-/** Sistem → Bank (Q124): master bank untuk rekening transfer manual, logo vektor / unggahan. */
+/** Langganan → Bank (Q124): master bank untuk rekening transfer manual, logo vektor / unggahan. */
 beforeEach(function () {
     Storage::fake('public');
     Filament::setCurrentPanel('admin');

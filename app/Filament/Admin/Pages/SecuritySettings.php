@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\Collection;
 use UnitEnum;
 
 /**
- * Sistem → Keamanan: on/off kewajiban 2FA untuk semua super admin, status 2FA tiap admin, pemeriksaan konfigurasi
+ * Pengaturan → Keamanan: on/off kewajiban 2FA untuk semua super admin, status 2FA tiap admin, pemeriksaan konfigurasi
  * (SecurityChecklist), dan ringkasan perlindungan bawaan. Setiap admin mengatur 2FA miliknya dari halaman profil.
  */
 final class SecuritySettings extends Page
@@ -38,7 +38,7 @@ final class SecuritySettings extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShieldCheck;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Sistem';
+    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
 
     protected static ?int $navigationSort = 2;
 
