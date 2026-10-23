@@ -117,6 +117,10 @@ Login owner/manager dengan email + kata sandi.
 }
 ```
 
+`user.permissions` = hak akses yang **berlaku** untuk user ini: bawaan role, pengaturan owner per bisnis (Pengaturan →
+Hak akses), dan pengecualian per karyawan (ADR 0026). Jangan menurunkan izin dari `role` di aplikasi; sembunyikan menu
+berdasarkan daftar ini dan muat ulang `/auth/me` saat aplikasi dibuka kembali.
+
 ### Error
 
 | HTTP | `error.code` | Kapan |

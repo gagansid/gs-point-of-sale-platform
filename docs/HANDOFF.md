@@ -1,16 +1,33 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-22 · Branch: `feature/pos` (semua di-push)
-> Status: fitur MVP + backlog ADR 0013–0025 selesai; 2026-10-22 halaman kasir web dirapikan (Q131); sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
+> Diperbarui: 2026-10-23 · Branch: `feature/pos` (semua di-push)
+> Status: fitur MVP + backlog ADR 0013–0026 selesai; 2026-10-22–23: menu owner baru (Q130), susunan menu (Q132), hak akses
+> per role & per karyawan (ADR 0026, Q133–Q134), halaman kasir web dirapikan (Q131); sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
 > pembayaran tagihan (QRIS/VA/transfer manual + bukti), master bank, PDF & email tagihan, Midtrans vendor 2 mode,
 > riwayat perubahan admin, pembersihan bukti transfer (SPEC Q118–Q127). Deploy ditunda atas keputusan pemilik.
-> Kualitas: 1994 test lulus (SQLite), Pint & Larastan level 6 bersih; test pembayaran/bank/audit juga lulus di MySQL
-> `gspos_test`. Paket hosting `dist/hosting` dibangun ulang 2026-10-21 (lihat §2 "Deploy").
+> Kualitas (2026-10-23): `composer check` hijau — Pint, Larastan level 6, **2062 test** lulus (SQLite), audit dependensi
+> bersih; seluruh suite juga lulus di **MySQL 9.5** lokal (`gspos_test`, paralel) termasuk rollback/ulang 2 migrasi baru.
+> Paket hosting `dist/hosting` (2026-10-21) **belum** memuat pekerjaan 22–23 Okt — bangun ulang sebelum deploy (§2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
 ---
 
 ## 1. Sudah dikerjakan
+
+### Menu owner & hak akses per bisnis (2026-10-22 – 2026-10-23, SPEC Q130, Q132–Q134, ADR 0026) — semua di-push
+| Bagian | Isi | Commit |
+|---|---|---|
+| Menu baru (Q130) | **Stok → Riwayat stok** (kartu stok `stock_movements`, dokumen asal bertaut, aksi *Riwayat stok* di Produk), **Pelanggan → Kasbon** (saldo, batas, umur kasbon, pelunasan; aksi bersama `ReceivableActions`), **Transaksi → Pesanan meja** (riwayat self-order), Penjualan tab **Diretur**, Laporan tab **Pembelian** (dipisah dari Stok, juga export & API), **lonceng peringatan** topbar (`DashboardAlerts`: pesanan meja menunggu, restok, shift > 24 jam, kasbon lama) | `5cf05a4` |
+| Susunan menu (Q132) | Laporan tanpa grup di bawah Beranda; Transaksi · Katalog · Stok (alur PO → masuk → transfer → opname → riwayat → supplier) · Pelanggan (+ Program member) · Pengaturan (setelan toko) · **Akun** (Langganan, Riwayat perubahan); ikon unik per menu; URL tetap | `3245e19` |
+| Hak akses per role (Q133) | Tabel `role_permissions` + `App\Support\RolePermissions`; owner mengatur permission Manager/Supervisor/Kasir di **Pengaturan → Hak akses** (tab per role, badge Bawaan/Diubah, Kembalikan bawaan). Khusus owner: `billing.manage`, `access.manage`, `outlet.access_all`. Permission baru `dashboard.access` (panel penuh) & `access.manage`. Izin tersirat (`UserRole::IMPLIES`). Pengelola karyawan non-owner hanya mengatur role di bawahnya | `ae6f4b3`, `9a1b677` |
+| Hak akses per karyawan (Q134) | `users.permissions_granted/revoked` = selisih terhadap role; Karyawan → aksi **Hak akses** (owner), keterangan *Hak akses khusus*; ganti role menghapus pengecualian | `3f403b8` |
+| Gerbang terpusat | Semua menu `extends DashboardResource` / `DashboardPage` (gerbang `dashboard.access` final; pengecualian hanya Laporan & Stok masuk), dijaga `DashboardAccessGateTest`; izin dimemo per user; cache paket & hak akses dikosongkan tiap job queue | `0d515fe` |
+| Review & perbaikan | Log hak akses selalu menyebut role; kasbon "Lama" = hari kalender zona outlet; outlet baru ditugaskan ke pembuat non-owner; kasir web "selalu boleh" hanya owner; `updateOrCreate` untuk simpan bersamaan | `e1c6910` |
+| UI | Item dropdown seragam (ikon 16px, teks 13px, 32px); tab form bergaris bawah (`tabs.md`) | `bd21a14`, `9a1b677` |
+
+Migrasi baru (wajib saat deploy): `2026_11_11_100000_create_role_permissions_table`,
+`2026_11_12_100000_add_permission_overrides_to_users`. Untuk Flutter: `/auth/me` → `permissions` kini mengikuti hak akses
+bisnis & karyawan; permission baru `dashboard.access` dan `access.manage` (lihat ADR 0026).
 
 ### Rapikan halaman kasir web (2026-10-22, SPEC Q131) — di-push
 | Halaman | Isi |
@@ -307,9 +324,11 @@ Data lokal demo: program member **aktif** di "Kopi Senja (Demo)", member "Rina K
 | 0 | Tindak lanjut modul Laporan | Lihat tabel "Perlu diubah / dilanjutkan" di bawah |
 | ✅ | Kasir web (SPEC Q54, W1–W6) | Selesai 2026-10-11: akses per karyawan, login `/cashier`, shift X/Z, layar transaksi, open bill, approval PIN, void, menu Perangkat. Sisa: uji di browser tablet sungguhan & printer thermal; cetak tanpa dialog di luar cakupan |
 | ✅ | Minggu 7 — panel admin | Selesai 2026-10-11 (lihat PROGRESS); sisa OWASP ZAP & uji manual di staging |
-| 3 | Minggu 8 — deploy | **Deploy:** paket `dist/hosting/` (zip proyek + `gspos-database.sql` dari DB lokal + `PANDUAN-HOSTING.html`) dibangun ulang 2026-10-21; APP_KEY harus sama dengan lokal (data terenkripsi). Sisa: cPanel nyata, uji MySQL/MariaDB hosting, cron `schedule:run`, uji dengan Flutter, pilot |
+| 3 | Minggu 8 — deploy (ditunda pemilik) | **Deploy:** paket `dist/hosting/` (zip proyek + `gspos-database.sql` dari DB lokal + `PANDUAN-HOSTING.html`) terakhir dibangun 2026-10-21 — **bangun ulang** (menu & hak akses 22–23 Okt, migrasi `role_permissions` & `users.permissions_*`, aset `public/build`); APP_KEY harus sama dengan lokal (data terenkripsi). Sisa: cPanel nyata, uji MariaDB 10.6 hosting (lokal baru MySQL 9.5), cron `schedule:run`, uji dengan Flutter, pilot |
 | ✅ | Import produk dari Excel | Selesai 2026-10-11 (`489e114`, Q59) |
-| 2 | Integrasi Flutter | L1 + F1–F2 (repo aplikasi) |
+| 2 | Integrasi Flutter | L1 + F1–F2 (repo aplikasi); sembunyikan menu dari `/auth/me` → `permissions` (kini per bisnis & per karyawan, ADR 0026), pembulatan selalu ke atas, opsi bawaan `is_default` (Q129) |
+| 4 | Keputusan label | "Purchase order" tetap atau "Pesanan pembelian" (UI berbahasa Indonesia) — menunggu pemilik |
+| 5 | Uji hak akses sebagai manager/supervisor di browser | Sudah lewat test (menu, API, Beranda, Karyawan); uji manual dari akun terbatas belum |
 | Ditunda | Aplikasi tablet | Fase tablet/aplikasi kasir (menu Perangkat sudah ada, Q54) |
 
 ### Perlu diubah / dilanjutkan (modul Laporan & UI)

@@ -1,8 +1,8 @@
 # Progres Pengerjaan
 
-> Terakhir diperbarui: 2026-10-11 · Branch: `feature/pos` (ADR 0003) · Program member M1–M7, self-order S1–S4 & stok I1–I4 selesai
-> Status kualitas: **1271 test** lulus (SQLite) + 3 uji E2E Dusk, Pint & Larastan level 6 bersih. Uji MySQL
-> untuk fitur 9–11 Okt belum dijalankan ulang. Ringkasan sesi terbaru: `docs/HANDOFF.md`.
+> Terakhir diperbarui: 2026-10-23 · Branch: `feature/pos` (ADR 0003) · Fitur MVP + ADR 0013–0026 selesai; deploy ditunda
+> Status kualitas: **2062 test** lulus di SQLite **dan** MySQL 9.5 lokal (`gspos_test`) + uji E2E Dusk, `composer check`
+> hijau (Pint, Larastan level 6, audit dependensi). Ringkasan sesi terbaru: `docs/HANDOFF.md`.
 
 Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#cara-melanjutkan) dan
 [Berikutnya](#berikutnya) sebelum mulai. Urutan rencana mengikuti `docs/SPEC.md` → *Urutan pengerjaan*.
@@ -44,11 +44,12 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | **Pecah & gabung bill** | ADR 0019 (Q95–Q96): pecah item ke open bill baru, gabung open bill (status `merged`), API + kasir web ✅ | ✅ 2026-10-14 | — |
 | **Retur sebagian** | ADR 0018 (Q92–Q94): retur per item & qty dari API & kasir web (cari nomor), nilai proporsional, tunai dari laci / manual, stok & poin ikut, izin `order.refund`, laporan & audit ✅ | ✅ 2026-10-14 | — |
 | **Shift bersama per perangkat** | ADR 0017 (Q87–Q91): C1 setoran + carry-over kas awal + koreksi + tutup oleh operator mana pun, C2 log operator + kunci layar (manual/otomatis) + buka kunci PIN di kasir web, C3 kas masuk/keluar (approval di atas batas), C4 Z-report/PDF, laporan Shift, panel Audit, ringkasan harian, detail shift dashboard ✅ | ✅ 2026-10-14 | — |
-| Self-order meja | ADR 0014 (S1–S4), setelah M5–M7 | ⏳ | — |
+| **Menu owner lengkap** | Q130: Riwayat stok, Kasbon, Pesanan meja, tab Diretur & Pembelian, lonceng peringatan; Q132: susunan grup menu (Laporan di bawah Beranda, grup Akun, ikon unik) | ✅ 2026-10-22 | `5cf05a4`, `3245e19` |
+| **Hak akses per bisnis** | ADR 0026 (Q133–Q134): `role_permissions` + Pengaturan → Hak akses (Manager/Supervisor/Kasir), pengecualian per karyawan, `dashboard.access` & `access.manage`, gerbang terpusat `DashboardResource`/`DashboardPage`, delegasi Kelola karyawan hanya ke role di bawahnya | ✅ 2026-10-23 | `ae6f4b3` … `0d515fe` |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ✅ 2026-10-11 (sisa: OWASP ZAP & uji manual di staging) | `38a67cd`..`fe6d252` |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
-Endpoint selesai: **80** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q113, ADR 0001–0025.
+Endpoint selesai: **80** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q134, ADR 0001–0026.
 
 ---
 
