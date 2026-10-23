@@ -326,9 +326,9 @@ Data lokal demo: program member **aktif** di "Kopi Senja (Demo)", member "Rina K
 | ✅ | Minggu 7 — panel admin | Selesai 2026-10-11 (lihat PROGRESS); sisa OWASP ZAP & uji manual di staging |
 | 3 | Minggu 8 — deploy (ditunda pemilik) | **Deploy:** paket `dist/hosting/` (zip proyek + `gspos-database.sql` dari DB lokal + `PANDUAN-HOSTING.html`) terakhir dibangun 2026-10-21 — **bangun ulang** (menu & hak akses 22–23 Okt, migrasi `role_permissions` & `users.permissions_*`, aset `public/build`); APP_KEY harus sama dengan lokal (data terenkripsi). Sisa: cPanel nyata, uji MariaDB 10.6 hosting (lokal baru MySQL 9.5), cron `schedule:run`, uji dengan Flutter, pilot |
 | ✅ | Import produk dari Excel | Selesai 2026-10-11 (`489e114`, Q59) |
-| 2 | Integrasi Flutter | L1 + F1–F2 (repo aplikasi); sembunyikan menu dari `/auth/me` → `permissions` (kini per bisnis & per karyawan, ADR 0026), pembulatan selalu ke atas, opsi bawaan `is_default` (Q129) |
-| 4 | Keputusan label | "Purchase order" tetap atau "Pesanan pembelian" (UI berbahasa Indonesia) — menunggu pemilik |
-| 5 | Uji hak akses sebagai manager/supervisor di browser | Sudah lewat test (menu, API, Beranda, Karyawan); uji manual dari akun terbatas belum |
+| 2 | Integrasi Flutter | L1 + daftar kerja aplikasi di [`docs/api/flutter-changes.md`](api/flutter-changes.md): F1 hak akses dari `/auth/me` (ADR 0026), F2 pembulatan selalu ke atas, F3 opsi bawaan `is_default` (Q129) — masing-masing dengan uji terima |
+| ✅ | Label "Purchase order" | Diputuskan pemilik 2026-10-23: **tetap** "Purchase order" (istilah lazim POS) |
+| ✅ | Uji hak akses dari akun terbatas di browser | 2026-10-23: manager & supervisor bawaan, owner mengubah role & pengecualian karyawan (berlaku tanpa logout), akses URL langsung (403), Karyawan dari manager berdelegasi; temuan "Nonaktifkan" tampil di baris owner/diri sendiri → diperbaiki |
 | Ditunda | Aplikasi tablet | Fase tablet/aplikasi kasir (menu Perangkat sudah ada, Q54) |
 
 ### Perlu diubah / dilanjutkan (modul Laporan & UI)

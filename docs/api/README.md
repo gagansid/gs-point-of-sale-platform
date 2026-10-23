@@ -14,6 +14,9 @@ Satu file per domain, berisi semua endpoint domain tersebut dengan format
 | Laporan | [`report.md`](report.md) | ✅ 19 endpoint (termasuk PDF rekap shift, laba kotor, member, kanal, pembelian) + export Excel/PDF di dashboard |
 | Setelan (outlet, karyawan, metode bayar) | [`settings.md`](settings.md) | 🟡 10 endpoint (outlet, daftar outlet, karyawan, metode bayar); perangkat menyusul |
 
+**Perubahan yang perlu diterapkan di aplikasi Flutter:** [`flutter-changes.md`](flutter-changes.md) (hak akses dari
+`/auth/me`, pembulatan ke atas, opsi bawaan).
+
 **Total: 80 endpoint** (cek: `php artisan scramble:analyze`). Dokumentasi interaktif (Scramble) dibuat
 otomatis dari route & docblock controller — tidak perlu diperbarui manual; cukup jaga docblock tetap akurat.
 
