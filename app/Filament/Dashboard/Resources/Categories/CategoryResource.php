@@ -8,6 +8,7 @@ use App\Actions\Product\DeleteCategory;
 use App\Actions\Product\SaveCategory;
 use App\Actions\Product\SetCategoryActive;
 use App\Filament\Dashboard\Resources\Categories\Pages\ManageCategories;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\BulkDeleteAction;
 use App\Filament\Shared\Columns\AuditColumns;
@@ -15,7 +16,6 @@ use App\Filament\Shared\Layout;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Models\Category;
-use App\Models\User;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
@@ -24,7 +24,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -37,7 +36,7 @@ use UnitEnum;
 /**
  * Menu Katalog → Kategori: CRUD dalam modal, urutan bisa digeser (urutan tampil di aplikasi kasir).
  */
-final class CategoryResource extends Resource
+final class CategoryResource extends DashboardResource
 {
     protected static ?string $model = Category::class;
 
@@ -52,14 +51,6 @@ final class CategoryResource extends Resource
     protected static ?string $modelLabel = 'kategori';
 
     protected static ?string $pluralModelLabel = 'kategori';
-
-    /** Menu dashboard: akses panel penuh (dashboard.access) + permission menu dari policy (ADR 0026). */
-    public static function canViewAny(): bool
-    {
-        $user = auth()->user();
-
-        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
-    }
 
     public static function form(Schema $schema): Schema
     {

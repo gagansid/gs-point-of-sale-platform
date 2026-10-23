@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\StockTransfers;
 
 use App\Enums\StockTransferStatus;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\StockTransfers\Pages\CreateStockTransfer;
 use App\Filament\Dashboard\Resources\StockTransfers\Pages\EditStockTransfer;
 use App\Filament\Dashboard\Resources\StockTransfers\Pages\ListStockTransfers;
@@ -25,7 +26,6 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -43,7 +43,7 @@ use UnitEnum;
  * Stok → Transfer (ADR 0015, Q82; izin stock.transfer): pindah stok antar outlet dua langkah. Daftar berisi transfer
  * dari/ke outlet yang dipegang user (dan sesuai pilihan outlet topbar).
  */
-final class StockTransferResource extends Resource
+final class StockTransferResource extends DashboardResource
 {
     protected static ?string $model = StockTransfer::class;
 
@@ -63,12 +63,12 @@ final class StockTransferResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
         // Butuh minimal 2 outlet aktif di bisnis
-        return $user instanceof User && Features::enabled('stock') && $user->hasFullDashboard() && $user->hasPermission('stock.transfer')
+        return $user instanceof User && Features::enabled('stock') && $user->hasPermission('stock.transfer')
             && Outlet::query()->active()->count() > 1;
     }
 

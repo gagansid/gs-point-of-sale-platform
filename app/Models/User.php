@@ -57,6 +57,9 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     /** @use HasFactory<UserFactory> */
     use BelongsToTenant, HasApiTokens, HasFactory, HasUuids, LogsChanges, Notifiable, RecordsAuthor, SoftDeletes;
 
+    /** @var array{key: string, permissions: list<string>}|null memo grantedPermissions() per instance */
+    private ?array $grantedPermissionsMemo = null;
+
     /** Kolom yang dicatat di audit log (Q58). */
     public static function auditAttributes(): array
     {
@@ -173,11 +176,26 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
             return [];
         }
 
-        $granted = RolePermissions::granted($role, $this->getAttribute('tenant_id'));
+        // Memo per instance: can() dipanggil ratusan kali per render. Kunci berubah bila role, tenant, pengecualian,
+        // atau pengaturan hak akses bisnis (RolePermissions::flush) berubah
+        $attributes = $this->getAttributes();
+        $key = implode('|', [
+            $role->value, (string) $this->getAttribute('tenant_id'), RolePermissions::version(),
+            (string) json_encode($attributes['permissions_granted'] ?? null), (string) json_encode($attributes['permissions_revoked'] ?? null),
+        ]);
 
-        return $role->isConfigurable()
+        if ($this->grantedPermissionsMemo !== null && $this->grantedPermissionsMemo['key'] === $key) {
+            return $this->grantedPermissionsMemo['permissions'];
+        }
+
+        $granted = RolePermissions::granted($role, $this->getAttribute('tenant_id'));
+        $permissions = $role->isConfigurable()
             ? RolePermissions::applyOverrides($granted, $this->permissionOverride('permissions_granted'), $this->permissionOverride('permissions_revoked'))
             : $granted;
+
+        $this->grantedPermissionsMemo = ['key' => $key, 'permissions' => $permissions];
+
+        return $permissions;
     }
 
     /** Karyawan ini punya pengecualian hak akses (badge "Khusus" di Karyawan). */

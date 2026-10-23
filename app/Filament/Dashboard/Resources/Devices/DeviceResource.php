@@ -8,6 +8,7 @@ use App\Actions\Device\RenameDevice;
 use App\Actions\Device\SetDeviceRevoked;
 use App\Enums\AppPlatform;
 use App\Exceptions\BusinessException;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Devices\Pages\ManageDevices;
 use App\Filament\Shared\Actions\RunBusinessAction;
 use App\Filament\Shared\Tables\TableEmptyState;
@@ -22,7 +23,6 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -40,7 +40,7 @@ use UnitEnum;
  * Ganti nama, cabut (token & sesi langsung tidak berlaku; juga massal), aktifkan lagi. Perangkat baru terdaftar
  * dari aplikasi (POST /devices) atau otomatis saat kasir web memilih outlet. Kasir web menganggur (Q117) ditandai.
  */
-final class DeviceResource extends Resource
+final class DeviceResource extends DashboardResource
 {
     protected static ?string $model = Device::class;
 
@@ -60,11 +60,11 @@ final class DeviceResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('device.manage');
+        return $user instanceof User && $user->hasPermission('device.manage');
     }
 
     public static function canCreate(): bool

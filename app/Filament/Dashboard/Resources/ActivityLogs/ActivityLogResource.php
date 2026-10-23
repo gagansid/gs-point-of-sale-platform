@@ -8,6 +8,7 @@ use App\Actions\Product\SetProductAvailability;
 use App\Enums\PaymentCategory;
 use App\Enums\UserRole;
 use App\Filament\Dashboard\Resources\ActivityLogs\Pages\ListActivityLogs;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Filters\DateRangeFilter;
 use App\Filament\Shared\Tables\TableEmptyState;
@@ -27,7 +28,6 @@ use App\Support\Money;
 use App\Support\PermissionCatalog;
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -42,7 +42,7 @@ use UnitEnum;
  * Hanya baca. Jenis data mengikuti izin pengelolanya (manager: katalog saja); outlet dibatasi ke outlet
  * yang boleh diakses (ADR 0010). Isolasi tenant lewat TenantScope di ActivityLog.
  */
-final class ActivityLogResource extends Resource
+final class ActivityLogResource extends DashboardResource
 {
     use HasSentenceCaseLabels;
 
@@ -95,11 +95,11 @@ final class ActivityLogResource extends Resource
 
     private const MONEY_FIELDS = ['price', 'cost_price', 'price_delta', 'daily_sales_target', 'monthly_sales_target', 'cash_float', 'cash_out_approval_limit'];
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('audit.view');
+        return $user instanceof User && $user->hasPermission('audit.view');
     }
 
     public static function canCreate(): bool

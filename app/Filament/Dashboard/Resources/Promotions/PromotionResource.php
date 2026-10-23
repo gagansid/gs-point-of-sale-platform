@@ -8,6 +8,7 @@ use App\Actions\Promotion\SavePromotion;
 use App\Actions\Promotion\SetPromotionActive;
 use App\Enums\DiscountType;
 use App\Enums\PromotionType;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Promotions\Pages\ManagePromotions;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
@@ -32,7 +33,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -46,7 +46,7 @@ use UnitEnum;
  * Pelanggan → Promo (ADR 0022; izin promo.manage): promo otomatis tanpa kode — diskon produk/kategori (happy hour),
  * beli X gratis Y, diskon minimal belanja; jadwal hari, jam, tanggal, outlet.
  */
-final class PromotionResource extends Resource
+final class PromotionResource extends DashboardResource
 {
     protected static ?string $model = Promotion::class;
 
@@ -68,11 +68,11 @@ final class PromotionResource extends Resource
 
     public const DAYS = [1 => 'Sen', 2 => 'Sel', 3 => 'Rab', 4 => 'Kam', 5 => 'Jum', 6 => 'Sab', 7 => 'Min'];
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('promotions') && $user->hasFullDashboard() && $user->hasPermission('promo.manage');
+        return $user instanceof User && Features::enabled('promotions') && $user->hasPermission('promo.manage');
     }
 
     public static function canCreate(): bool

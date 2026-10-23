@@ -18,7 +18,6 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
@@ -36,7 +35,7 @@ use UnitEnum;
  * dikelompokkan seperti menu. Owner selalu semua akses; langganan & hak akses tetap khusus owner. Disimpan lewat
  * UpdateRolePermissions; sama dengan bawaan = disimpan sebagai bawaan.
  */
-final class AccessSettings extends Page
+final class AccessSettings extends DashboardPage
 {
     use HasIconBreadcrumbs;
 
@@ -55,11 +54,11 @@ final class AccessSettings extends Page
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 
-    public static function canAccess(): bool
+    protected static function canUsePage(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && $user->can('access.manage');
+        return $user instanceof User && $user->can('access.manage');
     }
 
     public function getSubheading(): string
@@ -161,11 +160,15 @@ final class AccessSettings extends Page
             ]);
     }
 
+    /** Jumlah karyawan berpengecualian per role: satu query GROUP BY per request (label & visible memakai hasil sama). */
     private static function overrideCount(UserRole $role): int
     {
-        return User::query()->where('role', $role->value)
+        $counts = once(fn (): array => User::query()
             ->where(fn ($q) => $q->whereNotNull('permissions_granted')->orWhereNotNull('permissions_revoked'))
-            ->count();
+            ->groupBy('role')->selectRaw('role, COUNT(*) AS total')
+            ->pluck('total', 'role')->map(fn (mixed $n): int => (int) $n)->all());
+
+        return $counts[$role->value] ?? 0;
     }
 
     /**

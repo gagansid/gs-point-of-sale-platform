@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\StockReceipts;
 
 use App\Actions\Stock\SaveStockReceipt;
 use App\Enums\StockDocumentStatus;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\StockReceipts\Pages\CreateStockReceipt;
 use App\Filament\Dashboard\Resources\StockReceipts\Pages\EditStockReceipt;
 use App\Filament\Dashboard\Resources\StockReceipts\Pages\ListStockReceipts;
@@ -31,7 +32,6 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -50,7 +50,7 @@ use UnitEnum;
  * diubah; Posting menambah stok & menghitung modal rata-rata tertimbang; Batalkan mengurangi stok lagi.
  * Supervisor (dashboard hanya Laporan) juga mendapat menu ini untuk outlet yang ditugaskan.
  */
-final class StockReceiptResource extends Resource
+final class StockReceiptResource extends DashboardResource
 {
     use HasSentenceCaseLabels;
 
@@ -72,9 +72,12 @@ final class StockReceiptResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
+    /** Supervisor (tanpa dashboard.access) mencatat barang datang di outlet (Q79, ADR 0026). */
+    protected static bool $requiresFullDashboard = false;
+
     protected static ?string $recordTitleAttribute = 'number';
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 

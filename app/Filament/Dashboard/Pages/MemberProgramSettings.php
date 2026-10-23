@@ -30,7 +30,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
@@ -48,7 +47,7 @@ use UnitEnum;
  * Pengaturan → Program member (ADR 0013, Q60, member.settings): aktifkan program, outlet yang ikut, aturan poin,
  * diskon member, tier (M5), dan voucher ulang tahun (M7).
  */
-final class MemberProgramSettings extends Page
+final class MemberProgramSettings extends DashboardPage
 {
     use HasIconBreadcrumbs;
 
@@ -67,11 +66,11 @@ final class MemberProgramSettings extends Page
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 
-    public static function canAccess(): bool
+    protected static function canUsePage(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && Features::enabled('member') && $user->hasPermission('member.settings');
+        return $user instanceof User && Features::enabled('member') && $user->hasPermission('member.settings');
     }
 
     public function mount(): void

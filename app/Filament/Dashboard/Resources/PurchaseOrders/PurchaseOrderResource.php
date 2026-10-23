@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\PurchaseOrders;
 
 use App\Actions\Stock\SavePurchaseOrder;
 use App\Enums\PurchaseOrderStatus;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\PurchaseOrders\Pages\CreatePurchaseOrder;
 use App\Filament\Dashboard\Resources\PurchaseOrders\Pages\EditPurchaseOrder;
 use App\Filament\Dashboard\Resources\PurchaseOrders\Pages\ListPurchaseOrders;
@@ -31,7 +32,6 @@ use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -49,7 +49,7 @@ use UnitEnum;
  * Stok → Purchase order (ADR 0021; izin purchase.manage): pesanan ke supplier. Draf bisa diubah; Kirim mengunci;
  * Terima barang membuat draf Stok masuk dari sisa qty; Batalkan untuk PO yang belum diterima penuh.
  */
-final class PurchaseOrderResource extends Resource
+final class PurchaseOrderResource extends DashboardResource
 {
     use HasSentenceCaseLabels;
 
@@ -73,11 +73,11 @@ final class PurchaseOrderResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'number';
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && Features::enabled('stock') && $user->hasPermission('purchase.manage');
+        return $user instanceof User && Features::enabled('stock') && $user->hasPermission('purchase.manage');
     }
 
     public static function canCreate(): bool

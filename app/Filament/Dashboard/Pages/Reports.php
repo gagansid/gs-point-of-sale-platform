@@ -57,7 +57,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
-use Filament\Pages\Page;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Grid;
@@ -78,7 +77,7 @@ use UnitEnum;
  * operasional, maks. 31 hari ke belakang — dipotong di ReportContext (server), bukan hanya UI.
  * Angka dari ReportService (sama dengan API /reports, Beranda, dan file export).
  */
-final class Reports extends Page
+final class Reports extends DashboardPage
 {
     use HasFiltersForm {
         mountHasFilters as private mountFiltersFromSession;
@@ -109,7 +108,10 @@ final class Reports extends Page
 
     protected static ?string $slug = 'reports';
 
-    public static function canAccess(): bool
+    /** Supervisor (report.view_shift, tanpa dashboard.access) hanya membuka Laporan (Q50, ADR 0026). */
+    protected static bool $requiresFullDashboard = false;
+
+    protected static function canUsePage(): bool
     {
         $user = self::user();
 

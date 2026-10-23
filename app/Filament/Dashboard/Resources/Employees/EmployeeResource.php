@@ -13,6 +13,7 @@ use App\Actions\User\UnlockEmployeePin;
 use App\Enums\UserRole;
 use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Pages\AccessSettings;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Employees\Pages\ManageEmployees;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
@@ -35,7 +36,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
@@ -53,7 +53,7 @@ use UnitEnum;
  * Pengaturan → Karyawan (SPEC, permission user.manage). Simpan lewat SaveEmployee/SetEmployeeActive.
  * Karyawan tidak dihapus — dinonaktifkan agar riwayat transaksi tetap utuh.
  */
-final class EmployeeResource extends Resource
+final class EmployeeResource extends DashboardResource
 {
     protected static ?string $model = User::class;
 
@@ -72,14 +72,6 @@ final class EmployeeResource extends Resource
     protected static ?int $navigationSort = 2;
 
     protected static bool $isGloballySearchable = false;
-
-    /** Menu dashboard: akses panel penuh (dashboard.access) + permission menu dari policy (ADR 0026). */
-    public static function canViewAny(): bool
-    {
-        $user = auth()->user();
-
-        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
-    }
 
     public static function form(Schema $schema): Schema
     {

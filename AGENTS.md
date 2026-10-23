@@ -114,7 +114,7 @@ Untuk perubahan UI: buka panel di browser, cek light & dark mode, cek lebar mobi
 | Menambah permission | `UserRole::PERMISSIONS` + bawaan di `UserRole::permissions()` (+ `OWNER_ONLY`/`IMPLIES` bila perlu) + tabel permission di `docs/SPEC.md` |
 | Menambah error code | Tabel error code di `docs/SPEC.md` **dulu** (PR terpisah/disetujui), lalu `App\Enums\ErrorCode` |
 | Menambah status/tipe | `app/Enums/{Name}.php` (dengan label & warna untuk UI) |
-| Menambah menu dashboard owner | `app/Filament/Dashboard/Resources` atau `Pages` |
+| Menambah menu dashboard owner | `app/Filament/Dashboard/Resources` (`extends DashboardResource`, isi `canUseMenu()`) atau `Pages` (`extends DashboardPage`, isi `canUsePage()`) — dijaga `DashboardAccessGateTest` |
 | Menambah menu super admin | `app/Filament/Admin/Resources` atau `Pages` |
 | Mengubah tampilan panel | `resources/css/filament/{panel}/theme.css` — ikuti `docs/standards/ui/` |
 | Menambah tugas terjadwal | `routes/console.php` |

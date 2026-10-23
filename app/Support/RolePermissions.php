@@ -17,6 +17,9 @@ final class RolePermissions
     /** @var array<string, array<string, list<string>>> tenant id → role → permission yang diatur owner */
     private static array $cache = [];
 
+    /** Naik setiap flush: memo hak akses per user (User::grantedPermissions) ikut kedaluwarsa. */
+    private static int $version = 0;
+
     /** @return list<string> permission yang berlaku, urut seperti UserRole::PERMISSIONS */
     public static function granted(UserRole $role, ?string $tenantId): array
     {
@@ -91,6 +94,12 @@ final class RolePermissions
     public static function flush(): void
     {
         self::$cache = [];
+        self::$version++;
+    }
+
+    public static function version(): int
+    {
+        return self::$version;
     }
 
     /** @return array<string, list<string>> */

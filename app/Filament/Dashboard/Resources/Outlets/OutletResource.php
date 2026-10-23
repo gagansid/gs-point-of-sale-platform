@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\Outlets;
 
 use App\Actions\Outlet\SetOutletActive;
 use App\Filament\Dashboard\Pages\OutletSettings;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Outlets\Pages\ManageOutlets;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Columns\AuditColumns;
@@ -20,7 +21,6 @@ use Filament\Actions\ActionGroup;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -35,7 +35,7 @@ use UnitEnum;
  * Pengaturan → Outlet (ADR 0010, Q36). Owner menambah & menonaktifkan outlet (outlet.manage);
  * pajak, struk, dsb. diubah di halaman Profil outlet (outlet.settings). Outlet tidak pernah dihapus.
  */
-final class OutletResource extends Resource
+final class OutletResource extends DashboardResource
 {
     protected static ?string $model = Outlet::class;
 
@@ -55,11 +55,11 @@ final class OutletResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && ($user->hasPermission('outlet.manage') || $user->hasPermission('outlet.settings'));
+        return $user instanceof User && ($user->hasPermission('outlet.manage') || $user->hasPermission('outlet.settings'));
     }
 
     public static function canCreate(): bool

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\Receivables;
 
 use App\Enums\ReceivableEntryType;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Members\Actions\ReceivableActions;
 use App\Filament\Dashboard\Resources\Receivables\Pages\ListReceivables;
 use App\Filament\Shared\Columns\MoneyColumn;
@@ -21,7 +22,6 @@ use BackedEnum;
 use Carbon\CarbonImmutable;
 use Closure;
 use Filament\Actions\ActionGroup;
-use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
@@ -36,7 +36,7 @@ use UnitEnum;
  * saldo, batas, umur kasbon (sejak saldo terakhir naik dari nol), dan pelunasan terakhir. Ledger tetap di
  * `receivable_entries`; aksi memanggil Action yang sama dengan menu Member.
  */
-final class ReceivableResource extends Resource
+final class ReceivableResource extends DashboardResource
 {
     use HasSentenceCaseLabels;
 
@@ -62,11 +62,11 @@ final class ReceivableResource extends Resource
     protected static bool $isGloballySearchable = false;
 
     /** Tampil bila program kasbon aktif, atau masih ada kasbon tersisa walau program sudah dimatikan. */
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        if (! $user instanceof User || ! Features::enabled('member') || ! $user->hasFullDashboard() || ! $user->hasPermission('member.view')) {
+        if (! $user instanceof User || ! Features::enabled('member') || ! $user->hasPermission('member.view')) {
             return false;
         }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\StockMovements;
 
 use App\Enums\StockMovementType;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\StockMovements\Pages\ListStockMovements;
 use App\Filament\Shared\Concerns\HasSentenceCaseLabels;
 use App\Filament\Shared\Filters\DateRangeFilter;
@@ -16,7 +17,6 @@ use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\Features;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -31,7 +31,7 @@ use UnitEnum;
  * Stok → Riwayat stok (Q14, ADR 0015; izin stock.adjust): kartu stok per produk & outlet — setiap penjualan, void,
  * retur, stok masuk, opname, transfer, dan penyesuaian beserta stok akhirnya. Hanya baca; `stock_movements` append-only.
  */
-final class StockMovementResource extends Resource
+final class StockMovementResource extends DashboardResource
 {
     use HasSentenceCaseLabels;
 
@@ -53,11 +53,11 @@ final class StockMovementResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('stock') && $user->hasFullDashboard() && $user->hasPermission('stock.adjust');
+        return $user instanceof User && Features::enabled('stock') && $user->hasPermission('stock.adjust');
     }
 
     public static function canCreate(): bool

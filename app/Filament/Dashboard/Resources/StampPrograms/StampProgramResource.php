@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\StampPrograms;
 
 use App\Actions\Member\SaveStampProgram;
 use App\Actions\Member\SetStampProgramActive;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\StampPrograms\Pages\ManageStampPrograms;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
@@ -25,7 +26,6 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -38,7 +38,7 @@ use UnitEnum;
 /**
  * Pelanggan → Kartu stempel (ADR 0013, Q65; izin member.settings): program "beli N gratis 1" per produk/kategori.
  */
-final class StampProgramResource extends Resource
+final class StampProgramResource extends DashboardResource
 {
     use HasSentenceCaseLabels;
 
@@ -60,11 +60,11 @@ final class StampProgramResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('member') && $user->hasFullDashboard() && $user->hasPermission('member.settings');
+        return $user instanceof User && Features::enabled('member') && $user->hasPermission('member.settings');
     }
 
     public static function canCreate(): bool

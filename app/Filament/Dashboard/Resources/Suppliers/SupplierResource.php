@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\Suppliers;
 
 use App\Actions\Stock\SaveSupplier;
 use App\Actions\Stock\SetSupplierActive;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Suppliers\Pages\ManageSuppliers;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
@@ -20,7 +21,6 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -29,7 +29,7 @@ use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 /** Stok → Supplier (ADR 0015, Q79; izin supplier.manage): data supplier bisnis untuk stok masuk. */
-final class SupplierResource extends Resource
+final class SupplierResource extends DashboardResource
 {
     protected static ?string $model = Supplier::class;
 
@@ -49,11 +49,11 @@ final class SupplierResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('stock') && $user->hasFullDashboard() && $user->hasPermission('supplier.manage');
+        return $user instanceof User && Features::enabled('stock') && $user->hasPermission('supplier.manage');
     }
 
     public static function canCreate(): bool

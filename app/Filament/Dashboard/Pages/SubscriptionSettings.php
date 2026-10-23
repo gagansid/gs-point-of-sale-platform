@@ -43,7 +43,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Icons\Heroicon;
@@ -63,7 +62,7 @@ use UnitEnum;
  * (pilih paket & siklus), add-on (tambah prorata, berhenti/lanjutkan; ADR 0025 C2), bayar online (Midtrans vendor)
  * atau transfer manual, riwayat tagihan. Hanya edisi SaaS.
  */
-final class SubscriptionSettings extends Page implements HasTable
+final class SubscriptionSettings extends DashboardPage implements HasTable
 {
     use HasIconBreadcrumbs;
     use InteractsWithTable;
@@ -89,12 +88,12 @@ final class SubscriptionSettings extends Page implements HasTable
 
     protected string $view = 'filament.dashboard.pages.subscription';
 
-    public static function canAccess(): bool
+    protected static function canUsePage(): bool
     {
         $user = auth()->user();
 
         // Tetap bisa dibuka saat hanya-baca: justru untuk memperpanjang
-        return Edition::isSaas() && $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('billing.manage');
+        return Edition::isSaas() && $user instanceof User && $user->hasPermission('billing.manage');
     }
 
     public function tenant(): Tenant

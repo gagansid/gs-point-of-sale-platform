@@ -236,4 +236,17 @@ describe('perbaikan review', function () {
 
         expect(Cache::get('rp-job-can'))->toBeFalse();
     });
+
+    it('memo hak akses per user kedaluwarsa saat pengecualian atau hak akses role berubah', function () {
+        $budi = $this->pos->cashier;
+        expect($budi->can('order.void'))->toBeFalse();
+
+        // Pengecualian berubah di instance yang sama
+        $budi->forceFill(['permissions_granted' => ['order.void']]);
+        expect($budi->can('order.void'))->toBeTrue();
+
+        // Hak akses role berubah (flush) → instance yang sama membaca ulang
+        app(UpdateRolePermissions::class)->handle($this->owner, UserRole::Cashier, ['order.create', 'order.refund']);
+        expect($budi->can('order.refund'))->toBeTrue()->and($budi->can('order.reprint'))->toBeFalse();
+    });
 });

@@ -7,6 +7,7 @@ namespace App\Filament\Dashboard\Resources\DiningTables;
 use App\Actions\SelfOrder\RegenerateTableQr;
 use App\Actions\SelfOrder\SaveDiningTable;
 use App\Actions\SelfOrder\SetDiningTableActive;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\DiningTables\Pages\ManageDiningTables;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
@@ -26,7 +27,6 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -40,7 +40,7 @@ use UnitEnum;
  * Pengaturan → Meja & QR (ADR 0014, Q69; izin table.manage): meja per outlet, QR pesan sendiri (cetak, ganti token),
  * dan setelan self-order outlet (aksi di header halaman).
  */
-final class DiningTableResource extends Resource
+final class DiningTableResource extends DashboardResource
 {
     protected static ?string $model = DiningTable::class;
 
@@ -60,11 +60,11 @@ final class DiningTableResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('self_order') && $user->hasFullDashboard() && $user->hasPermission('table.manage');
+        return $user instanceof User && Features::enabled('self_order') && $user->hasPermission('table.manage');
     }
 
     public static function canCreate(): bool

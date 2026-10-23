@@ -19,7 +19,6 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
@@ -35,7 +34,7 @@ use UnitEnum;
  * Pengaturan → Pembayaran online (ADR 0014, Q72; izin payment_gateway.manage): akun Midtrans milik owner untuk
  * pesanan dari meja. Key disimpan terenkripsi dan tidak pernah ditampilkan lagi; kosong = key lama tetap.
  */
-final class PaymentGatewaySettings extends Page
+final class PaymentGatewaySettings extends DashboardPage
 {
     use HasIconBreadcrumbs;
 
@@ -54,11 +53,11 @@ final class PaymentGatewaySettings extends Page
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 
-    public static function canAccess(): bool
+    protected static function canUsePage(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && Features::enabled('self_order') && Features::enabled('online_payment') && $user->hasPermission('payment_gateway.manage');
+        return $user instanceof User && Features::enabled('self_order') && Features::enabled('online_payment') && $user->hasPermission('payment_gateway.manage');
     }
 
     public function mount(): void

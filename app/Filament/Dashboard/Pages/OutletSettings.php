@@ -20,7 +20,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Grid;
@@ -38,7 +37,7 @@ use UnitEnum;
  * Outlet dari ?outlet= (daftar Outlet) atau outlet aktif di pemilih outlet sidebar; hanya outlet yang boleh
  * diakses user (lainnya 404, ADR 0010).
  */
-final class OutletSettings extends Page
+final class OutletSettings extends DashboardPage
 {
     use HasIconBreadcrumbs;
 
@@ -65,11 +64,11 @@ final class OutletSettings extends Page
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 
-    public static function canAccess(): bool
+    protected static function canUsePage(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('outlet.settings');
+        return $user instanceof User && $user->hasPermission('outlet.settings');
     }
 
     public function mount(): void

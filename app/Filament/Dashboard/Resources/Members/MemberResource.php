@@ -11,6 +11,7 @@ use App\Actions\Member\Data\MemberData;
 use App\Actions\Member\SaveMember;
 use App\Actions\Member\SetMemberActive;
 use App\Actions\Member\SetMemberPin;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Members\Actions\ReceivableActions;
 use App\Filament\Dashboard\Resources\Members\Pages\ManageMembers;
 use App\Filament\Shared\Actions\ActiveStatusActions;
@@ -37,7 +38,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -52,7 +52,7 @@ use UnitEnum;
  * Pelanggan → Member (ADR 0013, member.view): daftar member bisnis (semua outlet). Tambah (member.create),
  * ubah/nonaktifkan/hapus = anonimkan (member.manage). Program diaktifkan di Pengaturan → Program member.
  */
-final class MemberResource extends Resource
+final class MemberResource extends DashboardResource
 {
     protected static ?string $model = Member::class;
 
@@ -72,12 +72,12 @@ final class MemberResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
         // Supervisor masuk dashboard hanya untuk Laporan (Q50); member dicari/didaftar dari kasir
-        return $user instanceof User && Features::enabled('member') && $user->hasFullDashboard() && $user->hasPermission('member.view');
+        return $user instanceof User && Features::enabled('member') && $user->hasPermission('member.view');
     }
 
     public static function canCreate(): bool

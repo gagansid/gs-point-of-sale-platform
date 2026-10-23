@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\StockOpnames;
 
 use App\Enums\StockDocumentStatus;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\StockOpnames\Pages\CountStockOpname;
 use App\Filament\Dashboard\Resources\StockOpnames\Pages\ListStockOpnames;
 use App\Filament\Dashboard\Resources\StockOpnames\Pages\ViewStockOpname;
@@ -24,7 +25,6 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Repeater\TableColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
@@ -41,7 +41,7 @@ use UnitEnum;
  * Stok → Stok opname (ADR 0015, Q81; izin stock.opname): lembar hitung fisik per outlet; posting menyamakan stok dengan
  * hitungan dan mencatat selisih (qty & nilai modal).
  */
-final class StockOpnameResource extends Resource
+final class StockOpnameResource extends DashboardResource
 {
     use HasSentenceCaseLabels;
 
@@ -63,11 +63,11 @@ final class StockOpnameResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('stock') && $user->hasFullDashboard() && $user->hasPermission('stock.opname');
+        return $user instanceof User && Features::enabled('stock') && $user->hasPermission('stock.opname');
     }
 
     public static function canCreate(): bool

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Resources\Shifts;
 
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Shifts\Pages\ListShifts;
 use App\Filament\Dashboard\Resources\Shifts\Pages\ViewShift;
 use App\Filament\Dashboard\Resources\Shifts\Schemas\ShiftInfolist;
@@ -12,7 +13,6 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Facades\FilamentTimezone;
 use Filament\Support\Icons\Heroicon;
@@ -25,7 +25,7 @@ use UnitEnum;
 /**
  * Menu Transaksi → Shift: riwayat shift, selisih kas per kasir, tutup paksa.
  */
-final class ShiftResource extends Resource
+final class ShiftResource extends DashboardResource
 {
     protected static ?string $model = Shift::class;
 
@@ -40,14 +40,6 @@ final class ShiftResource extends Resource
     protected static ?string $modelLabel = 'shift';
 
     protected static ?string $pluralModelLabel = 'shift';
-
-    /** Menu khusus akses panel penuh (owner/manager); supervisor di panel hanya Laporan (Q50). */
-    public static function canViewAny(): bool
-    {
-        $user = auth()->user();
-
-        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
-    }
 
     public static function canCreate(): bool
     {

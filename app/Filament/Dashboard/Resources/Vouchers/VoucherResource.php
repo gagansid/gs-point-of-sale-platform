@@ -8,6 +8,7 @@ use App\Actions\Member\SaveVoucher;
 use App\Actions\Member\SetVoucherActive;
 use App\Enums\DiscountType;
 use App\Enums\VoucherSource;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Vouchers\Pages\ManageVouchers;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Actions\RunBusinessAction;
@@ -31,7 +32,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -45,7 +45,7 @@ use UnitEnum;
  * Pelanggan → Voucher (ADR 0013, Q66; izin member.settings): kode promo owner (tambah/ubah/nonaktif) dan daftar
  * voucher ulang tahun yang dibuat otomatis (hanya dilihat).
  */
-final class VoucherResource extends Resource
+final class VoucherResource extends DashboardResource
 {
     protected static ?string $model = Voucher::class;
 
@@ -65,11 +65,11 @@ final class VoucherResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('member') && $user->hasFullDashboard() && $user->hasPermission('member.settings');
+        return $user instanceof User && Features::enabled('member') && $user->hasPermission('member.settings');
     }
 
     public static function canCreate(): bool

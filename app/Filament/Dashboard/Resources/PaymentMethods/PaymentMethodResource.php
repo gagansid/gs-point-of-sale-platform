@@ -6,6 +6,7 @@ namespace App\Filament\Dashboard\Resources\PaymentMethods;
 
 use App\Actions\Payment\UpdatePaymentMethod;
 use App\Enums\PaymentCategory;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\PaymentMethods\Pages\ManagePaymentMethods;
 use App\Filament\Shared\Actions\ActiveStatusActions;
 use App\Filament\Shared\Columns\AuditColumns;
@@ -22,7 +23,6 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -36,7 +36,7 @@ use UnitEnum;
  * Pengaturan → Metode pembayaran (permission payment_method.manage). Lima metode bawaan per bisnis
  * (satu per kategori): tidak ada tambah/hapus. Tunai tidak bisa dinonaktifkan.
  */
-final class PaymentMethodResource extends Resource
+final class PaymentMethodResource extends DashboardResource
 {
     use HasSentenceCaseLabels;
 
@@ -58,11 +58,11 @@ final class PaymentMethodResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('payment_method.manage');
+        return $user instanceof User && $user->hasPermission('payment_method.manage');
     }
 
     public static function canCreate(): bool

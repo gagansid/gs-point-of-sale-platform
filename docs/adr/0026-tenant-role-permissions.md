@@ -36,6 +36,8 @@ Pilihan yang ditimbang:
 | Delegasi `user.manage` | Non-owner hanya mengelola & memberi role **di bawah dirinya** (`UserRole::rank()`): tidak bisa menyentuh owner, sesama manager, atau dirinya sendiri (`SaveEmployee::ensureCanManage`, `UserPolicy::update`) → `FORBIDDEN` |
 | Verifikasi email | Supervisor/kasir yang diberi akses dashboard tetap wajib email terverifikasi (Q46), berdasarkan cara login role |
 | API | Policy (`ProductPolicy`, `UserPolicy`, …) tetap hanya memakai permission, tanpa `dashboard.access`, agar aplikasi kasir tidak ikut tertutup |
+| Penegakan terpusat | `DashboardResource::canViewAny()` & `DashboardPage::canAccess()` **final** = gerbang `dashboard.access` + `canUseMenu()`/`canUsePage()`. Pengecualian lewat `$requiresFullDashboard = false` hanya `Reports` & `StockReceiptResource`; `DashboardAccessGateTest` menolak menu yang tidak turunan base class atau pengecualian baru |
+| Kinerja | `User::grantedPermissions()` dimemo per instance (kunci: role, tenant, pengecualian, versi `RolePermissions::flush`); cache paket & hak akses dikosongkan di awal setiap job queue |
 
 ### Pengecualian per karyawan (opsi B, 2026-10-22)
 

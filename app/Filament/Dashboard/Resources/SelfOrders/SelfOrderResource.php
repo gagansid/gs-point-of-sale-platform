@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Dashboard\Resources\SelfOrders;
 
 use App\Enums\SelfOrderStatus;
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Orders\OrderResource;
 use App\Filament\Dashboard\Resources\SelfOrders\Pages\ListSelfOrders;
 use App\Filament\Shared\Columns\MoneyColumn;
@@ -21,7 +22,6 @@ use App\Support\CurrentOutlet;
 use App\Support\Features;
 use BackedEnum;
 use Filament\Actions\Action;
-use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -34,7 +34,7 @@ use UnitEnum;
  * Transaksi → Pesanan meja (ADR 0014, Q68; izin order.view_all): riwayat pesanan QR meja — menunggu, diterima
  * (tautan ke order), ditolak beserta alasannya, dan kedaluwarsa. Hanya baca; diterima/ditolak tetap di kasir.
  */
-final class SelfOrderResource extends Resource
+final class SelfOrderResource extends DashboardResource
 {
     use HasSentenceCaseLabels;
 
@@ -56,11 +56,11 @@ final class SelfOrderResource extends Resource
 
     protected static bool $isGloballySearchable = false;
 
-    public static function canViewAny(): bool
+    protected static function canUseMenu(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && Features::enabled('self_order') && $user->hasFullDashboard() && $user->hasPermission('order.view_all');
+        return $user instanceof User && Features::enabled('self_order') && $user->hasPermission('order.view_all');
     }
 
     public static function canCreate(): bool

@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Resources\Products;
 
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Products\Pages\CreateProduct;
 use App\Filament\Dashboard\Resources\Products\Pages\EditProduct;
 use App\Filament\Dashboard\Resources\Products\Pages\ListProducts;
 use App\Filament\Dashboard\Resources\Products\Schemas\ProductForm;
 use App\Filament\Dashboard\Resources\Products\Tables\ProductsTable;
 use App\Models\Product;
-use App\Models\User;
 use App\Support\CurrentOutlet;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -24,7 +23,7 @@ use UnitEnum;
  * Menu Katalog → Produk. Simpan lewat Action SaveProduct; stok lewat aksi Sesuaikan stok.
  * Katalog & harga per bisnis; stok dan ketersediaan milik outlet aktif di pemilih outlet sidebar (ADR 0010).
  */
-final class ProductResource extends Resource
+final class ProductResource extends DashboardResource
 {
     protected static ?string $model = Product::class;
 
@@ -41,14 +40,6 @@ final class ProductResource extends Resource
     protected static ?string $pluralModelLabel = 'produk';
 
     protected static ?string $recordTitleAttribute = 'name';
-
-    /** Menu dashboard: akses panel penuh (dashboard.access) + permission menu dari policy (ADR 0026). */
-    public static function canViewAny(): bool
-    {
-        $user = auth()->user();
-
-        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
-    }
 
     /** @return Builder<Product> */
     public static function getEloquentQuery(): Builder

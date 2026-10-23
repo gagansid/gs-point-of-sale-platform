@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Dashboard\Resources\Orders;
 
+use App\Filament\Dashboard\Resources\DashboardResource;
 use App\Filament\Dashboard\Resources\Orders\Pages\ListOrders;
 use App\Filament\Dashboard\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Dashboard\Resources\Orders\Schemas\OrderInfolist;
@@ -12,7 +13,6 @@ use App\Models\Order;
 use App\Models\User;
 use App\Support\CurrentOutlet;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
@@ -22,7 +22,7 @@ use UnitEnum;
 /**
  * Menu Transaksi → Penjualan (hanya baca + void). Order dibuat dari aplikasi kasir.
  */
-final class OrderResource extends Resource
+final class OrderResource extends DashboardResource
 {
     protected static ?string $model = Order::class;
 
@@ -39,14 +39,6 @@ final class OrderResource extends Resource
     protected static ?string $pluralModelLabel = 'penjualan';
 
     protected static ?string $recordTitleAttribute = 'order_number';
-
-    /** Menu khusus akses panel penuh (owner/manager); supervisor di panel hanya Laporan (Q50). */
-    public static function canViewAny(): bool
-    {
-        $user = auth()->user();
-
-        return $user instanceof User && $user->hasFullDashboard() && parent::canViewAny();
-    }
 
     public static function canCreate(): bool
     {

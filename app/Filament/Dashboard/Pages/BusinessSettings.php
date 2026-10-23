@@ -23,7 +23,6 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
-use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
@@ -39,7 +38,7 @@ use UnitEnum;
  * dashboard (preset / bebas), gaya sidebar, mode tampilan bawaan, panduan awal. Berlaku untuk semua pengguna bisnis
  * ini di dashboard. Kode bisnis (login kasir web) tidak bisa diubah di sini.
  */
-final class BusinessSettings extends Page
+final class BusinessSettings extends DashboardPage
 {
     use HasIconBreadcrumbs;
 
@@ -58,11 +57,11 @@ final class BusinessSettings extends Page
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 
-    public static function canAccess(): bool
+    protected static function canUsePage(): bool
     {
         $user = auth()->user();
 
-        return $user instanceof User && $user->hasFullDashboard() && $user->hasPermission('business.settings');
+        return $user instanceof User && $user->hasPermission('business.settings');
     }
 
     public function getSubheading(): string
