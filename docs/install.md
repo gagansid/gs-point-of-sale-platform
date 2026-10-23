@@ -69,6 +69,9 @@
 - Menghapus file kunci saja **tidak** membuka installer lagi (aplikasi yang sudah punya `APP_KEY` dianggap terinstal).
   Instal ulang = hapus `.env` + `storage/app/installed.json` **dan** kosongkan database (sengaja manual).
 - Kata sandi database, SMTP, dan akun tidak ditampilkan ulang; `.env` ditulis dengan izin 0640.
+- Instal lewat form membuat `APP_KEY` baru di server. Bila memindahkan data dari server/komputer lain bersama `.env`-nya
+  (instal manual), jalankan `php artisan pos:rotate-key` setelah aplikasi berjalan agar produksi memakai key sendiri
+  (GSPOS-SEC-025). Paket zip tidak boleh berisi `.env`: periksa dengan `scripts/release/check-package.sh <zip>`.
 
 ## Update ke versi baru (tanpa GitHub Actions)
 

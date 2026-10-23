@@ -70,6 +70,25 @@ final class SystemSettings
     private const CACHE_PREFIX = 'system_settings:';
 
     /**
+     * Setelan yang disimpan terenkripsi (Crypt::encryptString); dienkripsi ulang saat APP_KEY diganti (RotateAppKey).
+     *
+     * @return list<string>
+     */
+    public static function encryptedKeys(): array
+    {
+        return [
+            self::TURNSTILE_SECRET_KEY,
+            ...array_map(fn (string $mode): string => self::BILLING_MIDTRANS_KEY_PREFIX.$mode, array_keys(self::MIDTRANS_MODES)),
+        ];
+    }
+
+    /** Membuang cache satu setelan yang diubah langsung di database (mis. RotateAppKey). */
+    public static function forgetCached(string $key): void
+    {
+        Cache::forget(self::CACHE_PREFIX.$key);
+    }
+
+    /**
      * Wajibkan 2FA untuk semua super admin. Default dari config (aman: aktif) bila belum pernah diatur.
      */
     public function adminTwoFactorRequired(): bool

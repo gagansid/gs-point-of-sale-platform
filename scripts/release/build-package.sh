@@ -44,4 +44,7 @@ cp "$ROOT/docs/install.md" INSTALL.md
 ZIP="$OUT_ABS/gspos-${VERSION}-${EDITION}.zip"
 rm -f "$ZIP"
 (cd "$WORK" && zip -qr "$ZIP" gs-point-of-sale-platform)
+
+# Pagar terakhir: paket tidak boleh membawa .env/database/log (GSPOS-SEC-025); gagal = zip dihapus
+"$ROOT/scripts/release/check-package.sh" "$ZIP" >&2 || { rm -f "$ZIP"; exit 1; }
 echo "$ZIP"

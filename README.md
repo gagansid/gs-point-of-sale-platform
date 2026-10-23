@@ -46,3 +46,10 @@ Admin kehilangan aplikasi authenticator dan recovery code (jalankan di server):
 ```bash
 php artisan pos:admin-reset-2fa admin@domain.com
 ```
+
+Ganti `APP_KEY` produksi (sekali setelah deploy pertama, dan bila key diduga bocor — GSPOS-SEC-025). Data rahasia
+dienkripsi ulang, session web diputus, key lama dicabut:
+
+```bash
+php artisan pos:rotate-key && php artisan optimize
+```

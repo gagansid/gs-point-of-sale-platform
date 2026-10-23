@@ -99,3 +99,6 @@ Dengan ini "PR di-approve" → bisa di-merge → otomatis ter-deploy.
   terakhir (`storage/app/backups`, dibuat tepat sebelum migrasi).
 - Instalasi pertama bisa lewat form web `/install` (paket zip, ADR 0016) — lihat [`install.md`](install.md); setelah itu
   deploy otomatis ini dipakai untuk rilis berikutnya (`.env` & `storage/` di server tidak disentuh).
+- `APP_KEY` produksi tidak pernah sama dengan lokal/staging (GSPOS-SEC-025). Bila server diisi dari paket/data lokal
+  beserta `.env`-nya, jalankan sekali `php artisan pos:rotate-key --force && php artisan optimize` di server; ulangi
+  bila key diduga bocor. Semua pengguna web masuk ulang; token aplikasi Flutter tetap berlaku.

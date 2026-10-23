@@ -137,6 +137,12 @@ CSP untuk panel Filament (butuh skrip Livewire/Alpine) disusun di langkah panel,
 - [ ] AutoSSL aktif; ModSecurity cPanel aktif.
 - [ ] Project di luar `public_html`; document root ke `public/` (SPEC Deploy).
 - [ ] `.env` production: `APP_DEBUG=false`, `APP_ENV=production`, `SESSION_SECURE_COOKIE=true`.
+- [ ] **`APP_KEY` produksi berbeda dari lokal/staging** (GSPOS-SEC-025). Key bocor = cookie, session, signed URL &
+      snapshot Livewire bisa dipalsukan (jalur umum ke eksekusi kode). Setelah deploy pertama — dan setiap kali key
+      diduga bocor — jalankan `php artisan pos:rotate-key` (mengenkripsi ulang data rahasia, memutus session web,
+      mencabut key lama), lalu `php artisan optimize`. Simpan `.env` produksi di password manager, bukan di zip/chat.
+- [ ] Paket zip tidak pernah berisi `.env`, database/dump lokal, atau log: `scripts/release/check-package.sh <zip>`
+      (otomatis di `build-package.sh`). `.env` diunggah terpisah lewat File Manager.
 - [ ] PHP `post_max_size` ≤ 8M, `expose_php=Off`, `display_errors=Off`.
 - [ ] Izin file: folder 755, file 644, `.env` 600.
 - [ ] Subdomain (ADR 0008): `SESSION_DOMAIN` **kosong** (cookie host-only — sesi `app.` tidak terbawa ke
