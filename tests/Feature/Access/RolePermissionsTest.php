@@ -14,6 +14,7 @@ use App\Filament\Dashboard\Pages\Reports;
 use App\Filament\Dashboard\Pages\SubscriptionSettings;
 use App\Filament\Dashboard\Resources\ActivityLogs\Pages\ListActivityLogs;
 use App\Filament\Dashboard\Resources\Employees\EmployeeResource;
+use App\Filament\Dashboard\Resources\Employees\Pages\ManageEmployees;
 use App\Filament\Dashboard\Resources\Orders\OrderResource;
 use App\Filament\Dashboard\Resources\Products\ProductResource;
 use App\Models\ActivityLog;
@@ -22,8 +23,10 @@ use App\Models\User;
 use App\Support\CurrentOutlet;
 use App\Support\RolePermissions;
 use App\Support\TenantContext;
+use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Cache;
+use Livewire\Livewire;
 
 /**
  * Hak akses per bisnis (ADR 0026): owner mengatur permission manager/supervisor/kasir; bawaan = UserRole::permissions().
@@ -144,6 +147,21 @@ describe('user.manage didelegasikan ke manager', function () {
         rpActAs($this, $this->manager);
     });
 
+    it('UI Karyawan: aksi hanya untuk role di bawahnya; owner & akun sendiri tanpa Ubah/Nonaktifkan/Hak akses', function () {
+        $page = Livewire::test(ManageEmployees::class);
+
+        foreach ([$this->owner, $this->manager] as $locked) {
+            $page->assertActionHidden(TestAction::make('edit')->table($locked))
+                ->assertActionHidden(TestAction::make('deactivate')->table($locked))
+                ->assertActionHidden(TestAction::make('permissions')->table($locked));
+        }
+
+        $page->assertActionVisible(TestAction::make('edit')->table($this->pos->cashier))
+            ->assertActionVisible(TestAction::make('deactivate')->table($this->pos->cashier))
+            // Hak akses per karyawan tetap khusus owner
+            ->assertActionHidden(TestAction::make('permissions')->table($this->pos->cashier));
+    });
+
     $employee = fn (string $username, UserRole $role, ?string $outletId = null): EmployeeData => EmployeeData::fromArray([
         'name' => ucfirst($username), 'role' => $role->value, 'username' => $username, 'email' => "{$username}@kopi.test",
         'pin' => '481920', 'password' => 'rahasia123', 'outlet_ids' => array_filter([$outletId]),
@@ -193,7 +211,7 @@ describe('perbaikan review', function () {
         expect($updated->properties['role'])->toBe('manager');
 
         rpActAs($this, $this->owner);
-        Livewire\Livewire::test(ListActivityLogs::class)
+        Livewire::test(ListActivityLogs::class)
             ->assertSee('Role Manager')->assertDontSee('Role —');
     });
 

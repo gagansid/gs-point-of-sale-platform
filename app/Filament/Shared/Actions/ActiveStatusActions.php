@@ -27,19 +27,21 @@ final class ActiveStatusActions
      * @param  class-string<TModel>  $model
      * @param  Closure(TModel, bool): mixed  $setActive  memanggil Action bisnis, mis. SetCategoryActive::handle
      * @param  string|null  $permission  null = panel /admin (super admin, guard terpisah tanpa permission tenant)
+     * @param  (Closure(TModel): bool)|null  $canChange  syarat per baris (mis. karyawan di bawah role pengelola); null = semua baris
      * @return array{0: Action, 1: Action}
      */
-    public static function make(string $model, Closure $setActive, string $object, string $note, ?string $permission): array
+    public static function make(string $model, Closure $setActive, string $object, string $note, ?string $permission, ?Closure $canChange = null): array
     {
         $apply = fn (Model $record, bool $active): mixed => $setActive($model::query()->whereKey($record->getKey())->firstOrFail(), $active);
 
-        $canManage = fn (): bool => $permission === null || (auth()->user()?->can($permission) ?? false);
+        $canManage = fn (?Model $record = null): bool => ($permission === null || (auth()->user()?->can($permission) ?? false))
+            && ($canChange === null || $record === null || $canChange($record));
 
         return [
             Action::make('deactivate')
                 ->label('Nonaktifkan')
                 ->icon(Heroicon::OutlinedPauseCircle)
-                ->visible(fn (Model $record): bool => (bool) $record->getAttribute('is_active') && $canManage())
+                ->visible(fn (Model $record): bool => (bool) $record->getAttribute('is_active') && $canManage($record))
                 ->requiresConfirmation()
                 ->modalIcon(Heroicon::OutlinedPauseCircle)
                 ->modalIconColor('warning')
@@ -57,7 +59,7 @@ final class ActiveStatusActions
             Action::make('activate')
                 ->label('Aktifkan')
                 ->icon(Heroicon::OutlinedPlayCircle)
-                ->visible(fn (Model $record): bool => ! $record->getAttribute('is_active') && $canManage())
+                ->visible(fn (Model $record): bool => ! $record->getAttribute('is_active') && $canManage($record))
                 ->action(function (Model $record, Action $action) use ($apply, $object): void {
                     self::orNotify(fn () => $apply($record, true), $action);
 

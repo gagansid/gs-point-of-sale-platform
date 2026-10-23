@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Actions\User\SetEmployeeActive;
 use App\Enums\UserRole;
+use App\Exceptions\BusinessException;
 use App\Filament\Dashboard\Resources\Employees\EmployeeResource;
 use App\Filament\Dashboard\Resources\Employees\Pages\ManageEmployees;
 use App\Models\Outlet;
@@ -59,12 +61,15 @@ it('ubah nama tanpa mengisi ulang PIN', function () {
         ->and(Hash::check('481920', (string) $cashier->pin))->toBeTrue();
 });
 
-it('owner terakhir: nonaktifkan diri sendiri ditolak dengan notifikasi', function () {
+it('owner terakhir: nonaktifkan diri sendiri tidak ditawarkan di UI dan ditolak di Action', function () {
+    // Tombol tidak tampil di baris akun sendiri (tidak menawarkan aksi yang pasti gagal)
     Livewire::test(ManageEmployees::class)
-        ->callAction(TestAction::make('deactivate')->table($this->owner))
-        ->assertNotified('Tidak bisa menonaktifkan akun sendiri');
+        ->assertActionHidden(TestAction::make('deactivate')->table($this->owner));
 
-    expect($this->owner->refresh()->is_active)->toBeTrue();
+    // Lapisan server tetap menolak (mis. lewat API)
+    expect(fn () => app(SetEmployeeActive::class)->handle($this->owner, false, $this->owner))
+        ->toThrow(BusinessException::class, 'Tidak bisa menonaktifkan akun sendiri')
+        ->and($this->owner->refresh()->is_active)->toBeTrue();
 });
 
 it('manager tidak bisa membuka menu karyawan', function () {

@@ -258,6 +258,8 @@ final class EmployeeResource extends DashboardResource
                         'karyawan',
                         'Karyawan langsung keluar dari tablet & dashboard dan tidak bisa login sampai diaktifkan lagi.',
                         'user.manage',
+                        // Bukan akun sendiri, dan hanya karyawan yang boleh dikelola (owner semua; lainnya role di bawahnya)
+                        fn (User $employee): bool => self::canManage($employee) && $employee->isNot(self::actor()),
                     ),
                 ])->tooltip('Aksi lain'),
             ])
