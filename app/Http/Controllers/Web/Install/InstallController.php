@@ -30,7 +30,7 @@ use Throwable;
  * Installer web /install (ADR 0016). Hanya bisa dibuka sebelum terinstal (middleware EnsureInstalled).
  * Isian disimpan di session terenkripsi (driver file selama instal); proses instal per langkah lewat AJAX.
  *
- *   token? → requirements → database → application → accounts → run (environment, migrate, accounts, finish)
+ *   token → requirements → database → application → accounts → run (environment, migrate, accounts, finish)
  */
 final class InstallController extends Controller
 {
@@ -56,7 +56,10 @@ final class InstallController extends Controller
 
     public function token(): View
     {
-        return view('install.token');
+        return view('install.token', [
+            'fromEnvironment' => Installation::tokenFromEnvironment(),
+            'codePath' => Installation::codeDisplayPath(),
+        ]);
     }
 
     public function verifyToken(Request $request): RedirectResponse
@@ -67,6 +70,8 @@ final class InstallController extends Controller
             throw ValidationException::withMessages(['token' => 'Kode instal salah']);
         }
 
+        // ID session baru setelah lolos kode: cegah session fixation
+        $request->session()->regenerate();
         $request->session()->put('install.token_ok', true);
 
         return redirect()->route('install.requirements');
@@ -410,9 +415,10 @@ final class InstallController extends Controller
         return null;
     }
 
+    /** Kode instal selalu wajib (GSPOS-SEC-026); lolos sekali per session installer. */
     private function tokenRequired(Request $request): bool
     {
-        return Installation::token() !== null && ! $request->session()->get('install.token_ok', false);
+        return ! $request->session()->get('install.token_ok', false);
     }
 
     /**

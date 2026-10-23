@@ -32,7 +32,7 @@ unggah & ekstrak paket rilis → buka domain → /install
 | Topik | Keputusan |
 |---|---|
 | Paket rilis | Zip berisi `vendor/` & `public/build/` (dibuat GitHub Actions saat tag), jadi hosting tidak perlu `composer`/`npm`. Dari `git clone` tetap bisa (jalankan `composer install` dulu). |
-| Kode instal | **Opsional** (keputusan pemilik). Bila `INSTALL_TOKEN` diisi di `.env` awal / variabel server, form meminta kode itu; bila kosong, installer terbuka tanpa kode dan menampilkan peringatan "selesaikan instalasi segera". |
+| Kode instal | **Wajib** (direvisi 2026-10-23, GSPOS-SEC-026; semula opsional). `INSTALL_TOKEN` bila diisi di `.env` awal / variabel server; bila kosong, installer membuat kode acak 12 karakter di `storage/app/install-code.txt` (izin 0600) yang dibaca lewat File Manager cPanel = bukti akses server. File dihapus saat instal selesai. |
 | Edisi | Dipilih di form langkah 3; bawaannya dari paket (`POS_EDITION` di `.env.example` paket: zip `self_hosted` & `saas`). |
 | Bisnis pertama | Wajib untuk `self_hosted` (satu-satunya bisnis, sama dengan `pos:install`). Opsional untuk `saas`. |
 | Status terinstal | File `storage/app/installed.json` (versi, waktu). Ada file ini = `/install` 404 selamanya. `storage/` tidak disentuh deploy (`rsync-exclude.txt`). |
@@ -46,6 +46,8 @@ unggah & ekstrak paket rilis → buka domain → /install
 - Nilai `.env` di-escape (kutip, `#`, baris baru ditolak); `.env` ditulis dengan izin `0640`. Password DB & akun tidak
   pernah ditampilkan ulang dan tidak dicatat di log.
 - CSRF aktif (session file), throttle Tes koneksi DB & submit (mis. 10/menit per IP).
+- Kode instal wajib sebelum langkah apa pun (termasuk Tes koneksi DB, sehingga installer tidak bisa dipakai memindai
+  host/port internal); gagal tertutup bila tidak ada kode; ID session diganti setelah kode benar.
 - `APP_ENV=production`, `APP_DEBUG=false` ditulis otomatis; kata sandi akun mengikuti `Password::defaults()`.
 - Super admin wajib mengaktifkan 2FA saat login pertama (ADR 0006).
 - Instal ulang: hapus `storage/app/installed.json` **dan** kosongkan database (lewat cPanel, disengaja manual).
@@ -63,7 +65,7 @@ unggah & ekstrak paket rilis → buka domain → /install
 | Tahap | Isi |
 |---|---|
 | N1 | Status terinstal, middleware alih ke `/install`, session/cache `file` sebelum instal, penulis `.env` aman |
-| N2 | Form langkah 1–4 (validasi, Tes koneksi, kode instal opsional) |
+| N2 | Form langkah 1–4 (validasi, Tes koneksi, kode instal — wajib sejak 2026-10-23, GSPOS-SEC-026) |
 | N3 | Proses instal per langkah + progress + lanjut setelah refresh, kunci installer, alih ke login |
 | N4 | Workflow paket rilis (zip saat tag, `scripts/release/build-package.sh`), `docs/install.md` |
 

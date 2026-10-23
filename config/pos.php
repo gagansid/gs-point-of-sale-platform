@@ -32,10 +32,11 @@ return [
     'installer' => [
         // false = dianggap selalu terinstal (test, atau instal manual lewat terminal)
         'enabled' => (bool) env('POS_INSTALLER', true),
-        // Kode instal opsional: bila diisi, form instal memintanya sebelum langkah pertama
+        // Kode instal wajib (GSPOS-SEC-026): INSTALL_TOKEN bila diisi, selain itu kode acak di code_path
         'token' => env('INSTALL_TOKEN'),
         'lock_path' => storage_path('app/installed.json'),
         'state_path' => storage_path('app/install-state.json'),
+        'code_path' => storage_path('app/install-code.txt'),
     ],
 
     // Onboarding (ADR 0009). Nilai awal; super admin mengubahnya di Sistem → Pendaftaran

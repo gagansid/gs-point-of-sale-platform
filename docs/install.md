@@ -23,14 +23,18 @@
    - File Manager → unggah zip ke folder home (di luar `public_html`), ekstrak → folder `gs-point-of-sale-platform`.
    - Domains → arahkan **Document Root** domain (dan subdomain) ke `gs-point-of-sale-platform/public`.
    - Dari `git clone`: jalankan `composer install --no-dev --optimize-autoloader` dulu (aset `public/build` sudah ada di repo).
-3. **(Opsional) kode instal** — agar orang lain tidak bisa menjalankan installer lebih dulu: buat file
-   `gs-point-of-sale-platform/.env` berisi satu baris `INSTALL_TOKEN=kode-rahasia-anda`. Tanpa file ini installer
-   terbuka tanpa kode (muncul peringatan) — selesaikan instalasi segera.
-4. **Buka domain** di browser → otomatis ke `/install`:
+3. **Buka domain** di browser → otomatis ke `/install`, yang langsung meminta **kode instal** (wajib, GSPOS-SEC-026):
+   - Buka File Manager cPanel → `gs-point-of-sale-platform/storage/app/install-code.txt` (dibuat saat `/install`
+     pertama dibuka; format `XXXX-XXXX-XXXX`, tidak peka huruf besar/kecil). File dihapus otomatis setelah instal.
+   - Atau tentukan kode sendiri sebelum membuka domain: buat `gs-point-of-sale-platform/.env` berisi satu baris
+     `INSTALL_TOKEN=kode-rahasia-anda` (peka huruf besar/kecil; file kode acak tidak dibuat).
+   - Kode membuktikan Anda pemegang akses server, sehingga orang yang lebih dulu menemukan domain tidak bisa
+     menjalankan installer dengan database & akun miliknya.
+4. Isi form:
 
 | Langkah form | Isi |
 |---|---|
-| Kode instal | Hanya bila `INSTALL_TOKEN` diisi |
+| Kode instal | Isi `storage/app/install-code.txt`, atau `INSTALL_TOKEN` bila diisi |
 | 1. Syarat | Versi PHP, ekstensi, folder bisa ditulis (wajib); HTTPS, symlink, proc_open (peringatan) |
 | 2. Database | Host (cPanel: `localhost`), port `3306`, nama database, user, kata sandi → **Tes koneksi** |
 | 3. Aplikasi | Nama, URL (`https://…`), edisi (bawaan dari paket), zona waktu outlet, subdomain (opsional), SMTP (opsional) |
@@ -49,6 +53,7 @@
 
 | Gejala | Penyebab / solusi |
 |---|---|
+| File `install-code.txt` tidak ada | Buka `/install` sekali dulu (file dibuat saat itu); pastikan `storage/app` bisa ditulis |
 | "Folder aplikasi tidak bisa ditulis" | Izin folder: aplikasi & `storage`, `bootstrap/cache` 755, file 644 |
 | Tes koneksi: akses ditolak / database tidak ditemukan | Periksa user sudah ditambahkan ke database dengan All Privileges |
 | "Database tidak kosong" | Pakai database baru; installer tidak pernah menimpa data |
@@ -59,6 +64,8 @@
 ## Keamanan
 
 - `/install` hanya terbuka sebelum terinstal; setelah selesai dikunci (`storage/app/installed.json`) dan menjawab 404.
+- Semua langkah (termasuk Tes koneksi database & proses instal) butuh kode instal; tanpa kode yang berlaku installer
+  menolak semua isian (gagal tertutup). Batas 10 percobaan kode per menit per IP; ID session diganti setelah kode benar.
 - Menghapus file kunci saja **tidak** membuka installer lagi (aplikasi yang sudah punya `APP_KEY` dianggap terinstal).
   Instal ulang = hapus `.env` + `storage/app/installed.json` **dan** kosongkan database (sengaja manual).
 - Kata sandi database, SMTP, dan akun tidak ditampilkan ulang; `.env` ditulis dengan izin 0640.

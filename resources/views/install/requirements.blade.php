@@ -1,11 +1,5 @@
 {{-- Langkah 1: cek syarat server --}}
 <x-install.layout title="Cek syarat server" :step="1" subtitle="Aplikasi belum terpasang di server ini. Kami cek dulu kesiapan hosting.">
-    @if (\App\Support\Installer\Installation::token() === null)
-        <div class="site-alert site-alert-warning" role="note">
-            Installer terbuka tanpa kode instal. Selesaikan instalasi sekarang agar tidak didahului orang lain.
-        </div>
-    @endif
-
     <ul class="install-checklist">
         @foreach ($items as $item)
             <li @class(['is-ok' => $item['ok'], 'is-fail' => ! $item['ok'] && $item['required'], 'is-warn' => ! $item['ok'] && ! $item['required']])>

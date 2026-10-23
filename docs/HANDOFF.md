@@ -216,7 +216,7 @@ Deploy otomatis: `.github/workflows/deploy.yml` (merge ke `master` → CI → do
 persiapan secrets & branch protection di `docs/deploy.md` (belum diaktifkan di GitHub).
 
 ### Installer web (ADR 0016, SPEC Q86) — N1–N4 selesai 2026-10-12
-- `/install`: kode instal opsional → syarat → database → aplikasi → akun → proses per langkah (AJAX) → login. `docs/install.md`.
+- `/install`: kode instal wajib (`INSTALL_TOKEN` / `storage/app/install-code.txt`) → syarat → database → aplikasi → akun → proses per langkah (AJAX) → login. `docs/install.md`.
 - Sebelum terinstal: middleware `EnsureInstalled` (session/cache file, https mengikuti request), kunci `storage/app/installed.json`.
 - Paket zip: tag `v*` → workflow Release (`scripts/release/build-package.sh`, edisi self_hosted & saas).
 - Belum: uji di hosting cPanel nyata.

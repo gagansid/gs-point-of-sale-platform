@@ -8,6 +8,7 @@ use Illuminate\Cache\RateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
  * Status instalasi aplikasi (ADR 0016).
@@ -18,6 +19,9 @@ use Illuminate\Support\Str;
  *
  * Instalasi lama/manual (sudah ada APP_KEY, tanpa file status) dianggap terinstal dan file kunci dibuat
  * otomatis — sehingga database yang sedang tidak bisa dihubungi tidak pernah membuka installer.
+ *
+ * Kode instal selalu wajib (GSPOS-SEC-026): INSTALL_TOKEN bila diisi, selain itu kode acak yang ditulis ke
+ * storage/app/install-code.txt — hanya pemegang akses server (File Manager cPanel) yang bisa membacanya.
  */
 final class Installation
 {
@@ -82,6 +86,8 @@ final class Installation
             self::saveState(['started_at' => now()->toIso8601String(), 'completed' => []]);
         }
 
+        self::ensureCode();
+
         config([
             'app.key' => $key,
             'app.debug' => false,
@@ -141,24 +147,85 @@ final class Installation
             ...$meta,
         ]);
 
-        if (is_file(self::statePath())) {
-            @unlink(self::statePath());
+        foreach ([self::statePath(), self::codePath()] as $path) {
+            if (is_file($path)) {
+                @unlink($path);
+            }
         }
     }
 
-    /** Kode instal opsional (INSTALL_TOKEN); null = installer terbuka tanpa kode. */
+    /** Kode instal yang berlaku: INSTALL_TOKEN, atau kode acak di file server; null = belum dibuat. */
     public static function token(): ?string
     {
         $token = config('pos.installer.token');
 
-        return is_string($token) && $token !== '' ? $token : null;
+        if (is_string($token) && $token !== '') {
+            return $token;
+        }
+
+        $code = is_file(self::codePath()) ? trim((string) file_get_contents(self::codePath())) : '';
+
+        return $code !== '' ? $code : null;
     }
 
+    /** true = kode dari INSTALL_TOKEN, false = kode acak di storage/app/install-code.txt. */
+    public static function tokenFromEnvironment(): bool
+    {
+        $token = config('pos.installer.token');
+
+        return is_string($token) && $token !== '';
+    }
+
+    /** Gagal tertutup: tanpa kode yang berlaku, tidak ada isian yang diterima. */
     public static function tokenMatches(string $input): bool
     {
         $token = self::token();
+        $input = Str::of($input)->trim()->toString();
 
-        return $token === null || hash_equals($token, Str::of($input)->trim()->toString());
+        if ($token === null || $input === '') {
+            return false;
+        }
+
+        // Kode acak tidak peka huruf besar/kecil; INSTALL_TOKEN dibandingkan apa adanya
+        return self::tokenFromEnvironment()
+            ? hash_equals($token, $input)
+            : hash_equals($token, Str::upper($input));
+    }
+
+    /** Path kode instal relatif terhadap folder aplikasi, untuk ditampilkan di form. */
+    public static function codeDisplayPath(): string
+    {
+        return ltrim(Str::after(self::codePath(), base_path()), '/');
+    }
+
+    /**
+     * Membuat kode acak 12 karakter (±60 bit, tanpa huruf/angka yang mirip) bila INSTALL_TOKEN kosong
+     * dan file kode belum ada. Gagal menulis = RuntimeException (halaman "folder tidak bisa ditulis").
+     */
+    private static function ensureCode(): void
+    {
+        if (self::tokenFromEnvironment() || is_file(self::codePath())) {
+            return;
+        }
+
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $chars = '';
+
+        for ($i = 0; $i < 12; $i++) {
+            $chars .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+        }
+
+        $dir = dirname(self::codePath());
+
+        if (! is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+
+        if (@file_put_contents(self::codePath(), implode('-', str_split($chars, 4))."\n", LOCK_EX) === false) {
+            throw new RuntimeException('Tidak bisa membuat kode instal di '.self::codeDisplayPath().'. Pastikan folder storage bisa ditulis oleh PHP.');
+        }
+
+        @chmod(self::codePath(), 0600);
     }
 
     private static function lockPath(): string
@@ -169,6 +236,11 @@ final class Installation
     private static function statePath(): string
     {
         return (string) config('pos.installer.state_path');
+    }
+
+    private static function codePath(): string
+    {
+        return (string) config('pos.installer.code_path');
     }
 
     /**

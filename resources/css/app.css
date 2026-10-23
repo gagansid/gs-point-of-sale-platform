@@ -644,6 +644,17 @@
     color: #8a5a00;
 }
 
+.site-alert-info {
+    border: 1px solid rgb(45 66 130 / 0.25);
+    background: rgb(45 66 130 / 0.06);
+    color: #2d4282;
+}
+
+.site-alert code {
+    font-size: 12.5px;
+    word-break: break-all;
+}
+
 /* ---------- Login ---------- */
 .site-auth {
     display: flex;

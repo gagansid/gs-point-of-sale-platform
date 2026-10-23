@@ -28,6 +28,7 @@ beforeEach(function () {
         'pos.installer.token' => null,
         'pos.installer.lock_path' => $this->dir.'/installed.json',
         'pos.installer.state_path' => $this->dir.'/install-state.json',
+        'pos.installer.code_path' => $this->dir.'/install-code.txt',
         // Belum terinstal = belum ada APP_KEY (paket rilis baru diekstrak)
         'app.key' => '',
     ]);
@@ -48,9 +49,17 @@ function fakeDatabaseProbe(object $test, bool $ok = true, string $message = 'Ter
     app()->instance(DatabaseProbe::class, $probe);
 }
 
+/** Melewati form kode instal dengan kode acak yang dibuat installer di server. */
+function passInstallCode(object $test): void
+{
+    $test->get('/install')->assertRedirect(route('install.token'));
+    $test->post('/install/token', ['token' => (string) Installation::token()])->assertRedirect(route('install.requirements'));
+}
+
 /** Mengisi langkah form sampai halaman Instal. */
 function fillInstallForms(object $test, array $application = [], array $accounts = []): void
 {
+    passInstallCode($test);
     fakeDatabaseProbe($test);
 
     $test->post('/install/requirements')->assertRedirect('/install/database');
@@ -103,9 +112,9 @@ it('belum terinstal: web dialihkan ke /install, API 503, .env + APP_KEY dibuat d
         ->and($env->get('APP_DEBUG'))->toBe('false')
         ->and(Installation::inProgress())->toBeTrue();
 
-    $this->get('/install')->assertRedirect(route('install.requirements'));
-    $this->get('/install/requirements')->assertOk()->assertSee('Cek syarat server')
-        ->assertSee('Installer terbuka tanpa kode instal');
+    $this->get('/install')->assertRedirect(route('install.token'));
+    passInstallCode($this);
+    $this->get('/install/requirements')->assertOk()->assertSee('Cek syarat server');
 });
 
 it('.env berisi INSTALL_TOKEN saja dilengkapi dari .env.example tanpa menghapus kode', function () {
@@ -128,16 +137,54 @@ it('sudah terinstal: /install 404; instalasi lama (APP_KEY ada, tanpa status) di
     expect(is_file($this->dir.'/installed.json'))->toBeTrue();
 });
 
-it('kode instal opsional: bila INSTALL_TOKEN diisi, kode salah ditolak dan kode benar membuka installer', function () {
+it('INSTALL_TOKEN diisi: kode itu yang diminta (peka huruf), tanpa file kode acak', function () {
     config(['pos.installer.token' => 'kode-rahasia-123']);
 
     $this->get('/install/requirements')->assertRedirect(route('install.token'));
+    $this->get('/install/token')->assertOk()->assertSee('INSTALL_TOKEN');
     $this->post('/install/token', ['token' => 'salah'])->assertSessionHasErrors('token');
+    $this->post('/install/token', ['token' => 'KODE-RAHASIA-123'])->assertSessionHasErrors('token');
     $this->post('/install/token', ['token' => 'kode-rahasia-123'])->assertRedirect(route('install.requirements'));
-    $this->get('/install/requirements')->assertOk()->assertDontSee('Installer terbuka tanpa kode instal');
+    $this->get('/install/requirements')->assertOk();
+
+    expect(is_file($this->dir.'/install-code.txt'))->toBeFalse();
+});
+
+it('GSPOS-SEC-026: tanpa INSTALL_TOKEN installer tetap terkunci kode acak di file server', function () {
+    // Pengunjung tanpa akses server: semua langkah & proses instal dialihkan ke form kode
+    foreach (['/install/requirements', '/install/database', '/install/application', '/install/accounts', '/install/run'] as $page) {
+        $this->get($page)->assertRedirect(route('install.token'));
+    }
+    $this->postJson('/install/run/environment')->assertStatus(409);
+    $this->post('/install/database', ['host' => '10.0.0.5', 'port' => 3306, 'database' => 'db', 'username' => 'u', 'password' => 'p', 'action' => 'test'])
+        ->assertRedirect(route('install.token'));
+
+    $code = (string) file_get_contents($this->dir.'/install-code.txt');
+    expect(trim($code))->toMatch('/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/')
+        ->and(fileperms($this->dir.'/install-code.txt') & 0777)->toBe(0600);
+
+    // Form menunjuk lokasi file, bukan isinya
+    $this->get('/install/token')->assertOk()->assertSee('install-code.txt')->assertDontSee(trim($code));
+
+    $this->post('/install/token', ['token' => ''])->assertSessionHasErrors('token');
+    $this->post('/install/token', ['token' => 'AAAA-BBBB-CCCC'])->assertSessionHasErrors('token');
+    // Tidak peka huruf besar/kecil & spasi di tepi
+    $this->post('/install/token', ['token' => '  '.strtolower(trim($code)).' '])->assertRedirect(route('install.requirements'));
+    $this->get('/install/requirements')->assertOk();
+
+    // Kode tetap sama selama instal belum selesai
+    $this->get('/install');
+    expect((string) file_get_contents($this->dir.'/install-code.txt'))->toBe($code);
+});
+
+it('kode instal hanya cocok bila ada kode yang berlaku (gagal tertutup)', function () {
+    expect(Installation::token())->toBeNull()
+        ->and(Installation::tokenMatches(''))->toBeFalse()
+        ->and(Installation::tokenMatches('apa saja'))->toBeFalse();
 });
 
 it('kata sandi database yang tidak bisa ditulis aman ke .env ditolak di form', function () {
+    passInstallCode($this);
     $this->post('/install/requirements');
     fakeDatabaseProbe($this);
 
@@ -146,6 +193,7 @@ it('kata sandi database yang tidak bisa ditulis aman ke .env ditolak di form', f
 });
 
 it('langkah tidak bisa dilompati; database tidak kosong ditolak dengan pesan', function () {
+    passInstallCode($this);
     $this->get('/install/accounts')->assertRedirect(route('install.requirements'));
     $this->get('/install/run')->assertRedirect(route('install.requirements'));
 
@@ -216,6 +264,7 @@ it('proses instal: .env final, migrasi, akun & bisnis, kunci installer, lalu ke 
     $finish = $this->postJson('/install/run/finish')->assertOk()->json();
     expect($finish['redirect'])->toContain('login')
         ->and(is_file($this->dir.'/installed.json'))->toBeTrue()
+        ->and(is_file($this->dir.'/install-code.txt'))->toBeFalse()
         ->and(Installation::inProgress())->toBeFalse();
 
     $this->get('/install')->assertNotFound();
