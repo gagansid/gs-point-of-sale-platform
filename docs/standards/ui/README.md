@@ -37,6 +37,7 @@ sedangkan project ini memakai komponen Filament yang diberi tema.
 | [filament-theme.md](filament-theme.md) | Cara menerapkan token ke panel Filament |
 | [layout.md](layout.md) | Kerangka panel, navigasi, anatomi halaman |
 | [content.md](content.md) | Bahasa, format uang/tanggal/angka, penamaan label |
+| [customer-pages.md](customer-pages.md) | Halaman pelanggan mobile (pesan dari meja, member) & layar antrean staf (ADR 0027) |
 | `components/` | Satu file per komponen (lihat tabel di bawah) |
 
 ### Komponen

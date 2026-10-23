@@ -42,6 +42,12 @@ final class ListFulfillmentQueue extends ListRecords
         return 'Pesanan meja yang sudah lunas sampai diantar. Terlambat = belum diantar '.FulfillmentQueueResource::LATE_MINUTES.' menit setelah lunas';
     }
 
+    /** @return array<string> KPI rapat seperti Beranda & Laporan (home.css) */
+    public function getPageClasses(): array
+    {
+        return [...parent::getPageClasses(), 'pos-kpi-compact'];
+    }
+
     /** @return list<class-string> */
     protected function getHeaderWidgets(): array
     {

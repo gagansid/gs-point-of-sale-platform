@@ -69,8 +69,9 @@ it('statistik hari ini, tab berbadge, kolom tabel & langkah dari tabel', functio
     Carbon::setTestNow('2026-10-08 05:40:00');
 
     Livewire::test(FulfillmentStatsWidget::class)
-        ->assertSeeInOrder(['Antre', '1', 'Disiapkan', '1', 'Siap diantar', '0', 'Diantar', '1'])
-        ->assertSee('20 mnt') // Citra: lunas 12.00 → diantar 12.20
+        ->assertSeeInOrder(['Dalam antrean', '2', '1 antre · 1 dibuat · 0 siap'])
+        ->assertSeeInOrder(['Diantar hari ini', '1'])
+        ->assertSeeInOrder(['Waktu antar rata-rata', '20 mnt']) // Citra: lunas 12.00 → diantar 12.20
         ->assertSeeInOrder(['Terlambat', '2']); // Andi & Budi belum diantar > 30 menit
 
     $page = Livewire::test(ListFulfillmentQueue::class)
@@ -102,7 +103,7 @@ it('perubahan dari /cashier/queue tampil setelah polling; tenant & outlet lain t
 });
 
 it('akses: bawaan manager punya; owner mencabut order.fulfill → menu hilang & 403', function () {
-    $this->get(FulfillmentQueueResource::getUrl())->assertOk()->assertSee('Antrean pesanan')->assertSee('Rata-rata lunas → diantar', false);
+    $this->get(FulfillmentQueueResource::getUrl())->assertOk()->assertSee('Antrean pesanan')->assertSee('Waktu antar rata-rata');
 
     $manager = User::factory()->manager()->forOutlet($this->pos->outlet)->create();
     $this->actingAs($manager);

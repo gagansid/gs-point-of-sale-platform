@@ -1,7 +1,7 @@
 # Progres Pengerjaan
 
-> Terakhir diperbarui: 2026-10-23 · Branch: `feature/pos` (ADR 0003) · Fitur MVP + ADR 0013–0026 selesai; deploy ditunda
-> Status kualitas: **2086 test** lulus di SQLite **dan** MySQL 9.5 lokal (`gspos_test`) + uji E2E Dusk, `composer check`
+> Terakhir diperbarui: 2026-10-23 · Branch: `feature/pos` (ADR 0003) · Fitur MVP + ADR 0013–0027 selesai; deploy ditunda
+> Status kualitas: **2138 test** lulus di SQLite **dan** MySQL 9.5 lokal (`gspos_test`) + uji E2E Dusk, `composer check`
 > hijau (Pint, Larastan level 6, audit dependensi). Ringkasan sesi terbaru: `docs/HANDOFF.md`.
 
 Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#cara-melanjutkan) dan
@@ -47,10 +47,11 @@ Dokumen ini adalah **titik lanjut** pekerjaan. Baca bagian [Cara melanjutkan](#c
 | **Menu owner lengkap** | Q130: Riwayat stok, Kasbon, Pesanan meja, tab Diretur & Pembelian, lonceng peringatan; Q132: susunan grup menu (Laporan di bawah Beranda, grup Akun, ikon unik) | ✅ 2026-10-22 | `5cf05a4`, `3245e19` |
 | **Hak akses per bisnis** | ADR 0026 (Q133–Q134): `role_permissions` + Pengaturan → Hak akses (Manager/Supervisor/Kasir), pengecualian per karyawan, `dashboard.access` & `access.manage`, gerbang terpusat `DashboardResource`/`DashboardPage`, delegasi Kelola karyawan hanya ke role di bawahnya | ✅ 2026-10-23 | `ae6f4b3` … `0d515fe` |
 | **Audit keamanan 23 Okt** | SPEC Q136, `docs/security/reports/2026-10-23-audit.md`: `pos:rotate-key` + pemeriksa paket zip (SEC-025), kode instal wajib (SEC-026), batas percobaan voucher & pesan seragam (SEC-027), voucher ulang tahun 1×/tahun & tanggal lahir terkunci (SEC-028) | ✅ 2026-10-23 | `69d3c55` … `25b21a1` |
+| **Pesan dari meja bayar dulu** | ADR 0027 (Q137): login member wajib sebelum bayar (masuk/daftar singkat dari meja, keranjang tersimpan), bayar dulu tanpa terima kasir (`CheckoutSelfOrder`, shift terbuka paling awal), QRIS Core API di halaman, layar Tunjukkan ke kasir, pengantaran Antre → Disiapkan → Siap → Diantar / Selesai otomatis (`/cashier/queue`, dashboard Antrean pesanan, API F4), izin `order.fulfill`, tema bisnis & kontrol 32px di halaman meja/member, tab Profil | ✅ 2026-10-23 | `34563e9`..T6 |
 | Minggu 7 | Menu admin lain: Versi Aplikasi, Pengumuman, Backup, Log Viewer, Queue; rate limit & audit keamanan | ✅ 2026-10-11 (sisa: OWASP ZAP & uji manual di staging) | `38a67cd`..`fe6d252` |
 | Minggu 8 | Deploy cPanel, uji dengan Flutter, pilot | ⏳ | — |
 
-Endpoint selesai: **80** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q134, ADR 0001–0026.
+Endpoint selesai: **81** (lihat `docs/api/README.md`). Keputusan desain: SPEC Q1–Q137, ADR 0001–0027.
 
 ---
 

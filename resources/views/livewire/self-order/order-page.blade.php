@@ -22,7 +22,12 @@
         showToast(detail) { this.toast = detail; clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => this.toast = null, 5000) },
     }"
     x-on:so-toast.window="showToast($event.detail)">
+    {{-- Request lambat (> 1 detik): bilah tipis di bawah header; polling cepat tidak memicunya --}}
+    <div class="so-loading-bar" wire:loading.delay.long aria-hidden="true"></div>
+
     <main @class(['so-main', 'has-cartbar' => in_array($view, ['menu', 'cart'], true) && $count > 0])>
+        <div class="so-alert is-warning so-offline" wire:offline role="status">@svg('heroicon-o-signal-slash', ['aria-hidden' => 'true']) <span>Koneksi terputus. Mencoba terhubung lagi…</span></div>
+
         @if ($error)
             <div class="so-alert is-danger" role="alert">@svg('heroicon-o-exclamation-circle', ['aria-hidden' => 'true']) <span>{{ $error }}</span></div>
         @endif

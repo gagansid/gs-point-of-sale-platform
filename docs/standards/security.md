@@ -218,3 +218,20 @@ Laporan: [`docs/security/reports/2026-10-23-audit.md`](../security/reports/2026-
 | Penyalahgunaan voucher ulang tahun | Tanggal lahir diisi sekali oleh member (`UpdateOwnMemberProfile`); voucher 1×/tahun, hanya member yang terdaftar sebelum bulan lahirnya |
 | Upload (diperiksa, tetap) | Nama file `hashName()` = ekstensi dari isi file (polyglot `x.php` tersimpan `.jpg`); jangan pakai `preserveFilenames()` / `getUploadedFileNameForStorageUsing()` di disk `public` |
 
+
+## Pesan dari meja bayar dulu & pengantaran (2026-10-23, ADR 0027, SPEC Q137)
+
+| Ancaman | Kontrol |
+|---|---|
+| Pesanan iseng tanpa identitas | Login member **wajib sebelum membayar** bila program member aktif, ditegakkan di Action (`CheckoutSelfOrder`, `SubmitSelfOrder` → `UNAUTHENTICATED`), bukan hanya tampilan. Tamu dengan nama hanya bila program member nonaktif |
+| Tebak kata sandi member dari meja | Halaman masuk meja memakai `AuthenticateMember` yang sama dengan halaman member: 5/menit per HP+IP, 20/menit per IP, kunci 15 menit setelah 10 salah, pesan umum & waktu konstan (hash dummy) |
+| Akun massal | Daftar singkat memakai `SignUpMember`: 5 pendaftaran/jam per IP, kata sandi kuat, persetujuan wajib, kuota paket tidak dibuka ke publik |
+| Manipulasi keranjang / status dari browser | Properti Livewire hasil server `#[Locked]`: `cart`, `removed`, `pickIndex`, `view`, `payOrderId`, `payMethod`, `payError`, `shownTotal`. Keranjang dari session dipulihkan dan **divalidasi ulang** ke katalog outlet (produk/opsi asing dibuang, maks. 50 item) |
+| Harga/nominal dari HP | Tagihan dihitung ulang server saat checkout (`PriceOrder`/`OrderCalculator`); nominal QRIS = sisa tagihan server. Perubahan harga sejak pratinjau ditampilkan ke pelanggan |
+| Membayar/melihat pesanan orang lain | Pesanan hanya diambil dari daftar sesi browser per meja (session) dan meja yang sama; ID di URL tidak pernah dipakai. Riwayat pesanan tab Profil hanya `member_id` milik sesi member |
+| Spam tagihan QRIS | Satu QR aktif per pesanan (dipakai ulang); buat QR maks. 5/10 menit per pesanan & 10/10 menit per IP (`TOO_MANY_REQUESTS`); QR lama dibatalkan di Midtrans saat membuat baru; masa berlaku ≤ batas waktu bayar |
+| Pelunasan palsu | Lunas hanya dari webhook Midtrans terverifikasi (tanda tangan → transaksi tenant → cek ulang API → nominal cocok; **tidak diubah**). Polling HP hanya membaca status DB |
+| Kirim ganda | `id` pesanan dari HP = idempotency key (request bersamaan → unique constraint → replay); pengantaran idempotent (tahap sama/sebelumnya = tanpa perubahan) |
+| Pengantaran oleh yang tidak berhak | Izin `order.fulfill` (bawaan semua role, bisa dicabut ADR 0026) + akses outlet di `AdvanceOrderFulfillment`; Urungkan hanya pelaku yang sama ≤ 10 detik; tidak ada langkah mundur lewat API |
+| Enumerasi QR | QR tidak dikenal, diganti, atau meja/outlet/bisnis nonaktif → satu halaman "Kode QR tidak aktif" (404) tanpa nama bisnis/outlet |
+| Open redirect setelah masuk | Kembali hanya ke URL `/order/t/…` milik aplikasi (`MemberPortal::returnTo`, `member.table_url`) |

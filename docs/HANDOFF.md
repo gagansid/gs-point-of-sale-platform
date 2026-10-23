@@ -1,6 +1,6 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-23 · Branch: `feature/pos` (semua di-push)
+> Diperbarui: 2026-10-23 · Branch: `feature/pos` (ADR 0027 T0–T2 di-push; T3–T6 lokal sampai diminta push)
 > Status: fitur MVP + backlog ADR 0013–0026 selesai; 2026-10-22–23: menu owner baru (Q130), susunan menu (Q132), hak akses
 > per role & per karyawan (ADR 0026, Q133–Q134), halaman kasir web dirapikan (Q131); sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
 > pembayaran tagihan (QRIS/VA/transfer manual + bukti), master bank, PDF & email tagihan, Midtrans vendor 2 mode,
@@ -15,6 +15,28 @@
 ---
 
 ## 1. Sudah dikerjakan
+
+### Pesan dari meja: bayar dulu & pengantaran (2026-10-23, ADR 0027, SPEC Q137)
+Prompt: `docs/prompts/self-order-qr-redesign.md` (milik pemilik, tidak di-commit). Tahap T0–T6:
+
+| Tahap | Isi | Commit |
+|---|---|---|
+| T0 | ADR 0027 (K1–K9), ADR 0014 diubah sebagian, SPEC Q137, izin `order.fulfill` | `34563e9` |
+| T1 | Halaman meja & member bertema bisnis (`resources/css/self-order.css`, kelas `.so-*`, `x-so.head/brand`), kontrol 32px, navigasi bawah | `f024af6` |
+| T2 | Cari menu, tab kategori menempel + scroll-spy, mode Kotak/Baris (localStorage), `+` → stepper, sheet opsi (harga di tombol, error per grup), keranjang ubah/hapus + Urungkan, keranjang `#[Locked]` | `bc68f28` |
+| T3 | Masuk & daftar singkat dari meja (`AuthenticateMember`, `SignUpMember`), login wajib di Action, keranjang di session per meja, field berikon, menu akun + Tentang aplikasi | `966f0a0` |
+| T4 | `CheckoutSelfOrder` (tanpa terima kasir, shift terbuka paling awal), `StartTableQrisPayment` (Core API, satu QR aktif, batas), sheet pilih bayar, layar QRIS & Tunjukkan ke kasir, setelan `allow_qris/allow_points/auto_complete_minutes` | `4d1d410` |
+| T5 | `orders.fulfillment_*`, `AdvanceOrderFulfillment`/`Undo`/`AutoComplete` + `pos:auto-complete-fulfillment` (5 menit), `/cashier/queue`, lini waktu & struk HP, API `POST /orders/{id}/fulfillment` (F4) | `5704891` |
+| T5b + Profil | Dashboard Transaksi → **Antrean pesanan** (4 kartu ringkasan, tab, tabel, langkah), tab **Profil** di meja | `d43af14` |
+| T6 | Halaman "Kode QR tidak aktif", banner koneksi putus, bilah memuat, toast Urungkan kasir, uji lintas tema/viewport, dokumen (UI `customer-pages.md`, `security.md`, QA SO-026–045, API) | (commit T6) |
+
+Migrasi baru (wajib saat deploy): `2026_11_13_100000_add_pay_first_to_self_order`, `2026_11_14_100000_add_fulfillment_to_orders`.
+Jadwal baru: `pos:auto-complete-fulfillment` tiap 5 menit (cron `schedule:run` sudah cukup).
+Belum diuji nyata: QRIS Midtrans **sandbox** (butuh key sandbox owner + URL webhook publik/tunnel) — layar QRIS & webhook
+diuji dengan respons Midtrans palsu. Flutter: F4 di `docs/api/flutter-changes.md`.
+Data uji lokal (demo Kopi Senja): member "Uji Pesan Meja" (+6281100002701), pesanan DEMO01-261023-0001 (lunas, diantar),
+shift kasir web Andi terbuka (kas awal 0).
+
 
 ### Audit keamanan 2026-10-23 (SPEC Q136, GSPOS-SEC-025–028) — di-push (`9654b20`)
 Laporan: [`docs/security/reports/2026-10-23-audit.md`](security/reports/2026-10-23-audit.md). Tidak ada sink eksekusi

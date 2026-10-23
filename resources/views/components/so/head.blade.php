@@ -2,14 +2,15 @@
     <head> halaman pelanggan (pesan dari meja & member, ADR 0027 §6): tema bisnis Q128 — token warna
     (TenantAppearance::css), theme-color bilah status HP, mode terang/gelap/ikuti perangkat tanpa toggle.
 --}}
-@props(['tenant', 'title'])
-@php($mode = \App\Support\TenantAppearance::themeMode($tenant)->value)
+@props(['tenant' => null, 'title'])
+{{-- Tanpa bisnis (QR tidak dikenal): merek & warna bawaan gs.POS --}}
+@php($mode = $tenant ? \App\Support\TenantAppearance::themeMode($tenant)->value : 'system')
 <meta charset="utf-8">
 {{-- maximum-scale=1: field 13px (sama dengan panel owner) tidak memicu zoom otomatis iOS; cubit-zoom tetap bisa di iOS --}}
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="{{ \App\Support\TenantAppearance::hex($tenant) }}">
-<title>{{ $title }} · {{ $tenant->name }}</title>
+<meta name="theme-color" content="{{ $tenant ? \App\Support\TenantAppearance::hex($tenant) : \App\Support\TenantAppearance::PRESETS[\App\Support\TenantAppearance::DEFAULT_COLOR][1] }}">
+<title>{{ $title }} · {{ $tenant->name ?? 'gs.POS' }}</title>
 <script>
     // Mode tampilan bisnis: dipasang sebelum CSS dirender agar tidak berkedip
     (() => {
@@ -58,4 +59,6 @@
     });
 </script>
 @vite(['resources/css/self-order.css'])
-{{ \App\Support\TenantAppearance::css($tenant) }}
+@if ($tenant)
+    {{ \App\Support\TenantAppearance::css($tenant) }}
+@endif

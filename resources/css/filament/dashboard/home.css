@@ -405,26 +405,33 @@ td.pos-dash-table__share span.tabular-nums {
     padding-top: 0.125rem;
 }
 
-/* KPI rapat: padding & nominal lebih kecil, kartu 2 kolom (HP) → 4 kolom */
-.pos-report-page .fi-wi-stats-overview-stat {
+/* KPI rapat (Laporan & halaman daftar ber-KPI, mis. Antrean pesanan): padding & nominal lebih kecil, 2 → 4 kolom */
+.pos-report-page .fi-wi-stats-overview-stat,
+.pos-kpi-compact .fi-wi-stats-overview-stat {
     padding: 0.875rem 1rem;
 }
 
-.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-content {
+.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-content,
+.pos-kpi-compact .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-content {
     row-gap: 0.25rem;
 }
 
-.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value {
+.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value,
+.pos-kpi-compact .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value {
     font-size: clamp(1rem, 12cqi, 1.5rem);
 }
 
 .pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-label,
-.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description {
+.pos-report-page .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description,
+.pos-kpi-compact .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-label,
+.pos-kpi-compact .fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description {
     font-size: 0.75rem;
 }
 
 .pos-report-page .fi-wi-stats-overview > .fi-section-content-ctn,
-.pos-report-page .fi-wi-stats-overview .fi-grid {
+.pos-report-page .fi-wi-stats-overview .fi-grid,
+.pos-kpi-compact .fi-wi-stats-overview > .fi-section-content-ctn,
+.pos-kpi-compact .fi-wi-stats-overview .fi-grid {
     gap: 1rem;
 }
 

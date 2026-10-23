@@ -8,6 +8,7 @@ use App\Actions\SelfOrder\UpdateSelfOrderSettings;
 use App\Models\Tenant;
 use App\Support\TenantAppearance;
 use App\Support\TenantContext;
+use Illuminate\Support\Carbon;
 
 /** Tema bisnis di halaman pelanggan: meja & member (ADR 0027 §6, SPEC Q137, Q128). */
 beforeEach(function () {
@@ -76,4 +77,25 @@ it('CSS halaman pelanggan tanpa hex hard-coded selain token status & putih', fun
         ->values()->all();
 
     expect($offending)->toBe([]);
+});
+
+it('keadaan khusus: QR tidak dikenal / meja nonaktif / kode pendek salah = halaman ramah 404 tanpa nama bisnis', function () {
+    $this->get('/order/t/'.str_repeat('A', 32))->assertNotFound()->assertSee('Kode QR tidak aktif')->assertSee('class="so-body"', false);
+
+    $this->table->forceFill(['is_active' => false])->save();
+    $this->get($this->table->orderUrl())->assertNotFound()->assertSee('Kode QR tidak aktif')
+        ->assertDontSee($this->pos->outlet->name)->assertDontSee('Meja 5');
+    $this->get('/t/ZZZZZZ')->assertNotFound()->assertSee('Kode QR tidak aktif');
+});
+
+it('keadaan khusus: self-order mati & di luar jam layanan memakai empty-state yang sama; banner koneksi putus tersedia', function () {
+    $this->get($this->table->orderUrl())->assertOk()->assertSee('wire:offline', false)->assertSee('Koneksi terputus');
+
+    Carbon::setTestNow('2026-10-08 05:00:00'); // 12.00 WIB
+    app(UpdateSelfOrderSettings::class)->handle($this->pos->outlet, ['enabled' => true, 'opens_at' => '16:00', 'closes_at' => '22:00']);
+    $this->get($this->table->orderUrl())->assertOk()->assertSee('Belum bisa memesan dari Meja 5')->assertSee('Di luar jam layanan');
+
+    app(UpdateSelfOrderSettings::class)->handle($this->pos->outlet, ['enabled' => false]);
+    $this->get($this->table->orderUrl())->assertOk()->assertSee('Pesan dari meja belum aktif di outlet ini');
+    Carbon::setTestNow();
 });

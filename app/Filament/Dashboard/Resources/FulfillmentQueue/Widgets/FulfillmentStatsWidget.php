@@ -13,8 +13,8 @@ use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 /**
- * Antrean pesanan: statistik hari ini (zona outlet, outlet pilihan sidebar) — jumlah per tahap, rata-rata lunas →
- * diantar, dan pesanan terlambat (stat-widget.md). Polling 10 detik bersama tabel.
+ * Antrean pesanan: ringkasan hari ini (zona outlet, outlet pilihan sidebar) dalam empat kartu — dalam antrean (rincian
+ * per tahap), diantar, waktu antar rata-rata, terlambat (stat-widget.md). Polling 10 detik bersama tabel.
  */
 final class FulfillmentStatsWidget extends StatsOverviewWidget
 {
@@ -38,25 +38,26 @@ final class FulfillmentStatsWidget extends StatsOverviewWidget
         $format = fn (int $n): string => number_format($n, 0, ',', '.');
 
         // Rata-rata lunas → diantar (staf menandai Diantar), menit
-        $served = $today()->where('fulfillment_status', FulfillmentStatus::Served)->get(['completed_at', 'served_at']);
-        $average = $served->isEmpty() ? null : (int) round($served->avg(fn (Order $o): int => (int) $o->completed_at?->diffInMinutes($o->served_at)));
+        $servedOrders = $today()->where('fulfillment_status', FulfillmentStatus::Served)->get(['completed_at', 'served_at']);
+        $average = $servedOrders->isEmpty() ? null : (int) round($servedOrders->avg(fn (Order $o): int => (int) $o->completed_at?->diffInMinutes($o->served_at)));
         $late = FulfillmentQueueResource::late(FulfillmentQueueResource::getEloquentQuery())->count();
 
+        $open = $count(FulfillmentStatus::Queued) + $count(FulfillmentStatus::Preparing) + $count(FulfillmentStatus::Ready);
+        $served = $servedOrders->count();
+        $auto = $count(FulfillmentStatus::AutoCompleted);
+
+        // Empat kartu satu baris; rincian per tahap ada di tab tabel di bawahnya
         return [
-            Stat::make('Antre', $format($count(FulfillmentStatus::Queued)))->icon(Heroicon::OutlinedInboxArrowDown)
-                ->description('Lunas, belum disiapkan')->color($count(FulfillmentStatus::Queued) > 0 ? 'warning' : 'gray'),
-            Stat::make('Disiapkan', $format($count(FulfillmentStatus::Preparing)))->icon(Heroicon::OutlinedFire)
-                ->description('Sedang dibuat'),
-            Stat::make('Siap diantar', $format($count(FulfillmentStatus::Ready)))->icon(Heroicon::OutlinedBellAlert)
-                ->description('Menunggu diantar ke meja'),
-            Stat::make('Diantar', $format($count(FulfillmentStatus::Served)))->icon(Heroicon::OutlinedCheckCircle)
-                ->description('Ditandai staf hari ini')->color('success'),
-            Stat::make('Selesai otomatis', $format($count(FulfillmentStatus::AutoCompleted)))->icon(Heroicon::OutlinedClock)
-                ->description('Tidak ditandai Diantar'),
-            Stat::make('Rata-rata lunas → diantar', $average === null ? '—' : $average.' mnt')->icon(Heroicon::OutlinedArrowTrendingUp)
-                ->description($served->isEmpty() ? 'Belum ada yang diantar hari ini' : 'Dari '.$format($served->count()).' pesanan'),
+            Stat::make('Dalam antrean', $format($open))->icon(Heroicon::OutlinedInboxStack)
+                ->description($format($count(FulfillmentStatus::Queued)).' antre · '.$format($count(FulfillmentStatus::Preparing)).' dibuat · '.$format($count(FulfillmentStatus::Ready)).' siap')
+                ->color($open > 0 ? 'warning' : 'gray'),
+            Stat::make('Diantar hari ini', $format($served))->icon(Heroicon::OutlinedCheckCircle)
+                ->description($auto > 0 ? '+'.$format($auto).' selesai otomatis' : 'Ditandai staf')
+                ->color($served > 0 ? 'success' : 'gray'),
+            Stat::make('Waktu antar rata-rata', $average === null ? '—' : $average.' mnt')->icon(Heroicon::OutlinedClock)
+                ->description($average === null ? 'Belum ada data' : 'Lunas → diantar'),
             Stat::make('Terlambat', $format($late))->icon(Heroicon::OutlinedExclamationTriangle)
-                ->description('Belum diantar > '.FulfillmentQueueResource::LATE_MINUTES.' menit')
+                ->description('Lewat '.FulfillmentQueueResource::LATE_MINUTES.' menit')
                 ->color($late > 0 ? 'danger' : 'gray'),
         ];
     }

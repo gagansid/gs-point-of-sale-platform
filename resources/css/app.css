@@ -5854,6 +5854,10 @@
     min-width: 180px;
 }
 
+.pos-queue-col .pos-ticket-number {
+    white-space: nowrap;
+}
+
 .pos-badge.pos-age svg {
     width: 14px;
     height: 14px;
@@ -5880,8 +5884,11 @@
     padding: 0;
 }
 
-.cashier-toast-action {
+/* Lebih spesifik dari .cashier-toast button (tombol tutup 24px) */
+.cashier-toast button.cashier-toast-action {
     flex: none;
+    width: auto;
+    line-height: 1;
     align-self: center;
     height: 32px;
     padding: 0 12px;
