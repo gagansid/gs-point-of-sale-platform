@@ -286,22 +286,69 @@
             <section class="so-orders" wire:poll.5s aria-live="polite">
                 @forelse ($this->myOrders as $selfOrder)
                     @php($status = $statusLabel($selfOrder))
-                    <article class="so-card" wire:key="s-{{ $selfOrder->id }}">
+                    @php($order = $selfOrder->order)
+                    @php($tz = $context->outlet->timezone)
+                    <article class="so-card so-order" wire:key="s-{{ $selfOrder->id }}">
                         <div class="so-card-head">
-                            <h2 class="so-card-title">{{ $selfOrder->order?->order_number ?? 'Pesanan '.$selfOrder->created_at->setTimezone($context->outlet->timezone)->format('H.i') }}</h2>
+                            <div>
+                                <h2 class="so-card-title">{{ $order?->order_number ?? 'Pesanan '.$selfOrder->created_at->setTimezone($tz)->format('H.i') }}</h2>
+                                <p class="so-muted so-num">{{ $selfOrder->itemCount() }} item · {{ $money($order->grand_total ?? $selfOrder->estimated_total) }} · {{ $selfOrder->created_at->setTimezone($tz)->format('H.i') }}</p>
+                            </div>
                             <span class="so-badge is-{{ $status['tone'] === 'muted' ? 'gray' : $status['tone'] }}">{{ $status['label'] }}</span>
                         </div>
-                        <p class="so-secondary so-num">{{ $selfOrder->itemCount() }} item · {{ $money($selfOrder->order->grand_total ?? $selfOrder->estimated_total) }}@if ($selfOrder->order && \App\Support\Money::isPositive($selfOrder->order->paid_total) && $selfOrder->order->status === \App\Enums\OrderStatus::AwaitingPayment) · sisa {{ $money(\App\Support\Money::sub($selfOrder->order->grand_total, $selfOrder->order->paid_total)) }}@endif</p>
-                        @if ($status['note'] !== '')
-                            <p class="so-muted">{{ $status['note'] }}</p>
+
+                        @if ($order !== null && in_array($order->status, [\App\Enums\OrderStatus::AwaitingPayment, \App\Enums\OrderStatus::Completed], true))
+                            {{-- Lini waktu vertikal: tahap selesai hijau, tahap aktif primary --}}
+                            <ol class="so-timeline" aria-label="Status pesanan">
+                                @foreach (\App\Livewire\SelfOrder\OrderPage::timeline($order) as $step)
+                                    <li class="is-{{ $step['state'] }}" @if ($step['state'] === 'current') aria-current="step" @endif>
+                                        <span class="so-timeline-dot" aria-hidden="true">@if ($step['state'] === 'done')@svg('heroicon-s-check')@endif</span>
+                                        <span class="so-timeline-label">{{ $step['label'] }}</span>
+                                        <span class="so-timeline-time so-num">{{ $step['time']?->setTimezone($tz)->format('H.i') }}</span>
+                                    </li>
+                                @endforeach
+                            </ol>
                         @endif
-                        @if ($selfOrder->order?->status === \App\Enums\OrderStatus::AwaitingPayment)
-                            <div class="so-actions">
-                                <button type="button" class="so-btn is-primary is-block is-split" wire:click="openPay('{{ $selfOrder->id }}')" wire:loading.attr="disabled">
-                                    <span>Bayar sekarang</span>
-                                    <span class="so-num">{{ $money(\App\Support\Money::sub($selfOrder->order->grand_total, $selfOrder->order->paid_total)) }}</span>
-                                </button>
-                            </div>
+
+                        @if ($status['note'] !== '')
+                            <p @class(['so-muted', 'so-order-note', 'is-danger' => $status['tone'] === 'danger'])>{{ $status['note'] }}</p>
+                        @endif
+
+                        @if ($order?->status === \App\Enums\OrderStatus::AwaitingPayment)
+                            <button type="button" class="so-btn is-primary is-block is-split" wire:click="openPay('{{ $selfOrder->id }}')" wire:loading.attr="disabled">
+                                <span>Bayar sekarang</span>
+                                <span class="so-num">{{ $money(\App\Support\Money::sub($order->grand_total, $order->paid_total)) }}</span>
+                            </button>
+                        @elseif ($order?->status === \App\Enums\OrderStatus::Completed)
+                            {{-- Struk digital setelah lunas --}}
+                            <details class="so-receipt">
+                                <summary>@svg('heroicon-o-receipt-percent', ['aria-hidden' => 'true']) Struk digital @svg('heroicon-o-chevron-down', ['class' => 'so-extra-caret', 'aria-hidden' => 'true'])</summary>
+                                <ul class="so-receipt-items">
+                                    @foreach ($order->items as $item)
+                                        <li>
+                                            <span><span class="so-num">{{ $item->qty }}×</span> {{ $item->product_name }}@if ($item->options->isNotEmpty())<small>{{ $item->options->pluck('option_name')->implode(', ') }}</small>@endif</span>
+                                            <span class="so-num">{{ $money($item->line_total) }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <dl class="so-totals is-compact">
+                                    <dt>Subtotal</dt><dd>{{ $money($order->subtotal) }}</dd>
+                                    @if (\App\Support\Money::isPositive($order->discount_total))
+                                        <dt>Diskon</dt><dd class="is-discount">−{{ $money($order->discount_total) }}</dd>
+                                    @endif
+                                    @if (\App\Support\Money::isPositive($order->service_total))
+                                        <dt>Service</dt><dd>{{ $money($order->service_total) }}</dd>
+                                    @endif
+                                    @if (\App\Support\Money::isPositive($order->tax_total))
+                                        <dt>Pajak</dt><dd>{{ $money($order->tax_total) }}</dd>
+                                    @endif
+                                    <dt class="is-grand">Total</dt><dd class="is-grand">{{ $money($order->grand_total) }}</dd>
+                                    <dt>Dibayar</dt><dd>{{ $order->payments->map(fn ($p) => $p->method?->name)->filter()->unique()->implode(', ') ?: 'Voucher' }}</dd>
+                                    @if ($order->points_earned > 0)
+                                        <dt>Poin didapat</dt><dd class="is-discount">+{{ number_format($order->points_earned, 0, ',', '.') }}</dd>
+                                    @endif
+                                </dl>
+                            </details>
                         @endif
                     </article>
                 @empty
@@ -314,6 +361,9 @@
                         </div>
                     </div>
                 @endforelse
+                @if ($this->myOrders->isNotEmpty())
+                    <button type="button" class="so-btn is-outline is-block" wire:click="show('menu')">@svg('heroicon-o-plus', ['aria-hidden' => 'true']) Pesan lagi</button>
+                @endif
             </section>
         @endif
     </main>

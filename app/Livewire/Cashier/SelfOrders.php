@@ -6,10 +6,12 @@ namespace App\Livewire\Cashier;
 
 use App\Actions\SelfOrder\AcceptSelfOrder;
 use App\Actions\SelfOrder\RejectSelfOrder;
+use App\Enums\FulfillmentStatus;
 use App\Enums\OrderChannel;
 use App\Enums\OrderStatus;
 use App\Enums\SelfOrderStatus;
 use App\Exceptions\BusinessException;
+use App\Livewire\Cashier\Concerns\AdvancesFulfillment;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\SelfOrder;
@@ -27,9 +29,13 @@ use Livewire\Component;
  *
  * @property-read Collection<int, SelfOrder> $incoming
  * @property-read Collection<int, Order> $unpaid
+ * @property-read Collection<int, Order> $paid
+ * @property-read array<string, string> $paidCustomers
  */
 final class SelfOrders extends Component
 {
+    use AdvancesFulfillment;
+
     public ?string $rejectingId = null;
 
     public string $rejectReason = '';
@@ -54,6 +60,30 @@ final class SelfOrders extends Component
     {
         return Order::query()->where('outlet_id', CurrentOutlet::getOrFail()->id)->where('channel', OrderChannel::SelfOrder)
             ->where('status', OrderStatus::AwaitingPayment)->oldest('accepted_at')->limit(50)->get()->toBase();
+    }
+
+    /**
+     * Pesanan meja lunas yang belum diantar (ADR 0027): tombol langkah sama dengan /cashier/queue (sementara).
+     *
+     * @return Collection<int, Order>
+     */
+    #[Computed]
+    public function paid(): Collection
+    {
+        if (! $this->user()->can('order.fulfill')) {
+            return collect();
+        }
+
+        return Order::query()->with('items.options')->where('outlet_id', CurrentOutlet::getOrFail()->id)->where('channel', OrderChannel::SelfOrder)
+            ->where('status', OrderStatus::Completed)->whereIn('fulfillment_status', FulfillmentStatus::open())
+            ->oldest('completed_at')->limit(50)->get()->toBase();
+    }
+
+    /** @return array<string, string> order_id => nama pemesan */
+    #[Computed]
+    public function paidCustomers(): array
+    {
+        return SelfOrder::query()->whereIn('order_id', $this->paid->pluck('id'))->pluck('customer_name', 'order_id')->all();
     }
 
     /** @return array<string, string> product_id => nama, untuk menampilkan isi pesanan masuk */

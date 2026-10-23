@@ -11,6 +11,7 @@ file domain masing-masing; dokumen ini hanya merangkum apa yang harus diubah, ur
 | F1 | Hak akses dari `/auth/me` per bisnis & per karyawan | Wajib | ADR 0026, SPEC Q133–Q134, [`auth.md`](auth.md) | ⏳ |
 | F2 | Pratinjau total: pembulatan **selalu ke atas** | Wajib | [`order.md`](order.md) §Aturan perhitungan 1 | ⏳ |
 | F3 | Opsi bawaan per grup (`options[].is_default`) | Disarankan | SPEC Q129, [`product.md`](product.md) | ⏳ |
+| F4 | Pesanan meja bayar dulu & antrean pengantaran | Wajib | ADR 0027, SPEC Q137, [`self-order.md`](self-order.md) | ⏳ |
 
 ---
 
@@ -68,3 +69,22 @@ Rp28.000; `rounding = 0` = tanpa pembulatan. Jangan memakai `double` untuk uang;
 sedang habis (`is_available: false`) tidak pernah dipilih otomatis.
 
 - [ ] Membuka produk ber-grup wajib langsung menampilkan opsi bawaan terpilih; kasir tetap bisa mengganti.
+
+## F4. Pesanan meja bayar dulu & antrean pengantaran (ADR 0027)
+
+Pesanan dari QR meja tidak lagi menunggu kasir: pelanggan membayar dulu (QRIS di HP, di kasir, atau poin), lalu pesanan
+lunas masuk antrean pengantaran.
+
+- **Pesanan masuk** (`GET /self-orders`) hanya berisi pesanan lama `pending`; boleh disembunyikan bila `meta.pending_count`
+  0. Jangan lagi menjadikannya menu utama pesanan meja.
+- **Belum dibayar** tetap: `GET /orders?status=awaiting_payment&channel=self_order` → `POST /orders/{id}/payments`.
+- **Antrean baru** (izin `order.fulfill`, bawaan semua role): `GET /orders?fulfillment=queued,preparing,ready` (polling 5–10
+  detik, bunyi saat ada `queued` baru), kartu per pesanan: meja (`table_label`), nomor, umur sejak `paid_at` (kuning
+  > 15 menit, merah > 30 menit), item + opsi + catatan, satu tombol langkah berikutnya →
+  `POST /orders/{id}/fulfillment` dengan `preparing` → `ready` → `served`. Urungkan cukup di aplikasi (tunda kirim 5
+  detik) atau abaikan; server tidak menerima langkah mundur.
+- Batalkan pesanan lunas = void biasa (PIN sesuai `order.void`).
+- Field baru di order: `fulfillment_status`, `paid_at`, `prepared_at`, `ready_at`, `served_at`, `fulfillment_auto`.
+
+- [ ] Pesanan dibayar QRIS di HP muncul di Antrean aplikasi dalam ≤ 10 detik tanpa langkah "Terima".
+- [ ] Siapkan → Siap → Diantar dari tablet dan kasir web pada pesanan yang sama tidak menghasilkan error (idempotent).

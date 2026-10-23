@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\DiscountType;
+use App\Enums\FulfillmentStatus;
 use App\Enums\OrderChannel;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
@@ -69,6 +70,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $approved_by
  * @property CarbonImmutable|null $completed_at
  * @property CarbonImmutable|null $voided_at
+ * @property FulfillmentStatus|null $fulfillment_status pengantaran pesanan meja (ADR 0027); null = order non-meja / belum lunas
+ * @property CarbonImmutable|null $prepared_at
+ * @property CarbonImmutable|null $ready_at
+ * @property CarbonImmutable|null $served_at
+ * @property string|null $served_by
+ * @property bool $fulfillment_auto ditutup otomatis oleh jadwal, bukan staf
+ * @property FulfillmentStatus|null $fulfillment_previous tahap sebelum perubahan terakhir (Urungkan)
+ * @property string|null $fulfillment_updated_by
+ * @property CarbonImmutable|null $fulfillment_updated_at
  */
 final class Order extends Model
 {
@@ -122,6 +132,13 @@ final class Order extends Model
             'tax_inclusive' => 'boolean',
             'completed_at' => 'immutable_datetime',
             'voided_at' => 'immutable_datetime',
+            'fulfillment_status' => FulfillmentStatus::class,
+            'fulfillment_previous' => FulfillmentStatus::class,
+            'prepared_at' => 'immutable_datetime',
+            'ready_at' => 'immutable_datetime',
+            'served_at' => 'immutable_datetime',
+            'fulfillment_auto' => 'boolean',
+            'fulfillment_updated_at' => 'immutable_datetime',
         ];
     }
 

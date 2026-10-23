@@ -5838,3 +5838,105 @@
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* ==========================================================================
+   Kasir web → Antrean pesanan (ADR 0027 K8): tiga kolom (≤ 900px menjadi tab), umur pesanan, tombol langkah.
+   ========================================================================== */
+.pos-board.is-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pos-queue-tabs {
+    display: none;
+}
+
+.pos-queue-filter {
+    min-width: 180px;
+}
+
+.pos-badge.pos-age svg {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+}
+
+.pos-badge.pos-age.is-warning {
+    background: #fffaeb;
+    color: #b54708;
+}
+
+.pos-badge.pos-age.is-danger {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+.pos-ticket-foot .pos-step-btn {
+    min-width: 128px;
+    margin-left: auto;
+}
+
+.pos-ticket-foot .pos-btn-icon {
+    width: var(--pos-btn-h);
+    padding: 0;
+}
+
+.cashier-toast-action {
+    flex: none;
+    align-self: center;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid rgb(45 66 130 / 0.25);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--site-primary);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@media (max-width: 900px) {
+    .pos-board.is-3 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pos-queue-tabs {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        margin-bottom: 12px;
+        border-bottom: 1px solid #e6e7eb;
+    }
+
+    .pos-queue-tabs button {
+        position: relative;
+        flex: none;
+        height: 40px;
+        padding: 0 12px;
+        border: 0;
+        background: transparent;
+        color: #626d7d;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .pos-queue-tabs button.is-active {
+        color: var(--site-primary);
+    }
+
+    .pos-queue-tabs button.is-active::after {
+        position: absolute;
+        right: 12px;
+        bottom: -1px;
+        left: 12px;
+        height: 2px;
+        background: var(--site-primary);
+        content: '';
+    }
+
+    .pos-queue-col:not(.is-current) {
+        display: none;
+    }
+}

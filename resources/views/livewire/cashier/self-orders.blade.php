@@ -8,7 +8,7 @@
         </div>
     </header>
 
-    <div class="pos-board">
+    <div @class(['pos-board', 'is-3' => $this->paid->isNotEmpty()])>
         <section class="pos-card">
             <div class="pos-card-head">
                 <h2>Pesanan masuk <span @class(['pos-count', 'is-alert' => $this->incoming->isNotEmpty()])>{{ $this->incoming->count() }}</span></h2>
@@ -98,5 +98,18 @@
                 </div>
             @endforelse
         </section>
+
+        @if ($this->paid->isNotEmpty())
+            {{-- Sudah dibayar (ADR 0027): langkah pengantaran sementara juga di sini; halaman utama = Antrean --}}
+            <section class="pos-card">
+                <div class="pos-card-head">
+                    <h2>Sudah dibayar <span class="pos-count is-alert">{{ $this->paid->count() }}</span></h2>
+                    <a class="site-btn site-btn-outline" href="{{ route('cashier.queue') }}">@svg('heroicon-o-queue-list', ['aria-hidden' => 'true']) Buka antrean</a>
+                </div>
+                @foreach ($this->paid as $order)
+                    @include('livewire.cashier.partials.fulfillment-ticket', ['order' => $order, 'customer' => $this->paidCustomers[$order->id] ?? null])
+                @endforeach
+            </section>
+        @endif
     </div>
 </div>

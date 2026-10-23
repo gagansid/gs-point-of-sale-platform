@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Fulfillment\AdvanceOrderFulfillment;
 use App\Actions\Member\Data\BenefitSelection;
 use App\Actions\Member\ResolveOrderMember;
 use App\Actions\Order\AddPayment;
@@ -20,9 +21,12 @@ use App\Actions\Order\SplitOpenBill;
 use App\Actions\Order\VisibleOrders;
 use App\Actions\Order\VoidOrder;
 use App\Enums\DiscountType;
+use App\Enums\FulfillmentStatus;
+use App\Enums\OrderChannel;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Order\AddPaymentRequest;
 use App\Http\Requests\Api\V1\Order\CheckoutRequest;
+use App\Http\Requests\Api\V1\Order\FulfillOrderRequest;
 use App\Http\Requests\Api\V1\Order\MergeOpenBillRequest;
 use App\Http\Requests\Api\V1\Order\OpenBillRequest;
 use App\Http\Requests\Api\V1\Order\OrderIndexRequest;
@@ -129,7 +133,15 @@ final class OrderController extends Controller
         $user = ApiActor::user($request);
         $search = $request->string('search')->trim()->toString();
 
-        $orders = VisibleOrders::query($user)
+        // Antrean pengantaran (ADR 0027): semua pesanan meja di outlet perangkat ini bagi pemegang order.fulfill,
+        // tidak dibatasi shift kasir (tagihan meja masuk shift terbuka paling awal di outlet)
+        $fulfillment = $request->filled('fulfillment') ? explode(',', $request->string('fulfillment')->toString()) : null;
+        $base = $fulfillment !== null && $user->can('order.fulfill')
+            ? Order::query()->where('outlet_id', CurrentOutlet::getOrFail()->id)->where('channel', OrderChannel::SelfOrder)
+            : VisibleOrders::query($user);
+
+        $orders = $base
+            ->when($fulfillment !== null, fn (Builder $q) => $q->whereIn('fulfillment_status', $fulfillment))
             ->when($request->filled('date'), function (Builder $query) use ($request): void {
                 $date = $request->string('date')->toString();
                 $query->whereBetween('created_at', CurrentOutlet::utcRange($date, $date));
@@ -145,6 +157,19 @@ final class OrderController extends Controller
             ->paginate(min($request->integer('per_page', (int) config('pos.pagination.per_page')), (int) config('pos.pagination.max_per_page')));
 
         return ApiResponse::paginated($orders, OrderResource::class);
+    }
+
+    /**
+     * Majukan pengantaran pesanan meja.
+     *
+     * Izin order.fulfill. `status`: preparing (Disiapkan), ready (Siap diantar), served (Diantar). Hanya maju; tahap yang
+     * sudah tercapai = 200 tanpa perubahan (idempotent). Belum lunas/void → 409 ORDER_ALREADY_CLOSED.
+     */
+    public function fulfill(FulfillOrderRequest $request, Order $order, AdvanceOrderFulfillment $action): JsonResponse
+    {
+        $result = $action->handle(ApiActor::user($request), $order, FulfillmentStatus::from($request->string('status')->toString()));
+
+        return ApiResponse::success(OrderResource::make(CheckoutOrder::load($result))->resolve($request), 'Status pesanan diperbarui');
     }
 
     /**

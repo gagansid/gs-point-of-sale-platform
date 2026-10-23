@@ -9,6 +9,7 @@ use App\Http\Controllers\Web\Cashier\LockController as CashierLockController;
 use App\Http\Controllers\Web\Cashier\LoginController as CashierLoginController;
 use App\Http\Controllers\Web\Cashier\OrderController as CashierOrderController;
 use App\Http\Controllers\Web\Cashier\OutletController as CashierOutletController;
+use App\Http\Controllers\Web\Cashier\QueueController as CashierQueueController;
 use App\Http\Controllers\Web\Cashier\ReceivableController as CashierReceivableController;
 use App\Http\Controllers\Web\Cashier\RefundController as CashierRefundController;
 use App\Http\Controllers\Web\Cashier\SelfOrderController as CashierSelfOrderController;
@@ -221,6 +222,8 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
         Route::get('unlock', [CashierLockController::class, 'show'])->name('unlock');
         Route::post('unlock', [CashierLockController::class, 'unlock'])->middleware('throttle:10,1')->name('unlock.store');
         Route::get('self-orders', CashierSelfOrderController::class)->name('self-orders');
+        // Antrean pesanan meja sampai diantar (ADR 0027 K8)
+        Route::get('queue', CashierQueueController::class)->name('queue');
         Route::get('orders', [CashierOrderController::class, 'index'])->name('orders');
         Route::get('orders/{order}', [CashierOrderController::class, 'show'])->whereUuid('order')->name('orders.show');
         Route::post('orders/{order}/void', [CashierOrderController::class, 'void'])->whereUuid('order')->name('orders.void');

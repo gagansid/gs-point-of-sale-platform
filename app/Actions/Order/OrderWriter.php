@@ -6,6 +6,8 @@ namespace App\Actions\Order;
 
 use App\Actions\Member\AwardOrderBenefits;
 use App\Actions\Order\Data\ResolvedLine;
+use App\Enums\FulfillmentStatus;
+use App\Enums\OrderChannel;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentCategory;
 use App\Enums\PaymentStatus;
@@ -130,6 +132,8 @@ final class OrderWriter
             'status' => OrderStatus::Completed,
             'shift_id' => $shift->id,
             'completed_at' => now(),
+            // Pesanan meja lunas langsung masuk antrean pengantaran (ADR 0027), apa pun cara bayarnya
+            'fulfillment_status' => $order->channel === OrderChannel::SelfOrder ? ($order->fulfillment_status ?? FulfillmentStatus::Queued) : $order->fulfillment_status,
         ])->save();
 
         $this->moveStock($order, $actor, StockMovementType::Sale);

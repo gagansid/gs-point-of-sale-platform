@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Enums\OrderChannel;
 use App\Models\Order;
 use App\Support\Iso;
 use Illuminate\Http\Request;
@@ -28,6 +29,13 @@ final class OrderResource extends JsonResource
             'dining_table_id' => $this->dining_table_id,
             'accepted_at' => Iso::dateTime($this->accepted_at),
             'refund_required' => $this->refund_required,
+            // Pengantaran pesanan meja (ADR 0027); null untuk order non-meja / belum lunas
+            'fulfillment_status' => $this->fulfillment_status?->value,
+            'paid_at' => $this->channel === OrderChannel::SelfOrder ? Iso::dateTime($this->completed_at) : null,
+            'prepared_at' => Iso::dateTime($this->prepared_at),
+            'ready_at' => Iso::dateTime($this->ready_at),
+            'served_at' => Iso::dateTime($this->served_at),
+            'fulfillment_auto' => $this->fulfillment_auto,
             'notes' => $this->notes,
             // Snapshot nama saat transaksi (ADR 0013)
             'member' => $this->member_id !== null ? ['id' => $this->member_id, 'name' => $this->member_name, 'tier' => $this->member_tier] : null,

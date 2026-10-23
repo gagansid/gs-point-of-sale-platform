@@ -159,7 +159,8 @@ Body `{ "payments": [ { "id", "payment_method_id", "amount", "tendered"?, "refer
 ## `GET /v1/orders`
 
 Query: `date` (YYYY-MM-DD, **tanggal lokal outlet**), `status` (`open`/`awaiting_payment`/`completed`/`voided`/`expired`),
-`channel` (`pos`/`self_order`),
+`channel` (`pos`/`self_order`), `fulfillment` (antrean pesanan meja, mis. `queued,preparing,ready` — pemegang
+`order.fulfill` melihat semua pesanan meja outlet perangkat, lihat [`self-order.md`](self-order.md) §Pengantaran),
 `shift_id`, `search` (nomor order / meja), `page`, `per_page`. Urut terbaru.
 
 Visibilitas (Q21):

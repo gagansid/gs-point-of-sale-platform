@@ -13,6 +13,7 @@ use App\Actions\SelfOrder\CheckoutSelfOrder;
 use App\Actions\SelfOrder\PayWithPointsFromPhone;
 use App\Actions\SelfOrder\SubmitSelfOrder;
 use App\Enums\ErrorCode;
+use App\Enums\FulfillmentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\SelfOrderStatus;
 use App\Exceptions\BusinessException;
@@ -417,7 +418,8 @@ final class OrderPage extends Component
     {
         $ids = (array) session()->get($this->sessionKey(), []);
 
-        return SelfOrder::query()->with(['order:id,order_number,status,grand_total,paid_total,refund_required,accepted_at,completed_at'])->whereIn('id', $ids)
+        // Order lengkap (lini waktu pengantaran & struk digital, ADR 0027); maks. 10 pesanan sesi ini
+        return SelfOrder::query()->with(['order.items.options', 'order.payments.method'])->whereIn('id', $ids)
             ->where('dining_table_id', $this->context->table->id)->latest()->limit(10)->get()->toBase();
     }
 
@@ -968,11 +970,45 @@ final class OrderPage extends Component
             $selfOrder->status === SelfOrderStatus::Rejected => ['label' => 'Ditolak', 'tone' => 'danger', 'note' => (string) $selfOrder->reject_reason],
             $selfOrder->status === SelfOrderStatus::Expired => ['label' => 'Kedaluwarsa', 'tone' => 'muted', 'note' => 'Pesanan terlalu lama menunggu. Silakan pesan lagi atau ke kasir.'],
             $order?->status === OrderStatus::AwaitingPayment => ['label' => 'Menunggu bayar', 'tone' => 'warning', 'note' => 'Selesaikan pembayaran agar pesanan disiapkan.'],
+            $order?->status === OrderStatus::Completed && $order->fulfillment_status === FulfillmentStatus::Served => ['label' => 'Diantar', 'tone' => 'success', 'note' => 'Selamat menikmati!'],
+            $order?->status === OrderStatus::Completed && $order->fulfillment_status === FulfillmentStatus::AutoCompleted => ['label' => 'Selesai', 'tone' => 'success', 'note' => 'Selamat menikmati!'],
+            $order?->status === OrderStatus::Completed && $order->fulfillment_status === FulfillmentStatus::Ready => ['label' => 'Siap diantar', 'tone' => 'info', 'note' => 'Pesananmu sedang diantar ke meja.'],
+            $order?->status === OrderStatus::Completed && $order->fulfillment_status === FulfillmentStatus::Preparing => ['label' => 'Disiapkan', 'tone' => 'info', 'note' => 'Pesananmu sedang disiapkan.'],
             $order?->status === OrderStatus::Completed => ['label' => 'Lunas', 'tone' => 'success', 'note' => 'Terima kasih! Pesananmu masuk antrean.'],
             $order?->status === OrderStatus::Expired => ['label' => 'Kedaluwarsa', 'tone' => 'muted', 'note' => 'Pesanan tidak dibayar dalam batas waktu.'],
             $order?->status === OrderStatus::Voided => ['label' => 'Dibatalkan', 'tone' => 'danger', 'note' => $order->refund_required ? 'Pesanan dibatalkan outlet. Dana dikembalikan oleh outlet.' : 'Pesanan dibatalkan outlet.'],
             default => ['label' => 'Diterima', 'tone' => 'info', 'note' => ''],
         };
+    }
+
+    /**
+     * Lini waktu pesanan untuk pelanggan (ADR 0027 §5.8): Menunggu bayar → Lunas → Disiapkan → Siap diantar →
+     * Diantar / Selesai. `state`: done | current | todo.
+     *
+     * @return list<array{label: string, time: CarbonImmutable|null, state: string}>
+     */
+    public static function timeline(Order $order): array
+    {
+        $paid = $order->status === OrderStatus::Completed;
+        $stage = $paid ? ($order->fulfillment_status?->rank() ?? 3) : -1;
+        $steps = [
+            ['Menunggu bayar', $order->accepted_at, -1],
+            [$stage === 0 ? 'Lunas · antre' : 'Lunas', $order->completed_at, 0],
+            ['Disiapkan', $order->prepared_at, 1],
+            ['Siap diantar', $order->ready_at, 2],
+            [$order->fulfillment_status === FulfillmentStatus::AutoCompleted ? 'Selesai' : 'Diantar ke meja', $order->served_at, 3],
+        ];
+
+        // Tahap sekarang: -1 = belum lunas; 0 = lunas & antre; 3 = diantar/selesai (akhir, semua tercentang)
+        return array_map(fn (array $step): array => [
+            'label' => $step[0],
+            'time' => $step[1],
+            'state' => match (true) {
+                $step[2] < $stage || $stage === 3 => 'done',
+                $step[2] === $stage => 'current',
+                default => 'todo',
+            },
+        ], $steps);
     }
 
     /** @return list<array{product_id: string, qty: int, option_ids: list<string>, notes: string|null}> */

@@ -35,6 +35,8 @@ Schedule::command('pos:evaluate-member-tiers')->dailyAt('01:45')->timezone('Asia
 
 // Self-order (ADR 0014): pesanan meja yang tidak ditangani / tidak dibayar dalam batas waktu
 Schedule::command('pos:expire-self-orders')->everyMinute()->withoutOverlapping(5);
+// Pengantaran pesanan meja (ADR 0027 K4): lunas & tidak ditandai Diantar setelah batas outlet → Selesai otomatis
+Schedule::command('pos:auto-complete-fulfillment')->everyFiveMinutes()->withoutOverlapping(10);
 
 // Voucher ulang tahun (ADR 0013, Q66): harian, member yang berulang tahun bulan ini (sekali per bulan)
 Schedule::command('pos:issue-birthday-vouchers')->dailyAt('00:15')->timezone('Asia/Jakarta')->withoutOverlapping(30);

@@ -2328,3 +2328,141 @@
     background: color-mix(in srgb, var(--so-warning) 14%, transparent);
     color: var(--so-warning-text);
 }
+
+/* ---------- Pesananku: lini waktu vertikal & struk digital (ADR 0027 §5.8) ---------- */
+.so-order {
+    gap: 10px;
+}
+
+.so-timeline {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.so-timeline li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 30px;
+    color: var(--text-muted);
+}
+
+/* Garis penghubung antar-tahap */
+.so-timeline li:not(:last-child)::after {
+    position: absolute;
+    top: 22px;
+    bottom: -8px;
+    left: 9px;
+    width: 2px;
+    background: var(--border-color);
+    content: '';
+}
+
+.so-timeline li.is-done:not(:last-child)::after {
+    background: var(--so-success);
+}
+
+.so-timeline-dot {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-surface);
+}
+
+.so-timeline-dot svg {
+    width: 12px;
+    height: 12px;
+}
+
+.so-timeline .is-done {
+    color: var(--text);
+}
+
+.so-timeline .is-done .so-timeline-dot {
+    border-color: var(--so-success);
+    background: var(--so-success);
+    color: #ffffff;
+}
+
+.so-timeline .is-current {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.so-timeline .is-current .so-timeline-dot {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-lt);
+    animation: so-pulse 1.6s ease-in-out infinite;
+}
+
+.so-timeline-time {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.so-order-note.is-danger {
+    color: var(--so-danger-text);
+}
+
+.so-receipt {
+    border-top: 1px solid var(--border-color-light);
+}
+
+.so-receipt summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 40px;
+    color: var(--primary);
+    font-weight: 500;
+    list-style: none;
+    cursor: pointer;
+}
+
+.so-receipt summary::-webkit-details-marker {
+    display: none;
+}
+
+.so-receipt summary > svg:first-child {
+    width: 16px;
+    height: 16px;
+}
+
+.so-receipt summary .so-extra-caret {
+    margin-left: auto;
+}
+
+.so-receipt[open] summary .so-extra-caret {
+    transform: rotate(180deg);
+}
+
+.so-receipt-items {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 10px;
+    padding: 0 0 10px;
+    border-bottom: 1px dashed var(--border-color);
+    list-style: none;
+}
+
+.so-receipt-items li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.so-receipt-items small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 12px;
+}

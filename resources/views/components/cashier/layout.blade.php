@@ -17,6 +17,12 @@
     if ($selfOrder) {
         $links = ['pos' => $links['pos'], 'self-orders' => ['Pesanan meja', route('cashier.self-orders'), 'heroicon-o-qr-code'], ...$links];
     }
+    // Antrean pesanan meja sampai diantar (ADR 0027 K8): halaman utama staf dapur/bar/pelayan
+    if ($outlet !== null && ($user?->can('order.fulfill') ?? false) && \App\Models\SelfOrderSetting::forOutlet($outlet->id)->enabled) {
+        $links = ['pos' => $links['pos'], 'queue' => ['Antrean', route('cashier.queue'), 'heroicon-o-queue-list'], ...array_diff_key($links, ['pos' => true])];
+    }
+    // Badge + bunyi pesanan meja baru: di Antrean bila ada, selain itu di Pesanan meja
+    $badgeOn = isset($links['queue']) ? 'queue' : 'self-orders';
 @endphp
 <!DOCTYPE html>
 <html lang="id">
@@ -39,7 +45,7 @@
         </div>
         <nav class="cashier-nav" aria-label="Menu kasir">
             @foreach ($links as $key => [$label, $url, $icon])
-                <a href="{{ $url }}" @class(['is-active' => $active === $key]) @if ($active === $key) aria-current="page" @endif>@svg($icon, ['aria-hidden' => 'true'])<span>{{ $label }}</span>@if ($key === 'self-orders')<livewire:cashier.self-order-badge />@endif</a>
+                <a href="{{ $url }}" @class(['is-active' => $active === $key]) @if ($active === $key) aria-current="page" @endif>@svg($icon, ['aria-hidden' => 'true'])<span>{{ $label }}</span>@if ($key === $badgeOn)<livewire:cashier.self-order-badge />@endif</a>
             @endforeach
         </nav>
         <div class="cashier-header-actions">
@@ -183,7 +189,8 @@
             };
 
             // Pesan gagal tampil lebih lama; arahkan kursor ke toast untuk menahannya
-            window.cashierToast = (message, tone = 'success') => {
+            // action (opsional) = { label, run }: mis. Urungkan langkah antrean (ADR 0027), toast 5 detik
+            window.cashierToast = (message, tone = 'success', action = null) => {
                 tone = icons[tone] ? tone : 'success';
                 const toast = document.createElement('div');
                 toast.className = `cashier-toast is-${tone}`;
@@ -191,12 +198,20 @@
                 toast.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="${icons[tone]}"/></svg>`
                     + '<p></p><button type="button" aria-label="Tutup">&times;</button>';
                 toast.querySelector('p').textContent = message;
+                if (action) {
+                    const undo = document.createElement('button');
+                    undo.type = 'button';
+                    undo.className = 'cashier-toast-action';
+                    undo.textContent = action.label;
+                    undo.addEventListener('click', () => { action.run(); close(); });
+                    toast.querySelector('p').after(undo);
+                }
 
                 const close = () => {
                     toast.classList.add('is-leaving');
                     setTimeout(() => toast.remove(), 200);
                 };
-                let timer = setTimeout(close, tone === 'success' || tone === 'info' ? 4000 : 7000);
+                let timer = setTimeout(close, action ? 5000 : (tone === 'success' || tone === 'info' ? 4000 : 7000));
                 toast.addEventListener('mouseenter', () => clearTimeout(timer));
                 toast.addEventListener('mouseleave', () => { timer = setTimeout(close, 2500); });
                 toast.querySelector('button').addEventListener('click', close);
@@ -211,7 +226,8 @@
 
             window.addEventListener('cashier-toast', (event) => {
                 const detail = Array.isArray(event.detail) ? event.detail[0] : event.detail;
-                window.cashierToast(detail.message, detail.tone);
+                const action = detail.undo ? { label: 'Urungkan', run: () => window.Livewire?.dispatch('fulfillment-undo', { orderId: detail.undo }) } : null;
+                window.cashierToast(detail.message, detail.tone, action);
             });
 
             @if (session('status'))

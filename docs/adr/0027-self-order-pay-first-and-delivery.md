@@ -97,9 +97,14 @@ Menu → (opsi) → Keranjang → Bayar → [belum login → Masuk/Daftar → ke
   **Urungkan 5 detik** = `UndoOrderFulfillment` mengembalikan tahap sebelumnya hanya untuk perubahan oleh user yang
   sama dalam 10 detik terakhir.
 - Action `AutoCompleteFulfillment` + command `pos:auto-complete-fulfillment` tiap 5 menit (`schedule:run`): aman
-  diulang, tercatat di log aktivitas, tidak menyentuh order belum lunas/void/sudah diantar.
-- **Batalkan pesanan lunas** (menu habis): `CancelPaidSelfOrder` memakai void yang ada (alasan wajib, PIN approval
-  sesuai `order.void`, Q18); order dibayar online → `refund_required` (refund manual di dashboard Midtrans, Q73).
+  diulang, tercatat di log aktivitas (`log_name = fulfillment`, event `auto_completed`), tidak menyentuh order belum
+  lunas/void/sudah diantar.
+- Kolom tambahan untuk Urungkan: `fulfillment_previous`, `fulfillment_updated_by`, `fulfillment_updated_at`. API
+  menampilkan `paid_at` (= `completed_at` pesanan meja). Badge & bunyi kasir web pindah ke menu **Antrean** (pesanan Antre
+  + pesanan lama `pending`).
+- **Batalkan pesanan lunas** (menu habis): memakai `VoidOrder` yang sudah ada — tidak ada Action baru — lewat ⋯ di kartu
+  antrean → detail order (kasir web) / aksi Void (dashboard, API): alasan wajib, PIN approval sesuai `order.void` (Q18);
+  order dibayar online → `refund_required` (refund manual di dashboard Midtrans, Q73).
   Batal sebagian item memakai retur sebagian (ADR 0018) dari detail order. Pelanggan melihat status *Dibatalkan*.
 - Izin baru **`order.fulfill`** (memajukan tahap, melihat antrean): bawaan **semua role**, bisa dicabut owner per role
   atau per karyawan (ADR 0026). `self_order.handle` tetap untuk Terima/Tolak pesanan lama.
