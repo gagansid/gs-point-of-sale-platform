@@ -55,6 +55,7 @@ use Livewire\Component;
  * @property-read array{categories: Collection<int, Category>, products: Collection<int, Product>, option_groups: Collection<int, OptionGroup>} $catalog
  * @property-read array{totals: CalculationResult|null, error: string|null} $quote
  * @property-read Collection<int, SelfOrder> $myOrders
+ * @property-read Collection<int, Order> $memberOrders
  * @property-read bool $onlineReady
  */
 final class OrderPage extends Component
@@ -167,6 +168,9 @@ final class OrderPage extends Component
         $this->submitId = (string) Str::uuid7();
         $this->customerName = $this->member()->name ?? '';
         $this->restoreCart();
+        // Halaman member yang dibuka dari tab Profil menampilkan "Kembali ke meja"
+        session()->put('member.table_url', $this->context->url());
+        session()->put('member.table_name', $this->context->table->name);
 
         // Kembali dari masuk/daftar yang dimulai di Keranjang → langsung ke Keranjang
         $resume = session()->pull(self::resumeKey($this->context->table->id));
@@ -423,6 +427,21 @@ final class OrderPage extends Component
             ->where('dining_table_id', $this->context->table->id)->latest()->limit(10)->get()->toBase();
     }
 
+    /**
+     * Riwayat pesanan member yang masuk di bisnis ini (tab Profil → Riwayat pesanan), terbaru dulu.
+     *
+     * @return Collection<int, Order>
+     */
+    #[Computed]
+    public function memberOrders(): Collection
+    {
+        $member = $this->member();
+
+        return $member === null ? collect() : Order::query()->with('outlet:id,name')->where('member_id', $member->id)
+            ->whereIn('status', [OrderStatus::Completed, OrderStatus::AwaitingPayment, OrderStatus::Voided])
+            ->latest()->limit(20)->get()->toBase();
+    }
+
     public function member(): ?Member
     {
         return $this->context->member();
@@ -670,7 +689,7 @@ final class OrderPage extends Component
 
     public function show(string $view): void
     {
-        $this->view = in_array($view, ['menu', 'cart', 'status'], true) ? $view : 'menu';
+        $this->view = in_array($view, ['menu', 'cart', 'status', 'account', 'history'], true) ? $view : 'menu';
         $this->error = null;
         $this->payOpen = false;
     }

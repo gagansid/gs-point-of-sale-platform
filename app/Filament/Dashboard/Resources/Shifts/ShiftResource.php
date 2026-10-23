@@ -33,7 +33,7 @@ final class ShiftResource extends DashboardResource
 
     protected static string|UnitEnum|null $navigationGroup = 'Transaksi';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $navigationLabel = 'Shift';
 

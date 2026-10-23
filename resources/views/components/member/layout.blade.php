@@ -17,6 +17,11 @@
     </header>
 
     <main class="so-main">
+        {{-- Dibuka dari tab Profil halaman pesan meja (ADR 0027): jalan pulang ke meja --}}
+        @php($tableUrl = session('member.table_url'))
+        @if (is_string($tableUrl) && str_starts_with($tableUrl, url('/order/t/')))
+            <a class="so-back" href="{{ $tableUrl }}">@svg('heroicon-o-arrow-left', ['aria-hidden' => 'true']) Kembali ke {{ session('member.table_name', 'meja') }}</a>
+        @endif
         @if (session('status'))
             <div class="so-alert is-success" role="status">@svg('heroicon-o-check-circle', ['aria-hidden' => 'true']) <span>{{ session('status') }}</span></div>
         @endif

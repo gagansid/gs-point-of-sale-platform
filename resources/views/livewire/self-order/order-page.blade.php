@@ -280,6 +280,10 @@
                     <p class="so-muted so-foot">Bayar dulu, pesanan langsung disiapkan dan diantar ke {{ $context->table->name }}.</p>
                 @endif
             @endif
+        @elseif ($view === 'account')
+            @include('livewire.self-order.partials.account')
+        @elseif ($view === 'history')
+            @include('livewire.self-order.partials.history')
         @elseif ($view === 'pay')
             @include('livewire.self-order.partials.pay-screen')
         @else
@@ -409,8 +413,8 @@
 
     <nav class="so-tabbar" aria-label="Langkah pesanan">
         <div class="so-tabbar-inner">
-            @foreach (['menu' => ['Menu', 'heroicon-o-book-open', 0], 'cart' => ['Keranjang', 'heroicon-o-shopping-bag', $count], 'status' => ['Pesananku', 'heroicon-o-clipboard-document-list', $orderCount]] as $key => [$label, $icon, $badge])
-                @php($current = $view === $key || ($key === 'status' && $view === 'pay'))
+            @foreach (['menu' => ['Menu', 'heroicon-o-book-open', 0], 'cart' => ['Keranjang', 'heroicon-o-shopping-bag', $count], 'status' => ['Pesananku', 'heroicon-o-clipboard-document-list', $orderCount], 'account' => ['Profil', 'heroicon-o-user-circle', 0]] as $key => [$label, $icon, $badge])
+                @php($current = $view === $key || ($key === 'status' && $view === 'pay') || ($key === 'account' && $view === 'history'))
                 <button type="button" wire:click="show('{{ $key }}')" @class(['is-active' => $current]) @if ($current) aria-current="page" @endif>
                     <span class="so-tabbar-icon">
                         @svg($icon, ['aria-hidden' => 'true'])

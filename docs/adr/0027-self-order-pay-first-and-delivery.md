@@ -143,6 +143,10 @@ teks sambutan.
   selalu di bilah bawah tetap (bukan di atas), ikon + label, badge jumlah item/pesanan, aman
   `env(safe-area-inset-bottom)`, sama dengan navigasi bawah halaman member. Bila keranjang berisi, ringkasan
   `2 item · Rp54.000` + tombol utama 32px menempel tepat di atas bilah navigasi. Konten tidak tertutup keduanya.
+- **Tab Profil** (permintaan pemilik 2026-10-23) di samping Pesananku: kartu profil (nama, No. HP disamarkan, tier, poin
+  & nilainya) dan daftar menu: Riwayat pesanan (di halaman meja), Kartu member & QR, Riwayat poin, Ubah profil, Ganti kata
+  sandi, Tentang aplikasi, Keluar. Tamu: ajakan Masuk/Daftar + Tentang aplikasi. Halaman member yang dibuka dari sini
+  menampilkan tautan **Kembali ke meja**.
 
 ### 7. API Flutter
 

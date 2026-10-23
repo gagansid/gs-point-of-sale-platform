@@ -11,6 +11,7 @@ use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Livewire\SelfOrder\OrderPage;
 use App\Models\Member;
+use App\Models\Order;
 use App\Models\SelfOrder;
 use App\Models\Tenant;
 use App\Support\MemberPortal;
@@ -167,4 +168,24 @@ it('keranjang dipulihkan per meja & divalidasi ulang: meja lain kosong, produk a
 
     SelfOrderContext::set(SelfOrderContext::resolve($otherTable->qr_token));
     expect(Livewire::test(OrderPage::class)->get('cart'))->toBe([]);
+});
+
+it('tab Profil: tamu diajak masuk/daftar; member melihat kartu profil, menu akun, riwayat pesanan, dan jalan pulang ke meja', function () {
+    loginPage($this)->call('show', 'account')
+        ->assertSee('Masuk sebagai member')->assertSee('Daftar gratis')->assertSee('Tentang aplikasi')
+        ->assertDontSee('Riwayat pesanan')->assertDontSee('Keluar');
+
+    $this->post('/order/t/'.$this->token.'/login', ['phone' => '081234567890', 'password' => 'rahasia-123']);
+    loginPage($this)->call('quickAdd', $this->pos->croissant->id)->call('openPay')->call('choosePay', 'cashier');
+
+    $page = loginPage($this)->call('show', 'account')
+        ->assertSee('Rina')->assertSee('Riwayat pesanan')->assertSee('Kartu member & QR', false)->assertSee('Riwayat poin')
+        ->assertSee('Ubah profil')->assertSee('Ganti kata sandi')->assertSee('Keluar')
+        ->assertSee('/m/kopi-senja/profile', false)
+        ->call('show', 'history')->assertSee(Order::query()->sole()->order_number)->assertSee('Menunggu bayar');
+
+    // Hanya pesanan member yang masuk
+    expect($page->instance()->memberOrders->pluck('member_id')->unique()->all())->toBe([$this->member->id]);
+
+    $this->get('/m/kopi-senja/profile')->assertOk()->assertSee('Kembali ke Meja 3')->assertSee($this->table->orderUrl(), false);
 });

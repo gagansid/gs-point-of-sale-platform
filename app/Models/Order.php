@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Order. ID dibuat aplikasi (idempotency key). Nominal SELALU dari OrderCalculator.
@@ -140,6 +141,22 @@ final class Order extends Model
             'fulfillment_auto' => 'boolean',
             'fulfillment_updated_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * Pesanan HP asal order meja (nama pemesan, ADR 0014/0027).
+     *
+     * @return HasOne<SelfOrder, $this>
+     */
+    public function selfOrder(): HasOne
+    {
+        return $this->hasOne(SelfOrder::class, 'order_id');
+    }
+
+    /** @return BelongsTo<DiningTable, $this> */
+    public function diningTable(): BelongsTo
+    {
+        return $this->belongsTo(DiningTable::class);
     }
 
     /** @return HasMany<OrderItem, $this> */

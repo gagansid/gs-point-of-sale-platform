@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-BppdwIjS.css",
+    "file": "assets/app-CzmYrMSV.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -22,7 +22,7 @@
     ]
   },
   "resources/css/self-order.css": {
-    "file": "assets/self-order-Lo1L8ECQ.css",
+    "file": "assets/self-order-BRGUBsHR.css",
     "src": "resources/css/self-order.css",
     "isEntry": true,
     "name": "self-order",
