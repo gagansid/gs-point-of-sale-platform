@@ -9,7 +9,9 @@
 
 ## Anatomi
 
-`[👁] [✎] [⋯]` — tombol ikon 26×26px, ikon 14px, jarak 2px, rata tengah di kolom terakhir.
+`[👁] [✎] [⋯]` — tombol ikon 26×26px, ikon 14px, jarak 2px, rata tengah di kolom terakhir. Tombol grup memakai **⋯
+horizontal** (alias `ActionsIconAlias::ACTION_GROUP`), dengan optical sizing 18px + garis lebih tebal agar sebesar ikon aksi
+lain (titik ⋯ di kotak 14px hanya ±8×1px).
 
 Menu `⋯` (dan semua dropdown lain: menu akun, pemilih outlet): item 32px (`--control-h`), teks 13px
 (`--control-font`), ikon 16px — sama dengan ikon status tabel, bukan bawaan Filament 20px/14px (`components.css`).

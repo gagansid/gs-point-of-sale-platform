@@ -45,7 +45,8 @@ final class Icons
             ActionsIconAlias::EDIT_ACTION_GROUPED => Heroicon::OutlinedPencil,
             ActionsIconAlias::DELETE_ACTION => Heroicon::OutlinedTrash,
             ActionsIconAlias::DELETE_ACTION_GROUPED => Heroicon::OutlinedTrash,
-            ActionsIconAlias::ACTION_GROUP => Heroicon::OutlinedEllipsisVertical,
+            // ⋯ horizontal (row-actions.md): mengisi lebar kotak 14px seperti ikon aksi lain; ⋮ vertikal tampak jauh lebih kecil
+            ActionsIconAlias::ACTION_GROUP => Heroicon::OutlinedEllipsisHorizontal,
             ActionsIconAlias::DELETE_ACTION_MODAL => Heroicon::OutlinedExclamationTriangle,
             SupportIconAlias::MODAL_CLOSE_BUTTON => Heroicon::OutlinedXMark,
             SupportIconAlias::BADGE_DELETE_BUTTON => Heroicon::OutlinedXMark,
@@ -58,7 +59,7 @@ final class Icons
             TablesIconAlias::SEARCH_FIELD => Heroicon::OutlinedMagnifyingGlass,
             TablesIconAlias::ACTIONS_FILTER => Heroicon::OutlinedFunnel,
             TablesIconAlias::ACTIONS_COLUMN_MANAGER => Heroicon::OutlinedViewColumns,
-            TablesIconAlias::ACTIONS_OPEN_BULK_ACTIONS => Heroicon::OutlinedEllipsisVertical,
+            TablesIconAlias::ACTIONS_OPEN_BULK_ACTIONS => Heroicon::OutlinedEllipsisHorizontal,
             TablesIconAlias::ACTIONS_ENABLE_REORDERING => Heroicon::OutlinedArrowsUpDown,
             TablesIconAlias::ACTIONS_DISABLE_REORDERING => Heroicon::OutlinedCheck,
             TablesIconAlias::REORDER_HANDLE => Heroicon::OutlinedBars2,

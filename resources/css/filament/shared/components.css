@@ -1670,6 +1670,16 @@
     color: inherit;
 }
 
+/* Tombol grup ⋯ (ActionGroup): titik-titik hanya mengisi sebagian kotak 14px sehingga tampak jauh lebih kecil dari
+   ikon aksi lain (mata/pensil). Optical sizing: kotak 18px + garis lebih tebal → lebar terlihat ±10px, setara ikon 14px.
+   Tombol tetap 32px. */
+.fi-ta-cell .fi-ta-actions .fi-ac-icon-btn-group > .fi-icon,
+.gs-row-actions .fi-ac-icon-btn-group > .fi-icon {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.25;
+}
+
 .fi-ta-cell .fi-ta-actions {
     gap: 2px;
 }
