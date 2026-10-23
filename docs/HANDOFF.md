@@ -1,18 +1,34 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-23 · Branch: `feature/pos` (semua di-push)
+> Diperbarui: 2026-10-23 · Branch: `feature/pos` (audit keamanan 23 Okt belum di-push)
 > Status: fitur MVP + backlog ADR 0013–0026 selesai; 2026-10-22–23: menu owner baru (Q130), susunan menu (Q132), hak akses
 > per role & per karyawan (ADR 0026, Q133–Q134), halaman kasir web dirapikan (Q131); sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
 > pembayaran tagihan (QRIS/VA/transfer manual + bukti), master bank, PDF & email tagihan, Midtrans vendor 2 mode,
 > riwayat perubahan admin, pembersihan bukti transfer (SPEC Q118–Q127). Deploy ditunda atas keputusan pemilik.
-> Kualitas (2026-10-23): `composer check` hijau — Pint, Larastan level 6, **2062 test** lulus (SQLite), audit dependensi
-> bersih; seluruh suite juga lulus di **MySQL 9.5** lokal (`gspos_test`, paralel) termasuk rollback/ulang 2 migrasi baru.
-> Paket hosting `dist/hosting` (2026-10-21) **belum** memuat pekerjaan 22–23 Okt — bangun ulang sebelum deploy (§2).
+> Kualitas (2026-10-23): `composer check` hijau — Pint, Larastan level 6, **2086 test** lulus (SQLite), audit dependensi
+> bersih; seluruh suite juga lulus di **MySQL 9.5** lokal (`gspos_test`); file terdampak audit 23 Okt diuji ulang di MySQL.
+> Audit keamanan 2026-10-23 (SPEC Q136, GSPOS-SEC-025–028) selesai — lihat bagian pertama §1.
+> Paket hosting `dist/hosting` (2026-10-21) **belum** memuat pekerjaan 22–23 Okt **dan masih membawa `.env` di dalam zip**
+> (ditolak `scripts/release/check-package.sh`) — bangun ulang dengan alur baru sebelum deploy (§2).
 > Rincian per tahap tetap di [`docs/PROGRESS.md`](PROGRESS.md); dokumen ini ringkasan untuk melanjutkan.
 
 ---
 
 ## 1. Sudah dikerjakan
+
+### Audit keamanan 2026-10-23 (SPEC Q136, GSPOS-SEC-025–028) — belum di-push
+Laporan: [`docs/security/reports/2026-10-23-audit.md`](security/reports/2026-10-23-audit.md). Tidak ada sink eksekusi
+kode/webshell di kode aplikasi; empat temuan diperbaiki:
+
+| ID | Perbaikan | Commit |
+|---|---|---|
+| SEC-025 (High) | `php artisan pos:rotate-key` (`RotateAppKey`): key baru, enkripsi ulang data rahasia, putus session web, cabut key lama; `scripts/release/check-package.sh` menolak zip berisi `.env`/database/log (otomatis di `build-package.sh`) | `25b21a1` |
+| SEC-026 (Medium) | Kode instal wajib: `INSTALL_TOKEN` atau kode acak `storage/app/install-code.txt` (ADR 0016 direvisi) | `69d3c55` |
+| SEC-027 (Medium) | `VoucherAttempts`: batas percobaan kode voucher pesan dari meja (10/menit per IP, 30/menit per meja) & kasir web (30/menit per user), pesan gagal publik seragam, `appliedVoucherCode` `#[Locked]` | `fe03a50` |
+| SEC-028 (Medium) | Tanggal lahir member terkunci setelah diisi (`UpdateOwnMemberProfile`); voucher ulang tahun 1×/tahun, hanya member terdaftar sebelum bulan lahirnya (Q66 direvisi) | `9f34eca` |
+
+Data terenkripsi baru wajib didaftarkan di `RotateAppKey::ENCRYPTED_COLUMNS` / `SystemSettings::encryptedKeys()`.
+Terbuka (hosting): SEC-029 — pilih patch PHP 8.2.x terbaru (FPM/LSAPI) di cPanel; dukungan keamanan 8.2 berakhir 31 Des 2026.
 
 ### Menu owner, hak akses per bisnis & panel admin (2026-10-22 – 2026-10-23, SPEC Q130, Q132–Q135, ADR 0026)
 | Bagian | Isi | Commit |
@@ -325,7 +341,7 @@ Data lokal demo: program member **aktif** di "Kopi Senja (Demo)", member "Rina K
 | 0 | Tindak lanjut modul Laporan | Lihat tabel "Perlu diubah / dilanjutkan" di bawah |
 | ✅ | Kasir web (SPEC Q54, W1–W6) | Selesai 2026-10-11: akses per karyawan, login `/cashier`, shift X/Z, layar transaksi, open bill, approval PIN, void, menu Perangkat. Sisa: uji di browser tablet sungguhan & printer thermal; cetak tanpa dialog di luar cakupan |
 | ✅ | Minggu 7 — panel admin | Selesai 2026-10-11 (lihat PROGRESS); sisa OWASP ZAP & uji manual di staging |
-| 3 | Minggu 8 — deploy (ditunda pemilik) | **Deploy:** paket `dist/hosting/` (zip proyek + `gspos-database.sql` dari DB lokal + `PANDUAN-HOSTING.html`) terakhir dibangun 2026-10-21 — **bangun ulang** (menu & hak akses 22–23 Okt, migrasi `role_permissions` & `users.permissions_*`, aset `public/build`); APP_KEY harus sama dengan lokal (data terenkripsi). Sisa: cPanel nyata, uji MariaDB 10.6 hosting (lokal baru MySQL 9.5), cron `schedule:run`, uji dengan Flutter, pilot |
+| 3 | Minggu 8 — deploy (ditunda pemilik) | **Deploy:** paket `dist/hosting/` (zip proyek + `gspos-database.sql` dari DB lokal + `PANDUAN-HOSTING.html`) terakhir dibangun 2026-10-21 — **bangun ulang** (menu & hak akses 22–23 Okt, migrasi `role_permissions` & `users.permissions_*`, aset `public/build`); **Alur baru (GSPOS-SEC-025):** zip tanpa `.env` (cek `scripts/release/check-package.sh`), `.env` diunggah terpisah dengan key lokal agar data terenkripsi terbaca, lalu di server segera `php artisan pos:rotate-key --force && php artisan optimize` → produksi memakai key sendiri; simpan `.env` produksi di password manager; hapus zip lama yang memuat `.env`. Sisa: cPanel nyata, uji MariaDB 10.6 hosting (lokal baru MySQL 9.5), cron `schedule:run`, uji dengan Flutter, pilot |
 | ✅ | Import produk dari Excel | Selesai 2026-10-11 (`489e114`, Q59) |
 | 2 | Integrasi Flutter | L1 + daftar kerja aplikasi di [`docs/api/flutter-changes.md`](api/flutter-changes.md): F1 hak akses dari `/auth/me` (ADR 0026), F2 pembulatan selalu ke atas, F3 opsi bawaan `is_default` (Q129) — masing-masing dengan uji terima |
 | ✅ | Label "Purchase order" | Diputuskan pemilik 2026-10-23: **tetap** "Purchase order" (istilah lazim POS) |

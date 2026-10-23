@@ -204,3 +204,17 @@ Phishing menyerang **manusia**, sehingga kontrolnya sebagian besar operasional:
 | Key Midtrans vendor | Per mode (sandbox/produksi), terenkripsi (Crypt/APP_KEY), tidak pernah ditampilkan ulang atau dicatat; format dicek & diuji ke Midtrans sebelum disimpan; webhook hanya menerima tanda tangan dengan key mode aktif |
 | Audit | Kirim bukti, tolak bukti, ubah setelan pembayaran & bank dicatat di log aplikasi (tanpa isi file) |
 | PDF & email tagihan | Unduhan PDF dicek akses (owner: scope tenant + `billing.manage`; admin: guard admin), header `private, no-store`; email dikirim setelah commit lewat antrean; file bukti transfer tidak pernah dilampirkan ke email (hanya kuitansi PDF ke owner bisnis itu) |
+
+## Audit 2026-10-23 (GSPOS-SEC-025–028, SPEC Q136)
+
+Laporan: [`docs/security/reports/2026-10-23-audit.md`](../security/reports/2026-10-23-audit.md).
+
+| Kontrol | Implementasi |
+|---|---|
+| `APP_KEY` per lingkungan | Produksi tidak pernah memakai key lokal/staging. `php artisan pos:rotate-key` (`RotateAppKey`): key baru + `APP_PREVIOUS_KEYS` sementara → enkripsi ulang `payment_gateway_settings`, 2FA admin, `SystemSettings::encryptedKeys()` (satu transaksi) → hapus session web → cabut key lama. Aman diulang; nilai tak terbaca dilaporkan. Data terenkripsi baru **wajib** didaftarkan di `RotateAppKey::ENCRYPTED_COLUMNS` / `SystemSettings::encryptedKeys()` |
+| Paket zip | `scripts/release/check-package.sh` menolak `.env`, database/dump, log, status & kode installer, file session, kunci privat; otomatis di `build-package.sh`. `.env` produksi diunggah terpisah & disimpan di password manager |
+| Installer | Kode instal wajib (`INSTALL_TOKEN` atau kode acak 0600 di `storage/app/install-code.txt` = bukti akses server); gagal tertutup; session diganti setelah kode benar; file kode dihapus saat selesai |
+| Tebak kode voucher | `VoucherAttempts`: kode **baru** dihitung sebelum dicek ke database — pesan dari meja 10/menit per IP + 30/menit per meja, kasir web 30/menit per user (API `/vouchers/check` 30/menit). Publik hanya menerima satu pesan gagal (`PUBLIC_INVALID_MESSAGE`). State hasil cek di Livewire selalu `#[Locked]` |
+| Penyalahgunaan voucher ulang tahun | Tanggal lahir diisi sekali oleh member (`UpdateOwnMemberProfile`); voucher 1×/tahun, hanya member yang terdaftar sebelum bulan lahirnya |
+| Upload (diperiksa, tetap) | Nama file `hashName()` = ekstensi dari isi file (polyglot `x.php` tersimpan `.jpg`); jangan pakai `preserveFilenames()` / `getUploadedFileNameForStorageUsing()` di disk `public` |
+
