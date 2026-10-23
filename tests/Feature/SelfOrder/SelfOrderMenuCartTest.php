@@ -84,7 +84,8 @@ it('dialog opsi: harga di tombol ikut opsi & jumlah, item sama digabung, error d
         ->assertSet('pickError', 'Pilih 1 Ukuran')
         ->assertSeeHtml('id="g-error-'.$this->pos->size->id.'"');
 
-    // Opsi yang habis di outlet tidak bisa dipilih lewat request yang dimanipulasi
+    // Opsi yang habis di outlet tidak bisa dipilih lewat request yang dimanipulasi (keranjang tersimpan dikosongkan dulu)
+    session()->forget(OrderPage::cartKey($this->table->id));
     app(SetOptionAvailability::class)->handle($this->pos->large, $this->pos->outlet, false);
     menuPage($this)->call('addProduct', $this->pos->coffee->id)
         ->set("pickOptions.{$this->pos->size->id}", $this->pos->large->id)

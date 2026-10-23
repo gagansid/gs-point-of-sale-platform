@@ -22,7 +22,7 @@ use Illuminate\Validation\ValidationException;
  * Pelanggan mengirim pesanan dari HP (ADR 0014, Q70). Tidak ada order/stok yang dibuat: pesanan menunggu kasir.
  * Item & voucher divalidasi (katalog outlet, ADR 0011) dan totalnya dihitung server sebagai perkiraan; tagihan final
  * dihitung ulang saat diterima. Batas: 3 pesanan menunggu per meja, 10 pesanan/jam per IP, 50 item. `id` dari HP =
- * idempotency key (kirim ganda = pesanan yang sama).
+ * idempotency key (kirim ganda = pesanan yang sama). Bila program member aktif, member wajib masuk (ADR 0027 K1).
  */
 final class SubmitSelfOrder
 {
@@ -39,7 +39,7 @@ final class SubmitSelfOrder
      * @return array{self_order: SelfOrder, replayed: bool}
      *
      * @throws ValidationException
-     * @throws BusinessException SELF_ORDER_DISABLED, TOO_MANY_REQUESTS, VALIDATION_ERROR, VOUCHER_INVALID
+     * @throws BusinessException SELF_ORDER_DISABLED, UNAUTHENTICATED, TOO_MANY_REQUESTS, VALIDATION_ERROR, VOUCHER_INVALID
      */
     public function handle(SelfOrderContext $context, array $data, ?Member $member, string $ip): array
     {
@@ -56,6 +56,11 @@ final class SubmitSelfOrder
 
         if (($reason = $context->unavailableReason()) !== null) {
             throw BusinessException::of(ErrorCode::SelfOrderDisabled, $reason);
+        }
+
+        // Login member wajib sebelum membayar (ADR 0027 K1); tamu hanya bila program member tidak aktif
+        if ($member === null && $context->loginRequired()) {
+            throw BusinessException::of(ErrorCode::Unauthenticated, 'Masuk sebagai member dulu untuk melanjutkan');
         }
 
         $items = CheckoutData::parseItems($validated['items']);

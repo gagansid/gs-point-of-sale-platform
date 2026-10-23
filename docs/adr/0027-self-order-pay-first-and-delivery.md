@@ -44,6 +44,15 @@ Menu → (opsi) → Keranjang → Bayar → [belum login → Masuk/Daftar → ke
   bukan di URL; kembali dari login/daftar lewat `member.return_to` dengan keranjang utuh.
 - **Daftar singkat** dari meja (K5): nama, No. HP, kata sandi, persetujuan data; memakai `RegisterMemberAccount` dan
   throttle daftar yang sudah ada; tanpa OTP.
+- Halaman meja punya **Masuk** (`/order/t/{token}/login`) & **Daftar** (`/order/t/{token}/register`) sendiri, bertema bisnis,
+  field berikon + tombol tampilkan kata sandi. Logika & batas percobaan dipindah ke Action `AuthenticateMember` /
+  `SignUpMember`, dipakai juga halaman member `/m/{bisnis}`. Kata sandi sementara dari kasir → ganti dulu di halaman
+  member lalu kembali ke meja. Keluar dari menu akun header (`/order/t/{token}/logout`), keranjang tetap.
+- **Program member nonaktif** (bisnis/paket): login tidak mungkin, jadi pelanggan tetap memesan sebagai **tamu dengan
+  nama** (perilaku ADR 0014). Login wajib berlaku bila program member aktif (`SelfOrderContext::loginRequired()`),
+  ditegakkan di Action (`UNAUTHENTICATED`), bukan hanya di tampilan.
+- Keranjang dipulihkan dari session dan **divalidasi ulang** terhadap katalog outlet (produk/opsi yang tidak ada dibuang,
+  nama dari katalog, maks. 50 item). Properti keranjang Livewire `#[Locked]`.
 - Pesanan susulan di meja yang sama tetap bisa dibuat; layar status menampilkan semua pesanan sesi ini.
 
 ### 2. Bayar dulu tanpa terima kasir (K2)
@@ -116,6 +125,8 @@ teks sambutan.
   & kasir web. Tanpa hex hard-coded selain putih kartu QR.
 - Semua kontrol **32px** (`--control-h`), font kontrol 13px, label 12.5px, radius 6px; area sentuh diperluas dengan
   pseudo-element transparan tanpa mengubah tampilan. Kelas `.self-order-*` lama dihapus.
+- Versi gs.POS tidak lagi di kaki halaman: menu akun header → **Tentang aplikasi** (dialog). Keranjang ringkas: baris
+  diketuk = ubah, stepper kecil; catatan & voucher berupa baris yang bisa dibuka (masukan pemilik 2026-10-23).
 - **Tampilan menu dua mode** (permintaan pemilik 2026-10-23):
   - **Kotak (grid):** di HP minimal **3 kartu per baris** (360–430px), tablet lebih banyak; gambar 1:1 radius 8px,
     nama maks. 2 baris, harga `tabular-nums`, tombol `+`; semua kartu sama tinggi.

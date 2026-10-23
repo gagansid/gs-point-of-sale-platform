@@ -26,5 +26,36 @@
 </script>
 <link rel="preconnect" href="https://fonts.bunny.net">
 <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet">
+<script>
+    // Perilaku kecil tanpa Alpine (halaman non-Livewire): tampilkan kata sandi, menu akun, dialog Tentang
+    document.addEventListener('click', (event) => {
+        const reveal = event.target.closest('[data-so-reveal]');
+        if (reveal) {
+            const input = document.getElementById(reveal.dataset.soReveal);
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            reveal.setAttribute('aria-pressed', String(show));
+            reveal.setAttribute('aria-label', show ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+            reveal.querySelector('[data-show]').hidden = show;
+            reveal.querySelector('[data-hide]').hidden = ! show;
+        }
+
+        const opener = event.target.closest('[data-so-open]');
+        if (opener) {
+            opener.closest('details')?.removeAttribute('open');
+            document.getElementById(opener.dataset.soOpen)?.showModal();
+        }
+
+        document.querySelectorAll('details.so-menu-pop[open]').forEach((menu) => {
+            if (! menu.contains(event.target)) menu.removeAttribute('open');
+        });
+
+        // Ketuk latar dialog = tutup
+        if (event.target instanceof HTMLDialogElement && event.target.classList.contains('so-dialog')) event.target.close();
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') document.querySelectorAll('details.so-menu-pop[open]').forEach((menu) => menu.removeAttribute('open'));
+    });
+</script>
 @vite(['resources/css/self-order.css'])
 {{ \App\Support\TenantAppearance::css($tenant) }}

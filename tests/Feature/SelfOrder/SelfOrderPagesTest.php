@@ -80,7 +80,8 @@ it('HP: member yang masuk di halaman member otomatis terpasang', function () {
     orderPage($this)
         ->assertSet('customerName', 'Rina')
         ->call('addProduct', $this->pos->croissant->id)->call('savePick')
-        ->call('show', 'cart')->assertSee('Masuk sebagai member')
+        // ADR 0027: kartu member menggantikan kolom nama; nama pemesan = nama member
+        ->call('show', 'cart')->assertSee('Poin & diskon member ikut dihitung', false)->assertDontSee('Nama pemesan')
         ->call('submit')->assertSet('view', 'status');
 
     expect(SelfOrder::query()->sole()->member_id)->toBe($member->id);

@@ -9,9 +9,11 @@ use App\Actions\SelfOrder\UpdateSelfOrderSettings;
 use App\Exceptions\BusinessException;
 use App\Livewire\Cashier\PointOfSale;
 use App\Livewire\SelfOrder\OrderPage;
+use App\Models\Member;
 use App\Models\SelfOrder;
 use App\Models\Shift;
 use App\Support\CurrentOutlet;
+use App\Support\MemberPortal;
 use App\Support\SelfOrderContext;
 use App\Support\TenantContext;
 use App\Support\VoucherAttempts;
@@ -40,6 +42,11 @@ beforeEach(function () {
 
 function guessingOrderPage(object $test): Testable
 {
+    // ADR 0027 K1: program member aktif = pemesan wajib masuk sebagai member sebelum mengirim
+    $member = Member::query()->where('phone', '+6281299990001')->first() ?? Member::factory()->create(['name' => 'Andi', 'phone' => '+6281299990001']);
+    $member->forceFill(['password' => 'rahasia123'])->save();
+    MemberPortal::guard()->login($member);
+    session()->put(MemberPortal::SESSION_PASSWORD, MemberPortal::passwordFingerprint($member->refresh()));
     SelfOrderContext::set(SelfOrderContext::resolve($test->table->qr_token));
 
     return Livewire::test(OrderPage::class)

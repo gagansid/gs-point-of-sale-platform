@@ -132,14 +132,14 @@ function iswTenant(object $test, string $tag, string $outletCode): stdClass
             'items' => [['product_id' => $pos->croissant->id, 'qty' => 1, 'unit_cost' => '9000']],
         ]);
 
-        // Pesanan meja dari HP pelanggan (menunggu kasir)
+        // Pesanan meja dari HP pelanggan (menunggu kasir); program member aktif = atas nama member (ADR 0027 K1)
         app(UpdateSelfOrderSettings::class)->handle($pos->outlet, ['enabled' => true]);
         $table = app(SaveDiningTable::class)->handle(null, $pos->outlet, ['name' => "{$m}-MejaQR"]);
         RateLimiter::clear('self-order-ip:127.0.0.1');
         $pos->selfOrder = app(SubmitSelfOrder::class)->handle(SelfOrderContext::resolve($table->qr_token), [
             'id' => uuid(), 'customer_name' => "{$m}-Andi",
             'items' => [['product_id' => $pos->croissant->id, 'qty' => 1]],
-        ], null, '127.0.0.1')['self_order'];
+        ], $pos->member, '127.0.0.1')['self_order'];
     });
     TenantContext::forget();
     CurrentOutlet::forget();

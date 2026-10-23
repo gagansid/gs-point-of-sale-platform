@@ -118,7 +118,8 @@ final class PortalController extends Controller
         // Sesi ini tetap; sesi lain keluar (sidik kata sandi berubah)
         $request->session()->put(MemberPortal::SESSION_PASSWORD, MemberPortal::passwordFingerprint($member->refresh()));
 
-        return redirect()->route('member.home', ['business' => MemberPortal::tenant()->slug])->with('status', 'Kata sandi diganti');
+        // Kata sandi sementara diganti saat masuk dari meja → kembali ke pesanan (ADR 0027)
+        return MemberPortal::returnTo($request) ?? redirect()->route('member.home', ['business' => MemberPortal::tenant()->slug])->with('status', 'Kata sandi diganti');
     }
 
     public function destroy(Request $request, AnonymizeMember $anonymize): RedirectResponse

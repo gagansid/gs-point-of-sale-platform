@@ -10,12 +10,9 @@
     <header class="so-header">
         <div class="so-header-inner">
             <x-so.brand :tenant="$business" sub="Member" />
-            @if ($member)
-                <form method="POST" action="{{ route('member.logout', ['business' => $business->slug]) }}">
-                    @csrf
-                    <button type="submit" class="so-btn is-outline">@svg('heroicon-o-arrow-right-start-on-rectangle', ['aria-hidden' => 'true']) Keluar</button>
-                </form>
-            @endif
+            <div class="so-header-actions">
+                <x-so.account :tenant="$business" :member="$member" :logout-url="$member ? route('member.logout', ['business' => $business->slug]) : null" />
+            </div>
         </div>
     </header>
 
@@ -25,8 +22,6 @@
         @endif
 
         {{ $slot }}
-
-        <p class="so-powered">gs.POS · v{{ config('app.version') }}</p>
     </main>
 
     @if ($member && ! $member->getAttribute('must_change_password'))
@@ -41,5 +36,7 @@
             </div>
         </nav>
     @endif
+
+    <x-so.about :tenant="$business" />
 </body>
 </html>

@@ -9,21 +9,9 @@
 
         <form method="POST" action="{{ route('member.password.update', ['business' => $business->slug]) }}" class="so-form" novalidate>
             @csrf
-            <label class="so-field">
-                <span class="so-label">Kata sandi saat ini</span>
-                <input class="so-input" name="current_password" type="password" autocomplete="current-password" required autofocus @error('current_password') aria-invalid="true" @enderror>
-                @error('current_password') <em class="so-error">{{ $message }}</em> @enderror
-            </label>
-            <label class="so-field">
-                <span class="so-label">Kata sandi baru</span>
-                <input class="so-input" name="password" type="password" autocomplete="new-password" required @error('password') aria-invalid="true" @enderror>
-                <small class="so-help">Minimal 8 karakter, huruf & angka</small>
-                @error('password') <em class="so-error">{{ $message }}</em> @enderror
-            </label>
-            <label class="so-field">
-                <span class="so-label">Ulangi kata sandi baru</span>
-                <input class="so-input" name="password_confirmation" type="password" autocomplete="new-password" required>
-            </label>
+            <x-so.input name="current_password" label="Kata sandi saat ini" icon="heroicon-o-lock-closed" type="password" autocomplete="current-password" maxlength="255" required autofocus />
+            <x-so.input name="password" label="Kata sandi baru" icon="heroicon-o-key" type="password" autocomplete="new-password" maxlength="255" help="Minimal 8 karakter, berisi huruf & angka" required />
+            <x-so.input name="password_confirmation" label="Ulangi kata sandi baru" icon="heroicon-o-key" type="password" autocomplete="new-password" maxlength="255" required />
             <button type="submit" class="so-btn is-primary is-block">Simpan</button>
         </form>
     </section>

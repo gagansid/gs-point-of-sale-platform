@@ -137,7 +137,85 @@ final class OrderPage extends Component
         $this->token = $this->context->table->qr_token;
         $this->submitId = (string) Str::uuid7();
         $this->customerName = $this->member()->name ?? '';
-        $this->view = $this->myOrders->isNotEmpty() ? 'status' : 'menu';
+        $this->restoreCart();
+
+        // Kembali dari masuk/daftar yang dimulai di Keranjang → langsung ke Keranjang
+        $resume = session()->pull(self::resumeKey($this->context->table->id));
+        $this->view = match (true) {
+            $resume === 'cart' && $this->cart !== [] => 'cart',
+            $this->myOrders->isNotEmpty() && $this->cart === [] => 'status',
+            default => 'menu',
+        };
+    }
+
+    /** Keranjang disimpan di session per meja setiap request (bukan di URL), agar utuh setelah masuk/daftar (ADR 0027). */
+    public function dehydrate(): void
+    {
+        session()->put(self::cartKey($this->context->table->id), [
+            'cart' => $this->cart,
+            'notes' => mb_substr($this->notes, 0, 255),
+            'voucher' => $this->checkedVoucher,
+        ]);
+    }
+
+    public static function cartKey(string $tableId): string
+    {
+        return 'self_order_cart.'.$tableId;
+    }
+
+    public static function resumeKey(string $tableId): string
+    {
+        return 'self_order_resume.'.$tableId;
+    }
+
+    /** Wajib masuk member sebelum mengirim/membayar (ADR 0027 K1) dan belum masuk. */
+    public function needsLogin(): bool
+    {
+        return $this->context->loginRequired() && $this->member() === null;
+    }
+
+    /**
+     * Pulihkan keranjang dari session: hanya produk & opsi yang masih ada di katalog outlet, nama dari katalog, maks. 50
+     * item. Kode voucher yang dipulihkan sudah pernah lolos batas percobaan (VoucherAttempts).
+     */
+    private function restoreCart(): void
+    {
+        $saved = session()->get(self::cartKey($this->context->table->id));
+        if (! is_array($saved) || ! is_array($saved['cart'] ?? null)) {
+            return;
+        }
+
+        $products = $this->catalog['products']->keyBy('id');
+        $options = $this->catalog['option_groups']->flatMap(fn (OptionGroup $g) => $g->options)->keyBy('id');
+        $total = 0;
+
+        foreach ($saved['cart'] as $line) {
+            $product = is_array($line) ? $products->get($line['product_id'] ?? '') : null;
+            $qty = min((int) ($line['qty'] ?? 0), SubmitSelfOrder::MAX_ITEMS - $total);
+            if (! $product instanceof Product || $qty < 1) {
+                continue;
+            }
+
+            $groupIds = $product->optionGroups->pluck('id')->all();
+            $chosen = collect(self::chosenIds($line['option_ids'] ?? []))
+                ->map(fn (string $id) => $options->get($id))
+                ->filter(fn ($option): bool => $option !== null && in_array($option->option_group_id, $groupIds, true));
+
+            $this->cart[] = [
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'qty' => $qty,
+                'option_ids' => $chosen->pluck('id')->values()->all(),
+                'option_names' => $chosen->pluck('name')->values()->all(),
+                'notes' => is_string($line['notes'] ?? null) && $line['notes'] !== '' ? mb_substr($line['notes'], 0, 255) : null,
+            ];
+            $total += $qty;
+        }
+
+        $this->notes = is_string($saved['notes'] ?? null) ? mb_substr($saved['notes'], 0, 255) : '';
+        $voucher = is_string($saved['voucher'] ?? null) ? Voucher::normalizeCode(mb_substr($saved['voucher'], 0, 30)) : '';
+        $this->checkedVoucher = $voucher;
+        $this->voucherCode = $voucher;
     }
 
     /** @return array{categories: Collection<int, Category>, products: Collection<int, Product>, option_groups: Collection<int, OptionGroup>} */
@@ -578,14 +656,21 @@ final class OrderPage extends Component
             return;
         }
 
+        $member = $this->member();
+        if ($this->needsLogin()) {
+            $this->error = 'Masuk sebagai member dulu untuk melanjutkan. Keranjangmu tetap tersimpan.';
+
+            return;
+        }
+
         try {
             $result = app(SubmitSelfOrder::class)->handle($this->context, [
                 'id' => $this->submitId,
-                'customer_name' => mb_substr(trim($this->customerName), 0, 100),
+                'customer_name' => mb_substr(trim($member->name ?? $this->customerName), 0, 100),
                 'items' => $this->items(),
                 'notes' => filled(trim($this->notes)) ? mb_substr(trim($this->notes), 0, 255) : null,
                 'voucher_code' => $this->checkedVoucher !== '' ? $this->checkedVoucher : null,
-            ], $this->member(), (string) request()->ip());
+            ], $member, (string) request()->ip());
         } catch (ValidationException $e) {
             $this->error = $e->validator->errors()->first();
 

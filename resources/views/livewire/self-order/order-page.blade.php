@@ -20,7 +20,7 @@
         showToast(detail) { this.toast = detail; clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => this.toast = null, 5000) },
     }"
     x-on:so-toast.window="showToast($event.detail)">
-    <main @class(['so-main', 'has-cartbar' => $view === 'menu' && $count > 0])>
+    <main @class(['so-main', 'has-cartbar' => in_array($view, ['menu', 'cart'], true) && $count > 0])>
         @if ($error)
             <div class="so-alert is-danger" role="alert">@svg('heroicon-o-exclamation-circle', ['aria-hidden' => 'true']) <span>{{ $error }}</span></div>
         @endif
@@ -149,28 +149,25 @@
                     </div>
                 </section>
             @else
-                <section class="so-card">
+                {{-- Daftar pesanan ringkas: ketuk baris = ubah, stepper kecil di kanan --}}
+                <section class="so-card is-tight">
                     <div class="so-card-head">
-                        <h1 class="so-card-title">Pesananmu <span class="so-muted so-num">{{ $count }} item</span></h1>
-                        <button type="button" class="so-btn is-ghost" wire:click="show('menu')">@svg('heroicon-o-plus', ['aria-hidden' => 'true']) Tambah menu</button>
+                        <h1 class="so-card-title">Pesanan <span class="so-muted so-num">· {{ $count }} item</span></h1>
+                        <button type="button" class="so-btn is-ghost is-sm" wire:click="show('menu')">@svg('heroicon-o-plus', ['aria-hidden' => 'true']) Tambah</button>
                     </div>
-
-                    <ul class="so-lines">
+                    <ul class="so-cart">
                         @foreach ($cart as $i => $line)
-                            <li class="so-line" wire:key="l-{{ $i }}-{{ $line['product_id'] }}">
-                                <div>
-                                    <p class="so-line-name">{{ $line['name'] }}</p>
-                                    @if ($line['option_names'] !== [])
-                                        <p class="so-line-meta">{{ implode(', ', $line['option_names']) }}</p>
+                            <li class="so-cart-row" wire:key="l-{{ $i }}-{{ $line['product_id'] }}">
+                                <button type="button" class="so-cart-main" wire:click="editLine({{ $i }})" aria-label="Ubah {{ $line['name'] }}">
+                                    <span class="so-cart-name">{{ $line['name'] }}</span>
+                                    @if ($line['option_names'] !== [] || $line['notes'])
+                                        <span class="so-cart-meta">{{ implode(', ', $line['option_names']) }}@if ($line['option_names'] !== [] && $line['notes']) · @endif @if ($line['notes'])<i>“{{ $line['notes'] }}”</i>@endif</span>
                                     @endif
-                                    @if ($line['notes'])
-                                        <p class="so-line-note">“{{ $line['notes'] }}”</p>
-                                    @endif
-                                </div>
-                                <span class="so-line-price">{{ $money($this->linePrice($line)) }}</span>
-                                <div class="so-line-actions">
-                                    <button type="button" class="so-btn is-ghost so-line-edit" wire:click="editLine({{ $i }})" aria-label="Ubah {{ $line['name'] }}">@svg('heroicon-o-pencil-square', ['aria-hidden' => 'true']) Ubah</button>
-                                    <span class="so-qty">
+                                    <span class="so-cart-edit">Ubah</span>
+                                </button>
+                                <div class="so-cart-side">
+                                    <span class="so-cart-price">{{ $money($this->linePrice($line)) }}</span>
+                                    <span class="so-qty is-sm">
                                         <button type="button" wire:click="decrement({{ $i }})" aria-label="{{ $line['qty'] > 1 ? 'Kurangi' : 'Hapus' }} {{ $line['name'] }}">@svg($line['qty'] > 1 ? 'heroicon-o-minus' : 'heroicon-o-trash', ['aria-hidden' => 'true'])</button>
                                         <span aria-live="polite">{{ $line['qty'] }}</span>
                                         <button type="button" wire:click="increment({{ $i }})" @disabled($count >= \App\Actions\SelfOrder\SubmitSelfOrder::MAX_ITEMS) aria-label="Tambah {{ $line['name'] }}">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
@@ -181,28 +178,48 @@
                     </ul>
                 </section>
 
-                <section class="so-card">
-                    <h2 class="so-card-title">Catatan & voucher</h2>
-                    <label class="so-field">
-                        <span class="so-label">Catatan untuk outlet <small>(opsional)</small></span>
-                        <input class="so-input" type="text" wire:model.blur="notes" maxlength="255" placeholder="mis. tanpa sedotan">
-                    </label>
-                    <label class="so-field">
-                        <span class="so-label">Kode voucher <small>(opsional)</small></span>
-                        <input class="so-input" type="text" wire:model.blur="voucherCode" maxlength="30" autocomplete="off" autocapitalize="characters" @if ($quote['error']) aria-invalid="true" aria-describedby="voucher-error" @endif>
-                        @if ($quote['error'])
-                            <em class="so-error" id="voucher-error" role="alert">{{ $quote['error'] }}</em>
-                        @elseif ($checkedVoucher !== '' && $quote['totals'] && \App\Support\Money::isPositive($quote['totals']->voucherDiscount))
-                            <small class="so-help so-success">@svg('heroicon-s-check-circle', ['aria-hidden' => 'true']) Voucher dipakai: hemat {{ $money($quote['totals']->voucherDiscount) }}</small>
-                        @endif
-                    </label>
+                {{-- Catatan & voucher: baris yang bisa dibuka, tidak memakan tempat bila kosong --}}
+                <section class="so-card is-tight is-rows">
+                    <div class="so-extra" x-data="{ open: @js($notes !== '') }">
+                        <button type="button" class="so-extra-row" x-on:click="open = ! open" :aria-expanded="open">
+                            @svg('heroicon-o-chat-bubble-left-ellipsis', ['aria-hidden' => 'true'])
+                            <span class="so-extra-label">Catatan untuk outlet</span>
+                            <span class="so-extra-value">{{ $notes !== '' ? \Illuminate\Support\Str::limit($notes, 24) : 'Tambah' }}</span>
+                            @svg('heroicon-o-chevron-down', ['class' => 'so-extra-caret', ':class' => "open && 'is-open'", 'aria-hidden' => 'true'])
+                        </button>
+                        <div class="so-extra-body" x-show="open" x-cloak>
+                            <input class="so-input" type="text" wire:model.blur="notes" maxlength="255" placeholder="mis. tanpa sedotan, minta sendok" aria-label="Catatan untuk outlet">
+                        </div>
+                    </div>
+                    <div class="so-extra" x-data="{ open: @js($voucherCode !== '' || (bool) $quote['error']) }">
+                        <button type="button" class="so-extra-row" x-on:click="open = ! open" :aria-expanded="open">
+                            @svg('heroicon-o-ticket', ['aria-hidden' => 'true'])
+                            <span class="so-extra-label">Voucher</span>
+                            @if ($checkedVoucher !== '' && $quote['totals'] && \App\Support\Money::isPositive($quote['totals']->voucherDiscount))
+                                <span class="so-extra-value so-success">{{ $checkedVoucher }} · −{{ $money($quote['totals']->voucherDiscount) }}</span>
+                            @else
+                                <span class="so-extra-value">{{ $voucherCode !== '' ? $voucherCode : 'Pakai kode' }}</span>
+                            @endif
+                            @svg('heroicon-o-chevron-down', ['class' => 'so-extra-caret', ':class' => "open && 'is-open'", 'aria-hidden' => 'true'])
+                        </button>
+                        <div class="so-extra-body" x-show="open" x-cloak>
+                            <div class="so-inline">
+                                <input class="so-input" type="text" wire:model.blur="voucherCode" maxlength="30" autocomplete="off" autocapitalize="characters" placeholder="Kode voucher" aria-label="Kode voucher"
+                                    @if ($quote['error']) aria-invalid="true" aria-describedby="voucher-error" @endif>
+                                <button type="button" class="so-btn is-outline" wire:click="$refresh">Pakai</button>
+                            </div>
+                            @if ($quote['error'])
+                                <em class="so-error" id="voucher-error" role="alert">{{ $quote['error'] }}</em>
+                            @endif
+                        </div>
+                    </div>
                 </section>
 
-                <section class="so-card">
+                <section class="so-card is-tight">
                     <h2 class="so-card-title">Ringkasan</h2>
                     @if ($quote['totals'])
                         @php($t = $quote['totals'])
-                        <dl class="so-totals">
+                        <dl class="so-totals is-compact">
                             <dt>Subtotal</dt><dd>{{ $money($t->subtotal) }}</dd>
                             @if (\App\Support\Money::isPositive($t->voucherDiscount))
                                 <dt>Voucher</dt><dd class="is-discount">−{{ $money($t->voucherDiscount) }}</dd>
@@ -221,21 +238,37 @@
                     @else
                         <p class="so-muted">Ringkasan muncul setelah kode voucher diperbaiki atau dihapus.</p>
                     @endif
+                </section>
 
-                    <form class="so-form" wire:submit="submit">
+                {{-- Siapa yang memesan: member (wajib bila program aktif, ADR 0027 K1) atau nama tamu --}}
+                @if ($member)
+                    <section class="so-card is-tight is-row">
+                        <span class="so-member-chip-avatar is-lg" aria-hidden="true">{{ mb_strtoupper(mb_substr(trim($member->name), 0, 1)) }}</span>
+                        <div class="so-list-main">
+                            <strong>{{ $member->name }}</strong>
+                            <span class="so-muted">Poin & diskon member ikut dihitung</span>
+                        </div>
+                    </section>
+                @elseif ($this->needsLogin())
+                    <section class="so-card is-tight is-row is-info">
+                        <span class="so-member-chip-avatar is-lg" aria-hidden="true">@svg('heroicon-o-user')</span>
+                        <div class="so-list-main">
+                            <strong>Masuk untuk membayar</strong>
+                            <span class="so-muted">Keranjang tetap tersimpan. Belum punya akun? <a href="{{ route('self-order.register', ['token' => $context->table->qr_token, 'from' => 'cart']) }}">Daftar gratis</a></span>
+                        </div>
+                    </section>
+                @else
+                    <section class="so-card is-tight">
                         <label class="so-field">
                             <span class="so-label">Nama pemesan</span>
-                            <input class="so-input" type="text" wire:model="customerName" maxlength="100" required autocomplete="name">
+                            <div class="so-input-icon">
+                                @svg('heroicon-o-user', ['aria-hidden' => 'true'])
+                                <input class="so-input" type="text" wire:model="customerName" maxlength="100" autocomplete="name" placeholder="Nama untuk dipanggil">
+                            </div>
                         </label>
-                        @if ($member)
-                            <p class="so-muted">Masuk sebagai member <strong>{{ $member->name }}</strong>: poin & diskon member ikut dihitung.</p>
-                        @else
-                            <p class="so-muted"><a href="{{ route('self-order.member', ['token' => $context->table->qr_token]) }}">Masuk sebagai member</a> untuk dapat poin & diskon.</p>
-                        @endif
-                        <button type="submit" class="so-btn is-primary is-block" wire:loading.attr="disabled" wire:target="submit">Kirim pesanan</button>
-                        <p class="so-muted">Kasir memeriksa pesanan dulu, setelah itu kamu bisa membayar.</p>
-                    </form>
-                </section>
+                    </section>
+                @endif
+                <p class="so-muted so-foot">Kasir memeriksa pesanan dulu, setelah itu kamu bisa membayar.</p>
             @endif
         @else
             <section class="so-orders" wire:poll.5s aria-live="polite">
@@ -278,11 +311,25 @@
                 @endforelse
             </section>
         @endif
-
-        <p class="so-powered">gs.POS · v{{ config('app.version') }}</p>
     </main>
 
-    {{-- Ringkasan keranjang, menempel di atas navigasi bawah --}}
+    {{-- Bilah aksi di atas navigasi bawah: Menu → Lihat keranjang; Keranjang → Masuk / Kirim --}}
+    @if ($view === 'cart' && $count > 0)
+        <div class="so-cartbar">
+            <div class="so-cartbar-inner">
+                <div class="so-cartbar-info">
+                    <span class="so-muted">Total</span>
+                    <strong>{{ $quote['totals'] ? $money($quote['totals']->grandTotal) : '—' }}</strong>
+                </div>
+                @if ($this->needsLogin())
+                    <a class="so-btn is-primary" href="{{ route('self-order.login', ['token' => $context->table->qr_token, 'from' => 'cart']) }}">@svg('heroicon-o-user-circle', ['aria-hidden' => 'true']) Masuk untuk bayar</a>
+                @else
+                    <button type="button" class="so-btn is-primary" wire:click="submit" wire:loading.attr="disabled" wire:target="submit" @disabled($quote['totals'] === null)>Kirim pesanan @svg('heroicon-o-arrow-right', ['aria-hidden' => 'true'])</button>
+                @endif
+            </div>
+        </div>
+    @endif
+
     @if ($view === 'menu' && $count > 0)
         <div class="so-cartbar">
             <div class="so-cartbar-inner">

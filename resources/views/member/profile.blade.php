@@ -8,16 +8,8 @@
 
         <form method="POST" action="{{ route('member.profile.update', ['business' => $business->slug]) }}" class="so-form" novalidate>
             @csrf
-            <label class="so-field">
-                <span class="so-label">Nama</span>
-                <input class="so-input" name="name" type="text" value="{{ old('name', $member->name) }}" maxlength="100" required @error('name') aria-invalid="true" @enderror>
-                @error('name') <em class="so-error">{{ $message }}</em> @enderror
-            </label>
-            <label class="so-field">
-                <span class="so-label">Email <small>(opsional)</small></span>
-                <input class="so-input" name="email" type="email" value="{{ old('email', $member->email) }}" maxlength="150" @error('email') aria-invalid="true" @enderror>
-                @error('email') <em class="so-error">{{ $message }}</em> @enderror
-            </label>
+            <x-so.input name="name" label="Nama" icon="heroicon-o-user" :value="$member->name" maxlength="100" required />
+            <x-so.input name="email" label="Email" icon="heroicon-o-envelope" type="email" :value="$member->email" maxlength="150" optional />
             @if (\App\Actions\Member\UpdateOwnMemberProfile::birthDateLocked($member))
                 {{-- Sudah terisi: hanya kasir/owner yang bisa mengubah (GSPOS-SEC-028) --}}
                 <label class="so-field">
@@ -67,11 +59,7 @@
         </div>
         <form method="POST" action="{{ route('member.destroy', ['business' => $business->slug]) }}" class="so-form" novalidate>
             @csrf
-            <label class="so-field">
-                <span class="so-label">Kata sandi untuk konfirmasi</span>
-                <input class="so-input" name="password" type="password" autocomplete="current-password" required @error('password') aria-invalid="true" @enderror>
-                @error('password') <em class="so-error">{{ $message }}</em> @enderror
-            </label>
+            <x-so.input name="password" label="Kata sandi untuk konfirmasi" icon="heroicon-o-lock-closed" type="password" autocomplete="current-password" maxlength="255" required />
             <button type="submit" class="so-btn is-danger is-block">@svg('heroicon-o-trash', ['aria-hidden' => 'true']) Hapus akun saya</button>
         </form>
     </section>

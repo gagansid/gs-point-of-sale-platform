@@ -22,12 +22,9 @@ final class TableController extends Controller
         ]);
     }
 
-    /** Masuk member lalu kembali ke meja ini (sesi halaman member, ADR 0013). */
+    /** Tautan lama "Masuk sebagai member" (ADR 0014) → halaman masuk di meja (ADR 0027). */
     public function member(): RedirectResponse
     {
-        $context = SelfOrderContext::get();
-        session()->put('member.return_to', route('self-order.table', ['token' => $context->table->qr_token]));
-
-        return redirect()->route('member.login', ['business' => $context->tenant->slug]);
+        return redirect()->route('self-order.login', ['token' => SelfOrderContext::get()->table->qr_token, 'from' => 'cart']);
     }
 }

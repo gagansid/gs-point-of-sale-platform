@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\Member\PortalController as MemberPortalController;
 use App\Http\Controllers\Web\MidtransWebhookController;
 use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\SelfOrder\ShortTableLinkController;
+use App\Http\Controllers\Web\SelfOrder\TableAuthController;
 use App\Http\Controllers\Web\SelfOrder\TableController as SelfOrderTableController;
 use App\Http\Controllers\Web\SignupController;
 use App\Http\Controllers\Web\SiteController;
@@ -159,6 +160,14 @@ Route::domain(Domains::main())->prefix('order')->name('self-order.')
     ->group(function (): void {
         Route::get('t/{token}', [SelfOrderTableController::class, 'show'])->where('token', '[A-Za-z0-9]{32}')->name('table');
         Route::get('t/{token}/member', [SelfOrderTableController::class, 'member'])->where('token', '[A-Za-z0-9]{32}')->name('member');
+        // Masuk / daftar singkat member dari meja (ADR 0027 K1, K5); batas percobaan ada di Action
+        Route::controller(TableAuthController::class)->where(['token' => '[A-Za-z0-9]{32}'])->group(function (): void {
+            Route::get('t/{token}/login', 'loginForm')->name('login');
+            Route::post('t/{token}/login', 'login')->name('login.store');
+            Route::get('t/{token}/register', 'registerForm')->name('register');
+            Route::post('t/{token}/register', 'register')->name('register.store');
+            Route::post('t/{token}/logout', 'logout')->name('logout');
+        });
     });
 
 /*

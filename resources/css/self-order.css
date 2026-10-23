@@ -258,13 +258,6 @@
     padding-bottom: calc(var(--so-tabbar-h) + 64px + 32px + env(safe-area-inset-bottom));
 }
 
-.so-powered {
-    padding: 4px 0 0;
-    color: var(--text-muted);
-    font-size: 11px;
-    text-align: center;
-}
-
 /* ---------- Kartu ---------- */
 .so-card {
     display: grid;
@@ -1416,62 +1409,6 @@
     width: 24px;
 }
 
-/* ---------- Keranjang ---------- */
-.so-lines {
-    display: grid;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.so-line {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 6px 12px;
-    padding: 12px 0;
-    border-top: 1px solid var(--border-color-light);
-}
-
-.so-line:first-child {
-    border-top: 0;
-    padding-top: 0;
-}
-
-.so-line-name {
-    font-weight: 600;
-}
-
-.so-line-meta {
-    color: var(--text-muted);
-    font-size: 12px;
-    line-height: 16px;
-}
-
-.so-line-note {
-    color: var(--text-secondary);
-    font-size: 12px;
-    font-style: italic;
-    line-height: 16px;
-}
-
-.so-line-price {
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-}
-
-.so-line-actions {
-    display: flex;
-    grid-column: 1 / -1;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.so-line-actions .so-actions {
-    gap: 4px;
-}
-
 /* ---------- Bilah keranjang (di atas navigasi bawah) ---------- */
 .so-cartbar {
     position: fixed;
@@ -1778,7 +1715,392 @@
     flex: 0 0 auto;
 }
 
-.so-line-edit {
-    margin-left: -10px;
+
+/* ---------- Masuk / daftar (ADR 0027 K1, K5): kartu ringkas, field berikon ---------- */
+.so-auth .so-card,
+.so-card.so-auth {
+    gap: 16px;
+    padding: 20px 16px;
+}
+
+.so-auth-head {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    text-align: center;
+}
+
+.so-auth-head .so-empty-icon {
+    margin-bottom: 8px;
+}
+
+.so-auth-alt {
+    display: grid;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color-light);
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.so-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-self: start;
+    height: var(--control-h);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.so-back svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Tombol tampilkan kata sandi di dalam field */
+.so-input-icon.has-reveal > .so-input {
+    padding-right: 36px;
+}
+
+.so-reveal {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.so-reveal:hover {
+    background: var(--bg-surface-secondary);
+    color: var(--text);
+}
+
+.so-reveal:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--field-focus-ring);
+}
+
+.so-reveal svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ---------- Menu akun (details native) ---------- */
+.so-menu-pop {
+    position: relative;
+}
+
+.so-menu-pop > summary {
+    list-style: none;
+}
+
+.so-menu-pop > summary::-webkit-details-marker {
+    display: none;
+}
+
+.so-member-chip-caret {
+    width: 14px;
+    height: 14px;
+    color: var(--text-muted);
+}
+
+.so-menu-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 50;
+    display: grid;
+    min-width: 220px;
+    padding: 4px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    box-shadow: 0 8px 24px rgb(15 23 42 / 0.14);
+    animation: so-fade var(--so-ease);
+}
+
+.so-menu-head {
+    display: grid;
+    gap: 2px;
+    padding: 8px 10px 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.so-menu-panel a,
+.so-menu-panel button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    height: var(--control-h);
     padding: 0 10px;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.so-menu-panel a:hover,
+.so-menu-panel button:hover {
+    background: var(--bg-surface-secondary);
+    text-decoration: none;
+}
+
+.so-menu-panel svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.so-menu-panel .is-danger,
+.so-menu-panel .is-danger svg {
+    color: var(--so-danger-text);
+}
+
+/* ---------- Dialog (modal.md) ---------- */
+.so-dialog {
+    width: min(calc(100% - 32px), 360px);
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: var(--so-radius-card);
+    background: var(--bg-surface);
+    color: var(--text);
+}
+
+.so-dialog::backdrop {
+    background: rgb(15 23 42 / 0.45);
+}
+
+.so-dialog[open] {
+    animation: so-rise 180ms ease;
+}
+
+.so-dialog-body {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    padding: 20px 16px 12px;
+    text-align: center;
+}
+
+.so-dialog-body .so-totals {
+    width: 100%;
+    margin: 8px 0;
+    text-align: left;
+}
+
+.so-dialog-foot {
+    padding: 12px 16px 16px;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* ---------- Keranjang ringkas (masukan pemilik 2026-10-23) ---------- */
+.so-card.is-tight {
+    gap: 8px;
+    padding: 12px 16px;
+}
+
+.so-card.is-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.so-card.is-info {
+    border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+    background: color-mix(in srgb, var(--primary) 4%, var(--bg-surface));
+}
+
+.so-card.is-rows {
+    gap: 0;
+    padding: 0;
+}
+
+.so-btn.is-sm {
+    padding: 0 8px;
+}
+
+.so-member-chip-avatar.is-lg {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    font-size: 13px;
+}
+
+.so-member-chip-avatar.is-lg svg {
+    width: 16px;
+    height: 16px;
+}
+
+.so-cart {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.so-cart-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid var(--border-color-light);
+}
+
+.so-cart-row:first-child {
+    border-top: 0;
+    padding-top: 2px;
+}
+
+.so-cart-main {
+    display: grid;
+    flex: 1;
+    gap: 1px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.so-cart-main:focus-visible {
+    border-radius: var(--radius-sm);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--field-focus-ring);
+}
+
+.so-cart-name {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+}
+
+.so-cart-meta {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.so-cart-edit {
+    margin-top: 2px;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16px;
+}
+
+.so-cart-side {
+    display: grid;
+    justify-items: end;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.so-cart-price {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Baris catatan & voucher yang bisa dibuka */
+.so-extra + .so-extra {
+    border-top: 1px solid var(--border-color-light);
+}
+
+.so-extra-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.so-extra-row:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--field-focus-ring);
+}
+
+.so-extra-row > svg:first-child {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.so-extra-label {
+    flex: 1;
+    font-weight: 500;
+}
+
+.so-extra-value {
+    overflow: hidden;
+    max-width: 50%;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.so-extra-caret {
+    width: 14px;
+    height: 14px;
+    color: var(--text-muted);
+    transition: transform var(--so-ease);
+}
+
+.so-extra-caret.is-open {
+    transform: rotate(180deg);
+}
+
+.so-extra-body {
+    display: grid;
+    gap: 4px;
+    padding: 0 16px 12px;
+}
+
+.so-inline {
+    display: flex;
+    gap: 8px;
+}
+
+.so-inline .so-input {
+    flex: 1;
+}
+
+.so-totals.is-compact {
+    gap: 4px 0;
+}
+
+.so-totals.is-compact .is-grand {
+    margin-top: 4px;
 }

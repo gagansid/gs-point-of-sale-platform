@@ -73,6 +73,21 @@ final class SelfOrderContext
     }
 
     /**
+     * Login member wajib sebelum membayar (ADR 0027 K1). Bila program member bisnis nonaktif atau tidak termasuk paket,
+     * login tidak mungkin: pelanggan tetap memesan sebagai tamu dengan nama (perilaku ADR 0014).
+     */
+    public function loginRequired(): bool
+    {
+        return MemberSetting::current()->enabled && Features::enabled('member', $this->tenant);
+    }
+
+    /** URL halaman meja ini. */
+    public function url(): string
+    {
+        return $this->table->orderUrl();
+    }
+
+    /**
      * Member yang masuk di halaman member bisnis ini (ADR 0013) — sesi yang sama dengan gspos.id/m/{bisnis}. Dicek
      * ulang: bisnis sama, member aktif, program aktif, sidik kata sandi sesi cocok.
      */

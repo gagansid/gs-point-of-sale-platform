@@ -7,6 +7,7 @@ namespace App\Support;
 use App\Models\Member;
 use App\Models\Tenant;
 use Illuminate\Contracts\Auth\StatefulGuard;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -56,6 +57,17 @@ final class MemberPortal
         self::guard()->login($member);
         $request->session()->regenerate();
         $request->session()->put(self::SESSION_PASSWORD, self::passwordFingerprint($member));
+    }
+
+    /**
+     * Kembali ke halaman pesan meja bila masuk dimulai dari sana (ADR 0014/0027); hanya URL /order/t/ milik kita
+     * (bukan open redirect).
+     */
+    public static function returnTo(Request $request): ?RedirectResponse
+    {
+        $target = $request->session()->pull('member.return_to');
+
+        return is_string($target) && str_starts_with($target, url('/order/t/')) ? redirect()->to($target) : null;
     }
 
     public static function logout(Request $request): void
