@@ -142,10 +142,13 @@ it('member bayar dengan poin dari HP: maks. sesuai aturan, sisa tetap ditagih; l
     session()->put('self_orders.'.$this->table->id, [$selfOrderId]);
     SelfOrderContext::set(SelfOrderContext::resolve($this->table->qr_token));
 
+    // ADR 0027: poin dipilih dari sheet pilihan bayar
     Livewire::test(OrderPage::class)
-        ->assertSee('Pakai 315 poin')
-        ->call('payWithPoints', $selfOrderId)
-        ->assertSet('error', null)
+        ->call('openPay', $selfOrderId)
+        ->assertSee('Poin member')->assertSee('Saldo 315 poin')
+        ->call('choosePay', 'points')
+        ->assertSet('payError', null)
+        ->assertSet('view', 'status')
         ->assertSee('Lunas');
 
     expect(Order::query()->find($second->id)->status)->toBe(OrderStatus::Completed);

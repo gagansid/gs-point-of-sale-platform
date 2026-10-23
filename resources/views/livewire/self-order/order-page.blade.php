@@ -1,7 +1,8 @@
 {{--
     Halaman pesan dari meja (ADR 0014, tampilan ADR 0027 §6): Menu → Keranjang → Pesananku lewat navigasi bawah.
     Menu: cari, tab kategori menempel + scroll-spy, mode Kotak/Baris (localStorage), + cepat untuk produk tanpa opsi.
-    Harga di layar = pratinjau; tagihan final dihitung server. Semua teks pengguna di-escape.
+    Bayar dulu (ADR 0027): sheet metode → layar QRIS / Tunjukkan ke kasir (partials). Harga di layar = pratinjau; tagihan
+    final dihitung server. Semua teks pengguna di-escape.
 --}}
 @php
     $money = fn (string $v): string => \App\Support\Money::format($v);
@@ -11,6 +12,7 @@
     $orderCount = $this->myOrders->count();
     $categoryNames = $this->catalog['categories']->pluck('name', 'id')->all();
     $setting = $context->setting;
+    $closedForPay = \App\Actions\SelfOrder\CheckoutSelfOrder::openShift($context->outlet->id) === null;
     $hours = $setting->opens_at && $setting->closes_at ? substr($setting->opens_at, 0, 5).'–'.substr($setting->closes_at, 0, 5) : null;
 @endphp
 <div x-data="{
@@ -38,6 +40,10 @@
                         <span class="so-badge is-success">@svg('heroicon-o-clock', ['aria-hidden' => 'true']) Buka {{ $hours }}</span>
                     @endif
                 </div>
+            @endif
+
+            @if ($closedForPay)
+                <div class="so-alert is-warning" role="status">@svg('heroicon-o-clock', ['aria-hidden' => 'true']) <span>Kasir belum buka. Kamu bisa melihat menu, tetapi pesanan belum bisa dibayar.</span></div>
             @endif
 
             <div class="so-toolbar">
@@ -268,8 +274,14 @@
                         </label>
                     </section>
                 @endif
-                <p class="so-muted so-foot">Kasir memeriksa pesanan dulu, setelah itu kamu bisa membayar.</p>
+                @if ($closedForPay)
+                    <div class="so-alert is-warning" role="status">@svg('heroicon-o-clock', ['aria-hidden' => 'true']) <span>{{ \App\Actions\SelfOrder\CheckoutSelfOrder::CLOSED_MESSAGE }}.</span></div>
+                @else
+                    <p class="so-muted so-foot">Bayar dulu, pesanan langsung disiapkan dan diantar ke {{ $context->table->name }}.</p>
+                @endif
             @endif
+        @elseif ($view === 'pay')
+            @include('livewire.self-order.partials.pay-screen')
         @else
             <section class="so-orders" wire:poll.5s aria-live="polite">
                 @forelse ($this->myOrders as $selfOrder)
@@ -284,18 +296,11 @@
                             <p class="so-muted">{{ $status['note'] }}</p>
                         @endif
                         @if ($selfOrder->order?->status === \App\Enums\OrderStatus::AwaitingPayment)
-                            <div class="so-actions is-stack">
-                                @if (($points = $this->pointsFor($selfOrder)) > 0)
-                                    <button type="button" class="so-btn is-outline is-block" wire:click="payWithPoints('{{ $selfOrder->id }}')" wire:loading.attr="disabled">
-                                        Pakai {{ number_format($points, 0, ',', '.') }} poin ({{ $money(\App\Support\Money::mul((string) \App\Models\MemberSetting::current()->redeem_value, $points)) }})
-                                    </button>
-                                @endif
-                                @if ($this->onlineReady)
-                                    <button type="button" class="so-btn is-primary is-block" wire:click="payOnline('{{ $selfOrder->id }}')" wire:loading.attr="disabled">Bayar online (QRIS / e-wallet)</button>
-                                @endif
-                                @if ($context->setting->allow_pay_at_cashier || ! $this->onlineReady)
-                                    <p class="so-muted">{{ $this->onlineReady ? 'Atau bayar' : 'Bayar' }} di kasir dengan menyebut nomor pesanan.</p>
-                                @endif
+                            <div class="so-actions">
+                                <button type="button" class="so-btn is-primary is-block is-split" wire:click="openPay('{{ $selfOrder->id }}')" wire:loading.attr="disabled">
+                                    <span>Bayar sekarang</span>
+                                    <span class="so-num">{{ $money(\App\Support\Money::sub($selfOrder->order->grand_total, $selfOrder->order->paid_total)) }}</span>
+                                </button>
                             </div>
                         @endif
                     </article>
@@ -324,7 +329,7 @@
                 @if ($this->needsLogin())
                     <a class="so-btn is-primary" href="{{ route('self-order.login', ['token' => $context->table->qr_token, 'from' => 'cart']) }}">@svg('heroicon-o-user-circle', ['aria-hidden' => 'true']) Masuk untuk bayar</a>
                 @else
-                    <button type="button" class="so-btn is-primary" wire:click="submit" wire:loading.attr="disabled" wire:target="submit" @disabled($quote['totals'] === null)>Kirim pesanan @svg('heroicon-o-arrow-right', ['aria-hidden' => 'true'])</button>
+                    <button type="button" class="so-btn is-primary" wire:click="openPay" wire:loading.attr="disabled" wire:target="openPay" @disabled($quote['totals'] === null || $closedForPay)>@svg('heroicon-o-credit-card', ['aria-hidden' => 'true']) Bayar</button>
                 @endif
             </div>
         </div>
@@ -355,7 +360,8 @@
     <nav class="so-tabbar" aria-label="Langkah pesanan">
         <div class="so-tabbar-inner">
             @foreach (['menu' => ['Menu', 'heroicon-o-book-open', 0], 'cart' => ['Keranjang', 'heroicon-o-shopping-bag', $count], 'status' => ['Pesananku', 'heroicon-o-clipboard-document-list', $orderCount]] as $key => [$label, $icon, $badge])
-                <button type="button" wire:click="show('{{ $key }}')" @class(['is-active' => $view === $key]) @if ($view === $key) aria-current="page" @endif>
+                @php($current = $view === $key || ($key === 'status' && $view === 'pay'))
+                <button type="button" wire:click="show('{{ $key }}')" @class(['is-active' => $current]) @if ($current) aria-current="page" @endif>
                     <span class="so-tabbar-icon">
                         @svg($icon, ['aria-hidden' => 'true'])
                         @if ($badge > 0)
@@ -448,5 +454,9 @@
                 </div>
             </form>
         </div>
+    @endif
+
+    @if ($payOpen)
+        @include('livewire.self-order.partials.pay-sheet')
     @endif
 </div>

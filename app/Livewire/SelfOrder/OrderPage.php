@@ -8,6 +8,8 @@ use App\Actions\Catalog\GetCatalog;
 use App\Actions\Member\Data\BenefitSelection;
 use App\Actions\Order\QuoteOrder;
 use App\Actions\Payment\StartOnlinePayment;
+use App\Actions\Payment\StartTableQrisPayment;
+use App\Actions\SelfOrder\CheckoutSelfOrder;
 use App\Actions\SelfOrder\PayWithPointsFromPhone;
 use App\Actions\SelfOrder\SubmitSelfOrder;
 use App\Enums\ErrorCode;
@@ -15,7 +17,9 @@ use App\Enums\OrderStatus;
 use App\Enums\SelfOrderStatus;
 use App\Exceptions\BusinessException;
 use App\Models\Category;
+use App\Models\GatewayTransaction;
 use App\Models\Member;
+use App\Models\MemberSetting;
 use App\Models\OptionGroup;
 use App\Models\Order;
 use App\Models\PaymentGatewaySetting;
@@ -28,6 +32,7 @@ use App\Support\Money;
 use App\Support\OptionDefaults;
 use App\Support\SelfOrderContext;
 use App\Support\VoucherAttempts;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -37,9 +42,10 @@ use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 /**
- * Halaman pesan dari meja di HP (ADR 0014, Q70): menu outlet, keranjang, kirim pesanan, dan status (polling).
- * Tanpa login (nama wajib) atau sebagai member (sesi halaman member). Harga hanya pratinjau dari server; tagihan
- * final dihitung ulang saat kasir menerima. Pesanan milik sesi browser ini disimpan di session per meja.
+ * Halaman pesan dari meja di HP (ADR 0014, ADR 0027): menu outlet, keranjang, bayar dulu tanpa terima kasir (QRIS di
+ * halaman, e-wallet/VA lewat Snap, bayar di kasir, poin), dan status (polling yang hanya membaca server). Member wajib
+ * masuk sebelum bayar bila program member aktif. Harga di layar pratinjau; tagihan dihitung ulang server saat checkout.
+ * Pesanan milik sesi browser ini disimpan di session per meja; hanya pesanan itu yang bisa dilihat & dibayar.
  *
  * Request update Livewire tidak melewati middleware route: konteks meja dibaca ulang dari token di boot().
  * Kode voucher baru dihitung ke batas percobaan (VoucherAttempts) sebelum dicek ke database; gagal = pesan seragam
@@ -55,7 +61,8 @@ final class OrderPage extends Component
     #[Locked]
     public string $token = '';
 
-    // menu | cart | status
+    // menu | cart | status | pay (layar QRIS / Tunjukkan ke kasir)
+    #[Locked]
     public string $view = 'menu';
 
     /** Pencarian menu (nama produk), hanya menyaring tampilan. */
@@ -114,6 +121,27 @@ final class OrderPage extends Component
      */
     #[Locked]
     public ?array $removed = null;
+
+    // Bayar: sheet pilihan metode & layar QRIS / Tunjukkan ke kasir
+    public bool $payOpen = false;
+
+    /** Pesanan sesi ini yang sedang dibayar (null = keranjang belum menjadi tagihan). */
+    #[Locked]
+    public ?string $payOrderId = null;
+
+    /** qris | cashier — layar bayar yang sedang tampil. */
+    #[Locked]
+    public ?string $payMethod = null;
+
+    #[Locked]
+    public ?string $payError = null;
+
+    /** Total keranjang yang terakhir tampil & total sebelum dihitung ulang (bila berubah). */
+    #[Locked]
+    public ?string $shownTotal = null;
+
+    #[Locked]
+    public ?string $totalChangedFrom = null;
 
     private SelfOrderContext $context;
 
@@ -389,7 +417,7 @@ final class OrderPage extends Component
     {
         $ids = (array) session()->get($this->sessionKey(), []);
 
-        return SelfOrder::query()->with(['order:id,order_number,status,grand_total,paid_total'])->whereIn('id', $ids)
+        return SelfOrder::query()->with(['order:id,order_number,status,grand_total,paid_total,refund_required,accepted_at,completed_at'])->whereIn('id', $ids)
             ->where('dining_table_id', $this->context->table->id)->latest()->limit(10)->get()->toBase();
     }
 
@@ -642,113 +670,280 @@ final class OrderPage extends Component
     {
         $this->view = in_array($view, ['menu', 'cart', 'status'], true) ? $view : 'menu';
         $this->error = null;
+        $this->payOpen = false;
     }
 
-    // ---------- Kirim ----------
+    // ---------- Bayar (ADR 0027: bayar dulu tanpa terima kasir) ----------
 
-    public function submit(): void
+    /**
+     * Buka pilihan bayar untuk keranjang (`$selfOrderId` null) atau pesanan sesi ini yang menunggu bayar. Total keranjang
+     * dihitung ulang server sekarang; bila berbeda dari yang terakhir tampil, perbedaannya ditunjukkan di sheet.
+     */
+    public function openPay(?string $selfOrderId = null): void
     {
         $this->error = null;
+        $this->payError = null;
+        $this->totalChangedFrom = null;
 
-        if ($this->voucherBlocked !== null) {
-            $this->error = $this->voucherBlocked;
+        if ($selfOrderId !== null) {
+            $selfOrder = $this->myOrders->firstWhere('id', $selfOrderId);
+            if ($selfOrder?->order?->status !== OrderStatus::AwaitingPayment) {
+                return;
+            }
+            $this->payOrderId = $selfOrder->id;
+        } else {
+            if ($this->cart === []) {
+                return;
+            }
+            if ($this->needsLogin()) {
+                $this->error = 'Masuk sebagai member dulu untuk membayar. Keranjangmu tetap tersimpan.';
+
+                return;
+            }
+
+            $this->payOrderId = null;
+            $before = $this->shownTotal;
+            unset($this->quote);
+            $now = $this->quote['totals']?->grandTotal;
+
+            if ($this->quote['error'] !== null || $now === null) {
+                $this->error = $this->quote['error'] ?? 'Keranjang belum bisa dibayar';
+
+                return;
+            }
+            if ($before !== null && Money::compare($before, $now) !== 0) {
+                $this->totalChangedFrom = $before;
+            }
+        }
+
+        $this->payOpen = true;
+    }
+
+    public function closePay(): void
+    {
+        $this->payOpen = false;
+        $this->payError = null;
+    }
+
+    /**
+     * Metode bayar yang tersedia untuk pesanan/keranjang yang sedang dibayar (yang tidak tersedia disembunyikan).
+     *
+     * @return list<string> qris | ewallet | cashier | points
+     */
+    public function payMethods(): array
+    {
+        $setting = $this->context->setting;
+        $gateway = PaymentGatewaySetting::current();
+        $online = Features::enabled('online_payment') && $gateway->isReady();
+        $methods = [];
+
+        if (StartTableQrisPayment::available($gateway, $setting)) {
+            $methods[] = 'qris';
+        }
+        if ($online && StartOnlinePayment::channels($gateway) !== []) {
+            $methods[] = 'ewallet';
+        }
+        // Tanpa metode online, bayar di kasir selalu tersedia agar pesanan tetap bisa dibayar
+        if ($setting->allow_pay_at_cashier || $methods === []) {
+            $methods[] = 'cashier';
+        }
+        if ($setting->allow_points && $this->pointsAvailable() > 0) {
+            $methods[] = 'points';
+        }
+
+        return $methods;
+    }
+
+    /** Poin yang bisa dipakai: tagihan sudah ada = aturan program; keranjang = saldo cukup untuk minimal tukar. */
+    public function pointsAvailable(): int
+    {
+        $member = $this->member();
+        if ($member === null) {
+            return 0;
+        }
+
+        $order = $this->payOrder();
+        if ($order !== null) {
+            return $order->member_id === $member->id && $order->status === OrderStatus::AwaitingPayment ? PayWithPointsFromPhone::maxPoints($order, $member) : 0;
+        }
+
+        $settings = MemberSetting::current();
+
+        return $settings->enabled && $member->points_balance >= max(1, $settings->min_redeem_points) ? $member->points_balance : 0;
+    }
+
+    /** Pilih metode: keranjang dijadikan tagihan dulu (sekali, idempotent), lalu metode dijalankan. */
+    public function choosePay(string $method): void
+    {
+        $this->payError = null;
+
+        if (! in_array($method, $this->payMethods(), true)) {
+            $this->payError = 'Metode bayar ini sedang tidak tersedia';
 
             return;
         }
 
-        $member = $this->member();
-        if ($this->needsLogin()) {
-            $this->error = 'Masuk sebagai member dulu untuk melanjutkan. Keranjangmu tetap tersimpan.';
+        $order = $this->payOrderId !== null ? $this->payOrder() : $this->checkout();
+        if ($order === null) {
+            return;
+        }
+
+        if ($order->status === OrderStatus::Completed) {
+            $this->finishPaid();
 
             return;
         }
 
         try {
-            $result = app(SubmitSelfOrder::class)->handle($this->context, [
-                'id' => $this->submitId,
-                'customer_name' => mb_substr(trim($member->name ?? $this->customerName), 0, 100),
-                'items' => $this->items(),
-                'notes' => filled(trim($this->notes)) ? mb_substr(trim($this->notes), 0, 255) : null,
-                'voucher_code' => $this->checkedVoucher !== '' ? $this->checkedVoucher : null,
-            ], $member, (string) request()->ip());
-        } catch (ValidationException $e) {
-            $this->error = $e->validator->errors()->first();
-
-            return;
+            match ($method) {
+                'qris' => app(StartTableQrisPayment::class)->handle($order, (string) request()->ip()),
+                'points' => app(PayWithPointsFromPhone::class)->handle($order, $this->member() ?? throw BusinessException::of(ErrorCode::Unauthenticated)),
+                'ewallet' => $this->redirect((string) app(StartOnlinePayment::class)->handle($order, (string) $this->payingSelfOrder()?->customer_name, $this->context->url())->redirect_url),
+                default => null,
+            };
         } catch (BusinessException $e) {
-            $this->error = self::publicMessage($e);
+            $this->payError = $e->getMessage();
 
             return;
         }
 
-        session()->put($this->sessionKey(), array_values(array_unique([...(array) session()->get($this->sessionKey(), []), $result['self_order']->id])));
-        $this->reset('cart', 'notes', 'voucherCode', 'checkedVoucher', 'voucherBlocked');
-        $this->submitId = (string) Str::uuid7();
-        unset($this->myOrders, $this->quote);
-        $this->view = 'status';
+        if ($method === 'points') {
+            $order->refresh();
+            if ($order->status === OrderStatus::Completed) {
+                $this->finishPaid();
+            } else {
+                // Sisa tagihan dibayar dengan metode lain
+                $this->dispatch('so-toast', message: 'Poin dipakai. Sisa '.Money::format(Money::sub($order->grand_total, $order->paid_total)).' bayar dengan metode lain');
+            }
+
+            return;
+        }
+
+        if ($method !== 'ewallet') {
+            $this->payMethod = $method;
+            $this->payOpen = false;
+            $this->view = 'pay';
+        }
     }
 
-    /** Bayar online (Midtrans Snap) pesanan yang sudah diterima; hanya pesanan milik sesi ini. */
-    public function payOnline(string $selfOrderId): void
+    /** Layar QRIS kedaluwarsa: QR baru (QR lama dibatalkan). */
+    public function renewQris(): void
     {
-        $selfOrder = $this->myOrders->firstWhere('id', $selfOrderId);
-        $order = $selfOrder?->order_id !== null ? Order::query()->find($selfOrder->order_id) : null;
-
+        $order = $this->payOrder();
         if ($order === null) {
             return;
         }
 
         try {
-            $transaction = app(StartOnlinePayment::class)->handle($order, $selfOrder->customer_name,
-                route('self-order.table', ['token' => $this->context->table->qr_token]));
+            app(StartTableQrisPayment::class)->handle($order, (string) request()->ip(), renew: true);
+            $this->payError = null;
         } catch (BusinessException $e) {
-            $this->error = $e->getMessage();
-
-            return;
+            $this->payError = $e->getMessage();
         }
-
-        $this->redirect((string) $transaction->redirect_url);
     }
 
-    /** Bayar sebagian/seluruh tagihan dengan poin member yang masuk (bukti = sesi member). */
-    public function payWithPoints(string $selfOrderId): void
+    /** Pindah ke bayar di kasir dari layar QRIS. */
+    public function payAtCashier(): void
     {
-        $selfOrder = $this->myOrders->firstWhere('id', $selfOrderId);
-        $order = $selfOrder?->order_id !== null ? Order::query()->find($selfOrder->order_id) : null;
-        $member = $this->member();
+        if (in_array('cashier', $this->payMethods(), true) && $this->payOrder() !== null) {
+            $this->payMethod = 'cashier';
+            $this->view = 'pay';
+        }
+    }
 
-        if ($order === null || $member === null) {
-            return;
+    /** Polling layar bayar: hanya membaca status dari server; lunas → ke Pesananku. */
+    public function checkPayment(): void
+    {
+        $order = $this->payOrder();
+
+        if ($order?->status === OrderStatus::Completed) {
+            $this->finishPaid();
+        } elseif ($order === null || $order->status !== OrderStatus::AwaitingPayment) {
+            $this->view = 'status';
+        }
+    }
+
+    /** Pesanan yang sedang dibayar (hanya milik sesi ini). */
+    public function payOrder(): ?Order
+    {
+        $selfOrder = $this->payingSelfOrder();
+
+        return $selfOrder?->order_id !== null ? Order::query()->find($selfOrder->order_id) : null;
+    }
+
+    public function payingSelfOrder(): ?SelfOrder
+    {
+        return $this->payOrderId !== null ? $this->myOrders->firstWhere('id', $this->payOrderId) : null;
+    }
+
+    /** QR QRIS terbaru untuk pesanan yang sedang dibayar (aktif atau terakhir). */
+    public function qrisTransaction(): ?GatewayTransaction
+    {
+        $order = $this->payOrder();
+
+        return $order !== null ? GatewayTransaction::query()->where('order_id', $order->id)->where('method', GatewayTransaction::QRIS)->latest()->first() : null;
+    }
+
+    /** Batas waktu bayar pesanan (zona outlet). */
+    public function payDeadline(Order $order): CarbonImmutable
+    {
+        return CarbonImmutable::parse($order->accepted_at ?? $order->created_at)->addMinutes($this->context->setting->payment_timeout_minutes)
+            ->setTimezone($this->context->outlet->timezone);
+    }
+
+    /**
+     * Keranjang → tagihan (CheckoutSelfOrder). Berhasil: keranjang dikosongkan, pesanan masuk daftar sesi ini.
+     */
+    private function checkout(): ?Order
+    {
+        if ($this->voucherBlocked !== null) {
+            $this->payError = $this->voucherBlocked;
+
+            return null;
         }
 
         try {
-            app(PayWithPointsFromPhone::class)->handle($order, $member);
-        } catch (BusinessException $e) {
-            $this->error = $e->getMessage();
+            $result = app(CheckoutSelfOrder::class)->handle($this->context, [
+                'id' => $this->submitId,
+                'customer_name' => mb_substr(trim($this->customerName), 0, 100),
+                'items' => $this->items(),
+                'notes' => filled(trim($this->notes)) ? mb_substr(trim($this->notes), 0, 255) : null,
+                'voucher_code' => $this->checkedVoucher !== '' ? $this->checkedVoucher : null,
+            ], $this->member(), (string) request()->ip());
+        } catch (ValidationException $e) {
+            $this->payError = $e->validator->errors()->first();
 
-            return;
+            return null;
+        } catch (BusinessException $e) {
+            $this->payError = self::publicMessage($e);
+
+            return null;
         }
 
-        $this->error = null;
+        session()->put($this->sessionKey(), array_values(array_unique([...(array) session()->get($this->sessionKey(), []), $result['self_order']->id])));
+        $this->reset('cart', 'notes', 'voucherCode', 'checkedVoucher', 'voucherBlocked', 'shownTotal', 'totalChangedFrom');
+        $this->submitId = (string) Str::uuid7();
+        $this->payOrderId = $result['self_order']->id;
+        unset($this->myOrders, $this->quote);
+
+        return $result['order'];
+    }
+
+    private function finishPaid(): void
+    {
+        $this->payOpen = false;
+        $this->payMethod = null;
+        $this->view = 'status';
         unset($this->myOrders);
+        $this->dispatch('so-toast', message: 'Pembayaran diterima. Pesananmu masuk antrean');
     }
 
-    /** Poin yang bisa dipakai member yang masuk untuk order ini (0 = tidak ditawarkan). */
-    public function pointsFor(SelfOrder $selfOrder): int
+    /** Total keranjang yang terakhir tampil, untuk menunjukkan perubahan harga saat sheet bayar dibuka. */
+    public function rendering(): void
     {
-        $member = $this->member();
-        $order = $selfOrder->order_id !== null ? Order::query()->find($selfOrder->order_id) : null;
-
-        return $member !== null && $order !== null && $order->member_id === $member->id && $order->status === OrderStatus::AwaitingPayment
-            ? PayWithPointsFromPhone::maxPoints($order, $member)
-            : 0;
-    }
-
-    #[Computed]
-    public function onlineReady(): bool
-    {
-        // Fitur paket (ADR 0025): tanpa online_payment pelanggan bayar di kasir
-        return Features::enabled('online_payment') && PaymentGatewaySetting::current()->isReady();
+        if ($this->view === 'cart' && $this->cart !== [] && ! $this->payOpen) {
+            $this->shownTotal = $this->quote['totals']?->grandTotal;
+        }
     }
 
     public function render(): View
@@ -772,10 +967,10 @@ final class OrderPage extends Component
             $selfOrder->status === SelfOrderStatus::Pending => ['label' => 'Menunggu kasir', 'tone' => 'warning', 'note' => 'Kasir akan memeriksa pesananmu sebentar lagi.'],
             $selfOrder->status === SelfOrderStatus::Rejected => ['label' => 'Ditolak', 'tone' => 'danger', 'note' => (string) $selfOrder->reject_reason],
             $selfOrder->status === SelfOrderStatus::Expired => ['label' => 'Kedaluwarsa', 'tone' => 'muted', 'note' => 'Pesanan terlalu lama menunggu. Silakan pesan lagi atau ke kasir.'],
-            $order?->status === OrderStatus::AwaitingPayment => ['label' => 'Silakan bayar', 'tone' => 'info', 'note' => 'Pesanan diterima dengan nomor '.$order->order_number.'.'],
-            $order?->status === OrderStatus::Completed => ['label' => 'Lunas', 'tone' => 'success', 'note' => 'Terima kasih! Pesananmu sedang disiapkan.'],
+            $order?->status === OrderStatus::AwaitingPayment => ['label' => 'Menunggu bayar', 'tone' => 'warning', 'note' => 'Selesaikan pembayaran agar pesanan disiapkan.'],
+            $order?->status === OrderStatus::Completed => ['label' => 'Lunas', 'tone' => 'success', 'note' => 'Terima kasih! Pesananmu masuk antrean.'],
             $order?->status === OrderStatus::Expired => ['label' => 'Kedaluwarsa', 'tone' => 'muted', 'note' => 'Pesanan tidak dibayar dalam batas waktu.'],
-            $order?->status === OrderStatus::Voided => ['label' => 'Dibatalkan', 'tone' => 'danger', 'note' => 'Pesanan dibatalkan kasir.'],
+            $order?->status === OrderStatus::Voided => ['label' => 'Dibatalkan', 'tone' => 'danger', 'note' => $order->refund_required ? 'Pesanan dibatalkan outlet. Dana dikembalikan oleh outlet.' : 'Pesanan dibatalkan outlet.'],
             default => ['label' => 'Diterima', 'tone' => 'info', 'note' => ''],
         };
     }

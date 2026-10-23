@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Actions\Member\UpdateMemberProgram;
+use App\Actions\SelfOrder\CheckoutSelfOrder;
 use App\Actions\SelfOrder\SaveDiningTable;
 use App\Actions\SelfOrder\SubmitSelfOrder;
 use App\Actions\SelfOrder\UpdateSelfOrderSettings;
@@ -22,7 +23,7 @@ use Livewire\Livewire;
 
 /** Login/daftar member wajib sebelum membayar & keranjang selamat (ADR 0027 K1, K5; SPEC Q137 T3). */
 beforeEach(function () {
-    $this->pos = posSetup(openShift: false);
+    $this->pos = posSetup();
     Tenant::query()->whereKey($this->pos->tenantId)->update(['slug' => 'kopi-senja']);
     TenantContext::set($this->pos->tenantId);
     app(UpdateMemberProgram::class)->handle(true, [$this->pos->outlet->id]);
@@ -53,16 +54,19 @@ it('tamu boleh memilih menu, tetapi wajib masuk sebelum mengirim (Livewire & Act
         ->assertSee('Masuk untuk bayar')
         ->assertSee('/order/t/'.$this->token.'/login?from=cart', false)
         ->assertDontSee('Nama pemesan')
-        ->call('submit')
-        ->assertSet('error', 'Masuk sebagai member dulu untuk melanjutkan. Keranjangmu tetap tersimpan.');
+        ->call('openPay')
+        ->assertSet('payOpen', false)
+        ->assertSet('error', 'Masuk sebagai member dulu untuk membayar. Keranjangmu tetap tersimpan.');
 
     expect(SelfOrder::query()->count())->toBe(0)
         ->and(cartInSession($this)['cart'][0]['product_id'])->toBe($this->pos->croissant->id);
 
-    // Lapisan Action juga menolak (tidak bergantung pada tampilan)
-    expect(fn () => app(SubmitSelfOrder::class)->handle(SelfOrderContext::resolve($this->token), [
-        'id' => (string) Str::uuid7(), 'customer_name' => 'Tamu', 'items' => [['product_id' => $this->pos->croissant->id, 'qty' => 1]],
-    ], null, '127.0.0.1'))->toThrow(fn (BusinessException $e) => expect($e->errorCode)->toBe(ErrorCode::Unauthenticated->value));
+    // Lapisan Action juga menolak (tidak bergantung pada tampilan): checkout baru & kirim lama
+    foreach ([CheckoutSelfOrder::class, SubmitSelfOrder::class] as $action) {
+        expect(fn () => app($action)->handle(SelfOrderContext::resolve($this->token), [
+            'id' => (string) Str::uuid7(), 'customer_name' => 'Tamu', 'items' => [['product_id' => $this->pos->croissant->id, 'qty' => 1]],
+        ], null, '127.0.0.1'))->toThrow(fn (BusinessException $e) => expect($e->errorCode)->toBe(ErrorCode::Unauthenticated->value));
+    }
 });
 
 it('program member nonaktif: login tidak mungkin, tamu tetap memesan dengan nama; halaman masuk meja 404', function () {
@@ -70,7 +74,7 @@ it('program member nonaktif: login tidak mungkin, tamu tetap memesan dengan nama
 
     loginPage($this)->call('quickAdd', $this->pos->croissant->id)->call('show', 'cart')
         ->assertSee('Nama pemesan')->assertDontSee('Masuk untuk bayar')
-        ->set('customerName', 'Budi')->call('submit')->assertSet('error', null)->assertSet('view', 'status');
+        ->set('customerName', 'Budi')->call('openPay')->call('choosePay', 'cashier')->assertSet('payError', null)->assertSet('view', 'pay');
 
     expect(SelfOrder::query()->sole()->customer_name)->toBe('Budi');
     $this->get('/order/t/'.$this->token.'/login')->assertNotFound();
@@ -91,7 +95,7 @@ it('masuk dari keranjang: kembali ke meja, Keranjang terbuka & isinya utuh, pesa
         ->assertSet('cart.0.qty', 2)
         ->assertSet('notes', 'tanpa sedotan')
         ->assertSee('Poin & diskon member ikut dihitung', false)
-        ->call('submit')->assertSet('error', null)->assertSet('view', 'status');
+        ->call('openPay')->call('choosePay', 'cashier')->assertSet('payError', null)->assertSet('view', 'pay');
 
     $order = SelfOrder::query()->sole();
     expect($order->member_id)->toBe($this->member->id)->and($order->customer_name)->toBe('Rina')

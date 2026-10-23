@@ -193,20 +193,24 @@ it('dibayar setelah kedaluwarsa → tetap selesai; dibayar setelah void → perl
     expect($order->refresh()->refund_required)->toBeTrue();
 });
 
-it('HP: tombol bayar online mengarahkan ke Snap; tanpa gateway hanya bayar di kasir', function () {
+it('HP: e-wallet/VA mengarahkan ke Snap tanpa QRIS; tanpa gateway hanya bayar di kasir', function () {
     $order = acceptedOrder($this);
     $selfOrderId = SelfOrder::query()->where('order_id', $order->id)->value('id');
     session()->put('self_orders.'.$this->table->id, [$selfOrderId]);
     SelfOrderContext::set(SelfOrderContext::resolve($this->table->qr_token));
 
+    // ADR 0027: Snap hanya untuk e-wallet/VA dari sheet pilihan bayar (QRIS tampil di halaman)
     Livewire::test(OrderPage::class)
-        ->assertSee('Bayar online')
-        ->call('payOnline', $selfOrderId)
+        ->call('openPay', $selfOrderId)
+        ->assertSee('E-wallet / virtual account')
+        ->call('choosePay', 'ewallet')
         ->assertRedirect('https://app.sandbox.midtrans.com/snap/v4/redirection/snap-token');
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/snap/v1/transactions') && ! in_array('qris', (array) $request['enabled_payments'], true));
 
     app(UpdatePaymentGateway::class)->handle(['enabled' => false, 'is_production' => false]);
     SelfOrderContext::set(SelfOrderContext::resolve($this->table->qr_token));
-    Livewire::test(OrderPage::class)->assertDontSee('Bayar online')->assertSee('Bayar di kasir');
+    Livewire::test(OrderPage::class)->call('openPay', $selfOrderId)
+        ->assertDontSee('E-wallet / virtual account')->assertDontSee('Scan dari e-wallet')->assertSee('Bayar di kasir');
 });
 
 it('dashboard: owner mengatur; key tidak pernah tampil; manager ditolak', function () {

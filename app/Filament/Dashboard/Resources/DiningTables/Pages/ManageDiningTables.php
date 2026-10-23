@@ -81,13 +81,13 @@ final class ManageDiningTables extends ManageRecords
         ];
     }
 
-    /** Setelan self-order outlet (ADR 0014): aktif, batas waktu bayar, jam layanan, bayar di kasir, sambutan. */
+    /** Setelan self-order outlet (ADR 0014, 0027): aktif, batas waktu bayar, jam layanan, metode bayar di HP, selesai otomatis, sambutan. */
     public function settingsAction(): Action
     {
         $choose = fn (): bool => CurrentOutlet::selectedId() === null && count(CurrentOutlet::ids()) > 1;
         $values = fn (string $outletId): array => [
             'outlet_id' => $outletId,
-            ...SelfOrderSetting::forOutlet($outletId)->only(['enabled', 'payment_timeout_minutes', 'allow_pay_at_cashier', 'welcome_text']),
+            ...SelfOrderSetting::forOutlet($outletId)->only(['enabled', 'payment_timeout_minutes', 'allow_pay_at_cashier', 'allow_qris', 'allow_points', 'auto_complete_minutes', 'welcome_text']),
             'opens_at' => ($s = SelfOrderSetting::forOutlet($outletId))->opens_at !== null ? substr($s->opens_at, 0, 5) : null,
             'closes_at' => $s->closes_at !== null ? substr($s->closes_at, 0, 5) : null,
         ];
@@ -95,7 +95,7 @@ final class ManageDiningTables extends ManageRecords
         return Action::make('selfOrderSettings')->label('Setelan self-order')->icon(Heroicon::OutlinedCog6Tooth)->color('gray')
             ->visible(fn (): bool => DiningTableResource::canCreate())
             ->modalHeading('Setelan self-order')
-            ->modalDescription('Pelanggan memindai QR meja, memesan dari HP, lalu kasir menerima pesanan sebelum pelanggan membayar')
+            ->modalDescription('Pelanggan memindai QR meja, memesan & membayar dari HP; pesanan lunas langsung masuk antrean')
             ->modalWidth('lg')
             ->modalSubmitActionLabel('Simpan')
             ->fillForm(fn (): array => $values(CurrentOutlet::getOrFail()->id))
@@ -110,14 +110,22 @@ final class ManageDiningTables extends ManageRecords
                     ->visible($choose),
                 Toggle::make('enabled')->label('Aktifkan pesan dari meja')->live(),
                 TextInput::make('payment_timeout_minutes')->label('Batas waktu bayar')->integer()->minValue(5)->maxValue(120)->suffix('menit')
-                    ->default(15)->helperText('Setelah diterima kasir; lewat batas = pesanan kedaluwarsa')
+                    ->default(15)->helperText('Sejak pelanggan menekan Bayar; lewat batas = pesanan kedaluwarsa')
                     ->visible(fn (Get $get): bool => (bool) $get('enabled')),
                 TimePicker::make('opens_at')->label('Jam buka')->seconds(false)->requiredWith('closes_at')
                     ->visible(fn (Get $get): bool => (bool) $get('enabled')),
                 TimePicker::make('closes_at')->label('Jam tutup')->seconds(false)->requiredWith('opens_at')
                     ->helperText('Kosong = sepanjang hari')
                     ->visible(fn (Get $get): bool => (bool) $get('enabled')),
+                Toggle::make('allow_qris')->label('QRIS di HP')->default(true)
+                    ->helperText('Butuh Pembayaran online (Midtrans) aktif dengan QRIS diizinkan')
+                    ->visible(fn (Get $get): bool => (bool) $get('enabled')),
                 Toggle::make('allow_pay_at_cashier')->label('Pelanggan boleh bayar di kasir')->default(true)
+                    ->visible(fn (Get $get): bool => (bool) $get('enabled')),
+                Toggle::make('allow_points')->label('Bayar dengan poin member')->default(true)
+                    ->visible(fn (Get $get): bool => (bool) $get('enabled')),
+                TextInput::make('auto_complete_minutes')->label('Selesai otomatis setelah')->integer()->minValue(30)->maxValue(240)->suffix('menit')
+                    ->default(60)->helperText('Pesanan lunas yang tidak ditandai Diantar ditutup otomatis')
                     ->visible(fn (Get $get): bool => (bool) $get('enabled')),
                 Textarea::make('welcome_text')->label('Teks sambutan')->rows(2)->maxLength(255)
                     ->visible(fn (Get $get): bool => (bool) $get('enabled')),
@@ -130,6 +138,9 @@ final class ManageDiningTables extends ManageRecords
                 RunBusinessAction::run(fn () => app(UpdateSelfOrderSettings::class)->handle($outlet, [
                     'payment_timeout_minutes' => $current->payment_timeout_minutes,
                     'allow_pay_at_cashier' => $current->allow_pay_at_cashier,
+                    'allow_qris' => $current->allow_qris,
+                    'allow_points' => $current->allow_points,
+                    'auto_complete_minutes' => $current->auto_complete_minutes,
                     'opens_at' => $current->opens_at,
                     'closes_at' => $current->closes_at,
                     'welcome_text' => $current->welcome_text,

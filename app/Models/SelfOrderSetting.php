@@ -22,25 +22,31 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $opens_at HH:MM:SS waktu lokal outlet
  * @property string|null $closes_at
  * @property bool $allow_pay_at_cashier
+ * @property bool $allow_qris QRIS di HP (ADR 0027)
+ * @property bool $allow_points bayar dengan poin dari HP (ADR 0027)
+ * @property int $auto_complete_minutes pesanan lunas ditutup otomatis setelah ini (ADR 0027)
  * @property string|null $welcome_text
  */
 final class SelfOrderSetting extends Model
 {
     use BelongsToTenant, HasUuids, LogsChanges, RecordsAuthor;
 
-    protected $fillable = ['outlet_id', 'enabled', 'payment_timeout_minutes', 'opens_at', 'closes_at', 'allow_pay_at_cashier', 'welcome_text'];
+    protected $fillable = ['outlet_id', 'enabled', 'payment_timeout_minutes', 'opens_at', 'closes_at', 'allow_pay_at_cashier', 'allow_qris', 'allow_points', 'auto_complete_minutes', 'welcome_text'];
 
-    protected $attributes = ['enabled' => false, 'payment_timeout_minutes' => 15, 'allow_pay_at_cashier' => true];
+    protected $attributes = ['enabled' => false, 'payment_timeout_minutes' => 15, 'allow_pay_at_cashier' => true, 'allow_qris' => true, 'allow_points' => true, 'auto_complete_minutes' => 60];
 
     /** Kolom yang dicatat di audit log (Q58). */
     public static function auditAttributes(): array
     {
-        return ['enabled', 'payment_timeout_minutes', 'opens_at', 'closes_at', 'allow_pay_at_cashier', 'welcome_text'];
+        return ['enabled', 'payment_timeout_minutes', 'opens_at', 'closes_at', 'allow_pay_at_cashier', 'allow_qris', 'allow_points', 'auto_complete_minutes', 'welcome_text'];
     }
 
     protected function casts(): array
     {
-        return ['enabled' => 'boolean', 'payment_timeout_minutes' => 'integer', 'allow_pay_at_cashier' => 'boolean'];
+        return [
+            'enabled' => 'boolean', 'payment_timeout_minutes' => 'integer', 'allow_pay_at_cashier' => 'boolean',
+            'allow_qris' => 'boolean', 'allow_points' => 'boolean', 'auto_complete_minutes' => 'integer',
+        ];
     }
 
     /** Setelan outlet; belum ada = model baru (tidak disimpan) dengan self-order nonaktif. */

@@ -28,7 +28,7 @@ use Livewire\Livewire;
  * halaman pesan dari meja (publik) maupun kasir web, dan pesan gagal publik tidak membedakan kode yang ada.
  */
 beforeEach(function () {
-    $this->pos = posSetup(openShift: false);
+    $this->pos = posSetup();
     TenantContext::set($this->pos->tenantId);
     app(UpdateMemberProgram::class)->handle(true, [$this->pos->outlet->id]);
     app(UpdateSelfOrderSettings::class)->handle($this->pos->outlet, ['enabled' => true]);
@@ -63,13 +63,14 @@ it('pesan dari meja: kode tidak ada, kedaluwarsa, dan di bawah minimal belanja d
         expect($page->instance()->quote['error'])->toBe(VoucherAttempts::PUBLIC_INVALID_MESSAGE);
     }
 
-    $page->set('customerName', 'Andi')->call('submit')->assertSet('error', VoucherAttempts::PUBLIC_INVALID_MESSAGE);
+    // Bayar ditolak dengan pesan seragam yang sama (ADR 0027: tagihan dibuat saat memilih metode bayar)
+    $page->call('openPay')->assertSet('error', VoucherAttempts::PUBLIC_INVALID_MESSAGE);
     expect(SelfOrder::query()->count())->toBe(0);
 
     // Kode sah tetap dipakai
     $page->set('voucherCode', 'hemat5')->assertSet('checkedVoucher', 'HEMAT5');
     expect($page->instance()->quote['totals']->voucherDiscount)->toBe('5000.00');
-    $page->call('submit')->assertSet('error', null);
+    $page->call('openPay')->call('choosePay', 'cashier')->assertSet('payError', null);
     expect(SelfOrder::query()->sole()->voucher_code)->toBe('HEMAT5');
 });
 
@@ -86,12 +87,12 @@ it('pesan dari meja: kode baru ke-11 dalam semenit dari IP yang sama ditolak tan
     $page->set('voucherCode', 'HEMAT5')->assertSet('checkedVoucher', '');
     expect($page->instance()->quote['error'])->toStartWith('Terlalu banyak mencoba kode voucher');
 
-    $page->set('customerName', 'Andi')->call('submit');
+    $page->call('openPay');
     expect($page->get('error'))->toStartWith('Terlalu banyak mencoba kode voucher')
         ->and(SelfOrder::query()->count())->toBe(0);
 
     // Mengosongkan kode membuka kembali pesanan tanpa voucher
-    $page->set('voucherCode', '')->assertSet('voucherBlocked', null)->call('submit')->assertSet('error', null);
+    $page->set('voucherCode', '')->assertSet('voucherBlocked', null)->call('openPay')->call('choosePay', 'cashier')->assertSet('payError', null);
     expect(SelfOrder::query()->sole()->voucher_code)->toBeNull();
 });
 

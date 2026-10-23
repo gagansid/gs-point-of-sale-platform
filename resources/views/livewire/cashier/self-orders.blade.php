@@ -4,7 +4,7 @@
     <header class="pos-page-head">
         <div>
             <h1>Pesanan meja</h1>
-            <p>Periksa ketersediaan lalu terima; pelanggan membayar setelah pesanan diterima.</p>
+            <p>Pelanggan membayar dari HP; tagihan yang belum lunas ada di Belum dibayar. Terima/tolak hanya untuk pesanan lama.</p>
         </div>
     </header>
 
@@ -62,7 +62,7 @@
                 <div class="pos-empty">
                     <span class="pos-empty-icon" aria-hidden="true">@svg('heroicon-o-qr-code')</span>
                     <strong>Belum ada pesanan masuk</strong>
-                    <p>Pesanan dari QR meja akan muncul di sini dan berbunyi.</p>
+                    <p>Pesanan baru dari QR meja tidak perlu diterima lagi.</p>
                 </div>
             @endforelse
         </section>

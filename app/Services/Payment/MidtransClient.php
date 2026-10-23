@@ -8,6 +8,7 @@ use App\Enums\ErrorCode;
 use App\Exceptions\BusinessException;
 use App\Models\PaymentGatewaySetting;
 use App\Support\SystemSettings;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Klien HTTP Midtrans (Snap + Core status/cancel) memakai key owner (ADR 0014, Q72). Gagal jaringan/ditolak Midtrans
+ * Klien HTTP Midtrans (Snap + Core QRIS/status/cancel) memakai key owner (ADR 0014, Q72). Gagal jaringan/ditolak Midtrans
  * → PAYMENT_GATEWAY_ERROR (502); key tidak pernah ditulis ke log.
  */
 final class MidtransClient
@@ -79,6 +80,44 @@ final class MidtransClient
         }
 
         return ['token' => $token, 'redirect_url' => $url];
+    }
+
+    /**
+     * QRIS lewat Core API (ADR 0027 K3): QR tampil di halaman meja, bukan redirect Snap. Nominal bulat rupiah.
+     * `expiry_time` Midtrans = waktu WIB; tanpa itu dipakai sekarang + durasi.
+     *
+     * @return array{qr_string: string, transaction_id: string|null, expires_at: CarbonImmutable}
+     *
+     * @throws BusinessException
+     */
+    public function chargeQris(string $orderId, int $amount, int $expiryMinutes): array
+    {
+        $response = $this->send(fn () => $this->request()->post($this->apiUrl().'/v2/charge', [
+            'payment_type' => 'qris',
+            'transaction_details' => ['order_id' => $orderId, 'gross_amount' => $amount],
+            'qris' => ['acquirer' => 'gopay'],
+            'custom_expiry' => ['expiry_duration' => $expiryMinutes, 'unit' => 'minute'],
+        ]));
+
+        $qr = $response->json('qr_string');
+        // Core API bisa menjawab HTTP 200 dengan status_code gagal di badan respons
+        if (! is_string($qr) || $qr === '' || ! in_array((string) $response->json('status_code'), ['200', '201'], true)) {
+            Log::warning('Midtrans QRIS tanpa qr_string', ['status_code' => $response->json('status_code')]);
+            throw BusinessException::of(ErrorCode::PaymentGatewayError, 'QRIS belum bisa dibuat. Coba lagi atau bayar di kasir');
+        }
+
+        $expiry = $response->json('expiry_time');
+        try {
+            $expiresAt = is_string($expiry) ? CarbonImmutable::parse($expiry, 'Asia/Jakarta')->utc() : null;
+        } catch (\Throwable) {
+            $expiresAt = null;
+        }
+
+        return [
+            'qr_string' => $qr,
+            'transaction_id' => is_string($response->json('transaction_id')) ? $response->json('transaction_id') : null,
+            'expires_at' => $expiresAt ?? CarbonImmutable::now()->addMinutes($expiryMinutes),
+        ];
     }
 
     /**

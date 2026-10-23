@@ -42,8 +42,10 @@ function orderPage(object $test): Testable
     return Livewire::test(OrderPage::class);
 }
 
-it('HP: halaman QR menampilkan menu; pilih opsi wajib, kirim pesanan, status menunggu kasir', function () {
-    $this->get($this->table->orderUrl())->assertOk()->assertSee('Meja 5')->assertSee('Selamat datang di Kopi Senja')->assertSee('Croissant');
+it('HP: pilih opsi wajib, Bayar → bayar di kasir: tagihan langsung dibuat tanpa terima kasir (ADR 0027)', function () {
+    $this->get($this->table->orderUrl())->assertOk()->assertSee('Meja 5')->assertSee('Selamat datang di Kopi Senja')->assertSee('Croissant')
+        ->assertSee('Kasir belum buka');
+    Shift::factory()->forDevice($this->pos->device, $this->pos->cashier)->create(['opening_cash' => '100000.00']);
 
     orderPage($this)
         ->call('addProduct', $this->pos->coffee->id)
@@ -57,17 +59,24 @@ it('HP: halaman QR menampilkan menu; pilih opsi wajib, kirim pesanan, status men
         ->assertSet('cart.0.option_names', ['Large'])
         ->call('show', 'cart')
         ->assertSee('Rp54.000')
-        ->call('submit')
-        ->assertSet('error', 'Nama wajib diisi')
+        ->call('openPay')
+        ->assertSet('payOpen', true)
+        ->assertSee('Pilih pembayaran')->assertSee('Bayar di kasir')->assertDontSee('QRIS')
+        // Tamu (program member nonaktif) wajib mengisi nama
+        ->call('choosePay', 'cashier')
+        ->assertSet('payError', 'Nama wajib diisi')
         ->set('customerName', 'Andi')
-        ->call('submit')
-        ->assertSet('error', null)
-        ->assertSet('view', 'status')
+        ->call('choosePay', 'cashier')
+        ->assertSet('payError', null)
+        ->assertSet('view', 'pay')
         ->assertSet('cart', [])
-        ->assertSee('Menunggu kasir');
+        ->assertSee('Tunjukkan ke kasir');
 
     $selfOrder = SelfOrder::query()->sole();
-    expect($selfOrder->customer_name)->toBe('Andi')->and($selfOrder->items[0]['qty'])->toBe(2);
+    $order = Order::query()->sole();
+    expect($selfOrder->customer_name)->toBe('Andi')->and($selfOrder->items[0]['qty'])->toBe(2)
+        ->and($selfOrder->status)->toBe(SelfOrderStatus::Accepted)->and($selfOrder->handled_by)->toBeNull()
+        ->and($order->status)->toBe(OrderStatus::AwaitingPayment)->and($order->grand_total)->toBe('63000.00');
 });
 
 it('HP: member yang masuk di halaman member otomatis terpasang', function () {
@@ -77,12 +86,14 @@ it('HP: member yang masuk di halaman member otomatis terpasang', function () {
     MemberPortal::guard()->login($member);
     session()->put(MemberPortal::SESSION_PASSWORD, MemberPortal::passwordFingerprint($member->refresh()));
 
+    Shift::factory()->forDevice($this->pos->device, $this->pos->cashier)->create(['opening_cash' => '100000.00']);
+
     orderPage($this)
         ->assertSet('customerName', 'Rina')
         ->call('addProduct', $this->pos->croissant->id)->call('savePick')
         // ADR 0027: kartu member menggantikan kolom nama; nama pemesan = nama member
         ->call('show', 'cart')->assertSee('Poin & diskon member ikut dihitung', false)->assertDontSee('Nama pemesan')
-        ->call('submit')->assertSet('view', 'status');
+        ->call('openPay')->call('choosePay', 'cashier')->assertSet('view', 'pay');
 
     expect(SelfOrder::query()->sole()->member_id)->toBe($member->id);
 });

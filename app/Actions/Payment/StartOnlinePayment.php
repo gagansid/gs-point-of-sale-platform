@@ -17,7 +17,8 @@ use App\Support\Money;
 use Illuminate\Support\Str;
 
 /**
- * Pelanggan membayar pesanan meja yang sudah diterima lewat Midtrans Snap (ADR 0014, Q72). Nominal = sisa tagihan
+ * Pelanggan membayar pesanan meja lewat Midtrans Snap untuk e-wallet/VA (ADR 0014, Q72; QRIS lewat StartTableQrisPayment,
+ * ADR 0027). Nominal = sisa tagihan
  * dari server, dibulatkan ke atas ke rupiah (Midtrans IDR tanpa sen). Transaksi Snap yang masih berlaku dipakai
  * ulang (klik ganda tidak membuat dua tagihan). Lunas hanya lewat webhook terverifikasi.
  */
@@ -51,7 +52,7 @@ final class StartOnlinePayment
         $remaining = Money::sub($order->grand_total, $order->paid_total);
         $amount = (int) ceil((float) $remaining);
 
-        $existing = GatewayTransaction::query()->where('order_id', $order->id)->where('status', GatewayTransaction::PENDING)
+        $existing = GatewayTransaction::query()->where('order_id', $order->id)->where('method', GatewayTransaction::SNAP)->where('status', GatewayTransaction::PENDING)
             ->where('amount', $amount)->where('created_at', '>=', now()->subMinutes(self::REUSE_MINUTES))->latest()->first();
 
         if ($existing !== null && $existing->redirect_url !== null) {
@@ -61,9 +62,21 @@ final class StartOnlinePayment
         $transaction = new GatewayTransaction(['order_id' => $order->id, 'amount' => (string) $amount, 'status' => GatewayTransaction::PENDING]);
         $transaction->id = (string) Str::uuid7();
 
-        $snap = MidtransClient::for($setting)->createSnap($transaction->id, $amount, ['first_name' => mb_substr($customerName, 0, 50)], $finishUrl);
+        $snap = MidtransClient::for($setting)->createSnap($transaction->id, $amount, ['first_name' => mb_substr($customerName, 0, 50)], $finishUrl, self::channels($setting));
         $transaction->fill(['snap_token' => $snap['token'], 'redirect_url' => $snap['redirect_url']])->save();
 
         return $transaction;
+    }
+
+    /**
+     * Kanal Snap: e-wallet/VA yang diizinkan owner, tanpa QRIS (QRIS tampil langsung di halaman meja, ADR 0027 K3).
+     *
+     * @return list<string>
+     */
+    public static function channels(PaymentGatewaySetting $setting): array
+    {
+        $allowed = $setting->enabled_payments ?: array_keys(PaymentGatewaySetting::PAYMENT_TYPES);
+
+        return array_values(array_filter($allowed, fn (string $type): bool => $type !== 'qris'));
     }
 }
