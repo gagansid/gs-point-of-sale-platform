@@ -1,47 +1,134 @@
 {{--
     Halaman pesan dari meja (ADR 0014, tampilan ADR 0027 §6): Menu → Keranjang → Pesananku lewat navigasi bawah.
-    Mode menu Kotak/Baris disimpan di localStorage perangkat. Semua teks pengguna di-escape.
+    Menu: cari, tab kategori menempel + scroll-spy, mode Kotak/Baris (localStorage), + cepat untuk produk tanpa opsi.
+    Harga di layar = pratinjau; tagihan final dihitung server. Semua teks pengguna di-escape.
 --}}
 @php
     $money = fn (string $v): string => \App\Support\Money::format($v);
     $quote = $this->quote;
-    $count = (int) array_sum(array_column($cart, 'qty'));
+    $count = $this->cartQty();
     $member = $this->member();
     $orderCount = $this->myOrders->count();
     $categoryNames = $this->catalog['categories']->pluck('name', 'id')->all();
+    $setting = $context->setting;
+    $hours = $setting->opens_at && $setting->closes_at ? substr($setting->opens_at, 0, 5).'–'.substr($setting->closes_at, 0, 5) : null;
 @endphp
-<div x-data="{ setLayout(value) { document.documentElement.dataset.soView = value; try { localStorage.setItem('gspos.so.view', value) } catch (e) {} } }">
+<div x-data="{
+        setLayout(value) { document.documentElement.dataset.soView = value; try { localStorage.setItem('gspos.so.view', value) } catch (e) {} },
+        toast: null,
+        toastTimer: null,
+        showToast(detail) { this.toast = detail; clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => this.toast = null, 5000) },
+    }"
+    x-on:so-toast.window="showToast($event.detail)">
     <main @class(['so-main', 'has-cartbar' => $view === 'menu' && $count > 0])>
         @if ($error)
             <div class="so-alert is-danger" role="alert">@svg('heroicon-o-exclamation-circle', ['aria-hidden' => 'true']) <span>{{ $error }}</span></div>
         @endif
 
         @if ($view === 'menu')
-            @if ($context->setting->welcome_text)
-                <p class="so-secondary">{{ $context->setting->welcome_text }}</p>
-            @endif
+            @php($sections = $this->menuSections())
+            @php($plainQty = $this->plainQuantities())
 
-            @if ($this->catalog['categories']->count() > 1)
-                <nav class="so-cats" aria-label="Kategori">
-                    <div class="so-cats-scroll">
-                        <button type="button" class="so-tab {{ $category === '' ? 'is-active' : '' }}" wire:click="$set('category', '')">Semua</button>
-                        @foreach ($this->catalog['categories'] as $cat)
-                            <button type="button" wire:key="c-{{ $cat->id }}" class="so-tab {{ $category === $cat->id ? 'is-active' : '' }}" wire:click="$set('category', '{{ $cat->id }}')">{{ $cat->name }}</button>
-                        @endforeach
-                    </div>
-                </nav>
-            @endif
-
-            <section class="so-menu-section" aria-label="Menu">
-                <div class="so-menu-head">
-                    <h1 class="so-card-title">Menu</h1>
-                    <div class="so-segment" role="group" aria-label="Tampilan menu">
-                        <button type="button" data-view="grid" x-on:click="setLayout('grid')" aria-label="Tampilan kotak">@svg('heroicon-o-squares-2x2', ['aria-hidden' => 'true'])</button>
-                        <button type="button" data-view="list" x-on:click="setLayout('list')" aria-label="Tampilan baris">@svg('heroicon-o-bars-3', ['aria-hidden' => 'true'])</button>
-                    </div>
+            @if ($setting->welcome_text || $hours)
+                <div class="so-welcome">
+                    @if ($setting->welcome_text)
+                        <p class="so-secondary">{{ $setting->welcome_text }}</p>
+                    @endif
+                    @if ($hours)
+                        <span class="so-badge is-success">@svg('heroicon-o-clock', ['aria-hidden' => 'true']) Buka {{ $hours }}</span>
+                    @endif
                 </div>
+            @endif
 
-                @if ($this->visibleProducts()->isEmpty())
+            <div class="so-toolbar">
+                <label class="so-input-icon">
+                    @svg('heroicon-o-magnifying-glass', ['aria-hidden' => 'true'])
+                    <input class="so-input" type="search" wire:model.live.debounce.300ms="search" maxlength="50" placeholder="Cari menu" aria-label="Cari menu" enterkeyhint="search" autocomplete="off">
+                </label>
+                <div class="so-segment" role="group" aria-label="Tampilan menu">
+                    <button type="button" data-view="grid" x-on:click="setLayout('grid')" aria-label="Tampilan kotak">@svg('heroicon-o-squares-2x2', ['aria-hidden' => 'true'])</button>
+                    <button type="button" data-view="list" x-on:click="setLayout('list')" aria-label="Tampilan baris">@svg('heroicon-o-bars-3', ['aria-hidden' => 'true'])</button>
+                </div>
+            </div>
+
+            <div class="so-menu-wrap" wire:loading.class="is-loading" wire:target="search"
+                x-data="{
+                    active: @js($sections[0]['id'] ?? ''),
+                    go(id) {
+                        this.active = id;
+                        document.getElementById('sec-' + id)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+                    },
+                }"
+                x-init="$watch('active', (id) => { const tab = document.getElementById('tab-' + id); if (tab) tab.parentElement.scrollTo({ left: tab.offsetLeft - 16, behavior: 'smooth' }) })">
+                @if ($search === '' && count($sections) > 1)
+                    <nav class="so-cats" aria-label="Kategori menu">
+                        <div class="so-cats-scroll">
+                            @foreach ($sections as $section)
+                                <button type="button" id="tab-{{ $section['id'] }}" wire:key="tab-{{ $section['id'] }}" class="so-tab"
+                                    :class="active === @js($section['id']) && 'is-active'" :aria-current="active === @js($section['id']) ? 'true' : 'false'"
+                                    x-on:click="go(@js($section['id']))">{{ $section['name'] }}</button>
+                            @endforeach
+                        </div>
+                    </nav>
+                @endif
+
+                @forelse ($sections as $section)
+                    <section class="so-menu-section" id="sec-{{ $section['id'] }}" wire:key="sec-{{ $section['id'] }}" aria-labelledby="sec-title-{{ $section['id'] }}"
+                        x-intersect:enter.margin.-120px.0px.-60%.0px="active = @js($section['id'])">
+                        <h2 class="so-menu-title" id="sec-title-{{ $section['id'] }}">{{ $section['name'] }} <span class="so-muted">{{ $section['products']->count() }}</span></h2>
+
+                        @if ($section['products']->isEmpty())
+                            <div class="so-card">
+                                <div class="so-empty">
+                                    <span class="so-empty-icon" aria-hidden="true">@svg('heroicon-o-magnifying-glass')</span>
+                                    <p class="so-empty-title">Menu tidak ditemukan</p>
+                                    <p>Coba kata lain, atau lihat semua menu.</p>
+                                    <div class="so-actions"><button type="button" class="so-btn is-outline" wire:click="$set('search', '')">Lihat semua menu</button></div>
+                                </div>
+                            </div>
+                        @else
+                            <ul class="so-menu">
+                                @foreach ($section['products'] as $product)
+                                    @php($quick = \App\Livewire\SelfOrder\OrderPage::isQuickAdd($product))
+                                    @php($inCart = $plainQty[$product->id] ?? 0)
+                                    <li wire:key="p-{{ $section['id'] }}-{{ $product->id }}">
+                                        <article @class(['so-product', 'is-unavailable' => ! $product->is_available])>
+                                            <span class="so-product-media">
+                                                @if ($product->imageUrl())
+                                                    <img src="{{ $product->imageUrl() }}" alt="" loading="lazy" width="160" height="160">
+                                                @else
+                                                    @svg('heroicon-o-photo', ['aria-hidden' => 'true'])
+                                                @endif
+                                            </span>
+                                            <span class="so-product-body">
+                                                <span class="so-product-name">{{ $product->name }}</span>
+                                                @if ($categoryNames[$product->category_id] ?? null)
+                                                    <span class="so-product-desc">{{ $categoryNames[$product->category_id] }}</span>
+                                                @endif
+                                            </span>
+                                            <span class="so-product-foot">
+                                                <span class="so-product-price">{{ $money($product->price) }}</span>
+                                                @if (! $product->is_available)
+                                                    <span class="so-badge is-danger is-soldout">Habis</span>
+                                                @elseif ($quick && $inCart > 0)
+                                                    <span class="so-qty is-sm">
+                                                        <button type="button" wire:click="decrementProduct('{{ $product->id }}')" aria-label="{{ $inCart > 1 ? 'Kurangi' : 'Hapus' }} {{ $product->name }}">@svg($inCart > 1 ? 'heroicon-o-minus' : 'heroicon-o-trash', ['aria-hidden' => 'true'])</button>
+                                                        <span aria-live="polite">{{ $inCart }}</span>
+                                                        <button type="button" wire:click="quickAdd('{{ $product->id }}')" @disabled($count >= \App\Actions\SelfOrder\SubmitSelfOrder::MAX_ITEMS) aria-label="Tambah {{ $product->name }}">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
+                                                    </span>
+                                                @else
+                                                    <button type="button" class="so-icon-btn is-sm is-primary" wire:click="quickAdd('{{ $product->id }}')" aria-label="Tambah {{ $product->name }}">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
+                                                @endif
+                                            </span>
+                                            <button type="button" class="so-product-open" wire:click="addProduct('{{ $product->id }}')" @disabled(! $product->is_available)
+                                                aria-label="{{ $product->is_available ? $product->name.', '.$money($product->price).', lihat pilihan' : $product->name.' habis' }}"></button>
+                                        </article>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </section>
+                @empty
                     <div class="so-card">
                         <div class="so-empty">
                             <span class="so-empty-icon" aria-hidden="true">@svg('heroicon-o-book-open')</span>
@@ -49,58 +136,28 @@
                             <p>Silakan pesan langsung di kasir.</p>
                         </div>
                     </div>
-                @else
-                    <ul class="so-menu">
-                        @foreach ($this->visibleProducts() as $product)
-                            <li wire:key="p-{{ $product->id }}">
-                                <article @class(['so-product', 'is-unavailable' => ! $product->is_available])>
-                                    <span class="so-product-media">
-                                        @if ($product->imageUrl())
-                                            <img src="{{ $product->imageUrl() }}" alt="" loading="lazy" width="160" height="160">
-                                        @else
-                                            @svg('heroicon-o-photo', ['aria-hidden' => 'true'])
-                                        @endif
-                                    </span>
-                                    <span class="so-product-body">
-                                        <span class="so-product-name">{{ $product->name }}</span>
-                                        @if ($categoryNames[$product->category_id] ?? null)
-                                            <span class="so-product-desc">{{ $categoryNames[$product->category_id] }}</span>
-                                        @endif
-                                    </span>
-                                    <span class="so-product-foot">
-                                        <span class="so-product-price">{{ $money($product->price) }}</span>
-                                        @if ($product->is_available)
-                                            <span class="so-icon-btn is-sm is-primary" aria-hidden="true">@svg('heroicon-o-plus')</span>
-                                        @else
-                                            <span class="so-badge is-danger is-soldout">Habis</span>
-                                        @endif
-                                    </span>
-                                    <button type="button" class="so-product-open" wire:click="addProduct('{{ $product->id }}')" @disabled(! $product->is_available)
-                                        aria-label="{{ $product->is_available ? 'Tambah '.$product->name.', '.$money($product->price) : $product->name.' habis' }}"></button>
-                                </article>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-            </section>
+                @endforelse
+            </div>
         @elseif ($view === 'cart')
-            <section class="so-card">
-                <div class="so-card-head">
-                    <h1 class="so-card-title">Keranjang</h1>
-                    <span class="so-badge">{{ $context->table->name }}</span>
-                </div>
-
-                @if ($cart === [])
+            @if ($cart === [])
+                <section class="so-card">
                     <div class="so-empty">
                         <span class="so-empty-icon" aria-hidden="true">@svg('heroicon-o-shopping-bag')</span>
                         <p class="so-empty-title">Keranjang masih kosong</p>
                         <p>Pilih menu dulu, lalu kembali ke sini untuk membayar.</p>
                         <div class="so-actions"><button type="button" class="so-btn is-primary" wire:click="show('menu')">Lihat menu</button></div>
                     </div>
-                @else
+                </section>
+            @else
+                <section class="so-card">
+                    <div class="so-card-head">
+                        <h1 class="so-card-title">Pesananmu <span class="so-muted so-num">{{ $count }} item</span></h1>
+                        <button type="button" class="so-btn is-ghost" wire:click="show('menu')">@svg('heroicon-o-plus', ['aria-hidden' => 'true']) Tambah menu</button>
+                    </div>
+
                     <ul class="so-lines">
                         @foreach ($cart as $i => $line)
-                            <li class="so-line" wire:key="l-{{ $i }}">
+                            <li class="so-line" wire:key="l-{{ $i }}-{{ $line['product_id'] }}">
                                 <div>
                                     <p class="so-line-name">{{ $line['name'] }}</p>
                                     @if ($line['option_names'] !== [])
@@ -110,26 +167,40 @@
                                         <p class="so-line-note">“{{ $line['notes'] }}”</p>
                                     @endif
                                 </div>
+                                <span class="so-line-price">{{ $money($this->linePrice($line)) }}</span>
                                 <div class="so-line-actions">
-                                    <span></span>
+                                    <button type="button" class="so-btn is-ghost so-line-edit" wire:click="editLine({{ $i }})" aria-label="Ubah {{ $line['name'] }}">@svg('heroicon-o-pencil-square', ['aria-hidden' => 'true']) Ubah</button>
                                     <span class="so-qty">
-                                        <button type="button" wire:click="decrement({{ $i }})" aria-label="Kurangi {{ $line['name'] }}">@svg($line['qty'] > 1 ? 'heroicon-o-minus' : 'heroicon-o-trash', ['aria-hidden' => 'true'])</button>
+                                        <button type="button" wire:click="decrement({{ $i }})" aria-label="{{ $line['qty'] > 1 ? 'Kurangi' : 'Hapus' }} {{ $line['name'] }}">@svg($line['qty'] > 1 ? 'heroicon-o-minus' : 'heroicon-o-trash', ['aria-hidden' => 'true'])</button>
                                         <span aria-live="polite">{{ $line['qty'] }}</span>
-                                        <button type="button" wire:click="increment({{ $i }})" aria-label="Tambah {{ $line['name'] }}">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
+                                        <button type="button" wire:click="increment({{ $i }})" @disabled($count >= \App\Actions\SelfOrder\SubmitSelfOrder::MAX_ITEMS) aria-label="Tambah {{ $line['name'] }}">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
                                     </span>
                                 </div>
                             </li>
                         @endforeach
                     </ul>
-                @endif
-            </section>
+                </section>
 
-            @if ($cart !== [])
+                <section class="so-card">
+                    <h2 class="so-card-title">Catatan & voucher</h2>
+                    <label class="so-field">
+                        <span class="so-label">Catatan untuk outlet <small>(opsional)</small></span>
+                        <input class="so-input" type="text" wire:model.blur="notes" maxlength="255" placeholder="mis. tanpa sedotan">
+                    </label>
+                    <label class="so-field">
+                        <span class="so-label">Kode voucher <small>(opsional)</small></span>
+                        <input class="so-input" type="text" wire:model.blur="voucherCode" maxlength="30" autocomplete="off" autocapitalize="characters" @if ($quote['error']) aria-invalid="true" aria-describedby="voucher-error" @endif>
+                        @if ($quote['error'])
+                            <em class="so-error" id="voucher-error" role="alert">{{ $quote['error'] }}</em>
+                        @elseif ($checkedVoucher !== '' && $quote['totals'] && \App\Support\Money::isPositive($quote['totals']->voucherDiscount))
+                            <small class="so-help so-success">@svg('heroicon-s-check-circle', ['aria-hidden' => 'true']) Voucher dipakai: hemat {{ $money($quote['totals']->voucherDiscount) }}</small>
+                        @endif
+                    </label>
+                </section>
+
                 <section class="so-card">
                     <h2 class="so-card-title">Ringkasan</h2>
-                    @if ($quote['error'])
-                        <p class="so-error" role="alert">{{ $quote['error'] }}</p>
-                    @elseif ($quote['totals'])
+                    @if ($quote['totals'])
                         @php($t = $quote['totals'])
                         <dl class="so-totals">
                             <dt>Subtotal</dt><dd>{{ $money($t->subtotal) }}</dd>
@@ -147,6 +218,8 @@
                             @endif
                             <dt class="is-grand">Total</dt><dd class="is-grand">{{ $money($t->grandTotal) }}</dd>
                         </dl>
+                    @else
+                        <p class="so-muted">Ringkasan muncul setelah kode voucher diperbaiki atau dihapus.</p>
                     @endif
 
                     <form class="so-form" wire:submit="submit">
@@ -154,20 +227,12 @@
                             <span class="so-label">Nama pemesan</span>
                             <input class="so-input" type="text" wire:model="customerName" maxlength="100" required autocomplete="name">
                         </label>
-                        <label class="so-field">
-                            <span class="so-label">Catatan untuk outlet <small>(opsional)</small></span>
-                            <input class="so-input" type="text" wire:model="notes" maxlength="255">
-                        </label>
-                        <label class="so-field">
-                            <span class="so-label">Kode voucher <small>(opsional)</small></span>
-                            <input class="so-input" type="text" wire:model.blur="voucherCode" maxlength="30" autocomplete="off">
-                        </label>
                         @if ($member)
                             <p class="so-muted">Masuk sebagai member <strong>{{ $member->name }}</strong>: poin & diskon member ikut dihitung.</p>
                         @else
                             <p class="so-muted"><a href="{{ route('self-order.member', ['token' => $context->table->qr_token]) }}">Masuk sebagai member</a> untuk dapat poin & diskon.</p>
                         @endif
-                        <button type="submit" class="so-btn is-primary is-block" wire:loading.attr="disabled">Kirim pesanan</button>
+                        <button type="submit" class="so-btn is-primary is-block" wire:loading.attr="disabled" wire:target="submit">Kirim pesanan</button>
                         <p class="so-muted">Kasir memeriksa pesanan dulu, setelah itu kamu bisa membayar.</p>
                     </form>
                 </section>
@@ -222,13 +287,23 @@
         <div class="so-cartbar">
             <div class="so-cartbar-inner">
                 <div class="so-cartbar-info">
-                    <span class="so-muted">{{ $count }} item</span>
+                    <span class="so-muted so-num">{{ $count }} item</span>
                     <strong>{{ $quote['totals'] ? $money($quote['totals']->grandTotal) : '—' }}</strong>
                 </div>
                 <button type="button" class="so-btn is-primary" wire:click="show('cart')">Lihat keranjang @svg('heroicon-o-arrow-right', ['aria-hidden' => 'true'])</button>
             </div>
         </div>
     @endif
+
+    {{-- Toast (Urungkan hapus item) --}}
+    <div class="so-toast-wrap" aria-live="polite">
+        <template x-if="toast">
+            <div class="so-toast" role="status">
+                <span x-text="toast.message"></span>
+                <button type="button" class="so-btn is-ghost" x-show="toast.undo" x-on:click="$wire.undoRemove(); toast = null">Urungkan</button>
+            </div>
+        </template>
+    </div>
 
     <nav class="so-tabbar" aria-label="Langkah pesanan">
         <div class="so-tabbar-inner">
@@ -246,45 +321,60 @@
         </div>
     </nav>
 
-    {{-- Dialog opsi (bottom sheet) --}}
+    {{-- Dialog opsi (bottom sheet): pegangan geser, fokus terkunci, Esc/✕/latar untuk menutup --}}
     @if ($pickProductId)
         @php($pickProduct = $this->catalog['products']->firstWhere('id', $pickProductId))
-        <div class="so-sheet" role="dialog" aria-modal="true" aria-labelledby="pick-title" x-on:keydown.escape.window="$wire.closePicker()">
-            <button type="button" class="so-sheet-backdrop" wire:click="closePicker" aria-label="Tutup"></button>
-            <form class="so-sheet-panel" wire:submit="savePick">
-                <span class="so-sheet-grip" aria-hidden="true"></span>
-                <div class="so-sheet-head">
-                    <div class="so-sheet-hero">
-                        <span class="so-product-media">
-                            @if ($pickProduct?->imageUrl())
-                                <img src="{{ $pickProduct->imageUrl() }}" alt="">
-                            @else
-                                @svg('heroicon-o-photo', ['aria-hidden' => 'true'])
-                            @endif
-                        </span>
-                        <div>
-                            <h2 id="pick-title" class="so-card-title">{{ $pickProduct?->name }}</h2>
-                            <p class="so-secondary so-num">{{ $pickProduct ? $money($pickProduct->price) : '' }}</p>
+        <div class="so-sheet" role="dialog" aria-modal="true" aria-labelledby="pick-title" wire:key="sheet-{{ $pickProductId }}-{{ $pickIndex ?? 'new' }}"
+            x-data="{ startY: null, dy: 0 }" x-trap.noscroll="true" x-on:keydown.escape="$wire.closePicker()">
+            <button type="button" class="so-sheet-backdrop" wire:click="closePicker" aria-label="Tutup" tabindex="-1"></button>
+            <form class="so-sheet-panel" wire:submit="savePick" :style="dy > 0 && `transform: translateY(${dy}px); transition: none`">
+                <div class="so-sheet-drag"
+                    x-on:touchstart.passive="startY = $event.touches[0].clientY"
+                    x-on:touchmove.passive="if (startY !== null) dy = Math.max(0, $event.touches[0].clientY - startY)"
+                    x-on:touchend="if (dy > 90) { $wire.closePicker() } else { dy = 0 } startY = null">
+                    <span class="so-sheet-grip" aria-hidden="true"></span>
+                    <div class="so-sheet-head">
+                        <div class="so-sheet-hero">
+                            <span class="so-product-media">
+                                @if ($pickProduct?->imageUrl())
+                                    <img src="{{ $pickProduct->imageUrl() }}" alt="" width="72" height="72">
+                                @else
+                                    @svg('heroicon-o-photo', ['aria-hidden' => 'true'])
+                                @endif
+                            </span>
+                            <div>
+                                <h2 id="pick-title" class="so-card-title">{{ $pickProduct?->name }}</h2>
+                                <p class="so-secondary so-num">{{ $pickProduct ? $money($pickProduct->price) : '' }}</p>
+                                @if ($pickProduct && ($categoryNames[$pickProduct->category_id] ?? null))
+                                    <p class="so-muted">{{ $categoryNames[$pickProduct->category_id] }}</p>
+                                @endif
+                            </div>
                         </div>
+                        <button type="button" class="so-icon-btn is-plain" wire:click="closePicker" aria-label="Tutup">@svg('heroicon-o-x-mark', ['aria-hidden' => 'true'])</button>
                     </div>
-                    <button type="button" class="so-icon-btn is-plain" wire:click="closePicker" aria-label="Tutup">@svg('heroicon-o-x-mark', ['aria-hidden' => 'true'])</button>
                 </div>
 
                 <div class="so-sheet-body">
                     @foreach ($this->pickerGroups() as $group)
-                        <fieldset class="so-options" wire:key="g-{{ $group->id }}">
-                            <legend>{{ $group->name }} <span class="so-badge">{{ $group->min_select > 0 ? 'Pilih '.$group->min_select : 'Opsional' }}{{ $group->max_select > 1 ? ', maks. '.$group->max_select : '' }}</span></legend>
+                        <fieldset class="so-options" wire:key="g-{{ $group->id }}" @if ($pickErrorGroup === $group->id) aria-describedby="g-error-{{ $group->id }}" @endif>
+                            <legend>
+                                <span>{{ $group->name }}</span>
+                                <span @class(['so-badge', 'is-warning' => $pickErrorGroup === $group->id])>{{ $group->min_select > 0 ? 'Pilih '.($group->min_select === $group->max_select ? $group->min_select : $group->min_select.'–'.$group->max_select) : 'Opsional'.($group->max_select > 1 ? ', maks. '.$group->max_select : '') }}</span>
+                            </legend>
                             @foreach ($group->options as $option)
                                 <label @class(['so-option', 'is-unavailable' => ! $option->is_available])>
                                     @if ($group->max_select === 1)
-                                        <input type="radio" wire:model="pickOptions.{{ $group->id }}" value="{{ $option->id }}" @disabled(! $option->is_available)>
+                                        <input type="radio" name="g-{{ $group->id }}" wire:model.live="pickOptions.{{ $group->id }}" value="{{ $option->id }}" @disabled(! $option->is_available)>
                                     @else
-                                        <input type="checkbox" wire:model="pickOptions.{{ $group->id }}" value="{{ $option->id }}" @disabled(! $option->is_available)>
+                                        <input type="checkbox" wire:model.live="pickOptions.{{ $group->id }}" value="{{ $option->id }}" @disabled(! $option->is_available)>
                                     @endif
                                     <span>{{ $option->name }}</span>
-                                    <span class="so-option-price">{{ $option->is_available ? (\App\Support\Money::isPositive($option->price_delta) ? '+'.$money($option->price_delta) : '') : 'Habis' }}</span>
+                                    <span class="so-option-price so-num">{{ $option->is_available ? (\App\Support\Money::isPositive($option->price_delta) ? '+'.$money($option->price_delta) : '') : 'Habis' }}</span>
                                 </label>
                             @endforeach
+                            @if ($pickErrorGroup === $group->id && $pickError)
+                                <em class="so-error" id="g-error-{{ $group->id }}" role="alert">{{ $pickError }}</em>
+                            @endif
                         </fieldset>
                     @endforeach
 
@@ -293,7 +383,7 @@
                         <input class="so-input" type="text" maxlength="255" wire:model="pickNotes" placeholder="mis. less sugar">
                     </label>
 
-                    @if ($pickError)
+                    @if ($pickError && $pickErrorGroup === null)
                         <p class="so-error" role="alert">{{ $pickError }}</p>
                     @endif
                 </div>
@@ -302,9 +392,12 @@
                     <span class="so-qty">
                         <button type="button" wire:click="$set('pickQty', {{ max(1, $pickQty - 1) }})" @disabled($pickQty <= 1) aria-label="Kurangi jumlah">@svg('heroicon-o-minus', ['aria-hidden' => 'true'])</button>
                         <span aria-live="polite">{{ $pickQty }}</span>
-                        <button type="button" wire:click="$set('pickQty', {{ min(50, $pickQty + 1) }})" @disabled($pickQty >= 50) aria-label="Tambah jumlah">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
+                        <button type="button" wire:click="$set('pickQty', {{ min(\App\Actions\SelfOrder\SubmitSelfOrder::MAX_ITEMS, $pickQty + 1) }})" @disabled($pickQty >= \App\Actions\SelfOrder\SubmitSelfOrder::MAX_ITEMS) aria-label="Tambah jumlah">@svg('heroicon-o-plus', ['aria-hidden' => 'true'])</button>
                     </span>
-                    <button type="submit" class="so-btn is-primary">Tambah</button>
+                    <button type="submit" class="so-btn is-primary is-split" wire:loading.attr="disabled" wire:target="savePick">
+                        <span>{{ $pickIndex !== null ? 'Simpan' : 'Tambah' }}</span>
+                        <span class="so-num">{{ $money($this->pickTotal()) }}</span>
+                    </button>
                 </div>
             </form>
         </div>

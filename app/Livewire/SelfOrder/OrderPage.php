@@ -24,6 +24,7 @@ use App\Models\SelfOrder;
 use App\Models\Voucher;
 use App\Services\Order\CalculationResult;
 use App\Support\Features;
+use App\Support\Money;
 use App\Support\OptionDefaults;
 use App\Support\SelfOrderContext;
 use App\Support\VoucherAttempts;
@@ -57,9 +58,15 @@ final class OrderPage extends Component
     // menu | cart | status
     public string $view = 'menu';
 
-    public string $category = '';
+    /** Pencarian menu (nama produk), hanya menyaring tampilan. */
+    public string $search = '';
 
-    /** @var list<array{product_id: string, name: string, qty: int, option_ids: list<string>, option_names: list<string>, notes: string|null}> */
+    /**
+     * Keranjang; hanya diubah method server (dikunci agar isi tidak bisa dipalsukan dari browser).
+     *
+     * @var list<array{product_id: string, name: string, qty: int, option_ids: list<string>, option_names: list<string>, notes: string|null}>
+     */
+    #[Locked]
     public array $cart = [];
 
     public string $customerName = '';
@@ -92,6 +99,21 @@ final class OrderPage extends Component
     public string $pickNotes = '';
 
     public ?string $pickError = null;
+
+    /** Grup opsi yang gagal divalidasi (error tampil di bawah grupnya). */
+    public ?string $pickErrorGroup = null;
+
+    /** Baris keranjang yang sedang diubah lewat dialog opsi (null = tambah baru). */
+    #[Locked]
+    public ?int $pickIndex = null;
+
+    /**
+     * Baris terakhir yang dihapus, untuk Urungkan (5 detik di toast).
+     *
+     * @var array{index: int, line: array{product_id: string, name: string, qty: int, option_ids: list<string>, option_names: list<string>, notes: string|null}}|null
+     */
+    #[Locked]
+    public ?array $removed = null;
 
     private SelfOrderContext $context;
 
@@ -127,10 +149,114 @@ final class OrderPage extends Component
         return ['categories' => $catalog['categories']->toBase(), 'products' => $catalog['products']->toBase(), 'option_groups' => $catalog['option_groups']->toBase()];
     }
 
-    /** @return Collection<int, Product> */
-    public function visibleProducts(): Collection
+    /**
+     * Menu per kategori (urutan katalog) untuk tab menempel & scroll-spy; pencarian = satu bagian hasil.
+     *
+     * @return list<array{id: string, name: string, products: Collection<int, Product>}>
+     */
+    public function menuSections(): array
     {
-        return $this->catalog['products']->when($this->category !== '', fn (Collection $p) => $p->where('category_id', $this->category))->values();
+        $products = $this->catalog['products'];
+        $term = mb_strtolower(trim(mb_substr($this->search, 0, 50)));
+
+        if ($term !== '') {
+            return [['id' => 'search', 'name' => 'Hasil pencarian', 'products' => $products->filter(fn (Product $p): bool => str_contains(mb_strtolower($p->name), $term))->values()]];
+        }
+
+        $sections = [];
+        foreach ($this->catalog['categories'] as $category) {
+            $items = $products->where('category_id', $category->id)->values();
+            if ($items->isNotEmpty()) {
+                $sections[] = ['id' => $category->id, 'name' => $category->name, 'products' => $items];
+            }
+        }
+
+        $known = $this->catalog['categories']->pluck('id')->all();
+        $others = $products->reject(fn (Product $p): bool => in_array($p->category_id, $known, true))->values();
+        if ($others->isNotEmpty()) {
+            $sections[] = ['id' => 'other', 'name' => 'Lainnya', 'products' => $others];
+        }
+
+        return $sections;
+    }
+
+    /** Produk tanpa grup opsi bisa ditambah langsung dari kartu (tanpa dialog). */
+    public static function isQuickAdd(Product $product): bool
+    {
+        return $product->optionGroups->isEmpty();
+    }
+
+    /**
+     * Jumlah produk tanpa opsi & catatan di keranjang, untuk stepper di kartu menu.
+     *
+     * @return array<string, int>
+     */
+    public function plainQuantities(): array
+    {
+        $qty = [];
+        foreach ($this->cart as $line) {
+            if ($line['option_ids'] === [] && $line['notes'] === null) {
+                $qty[$line['product_id']] = ($qty[$line['product_id']] ?? 0) + $line['qty'];
+            }
+        }
+
+        return $qty;
+    }
+
+    /**
+     * Pratinjau harga satu baris: (harga + tambahan opsi) × qty. Tagihan final tetap dari server.
+     *
+     * @param  array{product_id: string, qty: int, option_ids: list<string>}  $line
+     */
+    public function linePrice(array $line): string
+    {
+        $product = $this->catalog['products']->firstWhere('id', $line['product_id']);
+        if (! $product instanceof Product) {
+            return '0.00';
+        }
+
+        return Money::mul($this->unitPrice($product, $line['option_ids']), $line['qty']);
+    }
+
+    /** Harga di tombol dialog opsi: (harga + opsi terpilih) × jumlah. */
+    public function pickTotal(): string
+    {
+        $product = $this->catalog['products']->firstWhere('id', $this->pickProductId);
+        if (! $product instanceof Product) {
+            return '0.00';
+        }
+
+        $ids = [];
+        foreach ($this->pickOptions as $chosen) {
+            array_push($ids, ...self::chosenIds($chosen));
+        }
+
+        return Money::mul($this->unitPrice($product, $ids), max(1, $this->pickQty));
+    }
+
+    /**
+     * ID opsi terpilih dari input dialog (radio = string, checkbox = daftar); nilai selain teks diabaikan.
+     *
+     * @return list<string>
+     */
+    private static function chosenIds(mixed $value): array
+    {
+        return array_values(array_filter((array) $value, fn (mixed $id): bool => is_string($id) && $id !== ''));
+    }
+
+    /** @param  list<string>  $optionIds */
+    private function unitPrice(Product $product, array $optionIds): string
+    {
+        $price = Money::fromDb($product->price);
+        foreach ($this->catalog['option_groups'] as $group) {
+            foreach ($group->options as $option) {
+                if (in_array($option->id, $optionIds, true)) {
+                    $price = Money::add($price, Money::fromDb($option->price_delta));
+                }
+            }
+        }
+
+        return $price;
     }
 
     /** @return array{totals: CalculationResult|null, error: string|null} */
@@ -207,7 +333,7 @@ final class OrderPage extends Component
         }
 
         $this->error = null;
-        $this->reset('pickOptions', 'pickNotes', 'pickError');
+        $this->reset('pickOptions', 'pickNotes', 'pickError', 'pickErrorGroup', 'pickIndex');
         $this->pickQty = 1;
         $this->pickProductId = $product->id;
 
@@ -221,8 +347,9 @@ final class OrderPage extends Component
     {
         $product = $this->catalog['products']->firstWhere('id', $this->pickProductId);
 
-        if (! $product instanceof Product) {
+        if (! $product instanceof Product || ! $product->is_available) {
             $this->closePicker();
+            $this->error = $product instanceof Product ? 'Menu ini sedang habis' : null;
 
             return;
         }
@@ -231,37 +358,144 @@ final class OrderPage extends Component
         $names = [];
 
         foreach ($this->pickerGroups() as $group) {
-            $chosen = array_values(array_filter((array) ($this->pickOptions[$group->id] ?? []), fn (string $id): bool => $id !== ''));
+            $chosen = self::chosenIds($this->pickOptions[$group->id] ?? []);
+            $valid = $group->options->whereIn('id', $chosen)->where('is_available', true);
 
-            if (count($chosen) < $group->min_select || count($chosen) > $group->max_select) {
-                $this->pickError = $group->min_select === $group->max_select
-                    ? "Pilih {$group->min_select} {$group->name}"
-                    : "{$group->name}: pilih {$group->min_select}–{$group->max_select}";
+            if (count($chosen) < $group->min_select || count($chosen) > $group->max_select || $valid->count() !== count($chosen)) {
+                $this->pickErrorGroup = $group->id;
+                $this->pickError = match (true) {
+                    $valid->count() !== count($chosen) => "{$group->name}: pilihan sedang habis",
+                    $group->min_select === $group->max_select => "Pilih {$group->min_select} {$group->name}",
+                    default => "{$group->name}: pilih {$group->min_select}–{$group->max_select}",
+                };
 
                 return;
             }
 
-            foreach ($group->options->whereIn('id', $chosen) as $option) {
+            foreach ($valid as $option) {
                 $optionIds[] = $option->id;
                 $names[] = $option->name;
             }
         }
 
-        $this->cart[] = [
-            'product_id' => $product->id,
-            'name' => $product->name,
-            'qty' => max(1, min(SubmitSelfOrder::MAX_ITEMS, $this->pickQty)),
-            'option_ids' => $optionIds,
-            'option_names' => $names,
-            'notes' => filled(trim($this->pickNotes)) ? mb_substr(trim($this->pickNotes), 0, 255) : null,
-        ];
+        $qty = max(1, min(SubmitSelfOrder::MAX_ITEMS, $this->pickQty));
+        $notes = filled(trim($this->pickNotes)) ? mb_substr(trim($this->pickNotes), 0, 255) : null;
+        $line = ['product_id' => $product->id, 'name' => $product->name, 'qty' => $qty, 'option_ids' => $optionIds, 'option_names' => $names, 'notes' => $notes];
+        $others = $this->cartQty() - ($this->pickIndex !== null ? ($this->cart[$this->pickIndex]['qty'] ?? 0) : 0);
+
+        if ($others + $qty > SubmitSelfOrder::MAX_ITEMS) {
+            $this->pickErrorGroup = null;
+            $this->pickError = 'Maksimal '.SubmitSelfOrder::MAX_ITEMS.' item per pesanan';
+
+            return;
+        }
+
+        if ($this->pickIndex !== null && isset($this->cart[$this->pickIndex])) {
+            $this->cart[$this->pickIndex] = $line;
+        } elseif (($same = $this->findLine($line)) !== null) {
+            // Item yang sama persis (opsi & catatan) digabung, bukan baris baru
+            $this->cart[$same]['qty'] += $qty;
+        } else {
+            $this->cart[] = $line;
+        }
+
         $this->closePicker();
+        unset($this->quote);
+    }
+
+    /** Tambah langsung dari kartu menu (produk tanpa opsi); produk beropsi membuka dialog. */
+    public function quickAdd(string $productId): void
+    {
+        $product = $this->catalog['products']->firstWhere('id', $productId);
+
+        if (! $product instanceof Product || ! $product->is_available) {
+            $this->error = 'Menu ini sedang habis';
+
+            return;
+        }
+
+        if (! self::isQuickAdd($product)) {
+            $this->addProduct($productId);
+
+            return;
+        }
+
+        if ($this->cartQty() >= SubmitSelfOrder::MAX_ITEMS) {
+            $this->error = 'Maksimal '.SubmitSelfOrder::MAX_ITEMS.' item per pesanan';
+
+            return;
+        }
+
+        $this->error = null;
+        $line = ['product_id' => $product->id, 'name' => $product->name, 'qty' => 1, 'option_ids' => [], 'option_names' => [], 'notes' => null];
+        $same = $this->findLine($line);
+        if ($same !== null) {
+            $this->cart[$same]['qty']++;
+        } else {
+            $this->cart[] = $line;
+        }
+        unset($this->quote);
+    }
+
+    /** Kurangi produk tanpa opsi dari stepper kartu menu. */
+    public function decrementProduct(string $productId): void
+    {
+        $index = $this->findLine(['product_id' => $productId, 'option_ids' => [], 'notes' => null]);
+
+        if ($index !== null) {
+            $this->decrement($index);
+        }
+    }
+
+    /** Ubah opsi/jumlah/catatan satu baris keranjang lewat dialog yang sama. */
+    public function editLine(int $index): void
+    {
+        $line = $this->cart[$index] ?? null;
+        $product = $line !== null ? $this->catalog['products']->firstWhere('id', $line['product_id']) : null;
+
+        if (! $product instanceof Product) {
+            return;
+        }
+
+        $this->reset('pickOptions', 'pickError', 'pickErrorGroup');
+        $this->pickProductId = $product->id;
+        $this->pickIndex = $index;
+        $this->pickQty = $line['qty'];
+        $this->pickNotes = (string) $line['notes'];
+
+        foreach ($this->pickerGroups() as $group) {
+            $chosen = $group->options->whereIn('id', $line['option_ids'])->pluck('id')->values()->all();
+            $this->pickOptions[$group->id] = $group->max_select === 1 ? ($chosen[0] ?? '') : $chosen;
+        }
+    }
+
+    /** Hapus baris; bisa diurungkan dari toast. */
+    public function removeLine(int $index): void
+    {
+        if (! isset($this->cart[$index])) {
+            return;
+        }
+
+        $this->removed = ['index' => $index, 'line' => $this->cart[$index]];
+        array_splice($this->cart, $index, 1);
+        unset($this->quote);
+        $this->dispatch('so-toast', message: $this->removed['line']['name'].' dihapus', undo: true);
+    }
+
+    public function undoRemove(): void
+    {
+        if ($this->removed === null || $this->cartQty() + $this->removed['line']['qty'] > SubmitSelfOrder::MAX_ITEMS) {
+            return;
+        }
+
+        array_splice($this->cart, min($this->removed['index'], count($this->cart)), 0, [$this->removed['line']]);
+        $this->removed = null;
         unset($this->quote);
     }
 
     public function closePicker(): void
     {
-        $this->reset('pickProductId', 'pickOptions', 'pickQty', 'pickNotes', 'pickError');
+        $this->reset('pickProductId', 'pickOptions', 'pickQty', 'pickNotes', 'pickError', 'pickErrorGroup', 'pickIndex');
     }
 
     /** @return Collection<int, OptionGroup> */
@@ -276,23 +510,54 @@ final class OrderPage extends Component
 
     public function increment(int $index): void
     {
-        if (isset($this->cart[$index]) && $this->cart[$index]['qty'] < SubmitSelfOrder::MAX_ITEMS) {
+        if (isset($this->cart[$index]) && $this->cartQty() < SubmitSelfOrder::MAX_ITEMS) {
             $this->cart[$index]['qty']++;
             unset($this->quote);
         }
     }
 
+    /** Qty 1 → baris dihapus (bisa diurungkan). */
     public function decrement(int $index): void
     {
         if (! isset($this->cart[$index])) {
             return;
         }
 
-        $this->cart[$index]['qty']--;
-        if ($this->cart[$index]['qty'] < 1) {
-            array_splice($this->cart, $index, 1);
+        if ($this->cart[$index]['qty'] <= 1) {
+            $this->removeLine($index);
+
+            return;
         }
+
+        $this->cart[$index]['qty']--;
         unset($this->quote);
+    }
+
+    public function cartQty(): int
+    {
+        return (int) array_sum(array_column($this->cart, 'qty'));
+    }
+
+    /**
+     * Baris keranjang yang sama persis (produk, opsi, catatan).
+     *
+     * @param  array{product_id: string, option_ids: list<string>, notes: string|null}  $line
+     */
+    private function findLine(array $line): ?int
+    {
+        $options = $line['option_ids'];
+        sort($options);
+
+        foreach ($this->cart as $i => $existing) {
+            $existingOptions = $existing['option_ids'];
+            sort($existingOptions);
+
+            if ($existing['product_id'] === $line['product_id'] && $existingOptions === $options && $existing['notes'] === $line['notes']) {
+                return $i;
+            }
+        }
+
+        return null;
     }
 
     public function show(string $view): void

@@ -767,7 +767,7 @@
     line-height: 22px;
 }
 
-.so-empty p {
+.so-empty p:not(.so-empty-title) {
     max-width: 320px;
     color: var(--text-muted);
     font-size: 12.5px;
@@ -1657,4 +1657,128 @@
 .so-orders {
     display: grid;
     gap: 12px;
+}
+
+/* ---------- Menu: sambutan, pembungkus bagian, judul kategori ---------- */
+.so-welcome {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 12px;
+}
+
+.so-menu-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    transition: opacity var(--so-ease);
+}
+
+.so-menu-wrap.is-loading {
+    opacity: 0.55;
+}
+
+.so-menu-title {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 22px;
+}
+
+.so-input[type='search']::-webkit-search-cancel-button {
+    cursor: pointer;
+}
+
+.so-success {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--so-success-text);
+}
+
+.so-success svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Harga panjang tetap muat di kartu sempit (3 kolom di 360px) */
+.so-product-price {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 379px) {
+    .so-menu:not(:where([data-so-view='list'] *)) .so-product-price {
+        font-size: 12px;
+    }
+}
+
+/* Area geser sheet (pegangan + kepala) */
+.so-sheet-drag {
+    touch-action: none;
+}
+
+/* ---------- Toast (notification.md): di atas bilah bawah, satu aksi Urungkan ---------- */
+.so-toast-wrap {
+    position: fixed;
+    right: 0;
+    bottom: calc(var(--so-tabbar-h) + 72px + env(safe-area-inset-bottom));
+    left: 0;
+    z-index: 70;
+    display: flex;
+    justify-content: center;
+    padding: 0 16px;
+    pointer-events: none;
+}
+
+.so-toast {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    max-width: calc(var(--so-max) - 32px);
+    min-height: 44px;
+    padding: 6px 6px 6px 14px;
+    border-radius: var(--radius-lg);
+    background: var(--text);
+    color: var(--bg-surface);
+    font-size: 12.5px;
+    box-shadow: 0 8px 24px rgb(15 23 42 / 0.18);
+    pointer-events: auto;
+    animation: so-rise 160ms ease;
+}
+
+.so-toast .so-btn.is-ghost {
+    color: var(--bg-surface);
+    font-weight: 600;
+}
+
+.so-toast .so-btn.is-ghost:hover {
+    background: color-mix(in srgb, var(--bg-surface) 14%, transparent);
+}
+
+/* Mode Kotak: stepper di kartu sempit memakai baris sendiri selebar kartu */
+.so-product-foot {
+    flex-wrap: wrap;
+    row-gap: 6px;
+}
+
+.so-product-foot .so-qty.is-sm {
+    flex: 1 0 100%;
+    justify-content: space-between;
+}
+
+[data-so-view='list'] .so-product-foot .so-qty.is-sm {
+    flex: 0 0 auto;
+}
+
+.so-line-edit {
+    margin-left: -10px;
+    padding: 0 10px;
 }
