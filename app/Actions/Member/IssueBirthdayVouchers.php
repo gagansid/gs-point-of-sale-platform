@@ -16,7 +16,11 @@ use Illuminate\Support\Facades\DB;
 /**
  * Voucher ulang tahun (ADR 0013, Q66): untuk setiap member aktif yang berulang tahun bulan ini dibuat satu voucher
  * pribadi, berlaku sampai akhir bulan, sekali pakai. Command `pos:issue-birthday-vouchers` harian (WIB); aman
- * diulang (satu voucher per member per bulan).
+ * diulang.
+ *
+ * Anti-penyalahgunaan (GSPOS-SEC-028): paling banyak satu voucher per member per tahun kalender (walau bulan lahir
+ * diubah kasir/owner), dan hanya member yang terdaftar sebelum bulan lahirnya dimulai — akun baru yang langsung
+ * mengisi bulan lahir = bulan ini tidak mendapat voucher.
  */
 final class IssueBirthdayVouchers
 {
@@ -29,10 +33,11 @@ final class IssueBirthdayVouchers
         $local = ($now ?? CarbonImmutable::now())->setTimezone(self::TIMEZONE);
         $start = $local->startOfMonth()->utc();
         $end = $local->endOfMonth()->utc();
+        $year = [$local->startOfYear()->utc(), $local->endOfYear()->utc()];
         $issued = 0;
 
         foreach (MemberSetting::allTenants()->where('enabled', true)->pluck('tenant_id') as $tenantId) {
-            $issued += TenantContext::run((string) $tenantId, function () use ($local, $start, $end): int {
+            $issued += TenantContext::run((string) $tenantId, function () use ($local, $start, $end, $year): int {
                 $rule = MemberSetting::current()->birthdayVoucher();
 
                 if (! $rule['enabled'] || (float) $rule['value'] <= 0) {
@@ -41,7 +46,8 @@ final class IssueBirthdayVouchers
 
                 $count = 0;
                 Member::query()->where('is_active', true)->whereNull('anonymized_at')->where('birth_month', $local->month)
-                    ->whereDoesntHave('vouchers', fn ($q) => $q->where('source', VoucherSource::Birthday)->where('starts_at', $start))
+                    ->where('created_at', '<', $start)
+                    ->whereDoesntHave('vouchers', fn ($q) => $q->where('source', VoucherSource::Birthday)->whereBetween('starts_at', $year))
                     ->chunkById(200, function ($members) use ($rule, $start, $end, &$count): void {
                         foreach ($members as $member) {
                             DB::transaction(function () use ($member, $rule, $start, $end): void {

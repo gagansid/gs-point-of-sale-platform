@@ -181,6 +181,8 @@ it('open bill: kuota dicek ulang saat lunas', function () {
 it('voucher ulang tahun: dibuat sekali di bulan lahir, hanya untuk pemiliknya, hilang setelah dipakai', function () {
     app(UpdateBirthdayVoucher::class)->handle(['enabled' => true, 'type' => 'percent', 'value' => '20', 'max_discount' => '10000', 'min_spend' => '0']);
     $other = Member::factory()->create(['birth_month' => 9]);
+    // Terdaftar sebelum bulan lahirnya (GSPOS-SEC-028)
+    Member::query()->update(['created_at' => '2026-01-10 03:00:00']);
 
     Carbon::setTestNow('2026-08-01 01:00:00');
     expect(app(IssueBirthdayVouchers::class)->handle())->toBe(1)

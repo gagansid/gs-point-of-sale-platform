@@ -16,26 +16,36 @@
                 <input name="email" type="email" value="{{ old('email', $member->email) }}" maxlength="150">
                 @error('email') <em class="member-error">{{ $message }}</em> @enderror
             </label>
-            <div class="member-row">
+            @if (\App\Actions\Member\UpdateOwnMemberProfile::birthDateLocked($member))
+                {{-- Sudah terisi: hanya kasir/owner yang bisa mengubah (GSPOS-SEC-028) --}}
                 <label class="member-field">
                     <span>Tanggal lahir</span>
-                    <select name="birth_day">
-                        <option value="">—</option>
-                        @foreach (range(1, 31) as $d)
-                            <option value="{{ $d }}" @selected((int) old('birth_day', $member->birth_day) === $d)>{{ $d }}</option>
-                        @endforeach
-                    </select>
+                    <input type="text" value="{{ trim($member->birth_day.' '.$months[$member->birth_month - 1]) }}" disabled>
+                    <small>Sudah terisi. Minta kasir bila perlu diubah.</small>
                 </label>
-                <label class="member-field">
-                    <span>Bulan</span>
-                    <select name="birth_month">
-                        <option value="">—</option>
-                        @foreach ($months as $i => $m)
-                            <option value="{{ $i + 1 }}" @selected((int) old('birth_month', $member->birth_month) === $i + 1)>{{ $m }}</option>
-                        @endforeach
-                    </select>
-                </label>
-            </div>
+            @else
+                <div class="member-row">
+                    <label class="member-field">
+                        <span>Tanggal lahir</span>
+                        <select name="birth_day">
+                            <option value="">—</option>
+                            @foreach (range(1, 31) as $d)
+                                <option value="{{ $d }}" @selected((int) old('birth_day', $member->birth_day) === $d)>{{ $d }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                    <label class="member-field">
+                        <span>Bulan</span>
+                        <select name="birth_month">
+                            <option value="">—</option>
+                            @foreach ($months as $i => $m)
+                                <option value="{{ $i + 1 }}" @selected((int) old('birth_month', $member->birth_month) === $i + 1)>{{ $m }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+                </div>
+                <small class="member-muted">Hanya bisa diisi sekali. Voucher ulang tahun dikirim di bulan lahir.</small>
+            @endif
             @error('birth_day') <p class="member-error">{{ $message }}</p> @enderror
             <button type="submit" class="member-btn">Simpan</button>
         </form>

@@ -6,8 +6,7 @@ namespace App\Http\Controllers\Web\Member;
 
 use App\Actions\Member\AnonymizeMember;
 use App\Actions\Member\ChangeMemberPassword;
-use App\Actions\Member\Data\MemberData;
-use App\Actions\Member\SaveMember;
+use App\Actions\Member\UpdateOwnMemberProfile;
 use App\Exceptions\BusinessException;
 use App\Http\Controllers\Controller;
 use App\Models\Member;
@@ -79,7 +78,7 @@ final class PortalController extends Controller
         return view('member.profile', ['member' => self::member()]);
     }
 
-    public function updateProfile(Request $request, SaveMember $save): RedirectResponse
+    public function updateProfile(Request $request, UpdateOwnMemberProfile $update): RedirectResponse
     {
         $member = self::member();
         $data = $request->validate([
@@ -90,8 +89,7 @@ final class PortalController extends Controller
         ], [], ['name' => 'nama', 'birth_day' => 'tanggal lahir', 'birth_month' => 'bulan lahir']);
 
         try {
-            // Nomor HP tidak bisa diganti sendiri (identitas login & kasir)
-            $save->handle($member, MemberData::fromArray([...$data, 'phone' => (string) $member->phone, 'notes' => $member->notes]));
+            $update->handle($member, $data);
         } catch (BusinessException $e) {
             throw ValidationException::withMessages(is_array($e->details) ? $e->details : ['name' => $e->getMessage()]);
         }
