@@ -1,6 +1,6 @@
 # ADR 0014: Self-order lewat QR meja — terima kasir dulu, bayar dulu, Midtrans per owner
 
-- Status: Diterima
+- Status: Diterima — **diubah sebagian oleh [ADR 0027](0027-self-order-pay-first-and-delivery.md)** (2026-10-23: bayar dulu tanpa terima kasir, login member wajib sebelum bayar, QRIS di halaman, antrean sampai diantar)
 - Tanggal: 2026-10-11
 - Pengambil keputusan: Gagan Suganda
 - Terkait: SPEC Q68–Q74, ADR 0013 (member), ADR 0011 (per outlet), ADR 0004 (shared hosting)

@@ -18,7 +18,7 @@ template: `docs/templates/adr.md`.
 | [0011](0011-per-outlet-catalog-and-payment-methods.md) | Menu & metode bayar per outlet: katalog bersama, dipilih per outlet, harga sama | Diterima |
 | [0012](0012-pdf-export-dompdf.md) | Export laporan PDF dengan dompdf (PHP murni, tanpa Chrome/biner) | Diterima |
 | [0013](0013-member-loyalty-program.md) | Program member milik bisnis: poin sebagai metode bayar, tier, stempel, voucher, halaman member HP + kata sandi | Diterima |
-| [0014](0014-table-qr-self-order-and-midtrans.md) | Self-order QR meja: terima kasir dulu, bayar dulu, Midtrans per owner | Diterima |
+| [0014](0014-table-qr-self-order-and-midtrans.md) | Self-order QR meja: terima kasir dulu, bayar dulu, Midtrans per owner | Diterima, diubah sebagian oleh 0027 |
 | [0015](0015-stock-in-opname-transfer.md) | Stok masuk, opname, transfer antar outlet: produk jadi, modal rata-rata tertimbang | Diterima |
 | [0016](0016-web-installer.md) | Installer lewat form web: cek syarat, database, akun, progress, kunci setelah instal | Diterima |
 | [0017](0017-shared-shift-cash-handover.md) | Shift bersama per perangkat: ganti kasir tanpa hitung, setoran, carry-over kas awal, kas masuk/keluar | Diterima |
@@ -31,3 +31,4 @@ template: `docs/templates/adr.md`.
 | [0024](0024-subscription-plans-billing.md) | Paket langganan & tagihan SaaS: fitur per paket, Midtrans vendor / manual, pengingat | Diterima |
 | [0025](0025-plan-features-quotas-addons.md) | Katalog fitur, kuota, dan add-on paket langganan; gerbang fitur di API | Diterima |
 | [0026](0026-tenant-role-permissions.md) | Hak akses role per bisnis: owner mengatur permission manager/supervisor/kasir, `dashboard.access` | Diterima |
+| [0027](0027-self-order-pay-first-and-delivery.md) | Pesan dari meja: bayar dulu tanpa terima kasir, QRIS di halaman, login member, antrean sampai diantar | Diterima |
