@@ -24,7 +24,7 @@
 | Gerbang terpusat | Semua menu `extends DashboardResource` / `DashboardPage` (gerbang `dashboard.access` final; pengecualian hanya Laporan & Stok masuk), dijaga `DashboardAccessGateTest`; izin dimemo per user; cache paket & hak akses dikosongkan tiap job queue | `0d515fe` |
 | Review & perbaikan | Log hak akses selalu menyebut role; kasbon "Lama" = hari kalender zona outlet; outlet baru ditugaskan ke pembuat non-owner; kasir web "selalu boleh" hanya owner; `updateOrCreate` untuk simpan bersamaan | `e1c6910` |
 | UI | Item dropdown seragam (ikon 16px, teks 13px, 32px); tab form bergaris bawah (`tabs.md`) | `bd21a14`, `9a1b677` |
-| Panel admin (Q135) | Grup Pelanggan · **Langganan** · Aplikasi · **Pengaturan** · Sistem; "Tenant" → **Bisnis** di seluruh UI admin; **lonceng peringatan admin** (`AdminAlerts`: pemeliharaan, bukti transfer, tagihan jatuh tempo, calon pelanggan baru, job gagal, backup > 24 jam); tautan tab langsung `?tab=` (`HasCardTabs`) dipakai lonceng owner & admin; `NavigationConventionsTest` menjaga susunan & ikon unik kedua panel | (commit berikutnya) |
+| Panel admin (Q135) | Grup Pelanggan · **Langganan** · Aplikasi · **Pengaturan** · Sistem; "Tenant" → **Bisnis** di seluruh UI admin; **lonceng peringatan admin** (`AdminAlerts`: pemeliharaan, bukti transfer, tagihan jatuh tempo, calon pelanggan baru, job gagal, backup > 24 jam); tautan tab langsung `?tab=` (`HasCardTabs`) dipakai lonceng owner & admin; `NavigationConventionsTest` menjaga susunan & ikon unik kedua panel | `ccc4c80` |
 
 Migrasi baru (wajib saat deploy): `2026_11_11_100000_create_role_permissions_table`,
 `2026_11_12_100000_add_permission_overrides_to_users`. Untuk Flutter: `/auth/me` → `permissions` kini mengikuti hak akses
