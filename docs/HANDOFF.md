@@ -1,6 +1,6 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-23 · Branch: `feature/pos` (audit keamanan 23 Okt belum di-push)
+> Diperbarui: 2026-10-23 · Branch: `feature/pos` (semua di-push)
 > Status: fitur MVP + backlog ADR 0013–0026 selesai; 2026-10-22–23: menu owner baru (Q130), susunan menu (Q132), hak akses
 > per role & per karyawan (ADR 0026, Q133–Q134), halaman kasir web dirapikan (Q131); sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
 > pembayaran tagihan (QRIS/VA/transfer manual + bukti), master bank, PDF & email tagihan, Midtrans vendor 2 mode,
@@ -16,7 +16,7 @@
 
 ## 1. Sudah dikerjakan
 
-### Audit keamanan 2026-10-23 (SPEC Q136, GSPOS-SEC-025–028) — belum di-push
+### Audit keamanan 2026-10-23 (SPEC Q136, GSPOS-SEC-025–028) — di-push (`9654b20`)
 Laporan: [`docs/security/reports/2026-10-23-audit.md`](security/reports/2026-10-23-audit.md). Tidak ada sink eksekusi
 kode/webshell di kode aplikasi; empat temuan diperbaiki:
 
