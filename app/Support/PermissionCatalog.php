@@ -48,6 +48,7 @@ final class PermissionCatalog
                     'order.void' => ['Void transaksi', 'Membatalkan transaksi; tanpa ini butuh PIN approval'],
                     'order.refund' => ['Retur', 'Retur sebagian per item; tanpa ini butuh PIN approval'],
                     'self_order.handle' => ['Tangani pesanan meja', 'Terima & tolak pesanan dari QR meja'],
+                    'order.fulfill' => ['Antrean pesanan', 'Majukan pesanan meja: disiapkan, siap, diantar'],
                 ],
             ],
             'shifts' => [

@@ -1,38 +1,43 @@
 <x-member.layout title="Daftar">
-    <section class="member-card">
-        <h1 class="member-title">Daftar member</h1>
-        <p class="member-muted">Kumpulkan poin di semua outlet {{ $business->name }}.</p>
+    <section class="so-card">
+        <div>
+            <h1 class="so-page-title">Daftar member</h1>
+            <p class="so-muted">Kumpulkan poin di semua outlet {{ $business->name }}.</p>
+        </div>
 
-        <form method="POST" action="{{ route('member.register.store', ['business' => $business->slug]) }}" class="member-form" novalidate>
+        <form method="POST" action="{{ route('member.register.store', ['business' => $business->slug]) }}" class="so-form" novalidate>
             @csrf
-            <label class="member-field">
-                <span>Nama</span>
-                <input name="name" type="text" value="{{ old('name') }}" autocomplete="name" maxlength="100" required autofocus>
-                @error('name') <em class="member-error">{{ $message }}</em> @enderror
+            <label class="so-field">
+                <span class="so-label">Nama</span>
+                <input class="so-input" name="name" type="text" value="{{ old('name') }}" autocomplete="name" maxlength="100" required autofocus @error('name') aria-invalid="true" @enderror>
+                @error('name') <em class="so-error">{{ $message }}</em> @enderror
             </label>
-            <label class="member-field">
-                <span>Nomor HP</span>
-                <input name="phone" type="tel" inputmode="tel" value="{{ old('phone') }}" autocomplete="tel" placeholder="0812 3456 7890" required>
-                @error('phone') <em class="member-error">{{ $message }}</em> @enderror
+            <label class="so-field">
+                <span class="so-label">Nomor HP</span>
+                <input class="so-input" name="phone" type="tel" inputmode="tel" value="{{ old('phone') }}" autocomplete="tel" placeholder="0812 3456 7890" required @error('phone') aria-invalid="true" @enderror>
+                @error('phone') <em class="so-error">{{ $message }}</em> @enderror
             </label>
-            <label class="member-field">
-                <span>Kata sandi</span>
-                <input name="password" type="password" autocomplete="new-password" required>
-                <small>Minimal 8 karakter, huruf & angka</small>
-                @error('password') <em class="member-error">{{ $message }}</em> @enderror
+            <label class="so-field">
+                <span class="so-label">Kata sandi</span>
+                <input class="so-input" name="password" type="password" autocomplete="new-password" required @error('password') aria-invalid="true" @enderror>
+                <small class="so-help">Minimal 8 karakter, huruf & angka</small>
+                @error('password') <em class="so-error">{{ $message }}</em> @enderror
             </label>
-            <label class="member-field">
-                <span>Ulangi kata sandi</span>
-                <input name="password_confirmation" type="password" autocomplete="new-password" required>
+            <label class="so-field">
+                <span class="so-label">Ulangi kata sandi</span>
+                <input class="so-input" name="password_confirmation" type="password" autocomplete="new-password" required>
             </label>
-            <label class="member-check">
-                <input type="checkbox" name="consent" value="1" @checked(old('consent'))>
-                <span>Saya setuju data saya dipakai {{ $business->name }} untuk program member</span>
-            </label>
-            @error('consent') <p class="member-error">{{ $message }}</p> @enderror
-            <button type="submit" class="member-btn">Daftar</button>
+            <div class="so-field">
+                <label class="so-check">
+                    <input type="checkbox" name="consent" value="1" @checked(old('consent'))>
+                    <span>Saya setuju data saya dipakai {{ $business->name }} untuk program member</span>
+                </label>
+                @error('consent') <em class="so-error">{{ $message }}</em> @enderror
+            </div>
+            <button type="submit" class="so-btn is-primary is-block">Daftar</button>
         </form>
 
-        <p class="member-foot">Sudah punya akun? <a href="{{ route('member.login', ['business' => $business->slug]) }}">Masuk</a></p>
+        <hr class="so-divider">
+        <p class="so-foot">Sudah punya akun? <a href="{{ route('member.login', ['business' => $business->slug]) }}">Masuk</a></p>
     </section>
 </x-member.layout>

@@ -1,30 +1,32 @@
-{{-- Kerangka halaman pesan dari meja (ADR 0014): mobile-first, header bisnis + meja; gaya sama dengan halaman member. --}}
+{{--
+    Kerangka halaman pesan dari meja (ADR 0014, tema bisnis ADR 0027 §6): header 56px menempel (logo, bisnis, outlet,
+    chip meja, Masuk / chip member). Navigasi bawah Menu · Keranjang · Pesananku ada di komponen Livewire.
+--}}
 @props(['context', 'title' => 'Pesan'])
+@php($member = $context->member())
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="robots" content="noindex">
-    <meta name="theme-color" content="#1b2a55">
-    <title>{{ $title }} · {{ $context->tenant->name }}</title>
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:400,500,600,700,800|nunito:800" rel="stylesheet">
-    @vite(['resources/css/app.css'])
+    <x-so.head :tenant="$context->tenant" :title="$title" />
 </head>
-<body class="site-body member-body self-order-body">
-    <header class="member-header">
-        <div>
-            <p class="member-header-label">{{ $context->outlet->name }}</p>
-            <p class="member-header-business">{{ $context->tenant->name }}</p>
+<body class="so-body">
+    <header class="so-header">
+        <div class="so-header-inner">
+            <x-so.brand :tenant="$context->tenant" :sub="$context->outlet->name" />
+            <div class="so-header-actions">
+                <span class="so-chip">@svg('heroicon-s-map-pin', ['aria-hidden' => 'true']) {{ $context->table->name }}</span>
+                @if ($member)
+                    <a class="so-member-chip" href="{{ route('member.home', ['business' => $context->tenant->slug]) }}" title="{{ $member->name }} · {{ number_format($member->points_balance, 0, ',', '.') }} poin">
+                        <span class="so-member-chip-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr(trim($member->name), 0, 1)) }}</span>
+                        <span class="so-member-chip-text so-num">{{ number_format($member->points_balance, 0, ',', '.') }} poin</span>
+                    </a>
+                @else
+                    <a class="so-btn is-outline" href="{{ route('self-order.member', ['token' => $context->table->qr_token]) }}">Masuk</a>
+                @endif
+            </div>
         </div>
-        <span class="self-order-table-badge">{{ $context->table->name }}</span>
     </header>
 
-    <main class="member-main">
-        {{ $slot }}
-    </main>
-
-    <p class="member-powered">gs.POS · v{{ config('app.version') }}</p>
+    {{ $slot }}
 </body>
 </html>
