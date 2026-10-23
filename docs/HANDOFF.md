@@ -1,6 +1,6 @@
 # Catatan Lanjut Pengerjaan
 
-> Diperbarui: 2026-10-23 · Branch: `feature/pos` (ADR 0027 T0–T2 di-push; T3–T6 lokal sampai diminta push)
+> Diperbarui: 2026-10-23 · Branch: `feature/pos` (semua di-push, termasuk ADR 0027 T0–T6 `8fab7e7`)
 > Status: fitur MVP + backlog ADR 0013–0026 selesai; 2026-10-22–23: menu owner baru (Q130), susunan menu (Q132), hak akses
 > per role & per karyawan (ADR 0026, Q133–Q134), halaman kasir web dirapikan (Q131); sesi 2026-10-19–21: rapikan admin, halaman masuk + Turnstile,
 > pembayaran tagihan (QRIS/VA/transfer manual + bukti), master bank, PDF & email tagihan, Midtrans vendor 2 mode,
@@ -28,7 +28,7 @@ Prompt: `docs/prompts/self-order-qr-redesign.md` (milik pemilik, tidak di-commit
 | T4 | `CheckoutSelfOrder` (tanpa terima kasir, shift terbuka paling awal), `StartTableQrisPayment` (Core API, satu QR aktif, batas), sheet pilih bayar, layar QRIS & Tunjukkan ke kasir, setelan `allow_qris/allow_points/auto_complete_minutes` | `4d1d410` |
 | T5 | `orders.fulfillment_*`, `AdvanceOrderFulfillment`/`Undo`/`AutoComplete` + `pos:auto-complete-fulfillment` (5 menit), `/cashier/queue`, lini waktu & struk HP, API `POST /orders/{id}/fulfillment` (F4) | `5704891` |
 | T5b + Profil | Dashboard Transaksi → **Antrean pesanan** (4 kartu ringkasan, tab, tabel, langkah), tab **Profil** di meja | `d43af14` |
-| T6 | Halaman "Kode QR tidak aktif", banner koneksi putus, bilah memuat, toast Urungkan kasir, uji lintas tema/viewport, dokumen (UI `customer-pages.md`, `security.md`, QA SO-026–045, API) | (commit T6) |
+| T6 | Halaman "Kode QR tidak aktif", banner koneksi putus, bilah memuat, toast Urungkan kasir, uji lintas tema/viewport, dokumen (UI `customer-pages.md`, `security.md`, QA SO-026–045, API) | `8fab7e7` |
 
 Migrasi baru (wajib saat deploy): `2026_11_13_100000_add_pay_first_to_self_order`, `2026_11_14_100000_add_fulfillment_to_orders`.
 Jadwal baru: `pos:auto-complete-fulfillment` tiap 5 menit (cron `schedule:run` sudah cukup).
