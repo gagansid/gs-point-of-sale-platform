@@ -42,6 +42,7 @@ use App\Support\Features;
 use App\Support\Money;
 use App\Support\OptionDefaults;
 use App\Support\Phone;
+use App\Support\VoucherAttempts;
 use App\Support\WebCashier;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -177,9 +178,11 @@ final class PointOfSale extends Component
      */
     public array $stampProgramIds = [];
 
-    // Voucher (M7): kode yang diketik kasir; yang dipakai = appliedVoucherCode (sudah dicek) atau voucherId (pribadi)
+    // Voucher (M7): kode yang diketik kasir; yang dipakai = appliedVoucherCode (sudah dicek) atau voucherId (pribadi).
+    // Dikunci: hanya applyVoucher() (lewat batas percobaan, GSPOS-SEC-027) atau memuat transaksi tertahan yang mengisinya
     public string $voucherInput = '';
 
+    #[Locked]
     public ?string $appliedVoucherCode = null;
 
     public ?string $voucherId = null;
@@ -970,6 +973,7 @@ final class PointOfSale extends Component
         }
 
         try {
+            VoucherAttempts::hitStaff((string) $this->user()->id);
             $member = $this->memberId !== null ? Member::query()->find($this->memberId) : null;
             app(QuoteOrder::class)->handle($this->outlet(), $this->checkoutItems(), $this->orderDiscountType(), $this->orderDiscountValue(),
                 $member, new BenefitSelection(stampProgramIds: $this->stampProgramIds, voucherCode: $code));

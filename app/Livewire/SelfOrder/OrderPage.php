@@ -10,6 +10,7 @@ use App\Actions\Order\QuoteOrder;
 use App\Actions\Payment\StartOnlinePayment;
 use App\Actions\SelfOrder\PayWithPointsFromPhone;
 use App\Actions\SelfOrder\SubmitSelfOrder;
+use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
 use App\Enums\SelfOrderStatus;
 use App\Exceptions\BusinessException;
@@ -20,10 +21,12 @@ use App\Models\Order;
 use App\Models\PaymentGatewaySetting;
 use App\Models\Product;
 use App\Models\SelfOrder;
+use App\Models\Voucher;
 use App\Services\Order\CalculationResult;
 use App\Support\Features;
 use App\Support\OptionDefaults;
 use App\Support\SelfOrderContext;
+use App\Support\VoucherAttempts;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -38,6 +41,8 @@ use Livewire\Component;
  * final dihitung ulang saat kasir menerima. Pesanan milik sesi browser ini disimpan di session per meja.
  *
  * Request update Livewire tidak melewati middleware route: konteks meja dibaca ulang dari token di boot().
+ * Kode voucher baru dihitung ke batas percobaan (VoucherAttempts) sebelum dicek ke database; gagal = pesan seragam
+ * (GSPOS-SEC-027).
  *
  * @property-read array{categories: Collection<int, Category>, products: Collection<int, Product>, option_groups: Collection<int, OptionGroup>} $catalog
  * @property-read array{totals: CalculationResult|null, error: string|null} $quote
@@ -62,6 +67,14 @@ final class OrderPage extends Component
     public string $notes = '';
 
     public string $voucherCode = '';
+
+    /** Kode voucher yang sudah lolos batas percobaan; hanya kode ini yang dicek & dikirim. */
+    #[Locked]
+    public string $checkedVoucher = '';
+
+    /** Pesan bila kode voucher terakhir ditolak batas percobaan (kode tidak dicek). */
+    #[Locked]
+    public ?string $voucherBlocked = null;
 
     #[Locked]
     public string $submitId = '';
@@ -128,12 +141,42 @@ final class OrderPage extends Component
             return ['totals' => null, 'error' => null];
         }
 
+        if ($this->voucherBlocked !== null) {
+            return ['totals' => null, 'error' => $this->voucherBlocked];
+        }
+
         try {
             return ['totals' => app(QuoteOrder::class)->handle($this->context->outlet, $this->items(), null, '0.00', $this->member(),
-                new BenefitSelection(voucherCode: filled(trim($this->voucherCode)) ? trim($this->voucherCode) : null)), 'error' => null];
+                new BenefitSelection(voucherCode: $this->checkedVoucher !== '' ? $this->checkedVoucher : null)), 'error' => null];
         } catch (BusinessException $e) {
-            return ['totals' => null, 'error' => $e->getMessage()];
+            return ['totals' => null, 'error' => self::publicMessage($e)];
         }
+    }
+
+    /** Kode voucher diubah pelanggan: kode baru dihitung ke batas percobaan dulu. */
+    public function updatedVoucherCode(): void
+    {
+        $code = Voucher::normalizeCode(mb_substr($this->voucherCode, 0, 30));
+        unset($this->quote);
+
+        if ($code === '' || $code === $this->checkedVoucher) {
+            $this->checkedVoucher = $code;
+            $this->voucherBlocked = null;
+
+            return;
+        }
+
+        try {
+            VoucherAttempts::hitPublic((string) request()->ip(), $this->context->table->id);
+        } catch (BusinessException $e) {
+            $this->checkedVoucher = '';
+            $this->voucherBlocked = $e->getMessage();
+
+            return;
+        }
+
+        $this->checkedVoucher = $code;
+        $this->voucherBlocked = null;
     }
 
     /** @return Collection<int, SelfOrder> pesanan sesi ini di meja ini, terbaru dulu */
@@ -264,26 +307,32 @@ final class OrderPage extends Component
     {
         $this->error = null;
 
+        if ($this->voucherBlocked !== null) {
+            $this->error = $this->voucherBlocked;
+
+            return;
+        }
+
         try {
             $result = app(SubmitSelfOrder::class)->handle($this->context, [
                 'id' => $this->submitId,
                 'customer_name' => mb_substr(trim($this->customerName), 0, 100),
                 'items' => $this->items(),
                 'notes' => filled(trim($this->notes)) ? mb_substr(trim($this->notes), 0, 255) : null,
-                'voucher_code' => filled(trim($this->voucherCode)) ? mb_substr(trim($this->voucherCode), 0, 30) : null,
+                'voucher_code' => $this->checkedVoucher !== '' ? $this->checkedVoucher : null,
             ], $this->member(), (string) request()->ip());
         } catch (ValidationException $e) {
             $this->error = $e->validator->errors()->first();
 
             return;
         } catch (BusinessException $e) {
-            $this->error = $e->getMessage();
+            $this->error = self::publicMessage($e);
 
             return;
         }
 
         session()->put($this->sessionKey(), array_values(array_unique([...(array) session()->get($this->sessionKey(), []), $result['self_order']->id])));
-        $this->reset('cart', 'notes', 'voucherCode');
+        $this->reset('cart', 'notes', 'voucherCode', 'checkedVoucher', 'voucherBlocked');
         $this->submitId = (string) Str::uuid7();
         unset($this->myOrders, $this->quote);
         $this->view = 'status';
@@ -390,5 +439,11 @@ final class OrderPage extends Component
     private function sessionKey(): string
     {
         return 'self_orders.'.$this->context->table->id;
+    }
+
+    /** Alasan voucher tidak sah tidak ditampilkan ke publik (kode yang ada tidak bisa dibedakan). */
+    private static function publicMessage(BusinessException $e): string
+    {
+        return $e->errorCode === ErrorCode::VoucherInvalid->value ? VoucherAttempts::PUBLIC_INVALID_MESSAGE : $e->getMessage();
     }
 }
