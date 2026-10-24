@@ -92,6 +92,13 @@ final class DashboardPanelProvider extends PanelProvider
             ])
             // Menu Kasir (Q55): tab baru ke kasir web, masuk ulang dengan kata sandi atau PIN
             ->navigationItems([
+                // Profil sendiri juga di sidebar (selain menu akun kanan atas) agar mudah ditemukan
+                NavigationItem::make('Profil saya')
+                    ->icon(Heroicon::OutlinedUserCircle)
+                    ->group('Akun')
+                    ->sort(0)
+                    ->url(fn (): string => EditProfile::getUrl())
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.dashboard.auth.profile')),
                 NavigationItem::make('Kasir')
                     ->icon(Heroicon::OutlinedComputerDesktop)
                     ->group('Transaksi')

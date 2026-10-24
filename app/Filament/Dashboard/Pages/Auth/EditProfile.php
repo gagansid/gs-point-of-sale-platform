@@ -8,7 +8,6 @@ use App\Actions\User\LogoutOtherSessions;
 use App\Actions\User\UpdateOwnAvatar;
 use App\Actions\User\UpdateOwnProfile;
 use App\Exceptions\BusinessException;
-use App\Filament\Dashboard\Resources\Products\Schemas\ProductForm;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Rules\SecurePin;
@@ -49,6 +48,11 @@ class EditProfile extends BaseEditProfile
     protected function getCancelFormAction(): Action
     {
         return parent::getCancelFormAction()->label('Batal');
+    }
+
+    public function getSubheading(): string
+    {
+        return 'Data diri, keamanan, dan perangkat yang memakai akun ini';
     }
 
     /** @return array<string> */
@@ -131,13 +135,12 @@ class EditProfile extends BaseEditProfile
     protected function getAvatarFormComponent(): Component
     {
         return FileUpload::make('avatar_path')->label('Foto profil')->hiddenLabel()
-            // Persegi 1:1 (sama dengan hasil simpan); dibuat bulat hanya di avatar topbar
-            ->image()->imageEditor()->imageEditorAspectRatios(['1:1'])->imageCropAspectRatio('1:1')
-            ->panelAspectRatio('1:1')
-            ->placeholder(ProductForm::uploadPlaceholder())
+            // Mode avatar: pratinjau bulat, dipotong 1:1 (sama dengan avatar topbar & kasir web)
+            ->avatar()->image()->imageEditor()->imageEditorAspectRatios(['1:1'])->imageCropAspectRatio('1:1')
+            ->placeholder('<span class="gs-avatar-placeholder">'.e(mb_strtoupper(mb_substr(trim($this->profileUser()->name), 0, 1))).'<small>Unggah foto</small></span>')
             ->disk('public')->directory(fn (): string => UpdateOwnAvatar::directory($this->profileUser()))->visibility('public')
             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(2048)
-            ->helperText('JPG, PNG, atau WEBP · maks. 2 MB · dipotong persegi')
+            ->helperText('Klik foto untuk mengganti · JPG, PNG, WEBP · maks. 2 MB')
             ->alignCenter()
             ->extraAttributes(['class' => 'gs-profile-avatar']);
     }

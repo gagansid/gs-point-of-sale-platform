@@ -72,7 +72,7 @@ it('panel dashboard (owner): susunan grup & konvensi menu', function () {
 
     expect(array_keys(navigationTree()))->toBe(['—', 'Transaksi', 'Katalog', 'Stok', 'Pelanggan', 'Pengaturan', 'Akun'])
         ->and(navigationTree()['—'])->toBe(['Beranda', 'Laporan'])
-        ->and(navigationTree()['Akun'])->toBe(['Langganan', 'Riwayat perubahan']);
+        ->and(navigationTree()['Akun'])->toBe(['Profil saya', 'Langganan', 'Riwayat perubahan']);
 
     assertNavigationConventions();
 });

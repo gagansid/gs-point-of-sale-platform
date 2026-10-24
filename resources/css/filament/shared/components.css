@@ -3449,8 +3449,38 @@ select.fi-select-input {
 }
 
 .gs-profile-card .gs-profile-avatar .filepond--root {
-    width: 160px;
+    width: 128px;
     margin-inline: auto;
+}
+
+/* Kartu kiri setinggi isinya & menempel saat kolom kanan digulir (yang meregang = kolom grid pembungkusnya) */
+.fi-grid-col:has(> .fi-sc-component > .gs-profile-card) {
+    position: sticky;
+    top: calc(var(--topbar-h) + 16px);
+    align-self: start;
+}
+
+/* Foto profil bulat (mode avatar FilePond) */
+.gs-profile-card .fi-fo-file-upload-avatar .filepond--root,
+.gs-profile-card .fi-fo-file-upload-avatar .filepond--panel-root,
+.gs-profile-card .fi-fo-file-upload-avatar .filepond--drop-label,
+.gs-profile-card .fi-fo-file-upload-avatar .filepond--image-preview-wrapper {
+    border-radius: 999px;
+}
+
+.gs-profile-card .fi-fo-file-upload-avatar .filepond--root {
+    aspect-ratio: 1;
+    height: auto;
+}
+
+.gs-profile-card .fi-fo-file-upload-avatar .filepond--panel-root {
+    border: 1px dashed var(--field-border-hover);
+    background: var(--primary-lt);
+}
+
+.gs-profile-card .fi-fo-file-upload-avatar .filepond--drop-label {
+    color: var(--primary);
+    font-size: 12px;
 }
 
 .gs-profile-summary {
@@ -3485,23 +3515,35 @@ select.fi-select-input {
 
 .gs-profile-info {
     display: grid;
-    gap: 10px;
-    margin-top: -6px;
+    margin: -6px 0 0;
     font-size: 13px;
 }
 
 .gs-profile-info div {
-    display: grid;
-    gap: 1px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px dashed var(--border-color);
+}
+
+.gs-profile-info div:first-child {
+    border-top: 0;
+    padding-top: 0;
 }
 
 .gs-profile-info dt {
+    flex: none;
     color: var(--text-muted);
-    font-size: 12px;
+    font-size: 12.5px;
 }
 
 .gs-profile-info dd {
     color: var(--text);
+    font-weight: 500;
+    text-align: right;
+    overflow-wrap: anywhere;
 }
 
 /* Teks bantuan foto di tengah, di bawah foto */
@@ -4953,4 +4995,22 @@ ul.gs-diff-cell {
 .gs-cell-center {
     display: flex;
     justify-content: center;
+}
+
+/* Placeholder foto profil: inisial besar + ajakan unggah */
+.gs-avatar-placeholder {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    color: var(--primary);
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.gs-avatar-placeholder small {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 500;
 }
