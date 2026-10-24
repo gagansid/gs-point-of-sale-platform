@@ -1061,6 +1061,186 @@
     color: #8a5a00;
 }
 
+/* ---------- Harga ---------- */
+/*
+ * Jumlah kolom = jumlah paket (maks. 4, dari --plans di Blade). Tiap kartu = 7 baris subgrid (judul, deskripsi,
+ * harga, tahunan, tombol, kuota, fitur) agar harga & tombol sejajar walau panjang deskripsi berbeda.
+ */
+.lp-plans {
+    display: grid;
+    grid-template-columns: repeat(var(--plans, 3), minmax(0, 1fr));
+    gap: 16px;
+}
+
+.lp-plan {
+    display: grid;
+    grid-row: span 7;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    padding: 24px;
+    border: 1px solid var(--site-border);
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgb(30 38 51 / 0.04);
+}
+
+/* Paket uji coba: garis atas navy + bayangan, seperti kartu terpilih */
+.lp-plan.is-featured {
+    border-color: var(--site-primary);
+    box-shadow: 0 0 0 1px var(--site-primary), 0 24px 48px rgb(27 42 85 / 0.12);
+}
+
+.lp-plan-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.lp-plan-head h3 {
+    margin: 0;
+    color: var(--site-navy);
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.lp-plan-badge {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--site-primary);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.lp-plan-desc {
+    margin: 8px 0 0;
+    color: var(--site-muted);
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+.lp-plan-price {
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
+    margin-top: 20px;
+    color: var(--site-navy);
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-plan-price small {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.lp-plan-price b {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+}
+
+.lp-plan-price span {
+    margin-inline-start: 4px;
+    color: var(--site-muted);
+    font-size: 14px;
+}
+
+.lp-plan-yearly {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 6px;
+    margin: 4px 0 20px;
+    color: var(--site-muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-plan-yearly em {
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: #e7f6ee;
+    color: #19764a;
+    font-size: 11.5px;
+    font-style: normal;
+    font-weight: 700;
+}
+
+/* Kuota: baris label ... angka, garis putus-putus seperti struk */
+.lp-plan-limits {
+    margin: 20px 0 0;
+    padding: 12px 0 0;
+    border-top: 1px dashed var(--site-border);
+}
+
+.lp-plan-limits div {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 13.5px;
+}
+
+.lp-plan-limits dt {
+    color: var(--site-muted);
+}
+
+.lp-plan-limits dd {
+    margin: 0;
+    color: var(--site-text);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-plan-limits .is-off :is(dt, dd) {
+    color: #a3aab6;
+    font-weight: 400;
+}
+
+.lp-plan-features {
+    display: grid;
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 14px 0 0;
+    border-top: 1px dashed var(--site-border);
+    list-style: none;
+    font-size: 13.5px;
+}
+
+.lp-plan-features li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lp-plan-features .site-icon {
+    color: var(--site-primary);
+    stroke-width: 2.4;
+}
+
+.lp-plan-features .lp-no {
+    margin: 0 3px;
+}
+
+.lp-plan-features .is-off {
+    color: #a3aab6;
+}
+
+.lp-plans-note {
+    margin: 24px 0 0;
+    color: var(--site-muted);
+    font-size: 14px;
+    text-align: center;
+}
+
+.lp-plans-note a {
+    color: var(--site-primary);
+    font-weight: 600;
+}
+
 /* ---------- Cara kerja ---------- */
 .lp-steps {
     display: grid;
@@ -1297,6 +1477,10 @@
     .lp-contact {
         grid-template-columns: minmax(0, 1fr);
     }
+
+    .lp-plans {
+        grid-template-columns: repeat(min(var(--plans, 3), 2), minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 760px) {
@@ -1333,6 +1517,20 @@
     .lp-steps {
         grid-template-columns: minmax(0, 1fr);
         gap: 32px;
+    }
+
+    .lp-plans {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lp-plan {
+        grid-row: auto;
+        grid-template-rows: none;
+    }
+
+    /* HP: daftar fitur cukup yang termasuk agar kartu tidak terlalu panjang */
+    .lp-plan-features .is-off {
+        display: none;
     }
 
     .lp-steps li:not(:last-child)::after {

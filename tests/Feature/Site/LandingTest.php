@@ -3,7 +3,10 @@
 declare(strict_types=1);
 
 use App\Enums\SalesLeadStatus;
+use App\Models\Plan;
 use App\Models\SalesLead;
+use App\Support\SystemSettings;
+use Database\Seeders\PlanSeeder;
 use Illuminate\Support\Facades\RateLimiter;
 
 beforeEach(function () {
@@ -22,6 +25,37 @@ it('halaman depan menampilkan fitur, tombol masuk, dan form hubungi sales', func
         ->assertSee('Split payment')
         ->assertSee('Masuk')
         ->assertSee('Kirim ke tim sales');
+});
+
+it('harga: hanya paket aktif, publik, dan dalam periode; harga & hemat tahunan dari master paket', function () {
+    $this->seed(PlanSeeder::class);
+    Plan::query()->create(['code' => 'promo-lalu', 'name' => 'Promo Lalu', 'price_monthly' => '50000', 'price_yearly' => '500000', 'limits' => [], 'available_until' => now()->subDay()]);
+    Plan::query()->create(['code' => 'arsip', 'name' => 'Paket Arsip', 'price_monthly' => '10000', 'price_yearly' => '100000', 'limits' => [], 'is_active' => false]);
+
+    $this->get('/')->assertOk()
+        ->assertSee('id="pricing"', false)
+        ->assertSeeInOrder(['Basic', 'Pro', 'Bisnis'])
+        ->assertSee('199.000')
+        ->assertSee('Rp1.990.000/tahun')
+        ->assertSee('hemat 17%')
+        ->assertDontSee('Enterprise')
+        ->assertDontSee('Promo Lalu')
+        ->assertDontSee('Paket Arsip');
+});
+
+it('harga: paket uji coba ditandai saat pendaftaran dibuka', function () {
+    $this->seed(PlanSeeder::class);
+    $settings = app(SystemSettings::class);
+    $settings->setOnboarding(14, true);
+    $settings->setOnboardingExtras(Plan::query()->where('code', 'pro')->value('id'), 20, [], [], null);
+
+    $this->get('/')->assertOk()->assertSee('Paket uji coba')->assertSee('Coba gratis 14 hari');
+});
+
+it('harga: section disembunyikan bila belum ada paket publik', function () {
+    $this->get('/')->assertOk()
+        ->assertDontSee('id="pricing"', false)
+        ->assertDontSee('href="#pricing"', false);
 });
 
 it('form hubungi sales menyimpan calon pelanggan', function () {

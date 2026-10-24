@@ -34,6 +34,9 @@
             <nav class="lp-nav" aria-label="Menu utama">
                 <a href="#features">Fitur</a>
                 <a href="#roles">Peran</a>
+                @if ($plans->isNotEmpty())
+                    <a href="#pricing">Harga</a>
+                @endif
                 <a href="#how-it-works">Cara kerja</a>
                 <a href="#contact">Kontak</a>
             </nav>
@@ -307,8 +310,102 @@
             </div>
         </section>
 
+        {{-- ---------- Harga: dari master paket (ADR 0025), sama dengan halaman Langganan owner ---------- --}}
+        @if ($plans->isNotEmpty())
+            <section id="pricing" class="lp-section lp-section-muted">
+                <div class="lp-container">
+                    <div class="lp-head lp-head-split">
+                        <div>
+                            <p class="lp-kicker">Harga</p>
+                            <h2 class="lp-title">Bayar sesuai ukuran usaha Anda</h2>
+                        </div>
+                        <p class="lp-lead">
+                            Semua paket sudah termasuk kasir, shift, stok, dan laporan.
+                            @if ($signupEnabled)
+                                Coba gratis {{ $trialDays }} hari, tanpa kartu kredit.
+                            @endif
+                            Naik atau turun paket kapan saja dari dashboard.
+                        </p>
+                    </div>
+
+                    <div class="lp-plans" style="--plans: {{ min($plans->count(), 4) }}">
+                        @foreach ($plans as $plan)
+                            @php
+                                $monthly = (float) $plan->price_monthly;
+                                $yearly = (float) $plan->price_yearly;
+                                // Hemat bayar tahunan dibanding 12× bulanan, dibulatkan ke persen terdekat
+                                $saving = $monthly > 0 ? (int) round((1 - $yearly / ($monthly * 12)) * 100) : 0;
+                                $isTrial = $signupEnabled && $plan->id === $trialPlanId;
+                            @endphp
+                            <article @class(['lp-plan', 'is-featured' => $isTrial])>
+                                <div class="lp-plan-head">
+                                    <h3>{{ $plan->name }}</h3>
+                                    @if ($isTrial)
+                                        <span class="lp-plan-badge">Paket uji coba</span>
+                                    @endif
+                                </div>
+                                {{-- Selalu dirender (walau kosong) agar baris subgrid kartu tetap 7 --}}
+                                <p class="lp-plan-desc">{{ $plan->description }}</p>
+
+                                <div class="lp-plan-price">
+                                    <small>Rp</small><b>{{ number_format($monthly, 0, ',', '.') }}</b><span>/bulan</span>
+                                </div>
+                                <p class="lp-plan-yearly">
+                                    <span>atau Rp{{ number_format($yearly, 0, ',', '.') }}/tahun</span>
+                                    @if ($saving > 0)
+                                        <em>hemat {{ $saving }}%</em>
+                                    @endif
+                                </p>
+
+                                @if ($signupEnabled)
+                                    <a href="{{ route('signup') }}" @class(['site-btn', 'site-btn-block', 'site-btn-primary' => $isTrial, 'site-btn-outline' => ! $isTrial])>Coba gratis</a>
+                                @else
+                                    <a href="#contact" @class(['site-btn', 'site-btn-block', 'site-btn-primary' => $isTrial, 'site-btn-outline' => ! $isTrial])>Hubungi sales</a>
+                                @endif
+
+                                <dl class="lp-plan-limits">
+                                    @foreach ($quotas as $key => $label)
+                                        @php($applies = ! isset($quotaFeatures[$key]) || $plan->hasFeature($quotaFeatures[$key]))
+                                        <div @class(['is-off' => ! $applies])>
+                                            <dt>{{ $label }}</dt>
+                                            <dd>
+                                                @if (! $applies)
+                                                    —
+                                                @elseif ($plan->limit($key) !== null)
+                                                    {{ number_format($plan->limit($key), 0, ',', '.') }}
+                                                @else
+                                                    Tanpa batas
+                                                @endif
+                                            </dd>
+                                        </div>
+                                    @endforeach
+                                </dl>
+
+                                <ul class="lp-plan-features">
+                                    @foreach ($features as $key => $label)
+                                        <li @class(['is-off' => ! $plan->hasFeature($key)])>
+                                            @if ($plan->hasFeature($key))
+                                                <x-site.icon name="check" class="size-4" />
+                                            @else
+                                                <span class="lp-no" aria-hidden="true"></span><span class="sr-only">Tidak termasuk:</span>
+                                            @endif
+                                            {{ $label }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </article>
+                        @endforeach
+                    </div>
+
+                    <p class="lp-plans-note">
+                        Punya banyak cabang atau waralaba? <a href="#contact">Hubungi sales</a> untuk paket khusus.
+                    </p>
+                </div>
+            </section>
+        @endif
+
         {{-- ---------- Cara kerja ---------- --}}
-        <section id="how-it-works" class="lp-section lp-section-muted">
+        <section id="how-it-works" @class(['lp-section', 'lp-section-muted' => $plans->isEmpty()])>
             <div class="lp-container">
                 <div class="lp-head">
                     <p class="lp-kicker">Cara kerja</p>
@@ -406,6 +503,9 @@
                     <h3>Produk</h3>
                     <a href="#features">Fitur</a>
                     <a href="#roles">Peran & hak akses</a>
+                    @if ($plans->isNotEmpty())
+                        <a href="#pricing">Harga</a>
+                    @endif
                     <a href="#how-it-works">Cara kerja</a>
                 </nav>
                 <nav aria-label="Akun">
