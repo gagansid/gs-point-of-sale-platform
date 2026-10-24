@@ -137,11 +137,11 @@ final class BillingPaymentSettings extends Page
                             ->helperText('Sandbox untuk uji coba (uang tidak sungguhan). Produksi untuk pembayaran nyata')
                             ->columnSpanFull(),
                         TextInput::make('midtrans_sandbox_key')->label('Server key sandbox (dev)')->password()->revealable()
-                            ->maxLength(120)->autocomplete('off')
+                            ->maxLength(120)->autocomplete('new-password')
                             ->placeholder(fn (): string => self::keyPlaceholder('sandbox', 'SB-Mid-server-…'))
                             ->helperText(fn (): string => self::keyStatus('sandbox')),
                         TextInput::make('midtrans_production_key')->label('Server key produksi')->password()->revealable()
-                            ->maxLength(120)->autocomplete('off')
+                            ->maxLength(120)->autocomplete('new-password')
                             ->placeholder(fn (): string => self::keyPlaceholder('production', 'Mid-server-…'))
                             ->helperText(fn (): string => self::keyStatus('production')),
                         Toggle::make('midtrans_clear_keys')->label('Hapus key tersimpan (kembali ke .env)')->columnSpanFull(),

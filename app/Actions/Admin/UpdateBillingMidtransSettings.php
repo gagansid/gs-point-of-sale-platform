@@ -34,7 +34,8 @@ final class UpdateBillingMidtransSettings
         $clear = (bool) ($data['midtrans_clear_keys'] ?? false);
         $keys = [];
         foreach (array_keys(SystemSettings::MIDTRANS_MODES) as $keyMode) {
-            $key = trim((string) ($data['midtrans_'.$keyMode.'_key'] ?? ''));
+            // Salinan dari dashboard Midtrans bisa membawa spasi khusus (NBSP, zero-width) yang tidak terbuang trim()
+            $key = (string) preg_replace('/[\s\x{00A0}\x{200B}-\x{200D}\x{2060}\x{FEFF}]+/u', '', (string) ($data['midtrans_'.$keyMode.'_key'] ?? ''));
             if ($key === '') {
                 $keys[$keyMode] = $clear ? '' : null;
 
@@ -42,9 +43,10 @@ final class UpdateBillingMidtransSettings
             }
 
             $field = 'midtrans_'.$keyMode.'_key';
-            $pattern = $keyMode === 'sandbox' ? '/^SB-Mid-server-[A-Za-z0-9_-]{8,100}$/' : '/^Mid-server-[A-Za-z0-9_-]{8,100}$/';
+            // Cukup prefiks + karakter ASCII tampak; keaslian key dipastikan uji ke Midtrans di bawah
+            $pattern = $keyMode === 'sandbox' ? '/^SB-Mid-server-[\x21-\x7E]{8,100}$/' : '/^Mid-server-[\x21-\x7E]{8,100}$/';
             if (preg_match($pattern, $key) !== 1) {
-                $message = $keyMode === 'sandbox' ? 'Server key sandbox diawali SB-Mid-server-' : 'Server key produksi diawali Mid-server- (bukan SB-)';
+                $message = self::formatError($keyMode, $key);
                 throw BusinessException::of(ErrorCode::ValidationError, $message, [$field => [$message]]);
             }
 
@@ -67,5 +69,20 @@ final class UpdateBillingMidtransSettings
         ]);
 
         return $this->settings->billingMidtransKey($mode) !== null;
+    }
+
+    /** Pesan format key yang menyebut kesalahan paling umum: Client Key tertempel, atau key mode lain. */
+    private static function formatError(string $keyMode, string $key): string
+    {
+        $expected = $keyMode === 'sandbox' ? 'SB-Mid-server-' : 'Mid-server-';
+
+        return match (true) {
+            str_contains($key, 'Mid-client-') => 'Yang ditempel Client Key. Pakai Server Key (diawali '.$expected.')',
+            $keyMode === 'production' && str_starts_with($key, 'SB-') => 'Ini key sandbox. Server key produksi diambil dari dashboard Midtrans mode Production (diawali Mid-server-)',
+            $keyMode === 'sandbox' && str_starts_with($key, 'Mid-server-') => 'Ini key produksi. Server key sandbox diambil dari dashboard Midtrans mode Sandbox (diawali SB-Mid-server-)',
+            default => $keyMode === 'sandbox'
+                ? 'Server key sandbox diawali SB-Mid-server-'
+                : 'Server key produksi diawali Mid-server- (bukan SB-)',
+        };
     }
 }

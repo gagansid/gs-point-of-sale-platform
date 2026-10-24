@@ -274,6 +274,34 @@ it('Midtrans vendor: mode sandbox/produksi, key per mode diuji & terenkripsi, ca
     Livewire::test(BillingPaymentSettings::class)->assertOk()->assertSee('Server key sandbox (dev)')->assertDontSee('dariEnv000');
 });
 
+it('Midtrans vendor: salinan key dibersihkan dari spasi khusus; Client Key & key mode lain diberi pesan jelas', function () {
+    $action = app(UpdateBillingMidtransSettings::class);
+    Http::fake(fn () => Http::response(['status_code' => '404'], 404));
+
+    // Client Key tertempel di kolom server key: ditolak tanpa memanggil Midtrans
+    expect(fn () => $action->handle($this->admin, ['midtrans_mode' => 'production', 'midtrans_production_key' => 'Mid-client-abcdefgh123']))
+        ->toThrow(BusinessException::class, 'Client Key');
+    expect(fn () => $action->handle($this->admin, ['midtrans_mode' => 'sandbox', 'midtrans_sandbox_key' => 'Mid-server-abcdefgh123']))
+        ->toThrow(BusinessException::class, 'Ini key produksi');
+    Http::assertNothingSent();
+
+    // NBSP, zero-width space, dan baris baru dari salinan dashboard tidak membuat key ditolak
+    $pasted = "\u{00A0}Mid-server-benar\u{200B}sekali1\n";
+    expect($action->handle($this->admin, ['midtrans_mode' => 'production', 'midtrans_production_key' => $pasted]))->toBeTrue()
+        ->and(app(SystemSettings::class)->billingMidtransKey('production'))->toBe('Mid-server-benarsekali1');
+
+    // Karakter di luar huruf/angka/_/- (mis. titik, plus, sama dengan) tetap diterima bila Midtrans menerimanya
+    expect($action->handle($this->admin, ['midtrans_mode' => 'production', 'midtrans_production_key' => 'Mid-server-pr_uVT.FK+Uab=']))->toBeTrue();
+});
+
+it('kolom server key tidak diisi otomatis kata sandi login oleh browser', function () {
+    Filament::setCurrentPanel('admin');
+    $this->actingAs($this->admin, 'admin');
+    Livewire::test(BillingPaymentSettings::class)->assertOk()
+        ->assertSeeHtml('autocomplete="new-password"')
+        ->assertDontSeeHtml('autocomplete="current-password"');
+});
+
 it('webhook tagihan memakai key mode aktif', function () {
     app(SystemSettings::class)->setBillingMidtrans('production', ['production' => 'Mid-server-prodkey00001']);
     $invoice = payInvoice($this);
