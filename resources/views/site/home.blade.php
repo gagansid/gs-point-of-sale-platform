@@ -418,7 +418,7 @@
                 </nav>
             </div>
             <div class="lp-footer-bottom">
-                <span>© {{ now()->year }} gs.POS · Abati Technology</span>
+                <span>© {{ now()->year }} gs.POS · GS Technology</span>
             </div>
         </div>
     </footer>

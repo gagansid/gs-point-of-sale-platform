@@ -105,7 +105,7 @@ final class BillingPaymentSettings extends Page
                                     ->getOptionLabelUsing(fn (mixed $value): ?string => ($bank = Bank::query()->find($value)) ? Bank::optionHtml($bank) : null),
                                 TextInput::make('number')->hiddenLabel()->required()->maxLength(30)->placeholder('1234567890')
                                     ->extraInputAttributes(['inputmode' => 'numeric', 'class' => 'font-mono']),
-                                TextInput::make('holder')->hiddenLabel()->required()->maxLength(80)->placeholder('PT Abati Teknologi'),
+                                TextInput::make('holder')->hiddenLabel()->required()->maxLength(80)->placeholder('PT GS Technology'),
                             ])
                             ->maxItems(SystemSettings::BILLING_ACCOUNTS_MAX)
                             ->defaultItems(0)

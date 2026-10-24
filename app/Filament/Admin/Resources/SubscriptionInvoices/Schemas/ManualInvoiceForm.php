@@ -111,7 +111,7 @@ final class ManualInvoiceForm
             Section::make('Catatan untuk pelanggan')->icon(Heroicon::OutlinedChatBubbleBottomCenterText)->description('Tampil di halaman Langganan owner & email tagihan')
                 ->columnSpan(['default' => 3, 'lg' => 2])->schema([
                     Textarea::make('memo')->hiddenLabel()->maxLength(1000)->rows(3)->autosize()
-                        ->placeholder('mis. Pembayaran ke BCA 123 456 7890 a.n. PT Abati. Cantumkan nomor tagihan.'),
+                        ->placeholder('mis. Pembayaran ke BCA 123 456 7890 a.n. PT GS Technology. Cantumkan nomor tagihan.'),
                 ]),
         ]);
     }
