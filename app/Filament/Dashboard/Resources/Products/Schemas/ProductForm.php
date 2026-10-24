@@ -8,6 +8,7 @@ use App\Actions\Product\SetProductListing;
 use App\Enums\ProductKind;
 use App\Filament\Shared\Forms\MoneyInput;
 use App\Filament\Shared\Forms\OutletPickList;
+use App\Filament\Shared\Forms\ShrinkImage;
 use App\Filament\Shared\Schemas\AuditInfo;
 use App\Models\Category;
 use App\Models\OptionGroup;
@@ -152,7 +153,7 @@ final class ProductForm
                         Section::make('Gambar')->icon(Heroicon::OutlinedPhoto)
                             ->description('Tampil di aplikasi kasir')
                             ->schema([
-                                FileUpload::make('image_path')
+                                ShrinkImage::apply(FileUpload::make('image_path')
                                     ->hiddenLabel()
                                     ->image()
                                     ->imageEditor()
@@ -161,11 +162,10 @@ final class ProductForm
                                     // Panel persegi: area seret-lepas & pratinjau sama ukurannya
                                     ->panelAspectRatio('1:1')
                                     ->placeholder(self::uploadPlaceholder())
-                                    ->helperText('JPG, PNG, atau WEBP · maks. 1 MB · dipotong persegi')
+                                    ->helperText('JPG, PNG, atau WEBP · dipotong persegi, foto besar otomatis diperkecil')
                                     ->disk('public')
                                     ->directory(fn (): string => 'products/'.TenantContext::idOrFail())
-                                    ->maxSize(1024)
-                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']),
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']), 800, 1024, 'cover'),
                             ]),
                         Section::make('Dijual di outlet')->icon(Heroicon::OutlinedBuildingStorefront)
                             ->description('Produk hanya tampil di aplikasi kasir outlet yang dicentang')

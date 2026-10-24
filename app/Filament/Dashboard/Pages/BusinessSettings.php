@@ -9,6 +9,7 @@ use App\Enums\BusinessType;
 use App\Exceptions\BusinessException;
 use App\Filament\Shared\Actions\SettingsFormActions;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
+use App\Filament\Shared\Forms\ShrinkImage;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\TenantAppearance;
@@ -103,11 +104,11 @@ final class BusinessSettings extends DashboardPage
                         Placeholder::make('slug')->label('Kode bisnis')
                             ->content(new HtmlString('<code class="text-sm">'.e($tenant->slug).'</code>'))
                             ->helperText('Dipakai kasir saat masuk dengan username. Hubungi tim gs.POS untuk mengubah'),
-                        FileUpload::make('logo')->label('Logo bisnis')->image()->disk('public')
+                        ShrinkImage::apply(FileUpload::make('logo')->label('Logo bisnis')->image()->disk('public')
                             ->directory(UpdateBusinessSettings::logoDirectory($tenant))->visibility('public')
-                            ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])->maxSize(1024)
+                            ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
                             ->imageEditor(false)
-                            ->helperText('Persegi, PNG/JPG/WEBP maks. 1 MB. Tampil di sidebar menggantikan logo gs.POS'),
+                            ->helperText('Persegi, PNG/JPG/WEBP; gambar besar otomatis diperkecil. Tampil di sidebar menggantikan logo gs.POS'), 512, 1024),
                     ]),
                 Section::make('Pratinjau')->icon(Heroicon::OutlinedEye)
                     ->description('Perkiraan tampilan dengan pilihan saat ini')

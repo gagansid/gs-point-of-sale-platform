@@ -9,6 +9,7 @@ use App\Actions\User\UpdateOwnAvatar;
 use App\Actions\User\UpdateOwnProfile;
 use App\Exceptions\BusinessException;
 use App\Filament\Shared\Concerns\ShowsPasswordConfirmation;
+use App\Filament\Shared\Forms\ShrinkImage;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Rules\SecurePin;
@@ -137,15 +138,16 @@ class EditProfile extends BaseEditProfile
     /** Foto profil: gambar ≤ 2 MB, dipotong persegi, disimpan di folder tenant (UpdateOwnAvatar). */
     protected function getAvatarFormComponent(): Component
     {
-        return FileUpload::make('avatar_path')->label('Foto profil')->hiddenLabel()
+        // Foto kamera diperkecil ke 512px di browser sebelum diunggah (ShrinkImage)
+        return ShrinkImage::apply(FileUpload::make('avatar_path')->label('Foto profil')->hiddenLabel()
             // Mode avatar: pratinjau bulat, dipotong 1:1 (sama dengan avatar topbar & kasir web)
             ->avatar()->image()->imageEditor()->imageEditorAspectRatios(['1:1'])->imageCropAspectRatio('1:1')
             ->placeholder('<span class="gs-avatar-placeholder">'.e(mb_strtoupper(mb_substr(trim($this->profileUser()->name), 0, 1))).'<small>Unggah foto</small></span>')
             ->disk('public')->directory(fn (): string => UpdateOwnAvatar::directory($this->profileUser()))->visibility('public')
-            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])->maxSize(2048)
-            ->helperText('Klik foto untuk mengganti · JPG, PNG, WEBP · maks. 2 MB')
+            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+            ->helperText('Klik foto untuk mengganti · JPG, PNG, WEBP · foto besar otomatis diperkecil')
             ->alignCenter()
-            ->extraAttributes(['class' => 'gs-profile-avatar']);
+            ->extraAttributes(['class' => 'gs-profile-avatar']), 512, 2048, 'cover');
     }
 
     /** Ringkasan harian lewat email (Q57): hanya untuk yang boleh melihat laporan. */

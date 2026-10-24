@@ -18,6 +18,7 @@ use App\Exceptions\BusinessException;
 use App\Filament\Shared\Columns\MoneyColumn;
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
 use App\Filament\Shared\Filters\DateRangeFilter;
+use App\Filament\Shared\Forms\ShrinkImage;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Filament\Shared\Tables\TableHeading;
 use App\Models\Addon;
@@ -396,11 +397,12 @@ final class SubscriptionSettings extends DashboardPage implements HasTable
                         'note' => app(SystemSettings::class)->billingManualNote(),
                         'invoice' => $this->payableInvoice($arguments),
                     ])->render())),
-                FileUpload::make('proof')->label('Bukti transfer')->required()
+                // Foto bukti dari kamera diperkecil ke 1600px agar nominal tetap terbaca; PDF tidak diubah
+                ShrinkImage::apply(FileUpload::make('proof')->label('Bukti transfer')->required()
                     ->visible(fn (Get $get): bool => $get('method') === InvoicePaymentMethod::Manual->value)
                     ->disk('local')->directory(fn (): string => SubmitPaymentProof::directory(TenantContext::idOrFail()))->visibility('private')
-                    ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp', 'application/pdf'])->maxSize(2048)
-                    ->helperText('Foto/screenshot atau PDF, maks. 2 MB. Pastikan nominal, tanggal & rekening tujuan terlihat'),
+                    ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp', 'application/pdf'])
+                    ->helperText('Foto/screenshot (otomatis diperkecil) atau PDF maks. 2 MB. Pastikan nominal, tanggal & rekening tujuan terlihat'), 1600, 2048),
                 TextInput::make('proof_sender')->label('Nama pengirim & bank asal')->required()->maxLength(120)
                     ->placeholder('mis. Budi Santoso · BCA')
                     ->visible(fn (Get $get): bool => $get('method') === InvoicePaymentMethod::Manual->value),
