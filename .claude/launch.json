@@ -4,9 +4,55 @@
     {
       "name": "laravel",
       "runtimeExecutable": "php",
-      "runtimeArgs": ["artisan", "serve", "--port=8000"],
+      "runtimeArgs": [
+        "artisan",
+        "serve",
+        "--port=8000"
+      ],
       "port": 8000,
       "url": "http://gspos.localhost:8000"
+    },
+    {
+      "name": "laravel-lan",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "APP_URL=http://gspos.192.168.100.25.nip.io:8000",
+        "POS_MAIN_DOMAIN=gspos.192.168.100.25.nip.io",
+        "POS_APP_DOMAIN=app.gspos.192.168.100.25.nip.io",
+        "POS_ADMIN_DOMAIN=admin.gspos.192.168.100.25.nip.io",
+        "POS_API_DOMAIN=api.gspos.192.168.100.25.nip.io",
+        "php",
+        "artisan",
+        "serve",
+        "--host=0.0.0.0",
+        "--port=8000",
+        "--no-reload"
+      ],
+      "port": 8000,
+      "url": "http://gspos.192.168.100.25.nip.io:8000"
+    },
+    {
+      "name": "laravel-8001",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "APP_URL=http://gspos.localhost:8001",
+        "php",
+        "artisan",
+        "serve",
+        "--port=8001",
+        "--no-reload"
+      ],
+      "port": 8001,
+      "url": "http://gspos.localhost:8001"
+    },
+    {
+      "name": "vite",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 5173
     }
   ]
 }

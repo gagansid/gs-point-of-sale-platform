@@ -30,3 +30,4 @@ Thumbs.db
 
 # Uji E2E Dusk (R9): database & artefak lokal
 /database/dusk.sqlite
+/dist
