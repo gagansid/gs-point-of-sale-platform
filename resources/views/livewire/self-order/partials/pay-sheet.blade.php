@@ -10,7 +10,7 @@
     $points = $this->pointsAvailable();
     $meta = [
         'qris' => ['heroicon-o-qr-code', 'QRIS', 'Scan dari e-wallet atau m-banking apa pun'],
-        'ewallet' => ['heroicon-o-device-phone-mobile', 'E-wallet / virtual account', 'GoPay, ShopeePay, atau transfer VA'],
+        'ewallet' => ['heroicon-o-device-phone-mobile', 'E-wallet / transfer bank', 'GoPay, ShopeePay, atau transfer dari m-banking'],
         'cashier' => ['heroicon-o-banknotes', 'Bayar di kasir', 'Tunjukkan nomor pesanan ke kasir'],
         'points' => ['heroicon-o-star', 'Poin member', 'Saldo '.number_format($points, 0, ',', '.').' poin; sisa tagihan bayar dengan metode lain'],
     ];
@@ -67,7 +67,7 @@
             </ul>
 
             @if (array_intersect(['qris', 'ewallet'], $this->payMethods()) !== [])
-                <p class="so-muted so-foot">@svg('heroicon-o-lock-closed', ['class' => 'so-inline-icon', 'aria-hidden' => 'true']) Pembayaran online diproses Midtrans. Setelah membayar, kembali ke halaman ini untuk melihat status.</p>
+                <p class="so-muted so-foot">@svg('heroicon-o-lock-closed', ['class' => 'so-inline-icon', 'aria-hidden' => 'true']) Pembayaran online aman & terenkripsi. Setelah membayar, kembali ke halaman ini untuk melihat status.</p>
             @endif
         </div>
     </div>

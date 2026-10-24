@@ -364,7 +364,7 @@
                                         <dt>Pajak</dt><dd>{{ $money($order->tax_total) }}</dd>
                                     @endif
                                     <dt class="is-grand">Total</dt><dd class="is-grand">{{ $money($order->grand_total) }}</dd>
-                                    <dt>Dibayar</dt><dd>{{ $order->payments->map(fn ($p) => $p->method?->name)->filter()->unique()->implode(', ') ?: 'Voucher' }}</dd>
+                                    <dt>Dibayar</dt><dd>{{ $order->payments->map(fn ($p) => \App\Livewire\SelfOrder\OrderPage::methodLabel($p->method))->filter()->unique()->implode(', ') ?: 'Voucher' }}</dd>
                                     @if ($order->points_earned > 0)
                                         <dt>Poin didapat</dt><dd class="is-discount">+{{ number_format($order->points_earned, 0, ',', '.') }}</dd>
                                     @endif

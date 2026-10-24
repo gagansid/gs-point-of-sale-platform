@@ -12,6 +12,7 @@ use App\Actions\SelfOrder\SaveDiningTable;
 use App\Actions\SelfOrder\UpdateSelfOrderSettings;
 use App\Enums\ErrorCode;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentCategory;
 use App\Enums\SelfOrderStatus;
 use App\Exceptions\BusinessException;
 use App\Livewire\Cashier\SelfOrders;
@@ -20,6 +21,7 @@ use App\Models\Device;
 use App\Models\GatewayTransaction;
 use App\Models\Member;
 use App\Models\Order;
+use App\Models\PaymentMethod;
 use App\Models\SelfOrder;
 use App\Models\Shift;
 use App\Models\ShiftOperator;
@@ -195,7 +197,7 @@ it('HP: Bayar → QRIS tampil di halaman; webhook lunas → Cek status memindahk
     $page = payPage($this)->call('quickAdd', $this->pos->croissant->id)->call('show', 'cart')
         ->set('customerName', 'Andi')
         ->call('openPay')
-        ->assertSee('QRIS')->assertSee('Bayar di kasir')->assertSee('E-wallet / virtual account')
+        ->assertSee('QRIS')->assertSee('Bayar di kasir')->assertSee('E-wallet / transfer bank')
         ->call('choosePay', 'qris')
         ->assertSet('view', 'pay')->assertSet('payMethod', 'qris')
         ->assertSee('Rp28.000')->assertSee('Simpan QR')->assertSeeHtml('<svg');
@@ -212,6 +214,17 @@ it('HP: Bayar → QRIS tampil di halaman; webhook lunas → Cek status memindahk
 
     $page->call('checkPayment')->assertSet('view', 'status')->assertDispatched('so-toast')->assertSee('Lunas');
     expect($order->refresh()->status)->toBe(OrderStatus::Completed);
+});
+
+it('HP: nama penyedia pembayaran tidak tampil ke pelanggan (sheet bayar, Tentang, struk, pesan gangguan)', function () {
+    payPage($this)->call('quickAdd', $this->pos->croissant->id)->call('show', 'cart')
+        ->set('customerName', 'Andi')->call('openPay')
+        ->assertSee('E-wallet / transfer bank')->assertDontSee('Midtrans')->assertDontSee('midtrans');
+
+    $online = PaymentMethod::query()->where('category', PaymentCategory::Online)->sole();
+    expect($online->name)->toContain('Midtrans')
+        ->and(OrderPage::methodLabel($online))->toBe('Pembayaran online')
+        ->and(OrderPage::GATEWAY_ERROR_MESSAGE)->not->toContain('Midtrans');
 });
 
 it('HP: tanpa polling — status dimuat saat tab aktif lagi / tombol, struk digital tidak tertutup saat render ulang (Q138)', function () {
@@ -243,7 +256,7 @@ it('HP: metode tersembunyi sesuai setelan; poin hanya untuk member dengan saldo'
 
     // Tidak ada metode online & kasir dimatikan: bayar di kasir tetap muncul agar pesanan bisa dibayar
     payPage($this)->call('quickAdd', $this->pos->croissant->id)->call('show', 'cart')->set('customerName', 'A')->call('openPay')
-        ->assertDontSee('Scan dari e-wallet')->assertDontSee('E-wallet / virtual account')->assertDontSee('Poin member')
+        ->assertDontSee('Scan dari e-wallet')->assertDontSee('E-wallet / transfer bank')->assertDontSee('Poin member')
         ->assertSee('Bayar di kasir')
         ->call('choosePay', 'qris')->assertSet('payError', 'Metode bayar ini sedang tidak tersedia');
 });

@@ -219,7 +219,7 @@ it('HP: e-wallet/VA mengarahkan ke Snap tanpa QRIS; tanpa gateway hanya bayar di
     // ADR 0027: Snap hanya untuk e-wallet/VA dari sheet pilihan bayar (QRIS tampil di halaman)
     Livewire::test(OrderPage::class)
         ->call('openPay', $selfOrderId)
-        ->assertSee('E-wallet / virtual account')
+        ->assertSee('E-wallet / transfer bank')
         ->call('choosePay', 'ewallet')
         ->assertRedirect('https://app.sandbox.midtrans.com/snap/v4/redirection/snap-token');
     Http::assertSent(fn ($request) => str_contains($request->url(), '/snap/v1/transactions') && ! in_array('qris', (array) $request['enabled_payments'], true));
@@ -227,7 +227,7 @@ it('HP: e-wallet/VA mengarahkan ke Snap tanpa QRIS; tanpa gateway hanya bayar di
     app(UpdatePaymentGateway::class)->handle(['enabled' => false, 'is_production' => false]);
     SelfOrderContext::set(SelfOrderContext::resolve($this->table->qr_token));
     Livewire::test(OrderPage::class)->call('openPay', $selfOrderId)
-        ->assertDontSee('E-wallet / virtual account')->assertDontSee('Scan dari e-wallet')->assertSee('Bayar di kasir');
+        ->assertDontSee('E-wallet / transfer bank')->assertDontSee('Scan dari e-wallet')->assertSee('Bayar di kasir');
 });
 
 it('dashboard: owner mengatur; key tidak pernah tampil; manager ditolak', function () {

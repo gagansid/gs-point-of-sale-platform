@@ -15,6 +15,7 @@ use App\Actions\SelfOrder\SubmitSelfOrder;
 use App\Enums\ErrorCode;
 use App\Enums\FulfillmentStatus;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentCategory;
 use App\Enums\SelfOrderStatus;
 use App\Exceptions\BusinessException;
 use App\Models\Category;
@@ -24,6 +25,7 @@ use App\Models\MemberSetting;
 use App\Models\OptionGroup;
 use App\Models\Order;
 use App\Models\PaymentGatewaySetting;
+use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\SelfOrder;
 use App\Models\Voucher;
@@ -823,7 +825,7 @@ final class OrderPage extends Component
                 default => null,
             };
         } catch (BusinessException $e) {
-            $this->payError = $e->getMessage();
+            $this->payError = self::publicMessage($e);
 
             return;
         }
@@ -859,7 +861,7 @@ final class OrderPage extends Component
             app(StartTableQrisPayment::class)->handle($order, (string) request()->ip(), renew: true);
             $this->payError = null;
         } catch (BusinessException $e) {
-            $this->payError = $e->getMessage();
+            $this->payError = self::publicMessage($e);
         }
     }
 
@@ -1041,9 +1043,25 @@ final class OrderPage extends Component
         return 'self_orders.'.$this->context->table->id;
     }
 
-    /** Alasan voucher tidak sah tidak ditampilkan ke publik (kode yang ada tidak bisa dibedakan). */
+    /** Pesan gangguan gateway untuk pelanggan: tanpa nama penyedia & detail teknis (key, mode). */
+    public const GATEWAY_ERROR_MESSAGE = 'Pembayaran online sedang gangguan. Coba lagi sebentar atau bayar di kasir.';
+
+    /**
+     * Pesan error untuk pelanggan: alasan voucher tidak sah tidak dibedakan (kode yang ada tidak bisa ditebak),
+     * gangguan gateway disamarkan (pesan teknis Midtrans hanya untuk owner/log).
+     */
     private static function publicMessage(BusinessException $e): string
     {
-        return $e->errorCode === ErrorCode::VoucherInvalid->value ? VoucherAttempts::PUBLIC_INVALID_MESSAGE : $e->getMessage();
+        return match ($e->errorCode) {
+            ErrorCode::VoucherInvalid->value => VoucherAttempts::PUBLIC_INVALID_MESSAGE,
+            ErrorCode::PaymentGatewayError->value => self::GATEWAY_ERROR_MESSAGE,
+            default => $e->getMessage(),
+        };
+    }
+
+    /** Nama metode di struk digital: metode online tampil netral ("Pembayaran online"), tanpa nama penyedia. */
+    public static function methodLabel(?PaymentMethod $method): ?string
+    {
+        return $method?->category === PaymentCategory::Online ? 'Pembayaran online' : $method?->name;
     }
 }

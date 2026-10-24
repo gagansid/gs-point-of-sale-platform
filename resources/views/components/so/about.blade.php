@@ -10,7 +10,7 @@
             <dt>Versi</dt><dd class="so-num">{{ config('app.version') }}</dd>
             <dt>Bisnis</dt><dd>{{ $tenant->name }}</dd>
         </dl>
-        <p class="so-muted">Data pesanan & member dikelola oleh {{ $tenant->name }}. Pembayaran online diproses Midtrans.</p>
+        <p class="so-muted">Data pesanan & member dikelola oleh {{ $tenant->name }}. Pembayaran online diproses mitra pembayaran resmi berizin Bank Indonesia.</p>
     </div>
     <form method="dialog" class="so-dialog-foot">
         <button type="submit" class="so-btn is-outline is-block">Tutup</button>
