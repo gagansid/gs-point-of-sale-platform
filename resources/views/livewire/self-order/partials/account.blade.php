@@ -12,14 +12,16 @@
         @php($tier = $member->tier)
         <article class="so-card so-profile">
             <div class="so-profile-head">
-                <span class="so-member-chip-avatar is-xl" aria-hidden="true">{{ mb_strtoupper(mb_substr(trim($member->name), 0, 1)) }}</span>
-                <div class="so-list-main">
-                    <strong class="so-profile-name">{{ $member->name }}</strong>
+                <span class="so-profile-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr(trim($member->name), 0, 1)) }}</span>
+                <div class="so-profile-id">
+                    <div class="so-profile-title">
+                        <strong class="so-profile-name">{{ $member->name }}</strong>
+                        @if ($tier)
+                            <span class="so-badge is-info">@svg('heroicon-s-star', ['aria-hidden' => 'true']) {{ $tier->name }}</span>
+                        @endif
+                    </div>
                     <span class="so-muted so-num">{{ \App\Support\Phone::masked($member->phone) }} · <span class="so-mono">{{ $member->code }}</span></span>
                 </div>
-                @if ($tier)
-                    <span class="so-badge is-info">@svg('heroicon-s-star', ['aria-hidden' => 'true']) {{ $tier->name }}</span>
-                @endif
             </div>
             <div class="so-profile-points">
                 <div>
@@ -37,7 +39,8 @@
             </div>
         </article>
 
-        <nav class="so-card so-menu-list" aria-label="Akun">
+        <h2 class="so-account-label" id="so-account-label">Akun</h2>
+        <nav class="so-card so-menu-list" aria-labelledby="so-account-label">
             <button type="button" wire:click="show('history')">
                 <span class="so-menu-list-icon" aria-hidden="true">@svg('heroicon-o-clock')</span>
                 <span class="so-list-main"><strong>Riwayat pesanan</strong><span class="so-muted">Semua pesananmu di {{ $context->tenant->name }}</span></span>
@@ -78,7 +81,8 @@
         </article>
     @endif
 
-    <nav class="so-card so-menu-list" aria-label="Lainnya">
+    <h2 class="so-account-label" id="so-other-label">Lainnya</h2>
+    <nav class="so-card so-menu-list" aria-labelledby="so-other-label">
         <button type="button" data-so-open="so-about">
             <span class="so-menu-list-icon" aria-hidden="true">@svg('heroicon-o-information-circle')</span>
             <span class="so-list-main"><strong>Tentang aplikasi</strong><span class="so-muted">gs.POS v{{ config('app.version') }}</span></span>

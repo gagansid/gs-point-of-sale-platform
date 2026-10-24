@@ -433,7 +433,7 @@
     justify-content: flex-end;
 }
 
-/* Tombol ikon persegi setinggi kontrol (is-sm = --control-h-sm, dalam baris) */
+/* Tombol ikon persegi setinggi kontrol (is-sm 26px di kartu menu: tetap ringkas) */
 .so-icon-btn {
     position: relative;
     display: inline-grid;
@@ -480,9 +480,9 @@
 }
 
 .so-icon-btn.is-sm {
-    width: var(--control-h-sm);
-    height: var(--control-h-sm);
-    border-radius: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: var(--radius);
 }
 
 .so-icon-btn.is-sm svg {
@@ -1197,7 +1197,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 4px;
-    min-height: var(--control-h-sm);
+    min-height: 26px;
 }
 
 .so-product-price {
@@ -1362,7 +1362,7 @@
     flex: 1;
 }
 
-/* ---------- Stepper qty `− n +` (tinggi --control-h; di kartu --control-h-sm) ---------- */
+/* ---------- Stepper qty `− n +` (tinggi --control-h; di kartu 26px) ---------- */
 .so-qty {
     display: inline-flex;
     align-items: center;
@@ -1409,11 +1409,11 @@
 }
 
 .so-qty.is-sm {
-    height: var(--control-h-sm);
+    height: 26px;
 }
 
 .so-qty.is-sm button {
-    width: 30px;
+    width: 24px;
 }
 
 /* ---------- Bilah keranjang (di atas navigasi bawah) ---------- */
@@ -2497,45 +2497,91 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    min-width: 0;
+}
+
+/* Inisial member: lingkaran warna bisnis (identitas utama kartu) */
+.so-profile-avatar {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--primary-btn);
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.so-profile-id {
+    display: grid;
+    flex: 1;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* Nama + badge tier sebaris; nama panjang dipotong, badge tetap utuh */
+.so-profile-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
 }
 
 .so-profile-name {
-    font-size: 15px;
+    overflow: hidden;
+    font-size: 16px;
     font-weight: 600;
+    line-height: 22px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.so-member-chip-avatar.is-xl {
-    width: 44px;
-    height: 44px;
+.so-profile-title .so-badge {
     flex-shrink: 0;
-    font-size: 17px;
 }
 
+/* Ringkasan poin: kotak lembut 3 kolom */
 .so-profile-points {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    padding: 10px 0 0;
-    border-top: 1px solid var(--border-color-light);
+    padding: 12px 0;
+    border-radius: 10px;
+    background: var(--bg-surface-secondary);
 }
 
 .so-profile-points > div {
     display: grid;
     gap: 2px;
-    padding: 0 8px;
-    border-left: 1px solid var(--border-color-light);
+    padding: 0 12px;
+    border-left: 1px solid var(--border-color);
 }
 
 .so-profile-points > div:first-child {
-    padding-left: 0;
     border-left: 0;
+}
+
+.so-profile-points .so-muted {
+    font-size: 12px;
 }
 
 .so-profile-points strong {
     overflow: hidden;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Label kelompok menu (Akun, Lainnya) */
+.so-account-label {
+    margin: 4px 4px -4px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .so-menu-list {
@@ -2580,8 +2626,12 @@
 }
 
 .so-menu-list strong {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
+}
+
+.so-menu-list .so-list-main .so-muted {
+    font-size: 12px;
 }
 
 .so-menu-list-icon {
