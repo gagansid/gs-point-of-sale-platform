@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<!--
+    Sumber gambar pratinjau tautan (Open Graph) halaman depan: public/images/brand/og-image.jpg (1200×630, JPEG ≤ 300 KB agar diterima WhatsApp).
+    Render ulang (dari root proyek):
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu --hide-scrollbars \
+        --window-size=1200,630 --virtual-time-budget=5000 \
+        --screenshot=/tmp/og-image.png resources/images/brand/src/og-image.html \
+        && sips -s format jpeg -s formatOptions 85 /tmp/og-image.png --out public/images/brand/og-image.jpg
+-->
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <link href="https://fonts.bunny.net/css?family=plus-jakarta-sans:500,700,800" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+
+        html, body {
+            width: 1200px;
+            height: 630px;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Latar sama dengan hero halaman depan: navy + cahaya + pola titik */
+        body {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 330px;
+            gap: 56px;
+            align-items: center;
+            padding: 72px 80px;
+            background:
+                radial-gradient(55% 60% at 5% 0%, rgb(77 104 186 / 0.55), transparent 70%),
+                radial-gradient(40% 50% at 100% 80%, rgb(184 192 212 / 0.16), transparent 70%),
+                linear-gradient(160deg, #1f3166 0%, #1b2a55 50%, #131d3d 100%);
+            color: #ffffff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body::before {
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgb(255 255 255 / 0.08) 1.2px, transparent 1.2px);
+            background-size: 24px 24px;
+            content: '';
+            mask-image: linear-gradient(180deg, #000, transparent 90%);
+        }
+
+        .copy {
+            position: relative;
+        }
+
+        .logo {
+            height: 44px;
+        }
+
+        h1 {
+            margin: 44px 0 20px;
+            font-size: 60px;
+            font-weight: 800;
+            line-height: 1.06;
+            letter-spacing: -0.025em;
+        }
+
+        h1 span {
+            color: #b8c0d4;
+        }
+
+        p {
+            margin: 0;
+            color: #c9d0e2;
+            font-size: 24px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .url {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 36px;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .url::before {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgb(255 255 255 / 0.16);
+            content: '';
+        }
+
+        /* Struk kertas, sama dengan ilustrasi hero */
+        .receipt {
+            position: relative;
+            padding: 26px 26px 40px;
+            background: #fffdf8;
+            color: #2b2f38;
+            font-family: ui-monospace, Menlo, monospace;
+            font-size: 17px;
+            line-height: 1.6;
+            transform: rotate(3deg);
+            filter: drop-shadow(0 24px 40px rgb(5 10 25 / 0.5));
+            mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 16px 100%;
+        }
+
+        .head {
+            display: grid;
+            padding-bottom: 12px;
+            margin-bottom: 10px;
+            border-bottom: 2px dashed #b9bcc4;
+            text-align: center;
+        }
+
+        .head small {
+            color: #6b7080;
+            font-size: 14px;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .total {
+            margin: 10px 0;
+            padding: 10px 0;
+            border-block: 2px dashed #b9bcc4;
+            font-weight: 700;
+        }
+
+        .paid {
+            width: fit-content;
+            margin: 18px auto 0;
+            padding: 2px 16px;
+            border: 2.5px solid #19764a;
+            border-radius: 6px;
+            color: #19764a;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            transform: rotate(-4deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="copy">
+        <img class="logo" src="../../../../public/images/brand/logo-horizontal-reversed.svg" alt="gs.POS">
+        <h1>Kasir cepat, laporan rapi, <span>bisnis lebih tenang.</span></h1>
+        <p>Aplikasi kasir, dashboard owner, dan QR meja untuk kafe, resto, &amp; UMKM.</p>
+        <div class="url">gspos.id</div>
+    </div>
+
+    <div class="receipt">
+        <div class="head"><b>KOPI SENJA</b><small>Outlet Dago · Meja 5</small></div>
+        <div class="row"><span>2× Es Kopi Susu</span><span>54.000</span></div>
+        <div class="row"><span>1× Croissant</span><span>24.000</span></div>
+        <div class="row total"><span>TOTAL</span><span>78.000</span></div>
+        <div class="row"><span>QRIS</span><span>50.000</span></div>
+        <div class="row"><span>Tunai</span><span>28.000</span></div>
+        <div class="paid">LUNAS</div>
+    </div>
+</body>
+</html>

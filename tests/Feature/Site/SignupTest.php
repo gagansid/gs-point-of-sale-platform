@@ -113,7 +113,7 @@ describe('verifikasi email', function () {
     });
 
     it('link bertanda tangan memverifikasi tanpa login', function () {
-        $this->get(VerifyOwnerEmail::url($this->owner))->assertOk()->assertSee('Email terverifikasi');
+        $this->get(VerifyOwnerEmail::url($this->owner))->assertOk()->assertSee('Email terverifikasi')->assertSee('<meta name="robots" content="noindex">', false)->assertDontSee('og:image', false);
 
         expect($this->owner->refresh()->hasVerifiedEmail())->toBeTrue();
     });

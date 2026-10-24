@@ -36,7 +36,37 @@
     ];
 @endphp
 
-<x-site.layout>
+<x-site.layout
+    seo
+    title="gs.POS — Aplikasi kasir & dashboard untuk kafe, resto, dan UMKM"
+    description="Aplikasi kasir di tablet, dashboard owner, dan QR meja. Split payment, open bill, stok, shift, member, dan laporan dalam satu sistem untuk kafe, resto, dan UMKM."
+>
+    {{-- Data terstruktur untuk mesin pencari; rentang harga dari paket publik yang tampil di section Harga --}}
+    <x-slot:head>
+        @php
+            $schema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'SoftwareApplication',
+                'name' => 'gs.POS',
+                'applicationCategory' => 'BusinessApplication',
+                'operatingSystem' => 'Android, Web',
+                'url' => route('landing'),
+                'description' => 'Aplikasi kasir dan dashboard untuk kafe, resto, dan UMKM.',
+                'publisher' => ['@type' => 'Organization', 'name' => 'GS Technology'],
+            ];
+            if ($plans->isNotEmpty()) {
+                $schema['offers'] = [
+                    '@type' => 'AggregateOffer',
+                    'priceCurrency' => 'IDR',
+                    'lowPrice' => (string) (int) $plans->min(fn ($plan) => (float) $plan->price_monthly),
+                    'highPrice' => (string) (int) $plans->max(fn ($plan) => (float) $plan->price_monthly),
+                    'offerCount' => $plans->count(),
+                ];
+            }
+        @endphp
+        <script type="application/ld+json">@json($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG)</script>
+    </x-slot:head>
+
     {{-- ---------- Navigasi ---------- --}}
     <header class="lp-header">
         <div class="lp-container lp-header-inner">

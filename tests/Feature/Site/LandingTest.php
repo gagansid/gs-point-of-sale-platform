@@ -66,6 +66,30 @@ it('pertanyaan umum tampil dengan jawaban yang jujur soal offline & masa uji cob
         ->assertSee('Akun menjadi hanya-baca, bukan dihapus.');
 });
 
+it('meta SEO: canonical, Open Graph, Twitter card, dan JSON-LD dengan rentang harga paket publik', function () {
+    $this->seed(PlanSeeder::class);
+
+    $html = $this->get('/')->assertOk()
+        ->assertSee('<link rel="canonical"', false)
+        ->assertSee('<meta property="og:image" content="'.asset('images/brand/og-image.jpg').'"', false)
+        ->assertSee('<meta name="twitter:card" content="summary_large_image">', false)
+        ->assertSee('<link rel="icon" href="'.asset('images/brand/favicon.svg').'"', false)
+        ->assertDontSee('<meta name="robots" content="noindex">', false)
+        ->getContent();
+
+    preg_match('#<script type="application/ld\+json">(.*?)</script>#s', $html, $match);
+    $schema = json_decode($match[1], true, flags: JSON_THROW_ON_ERROR);
+
+    expect($schema['@type'])->toBe('SoftwareApplication')
+        ->and($schema['publisher']['name'])->toBe('GS Technology')
+        ->and($schema['offers'])->toMatchArray(['priceCurrency' => 'IDR', 'lowPrice' => '99000', 'highPrice' => '399000', 'offerCount' => 3]);
+});
+
+it('gambar pratinjau tautan tersedia di public', function () {
+    expect(public_path('images/brand/og-image.jpg'))->toBeFile()
+        ->and(getimagesize(public_path('images/brand/og-image.jpg')))->toMatchArray([0 => 1200, 1 => 630, 'mime' => 'image/jpeg']);
+});
+
 it('form hubungi sales menyimpan calon pelanggan', function () {
     $this->post('/contact-sales', leadBody(['message' => 'Dua kasir']))
         ->assertRedirect()
