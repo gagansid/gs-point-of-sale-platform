@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F5F7FC"/><stop offset="1" stop-color="#E2E7F2"/></linearGradient><radialGradient id="glow" cx=".5" cy=".42" r=".5"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".9"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs><rect width="800" height="800" fill="url(#bg)"/><circle cx="400" cy="380" r="330" fill="url(#glow)"/><circle cx="660" cy="150" r="70" fill="#2D4282" opacity=".06"/><circle cx="130" cy="660" r="46" fill="#2D4282" opacity=".06"/>
+<ellipse cx="400" cy="672" rx="170" ry="26" fill="#1B2A55" opacity=".12"/>
+<rect x="452" y="120" width="26" height="250" rx="13" fill="#C0475C" transform="rotate(12 465 245)"/>
+<rect x="452" y="150" width="26" height="22" fill="#B8C0D4" transform="rotate(12 465 245)"/>
+<rect x="452" y="200" width="26" height="22" fill="#B8C0D4" transform="rotate(12 465 245)"/>
+<path d="M262 250 L538 250 L506 660 Q504 680 484 680 L316 680 Q296 680 294 660 Z" fill="#FFFFFF" opacity=".55" stroke="#B8C0D4" stroke-width="6"/>
+<path d="M272 300 L528 300 L502 640 Q500 660 482 660 L318 660 Q300 660 298 640 Z" fill="#EDB07A"/>
+<g stroke="#E8D9D2" stroke-width="3"><circle cx="350" cy="580" r="34" fill="#FBF6F0"/><circle cx="440" cy="600" r="32" fill="#FBF6F0"/><circle cx="410" cy="520" r="30" fill="#FBF6F0"/></g>
+<g fill="#FFFFFF" opacity=".75" stroke="#DDE3EF" stroke-width="3"><rect x="312" y="282" width="78" height="72" rx="14" transform="rotate(-10 351 318)"/><rect x="404" y="292" width="80" height="74" rx="14" transform="rotate(8 444 329)"/><rect x="350" y="364" width="74" height="68" rx="14" transform="rotate(14 387 398)"/></g>
+<path d="M290 270 L300 640" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" opacity=".6"/>
+<rect x="250" y="236" width="300" height="22" rx="11" fill="#E7EBF4" stroke="#B8C0D4" stroke-width="5"/>
+<g><circle cx="610" cy="640" r="38" fill="#C9374C"/><g fill="#A92A3E"><circle cx="595" cy="625" r="4"/><circle cx="620" cy="620" r="4"/><circle cx="630" cy="645" r="4"/><circle cx="600" cy="655" r="4"/><circle cx="612" cy="640" r="4"/><circle cx="588" cy="645" r="4"/></g><path d="M610 602 C612 590 620 584 630 582" stroke="#4F7A33" stroke-width="5" fill="none" stroke-linecap="round"/></g>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F5F7FC"/><stop offset="1" stop-color="#E2E7F2"/></linearGradient><radialGradient id="glow" cx=".5" cy=".42" r=".5"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".9"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs><rect width="800" height="800" fill="url(#bg)"/><circle cx="400" cy="380" r="330" fill="url(#glow)"/><circle cx="660" cy="150" r="70" fill="#2D4282" opacity=".06"/><circle cx="130" cy="660" r="46" fill="#2D4282" opacity=".06"/>
+<ellipse cx="400" cy="620" rx="290" ry="44" fill="#1B2A55" opacity=".12"/>
+<ellipse cx="400" cy="585" rx="290" ry="70" fill="#2D4282"/>
+<ellipse cx="400" cy="572" rx="290" ry="70" fill="#FFFFFF"/>
+<ellipse cx="400" cy="572" rx="230" ry="48" fill="#EEF1F8"/>
+<path d="M190 560 C190 440 290 380 400 380 C510 380 610 440 610 560 C540 590 260 590 190 560 Z" fill="#B4742F"/>
+<g fill="none" stroke="#D99A4E" stroke-width="10" stroke-linecap="round"><path d="M210 520 C250 480 290 550 330 510 C360 480 400 540 440 514"/><path d="M230 480 C270 440 310 510 350 470 C380 440 420 500 460 474"/><path d="M260 440 C300 400 340 470 380 430 C410 400 450 460 490 434"/><path d="M240 550 C280 510 320 580 360 540 C390 510 430 570 470 544"/><path d="M300 410 C340 370 380 440 420 400 C450 370 490 430 530 404"/><path d="M280 510 C320 470 360 540 400 500 C430 470 470 530 510 504"/></g>
+<g fill="none" stroke="#E9B46A" stroke-width="5" stroke-linecap="round" opacity=".8"><path d="M300 500 C340 470 380 524 420 492"/><path d="M360 460 C400 430 440 484 480 452"/><path d="M420 530 C460 500 500 554 540 522"/><path d="M250 470 C290 440 330 494 370 462"/></g>
+<g fill="#5E9A3C"><path d="M250 500 C270 470 310 480 300 510 Z"/><path d="M520 470 C550 450 580 470 560 500 Z"/><path d="M470 540 C490 520 520 530 510 556 Z"/></g>
+<g fill="#D64534"><circle cx="350" cy="540" r="6"/><circle cx="540" cy="520" r="5"/></g>
+<g transform="translate(400 400) scale(1.15)"><path d="M-80 0 C-90 -50 -30 -70 10 -60 C70 -70 100 -20 80 20 C70 60 -20 70 -60 45 C-85 30 -78 15 -80 0 Z" fill="#FFFFFF" stroke="#E6DCC8" stroke-width="4"/><circle cx="0" cy="-2" r="30" fill="#F4B63B"/><circle cx="-9" cy="-12" r="9" fill="#FBD77A"/></g>
+<path d="M600 520 C640 470 700 480 700 530 C700 570 640 590 600 560 Z" fill="#F4DFA8" stroke="#D9B66A" stroke-width="4"/>
+</svg>
