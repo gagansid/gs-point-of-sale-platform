@@ -131,6 +131,8 @@ it('bayar tunai: order di device web & shift browser, kembalian, keranjang koson
     $grand = $page->get('payments.0.amount');
 
     $page->set('payments.0.tendered', '50000')->call('pay')->assertSet('payError', null)->assertSet('cart', []);
+    // Stok terpotong → island katalog ikut dirender ulang (angka stok terbaru)
+    expect(implode('', $page->effects['islandFragments'] ?? []))->toContain('pos-tile-main');
 
     $order = Order::query()->findOrFail($orderId);
     expect($order->device_id)->toBe($this->pos->webDevice->id)
@@ -202,8 +204,20 @@ it('toggle habis: kasir boleh (Q115) dan melihat tombolnya; tersedia lagi', func
         ->call('toggleAvailability', $this->pos->croissant->id);
     expect(Product::query()->atOutlet($this->pos->outlet->id)->findOrFail($this->pos->croissant->id)->is_available)->toBeFalse();
 
-    $page->assertSeeHtml('aria-label="Tandai Croissant tersedia"')->call('toggleAvailability', $this->pos->croissant->id);
+    // Katalog = island: tombol baru ada di fragmen island yang dirender ulang
+    expect(implode('', $page->effects['islandFragments'] ?? []))->toContain('aria-label="Tandai Croissant tersedia"');
+    $page->call('toggleAvailability', $this->pos->croissant->id);
     expect(Product::query()->atOutlet($this->pos->outlet->id)->findOrFail($this->pos->croissant->id)->is_available)->toBeTrue();
+});
+
+it('klik cepat: tambah/ubah keranjang tidak me-render ulang grid produk (island katalog dilewati)', function () {
+    $page = Livewire::test(PointOfSale::class)->assertSeeHtml('pos-tile-main')
+        ->call('addProduct', $this->pos->croissant->id)
+        ->call('increment', 0);
+
+    expect($page->get('cart')[0]['qty'])->toBe(2)
+        ->and($page->html())->not->toContain('pos-tile-main')->toContain('mode=skip')
+        ->and($page->effects['islandFragments'] ?? [])->toBe([]);
 });
 
 it('toggle habis ditolak saat bisnis hanya-baca', function () {

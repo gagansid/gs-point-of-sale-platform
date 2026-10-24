@@ -375,6 +375,8 @@ final class PointOfSale extends Component
         if ($match !== null) {
             $this->addProduct($match->id);
             $this->search = '';
+            // Kolom cari di island katalog ikut dikosongkan
+            $this->refreshCatalog();
         }
     }
 
@@ -425,7 +427,22 @@ final class PointOfSale extends Component
         $product = $this->product($productId) ?? abort(404);
 
         app(SetProductAvailability::class)->handle(Product::query()->findOrFail($product->id), $this->outlet(), ! $product->is_available);
+        $this->refreshCatalog();
+    }
+
+    public function canToggleAvailability(): bool
+    {
+        return $this->user()->can('product.toggle_available');
+    }
+
+    /**
+     * Render ulang island katalog (stok/habis/kolom cari berubah). Render keranjang biasa melewati island ini agar
+     * respons klik kecil (lihat view).
+     */
+    private function refreshCatalog(): void
+    {
         unset($this->catalog, $this->visibleProducts);
+        $this->renderIsland('catalog');
     }
 
     // ---------- Dialog opsi / ubah item ----------
@@ -765,6 +782,8 @@ final class PointOfSale extends Component
         $this->completedChange = $order->change_total;
         $this->completedSummary = self::summaryOf($order);
         $this->resetOrder();
+        // Stok terpotong saat lunas: angka stok & status habis di katalog diperbarui
+        $this->refreshCatalog();
     }
 
     // ---------- Tahan transaksi (park) ----------
@@ -1302,7 +1321,6 @@ final class PointOfSale extends Component
     {
         return view('livewire.cashier.point-of-sale', [
             'outlet' => $this->outlet(),
-            'canToggle' => $this->user()->can('product.toggle_available'),
         ]);
     }
 

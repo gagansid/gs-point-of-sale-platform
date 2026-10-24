@@ -6,10 +6,20 @@
     $totals = $quote['totals'];
 @endphp
 <div class="pos">
-    {{-- Katalog --}}
+    {{--
+        Katalog = island Livewire 4: tidak ikut di-render ulang saat keranjang berubah (±75% ukuran respons, morph DOM
+        berat di tablet). Cari/kategori/Habis dari dalam island hanya me-render island; klik tile memakai $wire (tanpa
+        konteks island) sehingga hanya keranjang yang dirender. Server memuat ulang island lewat refreshCatalog().
+    --}}
+    @island('catalog')
+    @php
+        $islandMoney = fn (?string $v): string => $v === null ? '–' : \App\Support\Money::format($v);
+        $catalog = $this->catalog;
+        $canToggle = $this->canToggleAvailability();
+    @endphp
     <section class="pos-catalog" aria-label="Produk">
         <div class="pos-search">
-            <input type="search" wire:model.live.debounce.250ms="search" wire:keydown.enter.prevent="scan"
+            <input type="search" wire:model.live.debounce.250ms="search" x-on:keydown.enter.prevent="$wire.scan()"
                 placeholder="Cari produk atau scan barcode…" aria-label="Cari produk atau scan barcode" autofocus autocomplete="off">
         </div>
 
@@ -26,7 +36,10 @@
         <div class="pos-grid">
             @forelse ($this->visibleProducts as $product)
                 <div @class(['pos-tile', 'is-unavailable' => ! $product->is_available]) wire:key="p-{{ $product->id }}">
-                    <button type="button" class="pos-tile-main" wire:click="addProduct('{{ $product->id }}')" @disabled(! $product->is_available)>
+                    {{-- Umpan balik instan (is-tapped) sebelum respons server; $wire = render keranjang saja --}}
+                    <button type="button" class="pos-tile-main" @disabled(! $product->is_available)
+                        x-data x-on:click="$el.classList.remove('is-tapped'); void $el.offsetWidth; $el.classList.add('is-tapped'); $wire.addProduct('{{ $product->id }}')"
+                        x-on:animationend="$el.classList.remove('is-tapped')">
                         <span class="pos-tile-media">
                             @if ($image = $product->imageUrl())
                                 <img src="{{ $image }}" alt="" class="pos-tile-image" loading="lazy" decoding="async" width="400" height="400">
@@ -39,7 +52,7 @@
                             @endif
                         </span>
                         <span class="pos-tile-name">{{ $product->name }}</span>
-                        <span class="pos-tile-price">{{ $money($product->price) }}</span>
+                        <span class="pos-tile-price">{{ $islandMoney($product->price) }}</span>
                         @if (! $product->is_available)
                             <span class="pos-tile-flag">Stok habis</span>
                         @elseif ($product->track_stock)
@@ -64,6 +77,7 @@
             @endforelse
         </div>
     </section>
+    @endisland
 
     {{-- Keranjang: kepala (tipe order, member) & kaki (total, bayar) tetap; daftar pesanan di tengah yang menggulir --}}
     @php

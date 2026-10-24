@@ -582,6 +582,33 @@
     cursor: not-allowed;
 }
 
+/* Umpan balik ketuk instan (sebelum respons server): tile mengecil sebentar */
+.pos-tile-main {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.pos-tile-main:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.pos-tile-main.is-tapped {
+    animation: pos-tile-tap 220ms ease-out;
+}
+
+@keyframes pos-tile-tap {
+    0% { transform: scale(0.94); }
+    100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pos-tile-main.is-tapped,
+    .pos-tile-main:active:not(:disabled) {
+        animation: none;
+        transform: none;
+    }
+}
+
 .pos-tile-name {
     color: var(--site-navy);
     font-size: 14px;
