@@ -178,7 +178,11 @@ it('webhook vendor: tanda tangan, cek status API, nominal; lunas memperpanjang l
     $sign = fn (string $amount): string => MidtransClient::signature('BILL-X', '200', $amount, 'SB-vendor-key');
 
     $this->postJson('/webhooks/billing/midtrans', ['order_id' => 'BILL-X', 'status_code' => '200', 'gross_amount' => '199000.00', 'signature_key' => 'salah'])->assertStatus(403);
-    $this->postJson('/webhooks/billing/midtrans', ['order_id' => 'TIDAK-ADA', 'status_code' => '200', 'gross_amount' => '1', 'signature_key' => MidtransClient::signature('TIDAK-ADA', '200', '1', 'SB-vendor-key')])->assertStatus(404);
+    Http::preventStrayRequests();
+    $this->postJson('/webhooks/billing/midtrans', ['order_id' => 'TIDAK-ADA', 'status_code' => '200', 'gross_amount' => '1', 'signature_key' => MidtransClient::signature('TIDAK-ADA', '200', '1', 'SB-vendor-key')])->assertOk();
+    // Order tidak dikenal (notifikasi uji Midtrans / situs lain): diterima tanpa cek status ke API (request liar = gagal)
+    // & tanpa mengubah tagihan
+    expect($invoice->refresh()->status)->toBe(InvoiceStatus::Pending);
 
     Http::fake(['api.sandbox.midtrans.com/v2/BILL-X/status' => Http::sequence()
         ->push(['transaction_status' => 'settlement', 'gross_amount' => '1000.00'])

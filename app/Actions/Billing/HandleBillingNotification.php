@@ -37,7 +37,11 @@ final class HandleBillingNotification
 
         $invoice = SubscriptionInvoice::query()->withoutGlobalScopes()->where('gateway_order_id', $orderId)->first();
         if ($invoice === null) {
-            return 404;
+            // Tanda tangan sah tapi bukan tagihan gs.POS (tombol "Test notification URL" Midtrans, atau transaksi situs
+            // lain di akun Midtrans yang sama): diterima tanpa diproses agar Midtrans tidak mengirim ulang terus
+            Log::info('Notifikasi Midtrans tagihan tanpa tagihan cocok, diabaikan', ['order_id' => mb_substr($orderId, 0, 64)]);
+
+            return 200;
         }
 
         $status = $client->status($orderId);
