@@ -5014,3 +5014,22 @@ ul.gs-diff-cell {
     font-size: 11.5px;
     font-weight: 500;
 }
+
+/* Profil super admin: inisial bulat di kartu identitas (admin tanpa foto) */
+.gs-profile-initial {
+    display: grid;
+    place-items: center;
+    justify-self: center;
+    width: 88px;
+    height: 88px;
+    margin-bottom: 8px;
+    border-radius: 999px;
+    background: var(--primary-lt);
+    color: var(--primary);
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.gs-profile-info dd .fi-badge {
+    display: inline-flex;
+}

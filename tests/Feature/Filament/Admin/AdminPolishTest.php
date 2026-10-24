@@ -312,4 +312,35 @@ describe('perbaikan review 2026-10-19', function () {
 
         expect(Hash::check('Baru-Sekali-12345!', $this->admin->refresh()->password))->toBeTrue();
     });
+
+    it('profil admin: kartu identitas & status 2FA, ulangi kata sandi selalu tampil, simpan tanpa ganti kata sandi tetap bisa', function () {
+        Livewire::test(EditProfile::class)
+            ->assertSee('Super admin')->assertSee($this->admin->email)->assertSee('Status 2FA')
+            ->assertSee('Ulangi kata sandi baru')
+            ->assertActionVisible('logoutOtherDevices')
+            ->fillForm(['name' => 'Admin Baru'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        expect($this->admin->refresh()->name)->toBe('Admin Baru');
+
+        // Kata sandi baru tanpa ulangi = ditolak
+        Livewire::test(EditProfile::class)
+            ->fillForm(['password' => 'Baru-Sekali-12345!', 'passwordConfirmation' => '', 'currentPassword' => 'password'])
+            ->call('save')
+            ->assertHasFormErrors(['passwordConfirmation' => 'required']);
+    });
+
+    it('profil admin: keluarkan sesi lain wajib kata sandi saat ini', function () {
+        $this->admin->forceFill(['password' => 'Rahasia-Admin-1!'])->save();
+
+        Livewire::test(EditProfile::class)
+            ->callAction('logoutOtherDevices', data: ['password' => 'salah'])
+            ->assertHasActionErrors(['password']);
+
+        Livewire::test(EditProfile::class)
+            ->callAction('logoutOtherDevices', data: ['password' => 'Rahasia-Admin-1!'])
+            ->assertHasNoActionErrors()
+            ->assertNotified('Perangkat lain dikeluarkan');
+    });
 });

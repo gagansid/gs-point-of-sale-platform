@@ -8,6 +8,7 @@ use App\Actions\User\LogoutOtherSessions;
 use App\Actions\User\UpdateOwnAvatar;
 use App\Actions\User\UpdateOwnProfile;
 use App\Exceptions\BusinessException;
+use App\Filament\Shared\Concerns\ShowsPasswordConfirmation;
 use App\Models\PersonalAccessToken;
 use App\Models\User;
 use App\Rules\SecurePin;
@@ -39,6 +40,8 @@ use SensitiveParameter;
  */
 class EditProfile extends BaseEditProfile
 {
+    use ShowsPasswordConfirmation;
+
     /** Bar tombol "Batal · Simpan" sticky rata kanan seperti form tambah/ubah lain (components.css) */
     public function getFormActionsAlignment(): string|Alignment
     {
@@ -98,8 +101,8 @@ class EditProfile extends BaseEditProfile
                         ->columns(['default' => 1, 'md' => 2])
                         ->schema([
                             $this->getPasswordFormComponent(),
-                            $this->getPinFormComponent(),
                             $this->getPasswordConfirmationFormComponent(),
+                            $this->getPinFormComponent(),
                             $this->getCurrentPasswordFormComponent(),
                         ]),
 

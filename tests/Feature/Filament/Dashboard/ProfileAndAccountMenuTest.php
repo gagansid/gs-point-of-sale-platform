@@ -31,7 +31,8 @@ beforeEach(function () {
 it('profil: bagian lengkap, info akun, simpan nomor HP (dinormalisasi) tanpa kata sandi saat ini', function () {
     $this->get(EditProfile::getUrl())->assertOk()
         ->assertSee('Data diri')->assertSee('Keamanan')->assertSee('Info akun')->assertSee('Perangkat &amp; sesi', false)
-        ->assertSee('id="keamanan"', false)->assertSee('id="perangkat"', false)->assertSee('Owner');
+        ->assertSee('id="keamanan"', false)->assertSee('id="perangkat"', false)->assertSee('Owner')
+        ->assertSee('Ulangi kata sandi baru')->assertSee('Data diri, keamanan, dan perangkat yang memakai akun ini');
 
     Livewire::test(EditProfile::class)->fillForm(['phone' => '0812-3456-7890'])->call('save')->assertHasNoFormErrors();
     expect($this->owner->refresh()->phone)->toBe('+6281234567890');

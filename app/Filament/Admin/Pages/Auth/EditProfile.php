@@ -5,31 +5,38 @@ declare(strict_types=1);
 namespace App\Filament\Admin\Pages\Auth;
 
 use App\Filament\Shared\Concerns\HasIconBreadcrumbs;
+use App\Filament\Shared\Concerns\ShowsPasswordConfirmation;
+use App\Models\Admin;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Auth\MultiFactor\Contracts\MultiFactorAuthenticationProvider;
 use Filament\Auth\Pages\EditProfile as BaseEditProfile;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Auth\SessionGuard;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rules\Password;
 
 /**
- * Profil super admin, seragam dengan halaman form lain: breadcrumb berikon, section berikon, tombol Batal · Simpan
- * rata kanan, kartu 2FA di kolom kanan. Kata sandi baru mengikuti aturan akun admin (min. 12, huruf besar & kecil, simbol); mengganti
+ * Profil super admin, seragam dengan profil dashboard: kartu identitas & info akun di kiri (keluar dari perangkat lain),
+ * kartu 2FA lalu form di kanan, tombol Batal · Simpan rata kanan. Kata sandi baru mengikuti aturan akun admin (min. 12, huruf besar & kecil, simbol); mengganti
  * kata sandi atau email wajib kata sandi saat ini (bawaan Filament). 2FA tetap di section aplikasi authenticator.
  */
 class EditProfile extends BaseEditProfile
 {
     use HasIconBreadcrumbs;
+    use ShowsPasswordConfirmation;
 
     public function getFormActionsAlignment(): string|Alignment
     {
@@ -42,17 +49,75 @@ class EditProfile extends BaseEditProfile
     }
 
     /**
-     * Dua kolom: form (Data diri, Kata sandi, tombol Batal · Simpan) di kiri, kartu 2FA di kanan. Tombol tidak
-     * menempel (gs-form-page) karena halaman pendek dan kartu 2FA berada di luar form.
+     * Dua kolom seperti profil dashboard: kiri kartu identitas & info akun (+ keluar dari perangkat lain), kanan kartu
+     * 2FA lalu form (Data diri, Kata sandi, tombol Batal · Simpan).
      */
     public function content(Schema $schema): Schema
     {
         return $schema->components([
             Grid::make(['default' => 1, 'lg' => 3])->schema([
-                Group::make([$this->getFormContentComponent()])->columnSpan(['lg' => 2]),
-                Group::make(Arr::wrap($this->getMultiFactorAuthenticationContentComponent())),
+                Section::make()->extraAttributes(['class' => 'gs-profile-card'])->schema([
+                    View::make('filament.admin.profile.identity')->viewData(fn (): array => self::identity($this->admin())),
+                    Actions::make([$this->logoutOtherDevicesAction()])->fullWidth(),
+                ]),
+                Group::make([
+                    ...Arr::wrap($this->getMultiFactorAuthenticationContentComponent()),
+                    $this->getFormContentComponent(),
+                ])->columnSpan(['lg' => 2]),
             ]),
         ]);
+    }
+
+    /**
+     * Keluar dari semua sesi admin lain (perangkat hilang / sesi lama). Wajib kata sandi saat ini; memakai
+     * AuthenticateSession bawaan panel: sesi lain gugur pada request berikutnya, sesi ini tetap.
+     */
+    protected function logoutOtherDevicesAction(): Action
+    {
+        return Action::make('logoutOtherDevices')->label('Keluarkan sesi lain')->tooltip('Keluar dari semua perangkat lain')
+            ->icon(Heroicon::OutlinedArrowRightStartOnRectangle)->color('danger')->outlined()
+            ->modalHeading('Keluar dari semua perangkat lain?')
+            ->modalDescription('Sesi panel admin di browser lain harus masuk ulang. Browser ini tetap masuk.')
+            ->modalSubmitActionLabel('Keluarkan')
+            ->schema([
+                TextInput::make('password')->label('Kata sandi saat ini')->password()->revealable()->required()
+                    ->currentPassword(guard: Filament::getAuthGuard()),
+            ])
+            ->action(function (array $data): void {
+                $guard = Filament::auth();
+                abort_unless($guard instanceof SessionGuard, 500);
+                $guard->logoutOtherDevices((string) $data['password']);
+                Notification::make()->success()->title('Perangkat lain dikeluarkan')->send();
+            });
+    }
+
+    /**
+     * Data kartu identitas admin (baca saja).
+     *
+     * @return array{initial: string, name: string, email: string, twoFactor: bool, rows: list<array{label: string, value: string}>}
+     */
+    private static function identity(Admin $admin): array
+    {
+        $admin = $admin->fresh() ?? $admin;
+        $tz = 'Asia/Jakarta';
+
+        return [
+            'initial' => mb_strtoupper(mb_substr(trim($admin->name), 0, 1)),
+            'name' => $admin->name,
+            'email' => $admin->email,
+            'twoFactor' => filled($admin->getAttribute('app_authentication_secret')),
+            'rows' => [
+                ['label' => 'Terakhir masuk', 'value' => $admin->last_login_at?->setTimezone($tz)->locale('id')->translatedFormat('j M Y, H.i') ?? '—'],
+                ['label' => 'Dibuat', 'value' => $admin->created_at?->setTimezone($tz)->locale('id')->translatedFormat('j M Y') ?? '—'],
+            ],
+        ];
+    }
+
+    private function admin(): Admin
+    {
+        $admin = $this->getUser();
+
+        return $admin instanceof Admin ? $admin : abort(403);
     }
 
     /** Kartu 2FA bergaya section standar (judul berikon + deskripsi), isi tetap komponen Filament. */
