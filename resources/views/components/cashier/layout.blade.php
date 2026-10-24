@@ -39,10 +39,6 @@
 <body @class(['site-body', 'cashier-body', 'cashier-body-fill' => $wide])>
     <header class="cashier-header">
         <a href="{{ route('cashier.home') }}" class="cashier-brand" aria-label="Kasir web"><x-site.logo /></a>
-        <div class="cashier-context">
-            <strong>{{ $outlet?->name }}</strong>
-            <span>{{ $user?->name }}</span>
-        </div>
         <nav class="cashier-nav" aria-label="Menu kasir">
             @foreach ($links as $key => [$label, $url, $icon])
                 <a href="{{ $url }}" @class(['is-active' => $active === $key]) @if ($active === $key) aria-current="page" @endif>@svg($icon, ['aria-hidden' => 'true'])<span>{{ $label }}</span>@if ($key === $badgeOn)<livewire:cashier.self-order-badge />@endif</a>
@@ -56,12 +52,34 @@
                 @csrf
                 <button type="submit" class="site-link-button" title="Kunci layar untuk ganti kasir">@svg('heroicon-o-lock-closed', ['aria-hidden' => 'true'])<span>Kunci</span></button>
             </form>
-            <form method="POST" action="{{ route('cashier.logout') }}" class="cashier-logout"
-                data-confirm-title="Keluar dari kasir web?" data-confirm-ok="Keluar" data-confirm-icon="logout" data-confirm-tone="danger"
-                data-confirm-text="Shift di browser ini tetap terbuka. Bila sudah selesai bertugas, tutup shift dulu dari menu Shift.">
-                @csrf
-                <button type="submit" class="site-link-button" title="Keluar">@svg('heroicon-o-arrow-right-start-on-rectangle', ['aria-hidden' => 'true'])<span>Keluar</span></button>
-            </form>
+            {{-- Pengguna (paling kanan): foto + outlet + nama → menu Profil & Keluar. <details> = tanpa Alpine --}}
+            <details @class(['cashier-user', 'is-active' => $active === 'profile'])>
+                <summary class="cashier-context" title="Akun {{ $user?->name }}">
+                    @if ($user?->avatar_path)
+                        <img class="cashier-avatar" src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($user->avatar_path) }}" alt="">
+                    @else
+                        <span class="cashier-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr(trim((string) $user?->name), 0, 1)) }}</span>
+                    @endif
+                    <span class="cashier-context-text">
+                        <strong>{{ $outlet?->name }}</strong>
+                        <span>{{ $user?->name }}</span>
+                    </span>
+                    @svg('heroicon-o-chevron-down', ['class' => 'cashier-user-caret', 'aria-hidden' => 'true'])
+                </summary>
+                <div class="cashier-user-menu" role="menu">
+                    <div class="cashier-user-head">
+                        <strong>{{ $user?->name }}</strong>
+                        <span>{{ $user?->role?->getLabel() }} · {{ $outlet?->name }}</span>
+                    </div>
+                    <a href="{{ route('cashier.profile') }}" role="menuitem">@svg('heroicon-o-user-circle', ['aria-hidden' => 'true']) Profil</a>
+                    <form method="POST" action="{{ route('cashier.logout') }}"
+                        data-confirm-title="Keluar dari kasir web?" data-confirm-ok="Keluar" data-confirm-icon="logout" data-confirm-tone="danger"
+                        data-confirm-text="Shift di browser ini tetap terbuka. Bila sudah selesai bertugas, tutup shift dulu dari menu Shift.">
+                        @csrf
+                        <button type="submit" role="menuitem" class="is-danger">@svg('heroicon-o-arrow-right-start-on-rectangle', ['aria-hidden' => 'true']) Keluar</button>
+                    </form>
+                </div>
+            </details>
         </div>
     </header>
 
@@ -320,6 +338,15 @@
                 button.textContent = button.dataset.label;
                 button.classList.remove('is-armed');
             }, 5000);
+        });
+    </script>
+    <script>
+        // Menu akun kasir: tutup saat klik di luar atau Esc
+        document.addEventListener('click', (event) => {
+            document.querySelectorAll('details.cashier-user[open]').forEach((menu) => { if (! menu.contains(event.target)) menu.removeAttribute('open'); });
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') document.querySelectorAll('details.cashier-user[open]').forEach((menu) => menu.removeAttribute('open'));
         });
     </script>
 </body>

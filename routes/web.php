@@ -9,6 +9,7 @@ use App\Http\Controllers\Web\Cashier\LockController as CashierLockController;
 use App\Http\Controllers\Web\Cashier\LoginController as CashierLoginController;
 use App\Http\Controllers\Web\Cashier\OrderController as CashierOrderController;
 use App\Http\Controllers\Web\Cashier\OutletController as CashierOutletController;
+use App\Http\Controllers\Web\Cashier\ProfileController as CashierProfileController;
 use App\Http\Controllers\Web\Cashier\QueueController as CashierQueueController;
 use App\Http\Controllers\Web\Cashier\ReceivableController as CashierReceivableController;
 use App\Http\Controllers\Web\Cashier\RefundController as CashierRefundController;
@@ -224,6 +225,10 @@ Route::domain(Domains::app())->prefix('cashier')->name('cashier.')->group(functi
         Route::get('self-orders', CashierSelfOrderController::class)->name('self-orders');
         // Antrean pesanan meja sampai diantar (ADR 0027 K8)
         Route::get('queue', CashierQueueController::class)->name('queue');
+        // Profil pengguna yang masuk: data diri & keamanan
+        Route::get('profile', [CashierProfileController::class, 'show'])->name('profile');
+        Route::post('profile', [CashierProfileController::class, 'update'])->middleware('throttle:20,1')->name('profile.update');
+        Route::post('profile/security', [CashierProfileController::class, 'security'])->middleware('throttle:10,1')->name('profile.security');
         Route::get('orders', [CashierOrderController::class, 'index'])->name('orders');
         Route::get('orders/{order}', [CashierOrderController::class, 'show'])->whereUuid('order')->name('orders.show');
         Route::post('orders/{order}/void', [CashierOrderController::class, 'void'])->whereUuid('order')->name('orders.void');
