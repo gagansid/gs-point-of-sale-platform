@@ -1,6 +1,6 @@
 {{--
-    Pengaturan → Langganan (ADR 0024/0025, Q123): paket & masa aktif, tagihan menunggu (bayar QRIS / VA / transfer
-    manual + bukti), add-on, pemakaian kuota, riwayat tagihan (detail per tagihan).
+    Pengaturan → Langganan (ADR 0024/0025, Q123, Q141): kartu paket (hero), tagihan menunggu (bayar QRIS / VA / transfer
+    manual + bukti), pilih paket (kartu harga), add-on, pemakaian kuota, riwayat tagihan (detail per tagihan).
 --}}
 @php
     $tenant = $this->tenant();
@@ -22,11 +22,6 @@
         $daysLeft <= 7 => 'warning',
         default => 'success',
     };
-    $statusColor = match ($tenant->status) {
-        \App\Enums\TenantStatus::Active => 'success',
-        \App\Enums\TenantStatus::Trial => 'info',
-        default => 'danger',
-    };
     $features = $tenant->plan
         ? collect(\App\Models\Feature::options())->only(\App\Support\Features::enabledKeys($tenant))
         : collect();
@@ -34,21 +29,15 @@
 @endphp
 <x-filament-panels::page>
     <div class="gs-sub-grid">
-        {{-- Paket saat ini --}}
-        <x-filament::section :icon="\Filament\Support\Icons\Heroicon::OutlinedSparkles" heading="Paket saat ini" class="gs-sub-plan">
-            <x-slot name="afterHeader">
-                <div class="flex flex-wrap gap-2">
-                    @if ($this->canBuyAddons())
-                        {{ $this->addAddonAction }}
-                    @endif
-                    @if ($this->plans()->isNotEmpty())
-                        {{ $this->createInvoiceAction }}
-                    @endif
-                </div>
-            </x-slot>
-
-            <div class="gs-plan-hero">
+        {{-- Paket saat ini: kartu hero warna merek, sisa masa aktif & aksi utama --}}
+        <section class="gs-plan-card is-{{ $tone }}">
+            <div class="gs-plan-card-top">
                 <div class="min-w-0">
+                    <div class="gs-plan-eyebrow">
+                        <x-filament::icon :icon="\Filament\Support\Icons\Heroicon::OutlinedSparkles" />
+                        Paket saat ini
+                        <span class="gs-plan-status">{{ $tenant->status->getLabel() }}{{ $tenant->isReadOnly() ? ' · hanya-baca' : '' }}</span>
+                    </div>
                     <div class="gs-plan-name">{{ $tenant->plan?->name ?? 'Semua fitur (tanpa paket)' }}</div>
                     <div class="gs-plan-meta">
                         {{ $tenant->billing_cycle?->getLabel() ?? 'Tanpa siklus' }}
@@ -57,16 +46,28 @@
                         @endif
                     </div>
                 </div>
-                <x-filament::badge :color="$statusColor" size="lg">{{ $tenant->status->getLabel() }}{{ $tenant->isReadOnly() ? ' · hanya-baca' : '' }}</x-filament::badge>
+                <div class="gs-plan-days">
+                    <strong>{{ $daysLeft === null ? '∞' : number_format($daysLeft, 0, ',', '.') }}</strong>
+                    <span>{{ $daysLeft === null ? 'tanpa batas' : ($daysLeft === 0 ? 'berakhir hari ini' : 'hari lagi') }}</span>
+                </div>
             </div>
 
-            <div class="gs-plan-period is-{{ $tone }}">
+            <div class="gs-plan-period">
                 <div class="gs-plan-period-row">
                     <span>Aktif sampai <strong>{{ $date($endsAt) }}</strong></span>
-                    <span>{{ $daysLeft === null ? 'Tanpa batas' : ($daysLeft === 0 ? 'Berakhir hari ini' : $daysLeft.' hari lagi') }}</span>
+                    @if ($progress !== null)<span>{{ $progress }}% tersisa</span>@endif
                 </div>
                 @if ($progress !== null)
                     <div class="gs-plan-bar"><span style="width: {{ $progress }}%"></span></div>
+                @endif
+            </div>
+
+            <div class="gs-plan-actions">
+                @if ($this->plans()->isNotEmpty())
+                    {{ $this->createInvoiceAction }}
+                @endif
+                @if ($this->canBuyAddons())
+                    {{ $this->addAddonAction }}
                 @endif
             </div>
 
@@ -97,7 +98,7 @@
             @if ($this->plans()->isEmpty())
                 <p class="gs-muted">Belum ada paket yang bisa dipilih. Hubungi tim gs.POS untuk perpanjangan.</p>
             @endif
-        </x-filament::section>
+        </section>
 
         {{-- Tagihan menunggu --}}
         <x-filament::section :icon="\Filament\Support\Icons\Heroicon::OutlinedDocumentText" heading="Tagihan menunggu" class="gs-sub-pending">
@@ -145,6 +146,57 @@
             @endforelse
         </x-filament::section>
     </div>
+
+    {{-- Pilih paket: kartu harga berdampingan, saklar Bulanan/Tahunan; klik = Buat tagihan untuk paket itu --}}
+    @php($cards = $this->planCards())
+    @if ($cards !== [])
+        <x-filament::section :icon="\Filament\Support\Icons\Heroicon::OutlinedSquares2x2" heading="Pilih paket" description="Upgrade langsung aktif (bayar selisih sisa masa aktif); perpanjangan dimulai dari akhir masa aktif sekarang">
+            <x-slot name="afterHeader">
+                <div class="gs-cycle-switch" role="tablist" aria-label="Siklus harga">
+                    @foreach (\App\Enums\BillingCycle::cases() as $cycleOption)
+                        <button type="button" role="tab" aria-selected="{{ $pricingCycle === $cycleOption->value ? 'true' : 'false' }}"
+                            @class(['is-active' => $pricingCycle === $cycleOption->value]) wire:click="setPricingCycle('{{ $cycleOption->value }}')">
+                            {{ $cycleOption->getLabel() }}
+                        </button>
+                    @endforeach
+                </div>
+            </x-slot>
+
+            <div class="gs-price-grid">
+                @foreach ($cards as $card)
+                    <article wire:key="plan-{{ $card['id'] }}" @class(['gs-price-card', 'is-current' => $card['current']])>
+                        <div class="gs-price-head">
+                            <h3>{{ $card['name'] }}</h3>
+                            @if ($card['current'])
+                                <span class="gs-price-tag">Paket saat ini</span>
+                            @elseif ($pricingCycle === 'yearly' && $card['saving'])
+                                <span class="gs-price-tag is-saving">Hemat {{ $card['saving'] }}%</span>
+                            @endif
+                        </div>
+                        @if ($card['description'])
+                            <p class="gs-price-desc">{{ $card['description'] }}</p>
+                        @endif
+                        <div class="gs-price-amount"><strong>{{ $card['price'] }}</strong><span>{{ $card['per'] }}</span></div>
+                        <div class="gs-price-sub">{{ $card['monthly_equivalent'] ? 'setara '.$card['monthly_equivalent'] : ' ' }}</div>
+                        <ul class="gs-price-list">
+                            @forelse ($card['limits'] as $limit)
+                                <li><x-filament::icon :icon="\Filament\Support\Icons\Heroicon::Check" />{{ $limit }}</li>
+                            @empty
+                                <li><x-filament::icon :icon="\Filament\Support\Icons\Heroicon::Check" />Tanpa batas kuota</li>
+                            @endforelse
+                            @foreach ($card['features'] as $featureName)
+                                <li class="is-feature"><x-filament::icon :icon="\Filament\Support\Icons\Heroicon::Check" />{{ $featureName }}</li>
+                            @endforeach
+                        </ul>
+                        <x-filament::button :color="$card['current'] ? 'gray' : 'primary'" class="gs-price-cta"
+                            wire:click="mountAction('createInvoice', { plan: '{{ $card['id'] }}', cycle: '{{ $pricingCycle }}' })">
+                            {{ $card['cta'] }}
+                        </x-filament::button>
+                    </article>
+                @endforeach
+            </div>
+        </x-filament::section>
+    @endif
 
     {{-- Add-on (ADR 0025 C2) --}}
     @if ($owned->isNotEmpty() || $this->canBuyAddons())

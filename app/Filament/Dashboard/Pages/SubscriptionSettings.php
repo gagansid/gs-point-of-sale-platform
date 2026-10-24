@@ -22,7 +22,9 @@ use App\Filament\Shared\Forms\ShrinkImage;
 use App\Filament\Shared\Tables\TableEmptyState;
 use App\Filament\Shared\Tables\TableHeading;
 use App\Models\Addon;
+use App\Models\Feature;
 use App\Models\Plan;
+use App\Models\Quota;
 use App\Models\SubscriptionInvoice;
 use App\Models\Tenant;
 use App\Models\TenantAddon;
@@ -89,12 +91,82 @@ final class SubscriptionSettings extends DashboardPage implements HasTable
 
     protected string $view = 'filament.dashboard.pages.subscription';
 
+    /** Saklar harga kartu "Pilih paket": monthly | yearly. */
+    public string $pricingCycle = 'monthly';
+
     protected static function canUsePage(): bool
     {
         $user = auth()->user();
 
         // Tetap bisa dibuka saat hanya-baca: justru untuk memperpanjang
         return Edition::isSaas() && $user instanceof User && $user->hasPermission('billing.manage');
+    }
+
+    public function mount(): void
+    {
+        $this->pricingCycle = ($this->tenant()->billing_cycle ?? BillingCycle::Monthly)->value;
+        $this->notifyGatewayReturn();
+    }
+
+    public function setPricingCycle(string $cycle): void
+    {
+        $this->pricingCycle = BillingCycle::tryFrom($cycle)->value ?? BillingCycle::Monthly->value;
+    }
+
+    /**
+     * Kartu "Pilih paket": harga per siklus, hemat tahunan, batas & fitur, penanda paket saat ini.
+     *
+     * @return list<array{id: string, name: string, description: ?string, price: string, per: string, monthly_equivalent: ?string, saving: ?int, limits: list<string>, features: list<string>, current: bool, cta: string}>
+     */
+    public function planCards(): array
+    {
+        $tenant = $this->tenant();
+        $cycle = BillingCycle::tryFrom($this->pricingCycle) ?? BillingCycle::Monthly;
+        $featureNames = Feature::options();
+        $currentPrice = $tenant->plan?->price_monthly;
+
+        return $this->plans()->map(function (Plan $plan) use ($tenant, $cycle, $featureNames, $currentPrice): array {
+            $yearly = (float) $plan->price_yearly;
+            $twelve = (float) $plan->price_monthly * 12;
+            $current = $plan->id === $tenant->plan_id;
+
+            return [
+                'id' => $plan->id,
+                'name' => $plan->name,
+                'description' => $plan->description,
+                'price' => Money::format($plan->price($cycle)),
+                'per' => $cycle === BillingCycle::Yearly ? '/tahun' : '/bulan',
+                'monthly_equivalent' => $cycle === BillingCycle::Yearly && $yearly > 0 ? Money::formatWhole(Money::div($plan->price_yearly, 12)).'/bulan' : null,
+                'saving' => $twelve > 0 && $yearly > 0 && $yearly < $twelve ? (int) round((1 - $yearly / $twelve) * 100) : null,
+                'limits' => array_values(array_filter(explode(' · ', Quota::summary($plan->limits ?? [], '')))),
+                'features' => array_values(array_intersect_key($featureNames, array_flip($plan->features))),
+                'current' => $current,
+                'cta' => match (true) {
+                    $current => 'Perpanjang',
+                    $currentPrice !== null && (float) $plan->price_monthly > (float) $currentPrice => 'Upgrade',
+                    default => 'Pilih paket',
+                },
+            ];
+        })->values()->all();
+    }
+
+    /**
+     * Kembali dari halaman pembayaran online: Snap menambahkan ?transaction_status=… ke URL selesai. Hanya pesan
+     * informasi; status lunas tetap dari webhook bertanda tangan (bukan dari query string ini).
+     */
+    private function notifyGatewayReturn(): void
+    {
+        $status = (string) request()->query('transaction_status', '');
+
+        match ($status) {
+            'settlement', 'capture' => Notification::make()->success()->title('Pembayaran diterima')
+                ->body('Terima kasih! Status tagihan berubah menjadi Lunas dalam beberapa saat.')->send(),
+            'pending' => Notification::make()->info()->title('Menunggu pembayaran')
+                ->body('Selesaikan pembayaran sebelum jatuh tempo. Tagihan lunas otomatis setelah dana diterima.')->send(),
+            'deny', 'cancel', 'expire', 'failure' => Notification::make()->warning()->title('Pembayaran belum berhasil')
+                ->body('Silakan coba lagi dengan metode lain atau transfer manual.')->send(),
+            default => null,
+        };
     }
 
     public function tenant(): Tenant
@@ -289,15 +361,16 @@ final class SubscriptionSettings extends DashboardPage implements HasTable
 
     public function createInvoiceAction(): Action
     {
-        return Action::make('createInvoice')->label('Buat tagihan')->icon(Heroicon::OutlinedDocumentPlus)
+        return Action::make('createInvoice')->label('Perpanjang / ganti paket')->icon(Heroicon::OutlinedArrowPath)
             ->visible(fn (): bool => $this->plans()->isNotEmpty())
             ->modalHeading('Buat tagihan langganan')
             ->modalWidth('2xl')
             ->modalSubmitActionLabel('Buat tagihan')
             ->modalDescription('Upgrade ke paket lebih mahal: bayar selisih sisa masa aktif, paket langsung berganti. Lainnya: perpanjangan dari akhir masa aktif sekarang')
-            ->fillForm(fn (): array => [
-                'plan_id' => $this->tenant()->plan_id ?? $this->plans()->first()?->id,
-                'billing_cycle' => ($this->tenant()->billing_cycle ?? BillingCycle::Monthly)->value,
+            // Dari kartu "Pilih paket": argumen plan & cycle mengisi form (tetap divalidasi terhadap plans())
+            ->fillForm(fn (array $arguments): array => [
+                'plan_id' => $this->plans()->firstWhere('id', $arguments['plan'] ?? null)->id ?? $this->tenant()->plan_id ?? $this->plans()->first()?->id,
+                'billing_cycle' => BillingCycle::tryFrom((string) ($arguments['cycle'] ?? ''))->value ?? ($this->tenant()->billing_cycle ?? BillingCycle::Monthly)->value,
             ])
             ->schema([
                 ToggleButtons::make('billing_cycle')->label('Siklus tagihan')->required()->inline()->options(BillingCycle::class)->live(),
@@ -378,7 +451,7 @@ final class SubscriptionSettings extends DashboardPage implements HasTable
             ->modalHeading(fn (array $arguments): string => 'Bayar tagihan '.($this->payableInvoice($arguments)->number ?? ''))
             ->modalDescription('Pilih cara bayar. QRIS & VA lunas otomatis; transfer manual diverifikasi tim gs.POS')
             ->modalWidth('2xl')
-            ->modalSubmitActionLabel('Lanjutkan')
+            ->modalSubmitActionLabel('Lanjut bayar')
             ->fillForm(fn (array $arguments): array => [
                 'method' => ($this->payableInvoice($arguments)->payment_method ?? $this->paymentMethods()[0] ?? InvoicePaymentMethod::Manual)->value,
             ])
@@ -388,7 +461,11 @@ final class SubscriptionSettings extends DashboardPage implements HasTable
                 Radio::make('method')->label('Metode pembayaran')->required()->live()
                     ->options(collect($this->paymentMethods())->mapWithKeys(fn (InvoicePaymentMethod $m): array => [$m->value => $m->getLabel()])->all())
                     ->descriptions(collect($this->paymentMethods())->mapWithKeys(fn (InvoicePaymentMethod $m): array => [$m->value => $m->getDescription()])->all())
-                    ->extraAttributes(['class' => 'gs-choice-cards']),
+                    // Kartu metode berikon (ikon lewat CSS per nilai: gs-pay-methods)
+                    ->extraAttributes(['class' => 'gs-choice-cards gs-pay-methods']),
+                Placeholder::make('online_note')->hiddenLabel()
+                    ->visible(fn (Get $get): bool => InvoicePaymentMethod::tryFrom((string) $get('method'))?->isOnline() ?? false)
+                    ->content(new HtmlString('<div class="gs-pay-secure">'.svg('heroicon-o-lock-closed')->toHtml().'<span>Kamu diarahkan ke halaman pembayaran aman. Setelah membayar, kembali ke sini — tagihan lunas otomatis.</span></div>')),
                 Placeholder::make('transfer_to')->label('Transfer ke')
                     ->visible(fn (Get $get): bool => $get('method') === InvoicePaymentMethod::Manual->value)
                     ->content(fn (): HtmlString => new HtmlString(view('filament.dashboard.subscription.bank-accounts', [

@@ -35,6 +35,7 @@ use Filament\Facades\Filament;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 /** Paket langganan & tagihan SaaS (ADR 0024, Q108–Q111). */
@@ -267,4 +268,43 @@ it('dashboard: owner membuat tagihan di halaman Langganan; manager tanpa akses; 
 
     expect($invoice->refresh()->status)->toBe(InvoiceStatus::Paid)->and($invoice->paid_via)->toBe('manual')
         ->and($this->tenant->refresh()->plan_id)->toBe($this->basic->id);
+});
+
+it('halaman Langganan (Q141): kartu harga per siklus, hemat tahunan, paket saat ini, pilih paket mengisi form tagihan', function () {
+    $owner = TenantContext::run($this->tenant->id, fn () => User::factory()->owner()->create());
+    Filament::setCurrentPanel('dashboard');
+    TenantContext::set($this->tenant->id);
+    $this->actingAs($owner);
+    CurrentOutlet::set($owner);
+    $this->tenant->forceFill(['plan_id' => $this->basic->id, 'billing_cycle' => BillingCycle::Monthly])->save();
+
+    $page = Livewire::test(SubscriptionSettings::class)->assertSet('pricingCycle', 'monthly')
+        ->assertSee('Pilih paket')->assertSee('Paket saat ini')->assertSee('Rp99.000')->assertSee('Upgrade');
+    $cards = collect($page->instance()->planCards())->keyBy('name');
+    expect($cards['Basic']['current'])->toBeTrue()->and($cards['Basic']['cta'])->toBe('Perpanjang')
+        ->and($cards['Pro']['cta'])->toBe('Upgrade')->and($cards['Basic']['limits'])->not->toBe([]);
+
+    $page->call('setPricingCycle', 'yearly')->assertSee('Rp990.000')->assertSee('Hemat 17%')->assertSee('setara Rp82.500/bulan')
+        ->call('setPricingCycle', 'bogus')->assertSet('pricingCycle', 'monthly');
+
+    $page->mountAction('createInvoice', ['plan' => $this->pro->id, 'cycle' => 'yearly'])
+        ->assertActionDataSet(['plan_id' => $this->pro->id, 'billing_cycle' => BillingCycle::Yearly]);
+    // ID paket asing dari browser diabaikan (kembali ke paket saat ini)
+    Livewire::test(SubscriptionSettings::class)->mountAction('createInvoice', ['plan' => (string) Str::uuid(), 'cycle' => 'x'])
+        ->assertActionDataSet(['plan_id' => $this->basic->id, 'billing_cycle' => BillingCycle::Monthly]);
+});
+
+it('kembali dari halaman pembayaran online: pesan sesuai status (informasi saja, status lunas tetap dari webhook)', function () {
+    $owner = TenantContext::run($this->tenant->id, fn () => User::factory()->owner()->create());
+    Filament::setCurrentPanel('dashboard');
+    TenantContext::set($this->tenant->id);
+    $this->actingAs($owner);
+    CurrentOutlet::set($owner);
+    $invoice = invoiceFor($this);
+
+    Livewire::withQueryParams(['transaction_status' => 'settlement'])->test(SubscriptionSettings::class)->assertNotified('Pembayaran diterima');
+    Livewire::withQueryParams(['transaction_status' => 'pending'])->test(SubscriptionSettings::class)->assertNotified('Menunggu pembayaran');
+    Livewire::withQueryParams(['transaction_status' => 'expire'])->test(SubscriptionSettings::class)->assertNotified('Pembayaran belum berhasil');
+
+    expect($invoice->refresh()->status)->toBe(InvoiceStatus::Pending);
 });
