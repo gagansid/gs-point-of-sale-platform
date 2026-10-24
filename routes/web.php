@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\Install\InstallController;
 use App\Http\Controllers\Web\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Web\Member\PortalController as MemberPortalController;
 use App\Http\Controllers\Web\MidtransWebhookController;
+use App\Http\Controllers\Web\MoveToSubdomainController;
 use App\Http\Controllers\Web\PasswordResetController;
 use App\Http\Controllers\Web\SelfOrder\ShortTableLinkController;
 use App\Http\Controllers\Web\SelfOrder\TableAuthController;
@@ -37,7 +38,6 @@ use Dedoc\Scramble\Http\Middleware\RestrictedDocsAccess;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -111,18 +111,20 @@ Route::domain(Domains::main())->group(function (): void {
      *   /admin/tenants      → admin.gspos.id/tenants
      *   /api/v1/catalog     → api.gspos.id/v1/catalog (308: metode & body POST ikut)
      */
-    $move = fn (string $domain, string $prefix, int $status) => fn (Request $request, ?string $path = null): RedirectResponse => redirect()->away(
-        Domains::url($domain, $prefix.($path ?? ''), $request->getQueryString()),
-        $status,
-    );
+    // Controller + defaults, bukan closure: closure bersarang tidak bisa di-route:cache (php artisan optimize)
+    $move = fn (string $uri, string $target, string $prefix, string $status) => Route::any($uri.'/{path?}', MoveToSubdomainController::class)
+        ->where('path', '.*')
+        ->defaults('target', $target)
+        ->defaults('prefix', $prefix)
+        ->defaults('status', $status);
 
     // Hanya mengalihkan (tanpa membaca/mengubah data), jadi tanpa CSRF: POST dari aplikasi lama
     // tanpa token tetap dialihkan, bukan ditolak 419
     Route::withoutMiddleware(ValidateCsrfToken::class)->group(function () use ($move): void {
-        Route::any('dashboard/{path?}', $move((string) Domains::app(), '', 301))->where('path', '.*');
-        Route::any('cashier/{path?}', $move((string) Domains::app(), 'cashier/', 301))->where('path', '.*');
-        Route::any('admin/{path?}', $move((string) Domains::admin(), '', 301))->where('path', '.*');
-        Route::any('api/v1/{path?}', $move((string) Domains::api(), 'v1/', 308))->where('path', '.*');
+        $move('dashboard', 'app', '', '301');
+        $move('cashier', 'app', 'cashier/', '301');
+        $move('admin', 'admin', '', '301');
+        $move('api/v1', 'api', 'v1/', '308');
     });
 });
 

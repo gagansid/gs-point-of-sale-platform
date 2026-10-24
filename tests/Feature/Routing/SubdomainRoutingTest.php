@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\MoveToSubdomainController;
 use App\Models\Outlet;
 use App\Models\Product;
 use App\Models\User;
@@ -77,6 +78,21 @@ it('URL lama dialihkan ke subdomain baru dengan path & query', function () {
     $this->post('http://gspos.localhost/api/v1/auth/login')
         ->assertStatus(308)
         ->assertRedirect('http://api.gspos.localhost/v1/auth/login');
+});
+
+it('pengalihan URL lama memakai controller, bukan closure, agar aman di-route:cache (php artisan optimize)', function () {
+    // Closure bersarang (fn => fn) rusak setelah route:cache: "Too few arguments … exactly 3 expected" di produksi
+    foreach (['dashboard/{path?}', 'cashier/{path?}', 'admin/{path?}', 'api/v1/{path?}'] as $uri) {
+        $route = collect(app('router')->getRoutes()->getRoutes())
+            ->first(fn ($route): bool => $route->uri() === $uri && $route->getDomain() === 'gspos.localhost');
+
+        expect($route)->not->toBeNull()
+            ->and($route->getActionName())->toContain(MoveToSubdomainController::class);
+    }
+
+    $this->get('http://gspos.localhost/cashier/login?next=1')
+        ->assertStatus(301)
+        ->assertRedirect('http://app.gspos.localhost/cashier/login?next=1');
 });
 
 it('domain utama menampilkan halaman depan & login pelanggan, bukan panel', function () {
