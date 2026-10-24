@@ -56,6 +56,12 @@ it('foto profil: unggah ke folder tenant, ganti menghapus yang lama, bisa dihapu
 
     $this->post(route('cashier.profile.update'), ['name' => 'Budi', 'avatar' => UploadedFile::fake()->create('x.php', 10, 'text/x-php')])
         ->assertSessionHasErrors('avatar');
+
+    // Foto kamera 12 MP (4032×3024) diterima bila browser tidak sempat memperkecil; > 2 MB tetap ditolak
+    $this->post(route('cashier.profile.update'), ['name' => 'Budi', 'avatar' => UploadedFile::fake()->image('IMG_0001.jpg', 4032, 3024)])
+        ->assertSessionHasNoErrors();
+    $this->post(route('cashier.profile.update'), ['name' => 'Budi', 'avatar' => UploadedFile::fake()->image('besar.jpg', 800, 800)->size(3000)])
+        ->assertSessionHasErrors('avatar');
 });
 
 it('ganti kata sandi: wajib kata sandi saat ini; browser ini tetap masuk, token aplikasi dicabut', function () {

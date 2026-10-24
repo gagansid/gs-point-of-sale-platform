@@ -45,7 +45,7 @@
                             </label>
                             <div class="pos-avatar-body">
                                 <strong>Foto profil</strong>
-                                <small class="pos-field-hint" data-avatar-status>JPG, PNG, atau WEBP · maks. 2 MB · tampil bulat</small>
+                                <small class="pos-field-hint" data-avatar-status>JPG, PNG, atau WEBP · foto besar otomatis diperkecil · tampil bulat</small>
                                 <div class="pos-avatar-actions">
                                     <label class="site-btn site-btn-outline" for="avatar">@svg('heroicon-o-arrow-up-tray', ['aria-hidden' => 'true']) {{ $avatarUrl ? 'Ganti foto' : 'Unggah foto' }}</label>
                                     @if ($avatarUrl)
@@ -138,17 +138,60 @@
                 if (remove) remove.hidden = false;
             };
 
-            input.addEventListener('change', () => {
-                const file = input.files[0];
+            // Foto kamera HP/tablet (3–6 MB, 4032×3024) dipotong persegi tengah & diperkecil ke 512px JPEG sebelum
+            // dikirim, agar lolos batas server (2 MB, upload_max_filesize shared hosting) dan hemat kuota
+            const SIZE = 512;
+            const MAX_BYTES = 2 * 1024 * 1024;
+            const shrink = async (file) => {
+                const url = URL.createObjectURL(file);
+                try {
+                    const img = new Image();
+                    img.src = url;
+                    await img.decode();
+                    const side = Math.min(img.naturalWidth, img.naturalHeight);
+                    const out = Math.min(SIZE, side);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = canvas.height = out;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff'; // PNG transparan → latar putih (JPEG tanpa alpha)
+                    ctx.fillRect(0, 0, out, out);
+                    ctx.drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, out, out);
+                    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+                    return blob ? new File([blob], 'avatar.jpg', { type: 'image/jpeg' }) : null;
+                } finally {
+                    URL.revokeObjectURL(url);
+                }
+            };
+
+            input.addEventListener('change', async () => {
+                let file = input.files[0];
                 if (! file) return reset();
-                if (file.size > 2 * 1024 * 1024) {
-                    status.textContent = 'Ukuran foto lebih dari 2 MB. Pilih foto lain.';
+                status.textContent = 'Menyiapkan foto…';
+
+                try {
+                    const small = await shrink(file);
+                    if (small && typeof DataTransfer === 'function') {
+                        const dt = new DataTransfer();
+                        dt.items.add(small);
+                        input.files = dt.files;
+                        file = small;
+                    }
+                } catch {
                     input.value = '';
+                    status.textContent = 'Foto tidak bisa dibaca. Pilih foto JPG, PNG, atau WEBP.';
                     return;
                 }
+
+                // Browser lama tanpa DataTransfer: file asli dikirim apa adanya
+                if (file.size > MAX_BYTES) {
+                    input.value = '';
+                    status.textContent = 'Ukuran foto lebih dari 2 MB. Pilih foto lain.';
+                    return;
+                }
+
                 removeInput.value = '0';
                 show(URL.createObjectURL(file));
-                status.textContent = file.name + ' · klik Simpan data diri';
+                status.textContent = 'Foto siap · klik Simpan data diri';
                 cancel.hidden = false;
                 if (remove) remove.hidden = true;
             });

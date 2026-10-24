@@ -44,7 +44,7 @@ final class ProfileController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100', 'not_regex:/^[=+\-@]/'],
             'phone' => ['nullable', 'string', 'max:30'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:min_width=64,min_height=64,max_width=4000,max_height=4000'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:min_width=64,min_height=64,max_width=8000,max_height=8000'],
             'remove_avatar' => ['nullable', 'boolean'],
         ], [], ['name' => 'nama', 'phone' => 'nomor HP', 'avatar' => 'foto profil']);
 
