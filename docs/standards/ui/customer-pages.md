@@ -15,8 +15,12 @@ tetapi mobile-first. Kode: `resources/css/self-order.css` (entri Vite tersendiri
 
 ## Ukuran (sama dengan panel owner)
 
-Kontrol 32px (`--control-h`), field 13px, label 12.5px / 500, bantuan & error 12px, tombol radius 8px padding 14px,
-badge 20px, tombol ikon 32px (26px di dalam baris). Area sentuh diperluas `::after` inset −6px tanpa mengubah tampilan.
+Kontrol = kasir web (Q138): tinggi 40px (`--control-h`, di-override di `self-order.css`), field & tombol 14px,
+tombol 600 radius 10px padding 16px, label 12.5px / 500, bantuan & error 12px, badge 20px, tombol ikon 40px
+(32px `--control-h-sm` di dalam baris: stepper kartu, Tambah). Area sentuh diperluas `::after` inset −6px tanpa mengubah tampilan.
+
+Tanpa polling (Q138): daftar Pesananku & layar menunggu bayar dimuat ulang saat HP kembali ke tab (`visibilitychange`)
+atau lewat tombol **Perbarui** / **Cek status pembayaran**. Struk digital (`<details wire:ignore.self>`) tidak tertutup saat dirender ulang.
 Tidak ada ukuran 40/44px; satu-satunya angka besar = nomor pesanan di layar "Tunjukkan ke kasir" (28px mono, mengecil di HP sempit).
 
 ## Kerangka

@@ -67,7 +67,7 @@
             </ul>
 
             @if (array_intersect(['qris', 'ewallet'], $this->payMethods()) !== [])
-                <p class="so-muted so-foot">@svg('heroicon-o-lock-closed', ['class' => 'so-inline-icon', 'aria-hidden' => 'true']) Pembayaran online diproses Midtrans. Status berubah otomatis setelah lunas.</p>
+                <p class="so-muted so-foot">@svg('heroicon-o-lock-closed', ['class' => 'so-inline-icon', 'aria-hidden' => 'true']) Pembayaran online diproses Midtrans. Setelah membayar, kembali ke halaman ini untuk melihat status.</p>
             @endif
         </div>
     </div>

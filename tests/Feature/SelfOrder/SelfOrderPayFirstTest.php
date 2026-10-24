@@ -191,7 +191,7 @@ it('QRIS: batas 5 QR/10 menit per pesanan; order lunas/kedaluwarsa ditolak; tida
     expect(fn () => $qris->handle($fresh, '10.4.4.4'))->toThrow(fn (BusinessException $e) => expect($e->errorCode)->toBe(ErrorCode::PaymentGatewayNotConfigured->value));
 });
 
-it('HP: Bayar → QRIS tampil di halaman; webhook lunas → polling memindahkan ke Pesananku', function () {
+it('HP: Bayar → QRIS tampil di halaman; webhook lunas → Cek status memindahkan ke Pesananku', function () {
     $page = payPage($this)->call('quickAdd', $this->pos->croissant->id)->call('show', 'cart')
         ->set('customerName', 'Andi')
         ->call('openPay')
@@ -212,6 +212,19 @@ it('HP: Bayar → QRIS tampil di halaman; webhook lunas → polling memindahkan 
 
     $page->call('checkPayment')->assertSet('view', 'status')->assertDispatched('so-toast')->assertSee('Lunas');
     expect($order->refresh()->status)->toBe(OrderStatus::Completed);
+});
+
+it('HP: tanpa polling — status dimuat saat tab aktif lagi / tombol, struk digital tidak tertutup saat render ulang (Q138)', function () {
+    $page = payPage($this)->call('quickAdd', $this->pos->croissant->id)->call('show', 'cart')
+        ->set('customerName', 'Andi')->call('openPay')->call('choosePay', 'qris')
+        ->assertDontSeeHtml('wire:poll')->assertSeeHtml('visibilitychange')->assertSee('Cek status pembayaran');
+
+    $page->call('show', 'status')
+        ->assertDontSeeHtml('wire:poll')->assertSeeHtml('visibilitychange')->assertSee('Perbarui');
+
+    $order = Order::query()->sole();
+    $order->forceFill(['status' => OrderStatus::Completed, 'completed_at' => now()])->save();
+    $page->call('$refresh')->assertSee('Struk digital')->assertSeeHtml('<details class="so-receipt" wire:ignore.self>');
 });
 
 it('HP: QR kedaluwarsa → Buat QR baru / Bayar di kasir; layar kasir menampilkan nomor pesanan & batas waktu', function () {

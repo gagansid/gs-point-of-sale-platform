@@ -1,13 +1,14 @@
 {{--
     Layar menunggu pembayaran (ADR 0027 §5.6–5.7): QRIS di halaman (QR dirender server dari qr_string, kartu putih,
-    hitung mundur, Simpan QR) atau "Tunjukkan ke kasir". Polling 4 detik hanya membaca status dari server.
+    hitung mundur, Simpan QR) atau "Tunjukkan ke kasir". Tanpa polling: status dicek saat pelanggan kembali dari aplikasi
+    e-wallet (tab aktif lagi) atau menekan "Cek status pembayaran".
 --}}
 @php
     $payOrder = $this->payOrder();
     $remaining = $payOrder ? \App\Support\Money::sub($payOrder->grand_total, $payOrder->paid_total) : '0.00';
     $methods = $this->payMethods();
 @endphp
-<section class="so-pay" wire:poll.4s="checkPayment" aria-live="polite">
+<section class="so-pay" aria-live="polite" x-data x-on:visibilitychange.document="document.visibilityState === 'visible' && $wire.checkPayment()">
     @if ($payOrder === null)
         <div class="so-card">
             <div class="so-empty">
@@ -62,7 +63,7 @@
                     <ol class="so-steps">
                         <li>Buka aplikasi e-wallet atau m-banking.</li>
                         <li>Pilih bayar/scan QRIS, lalu pindai kode ini.</li>
-                        <li>Bayar {{ \App\Support\Money::format($remaining) }}. Status berubah sendiri setelah lunas.</li>
+                        <li>Bayar {{ \App\Support\Money::format($remaining) }}, lalu kembali ke halaman ini.</li>
                     </ol>
                     <div class="so-actions is-stack">
                         <button type="button" class="so-btn is-outline is-block" x-on:click="save()">@svg('heroicon-o-arrow-down-tray', ['aria-hidden' => 'true']) Simpan QR</button>
@@ -108,6 +109,9 @@
 
     @if ($payOrder !== null)
         <div class="so-actions is-stack">
+            <button type="button" class="so-btn is-primary is-block" wire:click="checkPayment" wire:loading.attr="disabled" wire:target="checkPayment">
+                @svg('heroicon-o-arrow-path', ['aria-hidden' => 'true']) Cek status pembayaran
+            </button>
             <button type="button" class="so-btn is-ghost is-block" wire:click="openPay('{{ $payOrderId }}')">@svg('heroicon-o-arrows-right-left', ['aria-hidden' => 'true']) Ganti metode bayar</button>
         </div>
     @endif

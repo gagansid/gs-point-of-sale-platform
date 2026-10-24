@@ -1,7 +1,8 @@
 /*
  * Halaman pelanggan: pesan dari meja /order/t/{token} & halaman member /m/{bisnis} (ADR 0027, SPEC Q137).
  * Satu bahasa visual dengan panel owner: token dari tokens.css, warna bisnis di-override per request oleh
- * TenantAppearance::css(), mode gelap lewat kelas .dark di <html>. Semua kontrol 32px (--control-h), tanpa skala sendiri.
+ * TenantAppearance::css(), mode gelap lewat kelas .dark di <html>. Ukuran kontrol = kasir web (40px, 14px/600, radius 10px)
+ * lewat override --control-* di bawah, agar nyaman disentuh di HP.
  * Entri Vite terpisah agar token :root panel tidak bocor ke halaman situs & kasir web (app.css).
  */
 @import './filament/shared/tokens.css';
@@ -19,8 +20,14 @@
     --so-info: var(--primary);
     --so-info-text: var(--primary);
 
+    /* Ukuran kontrol disamakan dengan kasir web (.cashier-body: --pos-btn-h 40px, --pos-radius 10px) */
+    --control-h: 40px;
+    --control-h-sm: 32px;
+    --control-font: 14px;
+    --control-radius: 10px;
+
     --so-radius-card: 12px;
-    --so-btn-radius: 8px;
+    --so-btn-radius: 10px;
     --so-tabbar-h: 56px;
     --so-max: 560px;
     --so-ease: 160ms ease;
@@ -312,22 +319,22 @@
     background: var(--border-color-light);
 }
 
-/* ---------- Tombol (button.md: 32px, 13px/500, radius 8px, padding 14px, ikon 15px) ---------- */
+/* ---------- Tombol (= kasir web: 40px, 14px/600, radius 10px, padding 16px, ikon 16px) ---------- */
 .so-btn {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 8px;
     height: var(--control-h);
-    padding: 0 14px;
+    padding: 0 16px;
     border: 1px solid transparent;
     border-radius: var(--so-btn-radius);
     background: transparent;
     color: var(--text);
     font: inherit;
     font-size: var(--control-font);
-    font-weight: 500;
+    font-weight: 600;
     line-height: 1;
     white-space: nowrap;
     text-decoration: none;
@@ -348,8 +355,8 @@
 }
 
 .so-btn svg {
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
 }
 
 .so-btn:focus-visible,
@@ -426,7 +433,7 @@
     justify-content: flex-end;
 }
 
-/* Tombol ikon 32px persegi (dalam baris 26px) */
+/* Tombol ikon persegi setinggi kontrol (is-sm = --control-h-sm, dalam baris) */
 .so-icon-btn {
     position: relative;
     display: inline-grid;
@@ -473,9 +480,9 @@
 }
 
 .so-icon-btn.is-sm {
-    width: 26px;
-    height: 26px;
-    border-radius: var(--radius);
+    width: var(--control-h-sm);
+    height: var(--control-h-sm);
+    border-radius: 8px;
 }
 
 .so-icon-btn.is-sm svg {
@@ -488,7 +495,7 @@
     cursor: not-allowed;
 }
 
-/* ---------- Form (form.md: label 12.5px/500, field 32px 13px radius 6px, bantuan/error 12px) ---------- */
+/* ---------- Form (label 12.5px/500, field = kasir web 40px 14px radius 10px, bantuan/error 12px) ---------- */
 .so-form {
     display: grid;
     gap: 16px;
@@ -518,7 +525,7 @@
 .so-textarea {
     width: 100%;
     height: var(--control-h);
-    padding: 0 10px;
+    padding: 0 12px;
     border: 1px solid var(--field-border);
     border-radius: var(--control-radius);
     outline: none;
@@ -534,15 +541,15 @@
 .so-select {
     padding-right: 30px;
     background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%), linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-    background-position: calc(100% - 15px) 14px, calc(100% - 11px) 14px;
+    background-position: calc(100% - 17px) calc(50% + 1px), calc(100% - 13px) calc(50% + 1px);
     background-repeat: no-repeat;
     background-size: 4px 4px;
 }
 
 .so-textarea {
     height: auto;
-    min-height: 64px;
-    padding: 6px 10px;
+    min-height: 80px;
+    padding: 8px 12px;
     resize: vertical;
 }
 
@@ -583,8 +590,8 @@
 
 .so-input-icon > svg {
     position: absolute;
-    top: 8px;
-    left: 10px;
+    top: calc((var(--control-h) - 16px) / 2);
+    left: 12px;
     width: 16px;
     height: 16px;
     color: var(--text-muted);
@@ -592,7 +599,7 @@
 }
 
 .so-input-icon > .so-input {
-    padding-left: 32px;
+    padding-left: 38px;
 }
 
 .so-help {
@@ -1067,12 +1074,12 @@
     position: relative;
     flex-shrink: 0;
     height: 40px;
-    padding: 0 10px;
+    padding: 0 12px;
     border: 0;
     background: transparent;
     color: var(--text-secondary);
     font: inherit;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
@@ -1190,7 +1197,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 4px;
-    min-height: 26px;
+    min-height: var(--control-h-sm);
 }
 
 .so-product-price {
@@ -1315,10 +1322,10 @@
 .so-segment button {
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 26px;
+    width: 36px;
+    height: 32px;
     border: 0;
-    border-radius: 6px;
+    border-radius: 8px;
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
@@ -1355,7 +1362,7 @@
     flex: 1;
 }
 
-/* ---------- Stepper qty `− n +` (tinggi 32px; di kartu 26px) ---------- */
+/* ---------- Stepper qty `− n +` (tinggi --control-h; di kartu --control-h-sm) ---------- */
 .so-qty {
     display: inline-flex;
     align-items: center;
@@ -1369,7 +1376,7 @@
     position: relative;
     display: grid;
     place-items: center;
-    width: 30px;
+    width: 36px;
     height: 100%;
     border: 0;
     background: transparent;
@@ -1394,19 +1401,19 @@
 }
 
 .so-qty span {
-    min-width: 20px;
-    font-size: 13px;
+    min-width: 24px;
+    font-size: 14px;
     font-weight: 600;
     text-align: center;
     font-variant-numeric: tabular-nums;
 }
 
 .so-qty.is-sm {
-    height: 26px;
+    height: var(--control-h-sm);
 }
 
 .so-qty.is-sm button {
-    width: 24px;
+    width: 30px;
 }
 
 /* ---------- Bilah keranjang (di atas navigasi bawah) ---------- */
@@ -1596,6 +1603,14 @@
     gap: 12px;
 }
 
+/* Baris "Status per HH.MM · Perbarui" di atas daftar pesanan (pengganti polling) */
+.so-orders-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
 /* ---------- Menu: sambutan, pembungkus bagian, judul kategori ---------- */
 .so-welcome {
     display: flex;
@@ -1749,7 +1764,7 @@
     gap: 6px;
     justify-self: start;
     height: var(--control-h);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
 }
 
@@ -1760,17 +1775,17 @@
 
 /* Tombol tampilkan kata sandi di dalam field */
 .so-input-icon.has-reveal > .so-input {
-    padding-right: 36px;
+    padding-right: 44px;
 }
 
 .so-reveal {
     position: absolute;
-    top: 3px;
-    right: 3px;
+    top: 4px;
+    right: 4px;
     display: grid;
     place-items: center;
-    width: 26px;
-    height: 26px;
+    width: calc(var(--control-h) - 8px);
+    height: calc(var(--control-h) - 8px);
     border: 0;
     border-radius: var(--radius);
     background: transparent;
@@ -1848,7 +1863,7 @@
     background: transparent;
     color: var(--text);
     font: inherit;
-    font-size: 13px;
+    font-size: 14px;
     text-align: left;
     text-decoration: none;
     cursor: pointer;
@@ -1934,7 +1949,8 @@
 }
 
 .so-btn.is-sm {
-    padding: 0 8px;
+    height: var(--control-h-sm);
+    padding: 0 10px;
 }
 
 .so-member-chip-avatar.is-lg {

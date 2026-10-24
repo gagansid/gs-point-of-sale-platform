@@ -75,7 +75,7 @@ Menu → (opsi) → Keranjang → Bayar → [belum login → Masuk/Daftar → ke
 | Pembuatan | Action `StartTableQrisPayment` → `MidtransClient::chargeQris()` (Core API `POST /v2/charge`, `payment_type=qris`). `order_id` Midtrans = id `gateway_transactions`; nominal = sisa tagihan server dibulatkan ke atas ke rupiah |
 | Penyimpanan | `gateway_transactions.method` (`snap`/`qris`), `qr_string`, `expires_at` (dari `expiry_time` Midtrans, maks. 15 menit) |
 | Satu QR aktif | QR pending yang masih berlaku dipakai ulang (klik ganda = QR sama); **Buat QR baru** membatalkan QR lama di Midtrans lalu membuat yang baru |
-| Tampilan | QR dirender server (`App\Support\QrSvg`) dari `qr_string` di kartu putih (tetap putih di mode gelap), hitung mundur, instruksi 3 langkah, tombol Simpan QR; status lewat `wire:poll` 4 detik yang **hanya membaca** status dari DB |
+| Tampilan | QR dirender server (`App\Support\QrSvg`) dari `qr_string` di kartu putih (tetap putih di mode gelap), hitung mundur, instruksi 3 langkah, tombol Simpan QR; status **hanya dibaca** dari DB saat pelanggan kembali ke tab atau menekan Cek status pembayaran (tanpa polling, Q138) |
 | Lunas | Hanya lewat webhook terverifikasi (tanda tangan → transaksi milik tenant → cek ulang API → nominal cocok). **Webhook tidak diubah**. Halaman HP tidak bisa menandai lunas |
 | Snap | Tetap dipakai hanya untuk e-wallet/VA bila diizinkan owner (`enabled_payments` selain `qris`) |
 | Batas | Membuat tagihan QRIS: maks. 5 per 10 menit per order dan 10 per 10 menit per IP → `TOO_MANY_REQUESTS` |
@@ -165,7 +165,7 @@ Tidak ada kode baru: `SELF_ORDER_DISABLED`, `TOO_MANY_REQUESTS`, `VOUCHER_INVALI
 - Positif: pelanggan tidak menunggu kasir untuk membayar; QRIS tidak keluar dari halaman; staf punya satu layar untuk
   memajukan pesanan; owner bisa memantau waktu lunas → diantar; tampilan pelanggan mengikuti merek bisnis.
 - Negatif: risiko **menu habis setelah lunas** (bayar dulu) → batal + refund manual; checkout butuh shift terbuka di
-  outlet; polling bertambah (HP 4–5 detik saat menunggu bayar, antrean 5 detik, dashboard 10 detik) — query ringan
+  outlet; polling bertambah (antrean 5 detik, dashboard 10 detik; HP tanpa polling sejak Q138) — query ringan
   dengan indeks `orders(outlet_id, fulfillment_status)`.
 - Netral: aplikasi Flutter perlu layar antrean & tombol langkah (F4); Terima/Tolak tetap ada untuk pesanan lama.
 

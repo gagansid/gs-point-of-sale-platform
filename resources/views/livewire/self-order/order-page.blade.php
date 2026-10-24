@@ -292,7 +292,18 @@
         @elseif ($view === 'pay')
             @include('livewire.self-order.partials.pay-screen')
         @else
-            <section class="so-orders" wire:poll.5s aria-live="polite">
+            {{-- Tanpa polling (berat di shared hosting): status dimuat ulang saat HP kembali ke halaman ini atau lewat tombol Perbarui --}}
+            <section class="so-orders" aria-live="polite" x-data x-on:visibilitychange.document="document.visibilityState === 'visible' && $wire.$refresh()">
+                @if ($this->myOrders->isNotEmpty())
+                    <div class="so-orders-head">
+                        <span class="so-muted">Status per {{ now()->setTimezone($context->outlet->timezone)->format('H.i') }}</span>
+                        <button type="button" class="so-btn is-ghost is-sm" wire:click="$refresh" wire:loading.attr="disabled">
+                            <span wire:loading.remove>@svg('heroicon-o-arrow-path', ['aria-hidden' => 'true'])</span>
+                            <span class="so-spinner" aria-hidden="true" wire:loading></span>
+                            Perbarui
+                        </button>
+                    </div>
+                @endif
                 @forelse ($this->myOrders as $selfOrder)
                     @php($status = $statusLabel($selfOrder))
                     @php($order = $selfOrder->order)
@@ -330,7 +341,8 @@
                             </button>
                         @elseif ($order?->status === \App\Enums\OrderStatus::Completed)
                             {{-- Struk digital setelah lunas --}}
-                            <details class="so-receipt">
+                            {{-- wire:ignore.self: status buka/tutup struk tidak direset saat komponen dirender ulang --}}
+                            <details class="so-receipt" wire:ignore.self>
                                 <summary>@svg('heroicon-o-receipt-percent', ['aria-hidden' => 'true']) Struk digital @svg('heroicon-o-chevron-down', ['class' => 'so-extra-caret', 'aria-hidden' => 'true'])</summary>
                                 <ul class="so-receipt-items">
                                     @foreach ($order->items as $item)
