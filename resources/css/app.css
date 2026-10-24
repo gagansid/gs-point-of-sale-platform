@@ -5690,34 +5690,8 @@
     display: none;
 }
 
-.pos-avatar-pick {
-    position: relative;
+.pos-avatar-preview {
     flex: none;
-    border-radius: 999px;
-    cursor: pointer;
-}
-
-.pos-avatar-pick:hover .pos-avatar {
-    filter: brightness(0.95);
-}
-
-.pos-avatar-badge {
-    position: absolute;
-    right: -2px;
-    bottom: -2px;
-    display: grid;
-    place-items: center;
-    width: 26px;
-    height: 26px;
-    border: 2px solid #ffffff;
-    border-radius: 999px;
-    background: var(--site-primary);
-    color: #ffffff;
-}
-
-.pos-avatar-badge svg {
-    width: 14px;
-    height: 14px;
 }
 
 .pos-avatar-body {

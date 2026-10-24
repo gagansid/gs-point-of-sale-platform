@@ -36,13 +36,12 @@
                     <div class="pos-card-head"><h2>@svg('heroicon-o-user', ['aria-hidden' => 'true']) Data diri</h2></div>
                     <form method="POST" action="{{ route('cashier.profile.update') }}" enctype="multipart/form-data" class="pos-form" novalidate>
                         @csrf
-                        {{-- Foto: pratinjau langsung sebelum disimpan, tombol Unggah/Hapus/Batal (JS kecil di bawah, tanpa Alpine) --}}
+                        {{-- Foto: pratinjau langsung sebelum disimpan; satu pemicu unggah = tombol Unggah/Ganti foto (JS kecil di bawah, tanpa Alpine) --}}
                         <div class="pos-avatar-field" data-avatar-field>
-                            <label class="pos-avatar-pick" for="avatar" title="Ganti foto">
+                            <span class="pos-avatar-preview">
                                 <img class="pos-avatar is-md" src="{{ $avatarUrl ?? '' }}" alt="" data-avatar-preview data-original="{{ $avatarUrl ?? '' }}" @if (! $avatarUrl) hidden @endif>
                                 <span class="pos-avatar is-md" aria-hidden="true" data-avatar-initial @if ($avatarUrl) hidden @endif>{{ $initial }}</span>
-                                <span class="pos-avatar-badge" aria-hidden="true">@svg('heroicon-s-camera')</span>
-                            </label>
+                            </span>
                             <div class="pos-avatar-body">
                                 <strong>Foto profil</strong>
                                 <small class="pos-field-hint" data-avatar-status>JPG, PNG, atau WEBP · foto besar otomatis diperkecil · tampil bulat</small>
