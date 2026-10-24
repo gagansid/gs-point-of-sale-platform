@@ -59,7 +59,7 @@ it('tanpa masalah (backup baru): tidak ada peringatan; lonceng tampil "Semua ama
     fakeBackup(2);
 
     expect(AdminAlerts::all())->toBe([]);
-    $this->get(Dashboard::getUrl())->assertOk()->assertSee('gs-alerts-trigger', false)->assertSee('Semua aman');
+    $this->get(Dashboard::getUrl())->assertOk()->assertSee('gs-alerts-trigger', false)->assertSee('Tidak ada notifikasi baru');
 });
 
 it('bukti transfer menunggu, tagihan lewat jatuh tempo, calon pelanggan baru', function () {

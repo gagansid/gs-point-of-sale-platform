@@ -235,3 +235,12 @@ Laporan: [`docs/security/reports/2026-10-23-audit.md`](../security/reports/2026-
 | Pengantaran oleh yang tidak berhak | Izin `order.fulfill` (bawaan semua role, bisa dicabut ADR 0026) + akses outlet di `AdvanceOrderFulfillment`; Urungkan hanya pelaku yang sama ≤ 10 detik; tidak ada langkah mundur lewat API |
 | Enumerasi QR | QR tidak dikenal, diganti, atau meja/outlet/bisnis nonaktif → satu halaman "Kode QR tidak aktif" (404) tanpa nama bisnis/outlet |
 | Open redirect setelah masuk | Kembali hanya ke URL `/order/t/…` milik aplikasi (`MemberPortal::returnTo`, `member.table_url`) |
+
+## Notifikasi lonceng owner & admin (2026-10-24, SPEC Q139)
+
+- Tabel `notifications` per penerima (morph User / Admin); semua query lewat `AlertInbox` yang selalu dibatasi ke
+  `notifiable` pengguna yang masuk, jadi id notifikasi dari browser milik user/tenant lain tidak berefek (dijaga test isolasi).
+- Komponen `NotificationInbox`: properti `panel`/`mode` `#[Locked]`; penerima diambil dari guard eksplisit (`web` dengan
+  `dashboard.access`, atau `admin`), bukan dari input; kasir tanpa akses dashboard mendapat 403.
+- URL tujuan notifikasi berasal dari data server sendiri (`getUrl()` resource), bukan dari input pengguna.
+- Retensi 90 hari (dihapus saat sinkron) agar tabel tidak tumbuh tanpa batas di shared hosting.

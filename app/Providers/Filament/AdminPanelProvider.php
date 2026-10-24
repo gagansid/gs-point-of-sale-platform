@@ -12,7 +12,6 @@ use App\Filament\Shared\Layout;
 use App\Filament\Shared\Theme;
 use App\Http\Middleware\Filament\EnsureAdminTwoFactorWhenRequired;
 use App\Models\Admin;
-use App\Support\AdminAlerts;
 use App\Support\Domains;
 use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Enums\ThemeMode;
@@ -31,6 +30,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /**
@@ -100,10 +100,10 @@ final class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
-            // Lonceng peringatan di kiri tombol tema (Q135): bukti transfer, tagihan lewat jatuh tempo, calon pelanggan baru,
-            // job gagal, backup usang, mode pemeliharaan — tampilan sama dengan panel /dashboard
+            // Lonceng notifikasi di kiri tombol tema (Q135, Q139): bukti transfer, tagihan lewat jatuh tempo, calon pelanggan
+            // baru, job gagal, backup usang, mode pemeliharaan — dibaca/hapus/riwayat lewat NotificationInbox
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): string => Filament::auth()->user() instanceof Admin
-                ? view('filament.shared.alerts', ['alerts' => AdminAlerts::all()])->render()
+                ? Blade::render('<livewire:panel.notification-inbox panel="admin" />')
                 : '');
     }
 }

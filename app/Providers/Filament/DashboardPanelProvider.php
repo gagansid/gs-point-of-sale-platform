@@ -17,7 +17,6 @@ use App\Http\Middleware\Filament\ApplyTenantAppearance;
 use App\Http\Middleware\Filament\SetDashboardTenant;
 use App\Models\User;
 use App\Support\CurrentOutlet;
-use App\Support\DashboardAlerts;
 use App\Support\Domains;
 use App\Support\Features;
 use App\Support\Support;
@@ -41,6 +40,7 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
@@ -172,12 +172,13 @@ final class DashboardPanelProvider extends PanelProvider
                         .view('filament.dashboard.announcements')->render()
                     : '';
             })
-            // Lonceng peringatan di kiri tombol tema (topbar): pesanan meja menunggu, restok, shift lupa ditutup, kasbon lama
+            // Lonceng notifikasi di kiri tombol tema (topbar, Q139): pesanan meja menunggu, restok, shift lupa ditutup,
+            // kasbon lama — dibaca/hapus/riwayat lewat NotificationInbox
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, function (): string {
                 $user = Filament::auth()->user();
 
                 return $user instanceof User && $user->hasFullDashboard()
-                    ? view('filament.shared.alerts', ['alerts' => DashboardAlerts::for($user)])->render()
+                    ? Blade::render('<livewire:panel.notification-inbox panel="dashboard" />')
                     : '';
             })
             // Tampilan bisnis (Q128): token warna gs.POS per tenant (palet Filament di ApplyTenantAppearance)

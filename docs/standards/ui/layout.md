@@ -17,9 +17,10 @@
 ```
 
 Meniru gs-task-tracker: sidebar setinggi layar di kiri, topbar dimulai di kanan sidebar.
-Topbar hanya berisi ☰, pencarian global (kiri), dan di kanan: lonceng peringatan (`/dashboard` saja,
-`App\Support\DashboardAlerts`, view `filament/dashboard/alerts`, tombol bergaya sama dengan tombol tema; badge merah
-jumlah peringatan, dropdown "Perlu perhatian" berisi ikon warna makna + judul + keterangan, kosong = "Semua aman"),
+Topbar hanya berisi ☰, pencarian global (kiri), dan di kanan: lonceng notifikasi (Q139, Livewire
+`App\Livewire\Panel\NotificationInbox`, tombol bergaya sama dengan tombol tema; badge merah = jumlah **belum dibaca**;
+dropdown: tab Belum dibaca/Semua, item ikon warna makna + judul + keterangan + waktu relatif + titik belum dibaca, aksi
+hover tandai dibaca/belum & hapus, kaki "Lihat semua notifikasi" (halaman `/notifications`) & "Bersihkan semua"),
 tombol tema, dan menu akun. **Pemilih outlet** `/dashboard`
 (SPEC Q41) ada di atas menu sidebar, di bawah logo — hanya bila user memegang lebih dari satu outlet aktif;
 sidebar ciut = ikon outlet saja (`PanelsRenderHook::SIDEBAR_NAV_START`, view `filament/dashboard/outlet-switcher`).
@@ -66,7 +67,7 @@ Istilah UI **Bisnis** (model & URL tetap `tenants`).
 | Pengaturan | Pendaftaran · Keamanan · Admin (setelan platform & akun admin) | `user-plus` · `shield-check` · `user-group` |
 | Sistem | Backup · Antrean · Pemeliharaan · Log · Riwayat perubahan (operasional teknis) | `circle-stack` · `queue-list` · `wrench-screwdriver` · `document-magnifying-glass` · `clipboard-document-list` |
 
-Topbar `/admin` juga memakai **lonceng peringatan** (`App\Support\AdminAlerts`, view bersama `filament/shared/alerts`):
+Topbar `/admin` juga memakai **lonceng notifikasi** yang sama (`App\Support\AdminAlerts` → `NotificationInbox`, Q139):
 mode pemeliharaan aktif, bukti transfer menunggu verifikasi, tagihan lewat jatuh tempo, calon pelanggan baru (edisi
 SaaS), job antrean gagal, backup terakhir > 24 jam / belum ada. Tautan membuka tab yang tepat (`?tab=`, §tabs).
 

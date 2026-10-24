@@ -39,11 +39,11 @@ function alertKeys(User $user): array
     return array_column(DashboardAlerts::for($user), 'key');
 }
 
-it('tanpa masalah: tidak ada peringatan; lonceng tetap tampil dengan "Semua aman"', function () {
+it('tanpa masalah: tidak ada peringatan; lonceng tetap tampil tanpa notifikasi', function () {
     // Croissant stok 10 tanpa batas minimum; shift baru dibuka
     expect(DashboardAlerts::for($this->owner))->toBe([]);
 
-    $this->get(Home::getUrl())->assertOk()->assertSee('gs-alerts-trigger', false)->assertSee('Semua aman');
+    $this->get(Home::getUrl())->assertOk()->assertSee('gs-alerts-trigger', false)->assertSee('Tidak ada notifikasi baru');
 });
 
 it('restok: produk habis & menipis di outlet aktif', function () {

@@ -362,7 +362,7 @@
     height: 18px;
 }
 
-/* ---------- Lonceng peringatan topbar /dashboard (DashboardAlerts) — tombol = gaya gs-theme-toggle ---------- */
+/* ---------- Lonceng notifikasi topbar kedua panel (NotificationInbox, Q139) — tombol = gaya gs-theme-toggle ---------- */
 .gs-alerts-trigger {
     position: relative;
 }
@@ -415,10 +415,17 @@
 
 .gs-alerts-item {
     display: flex;
+    flex: 1;
     align-items: center;
     gap: 10px;
+    min-width: 0;
     padding: 8px 10px;
+    border: 0;
     border-radius: var(--radius);
+    background: transparent;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
     transition: background-color 120ms;
 }
 
@@ -456,6 +463,11 @@
 .gs-alerts-icon.is-info {
     background: var(--primary-lt);
     color: var(--primary);
+}
+
+.gs-alerts-icon.is-done {
+    background: var(--bg-surface-secondary);
+    color: var(--text-muted);
 }
 
 .dark .gs-alerts-icon.is-warning { color: var(--warning-300); }
@@ -503,6 +515,176 @@
     width: 20px;
     height: 20px;
     color: var(--success-600);
+}
+
+/* Kotak notifikasi: tab, baris (titik belum dibaca, aksi muncul saat hover/fokus), kaki, mode halaman */
+.gs-alerts-head .gs-alerts-count {
+    margin-inline-start: 6px;
+}
+
+.gs-inbox-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--primary);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.gs-inbox-link:hover {
+    text-decoration: underline;
+}
+
+.gs-inbox-link.is-danger {
+    color: var(--danger-600);
+}
+
+.gs-inbox-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 6px 10px 0;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.gs-inbox-tab {
+    position: relative;
+    padding: 6px 8px 8px;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.gs-inbox-tab.is-active {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.gs-inbox-tab.is-active::after {
+    position: absolute;
+    right: 8px;
+    bottom: -1px;
+    left: 8px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--primary);
+    content: '';
+}
+
+.gs-inbox-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius);
+}
+
+.gs-inbox-row.is-unread {
+    background: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.gs-inbox-row:not(.is-unread) .gs-alerts-title {
+    font-weight: 500;
+}
+
+.gs-inbox-time {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.gs-inbox-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: var(--primary);
+}
+
+.gs-inbox-actions {
+    position: absolute;
+    top: 6px;
+    inset-inline-end: 6px;
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: var(--radius);
+    background: var(--bg-surface);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    opacity: 0;
+    transition: opacity 120ms;
+}
+
+.gs-inbox-row:hover .gs-inbox-actions,
+.gs-inbox-row:focus-within .gs-inbox-actions {
+    opacity: 1;
+}
+
+/* Layar sentuh tanpa hover: aksi selalu tampil */
+@media (hover: none) {
+    .gs-inbox-actions {
+        position: static;
+        box-shadow: none;
+        opacity: 1;
+    }
+}
+
+.gs-inbox-icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.gs-inbox-icon-btn:hover {
+    background: var(--bg-surface-secondary);
+    color: var(--text);
+}
+
+.gs-inbox-icon-btn.is-danger:hover {
+    color: var(--danger-600);
+}
+
+.gs-inbox-icon-btn .fi-icon {
+    width: 15px;
+    height: 15px;
+}
+
+.gs-inbox-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border-color-light);
+}
+
+.gs-inbox.is-page {
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+}
+
+.gs-alerts-list.is-page {
+    max-height: none;
+}
+
+.gs-inbox.is-page .gs-alerts-desc {
+    white-space: normal;
+}
+
+.gs-inbox-pages {
+    padding: 10px 14px;
+    border-top: 1px solid var(--border-color-light);
 }
 
 @media (max-width: 37.5rem) {
