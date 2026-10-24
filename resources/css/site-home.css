@@ -1,0 +1,1412 @@
+/*
+ * Halaman depan gspos.id (resources/views/site/home.blade.php). Kelas lp-* khusus halaman ini; tombol, field, dan
+ * alert memakai site-* bersama (app.css). Warna = token situs (auth.css) / panel (docs/standards/ui/design-tokens.md).
+ * Ciri khas: hero navy + pola titik seperti login kasir, motif struk (garis putus-putus, angka tabular), titik brand.
+ */
+.lp-container {
+    width: 100%;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+/* Label kecil di atas judul: titik brand (bm-dot logo) + huruf kapital renggang */
+.lp-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    color: var(--site-primary);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.lp-kicker::before {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+    box-shadow: 0 0 0 3px rgb(45 66 130 / 0.14);
+    content: '';
+}
+
+.lp-kicker-light {
+    color: var(--site-mist);
+}
+
+.lp-kicker-light::before {
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgb(255 255 255 / 0.14);
+}
+
+/* ---------- Header ---------- */
+.lp-header {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    border-bottom: 1px solid var(--site-border);
+    background: rgb(255 255 255 / 0.9);
+    -webkit-backdrop-filter: saturate(1.4) blur(12px);
+    backdrop-filter: saturate(1.4) blur(12px);
+}
+
+.lp-header-inner {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    height: 64px;
+}
+
+.lp-nav {
+    display: flex;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.lp-nav a {
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: var(--site-muted);
+    text-decoration: none;
+    transition: color 120ms, background-color 120ms;
+}
+
+.lp-nav a:hover {
+    background: var(--site-bg);
+    color: var(--site-navy);
+}
+
+.lp-header-actions {
+    display: flex;
+    gap: 8px;
+    margin-inline-start: auto;
+}
+
+/* ---------- Hero ---------- */
+.lp-hero {
+    position: relative;
+    padding: 80px 0 0;
+    overflow: hidden;
+    background:
+        radial-gradient(50% 55% at 8% 0%, rgb(77 104 186 / 0.5), transparent 70%),
+        radial-gradient(40% 50% at 100% 70%, rgb(184 192 212 / 0.16), transparent 70%),
+        linear-gradient(160deg, #1f3166 0%, var(--site-navy) 50%, #131d3d 100%);
+    color: #ffffff;
+    isolation: isolate;
+}
+
+/* Pola titik halus seperti .cashier-auth, memudar ke bawah */
+.lp-hero::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(rgb(255 255 255 / 0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+    content: '';
+    mask-image: linear-gradient(180deg, #000 0%, transparent 85%);
+}
+
+.lp-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 48px;
+    align-items: center;
+}
+
+.lp-hero-title {
+    margin: 0 0 20px;
+    color: #ffffff;
+    font-size: clamp(34px, 4.6vw, 54px);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+}
+
+.lp-hero-title span {
+    color: var(--site-mist);
+}
+
+.lp-hero-text {
+    max-width: 30rem;
+    margin: 0 0 32px;
+    color: #c9d0e2;
+    font-size: 17px;
+    line-height: 1.65;
+}
+
+.lp-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.site-body .lp-btn-light {
+    background: #ffffff;
+    color: var(--site-navy);
+    box-shadow: 0 8px 24px rgb(8 14 33 / 0.3);
+}
+
+.lp-btn-light:hover {
+    background: #eef1f8;
+}
+
+.site-body .lp-btn-glass {
+    border-color: rgb(255 255 255 / 0.22);
+    background: rgb(255 255 255 / 0.06);
+    color: #ffffff;
+}
+
+.lp-btn-glass:hover {
+    border-color: rgb(255 255 255 / 0.4);
+    background: rgb(255 255 255 / 0.12);
+}
+
+.lp-hero-note {
+    margin: 16px 0 0;
+    color: rgb(184 192 212 / 0.85);
+    font-size: 13px;
+}
+
+/* ---------- Ilustrasi hero: tablet kasir + struk ---------- */
+.lp-stage {
+    position: relative;
+    padding: 0 0 56px;
+}
+
+.lp-tablet {
+    padding: 10px;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 22px;
+    background: #0e1630;
+    box-shadow: 0 40px 80px rgb(5 10 25 / 0.5), inset 0 0 0 1px rgb(255 255 255 / 0.04);
+}
+
+.lp-tablet-top,
+.lp-tablet-body {
+    background: var(--site-bg);
+    color: var(--site-text);
+}
+
+.lp-tablet-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--site-border);
+    border-radius: 13px 13px 0 0;
+    background: #ffffff;
+}
+
+.lp-tablet-logo .site-logo-mark {
+    width: 20px;
+    height: 20px;
+}
+
+.lp-tablet-logo .site-logo-word {
+    font-size: 14px;
+}
+
+.lp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.lp-chip i {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+}
+
+.lp-chip-ok {
+    background: #e7f6ee;
+    color: #19764a;
+}
+
+.lp-tablet-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 42%;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 0 0 13px 13px;
+}
+
+.lp-cats {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.lp-cats span {
+    padding: 4px 10px;
+    border: 1px solid var(--site-border);
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--site-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.lp-cats .is-active {
+    border-color: var(--site-primary);
+    background: var(--site-primary);
+    color: #ffffff;
+}
+
+.lp-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.lp-tile {
+    display: grid;
+    gap: 1px;
+    padding: 6px;
+    border: 1px solid var(--site-border);
+    border-radius: 9px;
+    background: #ffffff;
+    font-size: 10.5px;
+    line-height: 1.3;
+}
+
+.lp-tile.is-picked {
+    border-color: var(--site-primary);
+    box-shadow: 0 0 0 2px rgb(45 66 130 / 0.14);
+}
+
+.lp-tile b {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lp-tile small {
+    color: var(--site-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Gambar produk = inisial di kotak lembut (sama dengan tile kasir web tanpa gambar) */
+.lp-tile-img {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #e9edf7, #dfe4f1);
+    color: var(--site-primary);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.lp-cart {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    border: 1px solid var(--site-border);
+    border-radius: 10px;
+    background: #ffffff;
+    font-size: 11px;
+}
+
+.lp-cart-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--site-border);
+    color: var(--site-navy);
+    font-size: 12px;
+}
+
+.lp-cart-head small,
+.lp-cart-line small {
+    color: var(--site-muted);
+    font-size: 10px;
+}
+
+.lp-cart-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--site-border);
+}
+
+.lp-cart-line span {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 6px;
+}
+
+.lp-cart-line em {
+    grid-row: span 2;
+    color: var(--site-primary);
+    font-style: normal;
+    font-weight: 700;
+}
+
+.lp-cart-line b,
+.lp-cart-total b {
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-cart-foot {
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.lp-cart-total {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    color: var(--site-navy);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.lp-cart-pay {
+    padding: 7px;
+    border-radius: 7px;
+    background: var(--site-primary);
+    color: #ffffff;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* Struk kertas: tepi bawah bergerigi, huruf monospace seperti printer thermal */
+.lp-receipt {
+    position: absolute;
+    bottom: 0;
+    left: -28px;
+    width: 196px;
+    padding: 14px 14px 22px;
+    background: #fffdf8;
+    color: #2b2f38;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px;
+    line-height: 1.5;
+    filter: drop-shadow(0 18px 30px rgb(5 10 25 / 0.45));
+    transform: rotate(-3deg);
+    mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 10px 100%;
+}
+
+.lp-receipt-head {
+    display: grid;
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px dashed #b9bcc4;
+    text-align: center;
+}
+
+.lp-receipt-head small {
+    color: #6b7080;
+}
+
+.lp-receipt-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.lp-receipt-total {
+    margin: 6px 0;
+    padding: 6px 0;
+    border-block: 1px dashed #b9bcc4;
+    font-weight: 700;
+}
+
+.lp-receipt-paid {
+    width: fit-content;
+    margin: 10px auto 0;
+    padding: 1px 10px;
+    border: 1.5px solid #19764a;
+    border-radius: 4px;
+    color: #19764a;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    transform: rotate(-4deg);
+}
+
+/* Angka ringkas di kaki hero */
+.lp-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 56px 0 0;
+    border-top: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.lp-facts div {
+    padding: 24px 24px 28px 0;
+}
+
+.lp-facts div + div {
+    padding-inline-start: 24px;
+    border-inline-start: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.lp-facts dt {
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.lp-facts dd {
+    margin: 4px 0 0;
+    color: var(--site-mist);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* ---------- Section ---------- */
+.lp-section {
+    padding: 96px 0;
+    /* Anchor menu (#features, #roles, ...) tidak tertutup header sticky */
+    scroll-margin-top: 64px;
+}
+
+.lp-section-muted {
+    border-block: 1px solid var(--site-border);
+    background: var(--site-bg);
+}
+
+.lp-head {
+    max-width: 640px;
+    margin-bottom: 56px;
+}
+
+.lp-head-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 48px;
+    align-items: end;
+    max-width: none;
+}
+
+.lp-title {
+    margin: 0;
+    color: var(--site-navy);
+    font-size: clamp(26px, 3.2vw, 36px);
+    font-weight: 800;
+    line-height: 1.18;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+}
+
+.lp-lead {
+    margin: 0;
+    color: var(--site-muted);
+    font-size: 16px;
+    line-height: 1.65;
+}
+
+/* ---------- Baris fitur (teks + ilustrasi, bergantian) ---------- */
+.lp-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 64px;
+    align-items: center;
+    padding: 48px 0;
+}
+
+.lp-row + .lp-row {
+    border-top: 1px dashed var(--site-border);
+}
+
+.lp-row-flip .lp-row-copy {
+    order: 2;
+}
+
+.lp-row-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    color: var(--site-primary);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.lp-row-copy h3 {
+    margin: 0 0 12px;
+    color: var(--site-navy);
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+}
+
+.lp-row-copy > p {
+    margin: 0 0 20px;
+    color: var(--site-muted);
+    font-size: 15.5px;
+    line-height: 1.65;
+}
+
+.lp-ticks {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14.5px;
+}
+
+.lp-ticks li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.lp-ticks .site-icon {
+    margin-top: 3px;
+    padding: 2px;
+    border-radius: 999px;
+    background: var(--site-primary-lt);
+    color: var(--site-primary);
+    stroke-width: 2.4;
+}
+
+/* Bingkai ilustrasi: latar bertitik lembut agar kartu UI "mengambang" */
+.lp-panel {
+    position: relative;
+    display: grid;
+    gap: 14px;
+    padding: 32px;
+    border: 1px solid var(--site-border);
+    border-radius: 20px;
+    background:
+        radial-gradient(rgb(45 66 130 / 0.09) 1px, transparent 1px) 0 0 / 18px 18px,
+        linear-gradient(180deg, #f8f9fc, #f1f4fa);
+}
+
+.lp-pay,
+.lp-pin,
+.lp-dash > *,
+.lp-phone {
+    border: 1px solid var(--site-border);
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 12px 32px rgb(27 42 85 / 0.08);
+}
+
+.lp-pay {
+    padding: 16px;
+    font-size: 13px;
+}
+
+.lp-pay-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    color: var(--site-muted);
+}
+
+.lp-pay-head b {
+    color: var(--site-navy);
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-pay-methods {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.lp-pay-methods span {
+    padding: 7px 0;
+    border: 1px solid var(--site-border);
+    border-radius: 8px;
+    color: var(--site-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.lp-pay-methods .is-active {
+    border-color: var(--site-primary);
+    background: var(--site-primary-lt);
+    color: var(--site-primary);
+}
+
+.lp-pay-line,
+.lp-pay-status {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-pay-line {
+    border-bottom: 1px dashed var(--site-border);
+}
+
+.lp-pay-status {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #e7f6ee;
+    color: #19764a;
+    font-weight: 600;
+}
+
+.lp-pin {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 14px;
+    align-items: center;
+    width: 86%;
+    margin-inline-start: auto;
+    padding: 12px 16px;
+    font-size: 12.5px;
+}
+
+.lp-pin small {
+    color: var(--site-muted);
+    font-weight: 600;
+}
+
+.lp-pin-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.lp-pin-dots i {
+    width: 10px;
+    height: 10px;
+    border: 1.5px solid var(--site-mist);
+    border-radius: 999px;
+}
+
+.lp-pin-dots .on {
+    border-color: var(--site-primary);
+    background: var(--site-primary);
+}
+
+.lp-pin span {
+    color: var(--site-text);
+    font-weight: 600;
+    text-align: end;
+}
+
+/* Dashboard owner: KPI + grafik batang */
+.lp-dash {
+    display: grid;
+    gap: 14px;
+}
+
+.lp-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 0;
+}
+
+.lp-kpis div {
+    display: grid;
+    padding: 14px 16px;
+}
+
+.lp-kpis div + div {
+    border-inline-start: 1px solid var(--site-border);
+}
+
+.lp-kpis small {
+    color: var(--site-muted);
+    font-size: 11.5px;
+}
+
+.lp-kpis b {
+    color: var(--site-navy);
+    font-size: 18px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-kpis em {
+    color: var(--site-muted);
+    font-size: 11.5px;
+    font-style: normal;
+    font-weight: 600;
+}
+
+.lp-kpis em.up {
+    color: #19764a;
+}
+
+.lp-chart {
+    padding: 16px;
+}
+
+.lp-chart-head {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    color: var(--site-navy);
+    font-size: 13px;
+}
+
+.lp-chart-head small {
+    color: var(--site-muted);
+}
+
+.lp-bars {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+    align-items: end;
+    height: 120px;
+}
+
+.lp-bars span {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 6px;
+    height: 100%;
+}
+
+.lp-bars i {
+    align-self: end;
+    height: var(--h);
+    border-radius: 5px 5px 2px 2px;
+    background: #d5dbeb;
+}
+
+.lp-bars .is-today i {
+    background: var(--site-primary);
+}
+
+.lp-bars small {
+    color: var(--site-muted);
+    font-size: 10.5px;
+    text-align: center;
+}
+
+/* Halaman meja di HP */
+.lp-panel-phone {
+    justify-items: center;
+}
+
+.lp-phone {
+    width: min(100%, 300px);
+    padding: 16px;
+    border: 6px solid #0e1630;
+    border-radius: 28px;
+    font-size: 12.5px;
+}
+
+.lp-phone-head {
+    display: grid;
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.lp-phone-head small {
+    color: var(--site-muted);
+}
+
+.lp-phone-head b {
+    color: var(--site-navy);
+    font-size: 17px;
+}
+
+.lp-track {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 12px;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.lp-track span {
+    padding-top: 7px;
+    border-top: 3px solid var(--site-border);
+    color: var(--site-muted);
+}
+
+.lp-track .done {
+    border-color: #19764a;
+    color: #19764a;
+}
+
+.lp-track .now {
+    border-color: var(--site-primary);
+    color: var(--site-primary);
+}
+
+.lp-phone-item {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--site-border);
+    font-variant-numeric: tabular-nums;
+}
+
+.lp-phone-item .lp-tile-img {
+    margin: 0;
+    aspect-ratio: 1;
+    font-size: 11px;
+}
+
+.lp-phone-item div {
+    display: grid;
+}
+
+.lp-phone-item small {
+    color: var(--site-muted);
+    font-size: 11px;
+}
+
+.lp-phone-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--site-navy);
+    color: var(--site-mist);
+    font-size: 11.5px;
+}
+
+.lp-phone-foot b {
+    color: #ffffff;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Daftar modul bergaya struk ---------- */
+.lp-ledger {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid var(--site-border);
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgb(30 38 51 / 0.04);
+}
+
+.lp-ledger-col {
+    padding: 24px;
+}
+
+.lp-ledger-col + .lp-ledger-col {
+    border-inline-start: 1px dashed var(--site-border);
+}
+
+.lp-ledger h3 {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0 0 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--site-navy);
+    color: var(--site-navy);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.lp-ledger h3 span {
+    color: var(--site-mist);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.lp-ledger ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Baris: nama ... ✓ dengan titik penghubung seperti struk */
+.lp-ledger li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 7px 0;
+    color: var(--site-text);
+    font-size: 14px;
+}
+
+.lp-ledger li::after {
+    flex: 1;
+    order: 1;
+    min-width: 12px;
+    height: 1px;
+    margin-top: 6px;
+    background-image: radial-gradient(circle, var(--site-mist) 1px, transparent 1.2px);
+    background-size: 5px 2px;
+    content: '';
+}
+
+.lp-ledger li .site-icon {
+    order: 2;
+    color: var(--site-primary);
+    stroke-width: 2.4;
+}
+
+/* ---------- Peran & hak akses ---------- */
+.lp-roles {
+    display: grid;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 64px;
+    align-items: center;
+}
+
+.lp-roles-copy .lp-title {
+    margin-bottom: 16px;
+}
+
+.lp-roles-note {
+    margin: 20px 0 0;
+    padding-inline-start: 12px;
+    border-inline-start: 3px solid var(--site-mist);
+    color: var(--site-muted);
+    font-size: 13.5px;
+}
+
+.lp-matrix-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--site-border);
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 20px 48px rgb(27 42 85 / 0.07);
+}
+
+.lp-matrix {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+}
+
+.lp-matrix th,
+.lp-matrix td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--site-border);
+}
+
+.lp-matrix tbody tr:last-child > * {
+    border-bottom: 0;
+}
+
+.lp-matrix thead th {
+    background: var(--site-bg);
+    color: var(--site-navy);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.lp-matrix tbody th {
+    color: var(--site-text);
+    font-weight: 500;
+    text-align: start;
+}
+
+.lp-matrix td {
+    text-align: center;
+}
+
+.lp-yes {
+    width: 18px;
+    height: 18px;
+    color: var(--site-primary);
+    stroke-width: 2.4;
+    vertical-align: middle;
+}
+
+.lp-no {
+    display: inline-block;
+    width: 10px;
+    height: 2px;
+    border-radius: 2px;
+    background: #d3d7df;
+    vertical-align: middle;
+}
+
+.lp-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--site-bg);
+    color: var(--site-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.lp-tag-pin {
+    background: #fff4e0;
+    color: #8a5a00;
+}
+
+/* ---------- Cara kerja ---------- */
+.lp-steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: step;
+}
+
+.lp-steps li {
+    position: relative;
+    display: grid;
+    gap: 6px;
+    padding-top: 56px;
+    counter-increment: step;
+}
+
+/* Nomor 01/02/03 + garis penghubung ke langkah berikutnya */
+.lp-steps li::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--site-border);
+    border-radius: 10px;
+    background: #ffffff;
+    color: var(--site-primary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    font-weight: 700;
+    content: counter(step, decimal-leading-zero);
+    box-shadow: 0 4px 12px rgb(27 42 85 / 0.06);
+}
+
+.lp-steps li:not(:last-child)::after {
+    position: absolute;
+    top: 20px;
+    right: -24px;
+    left: 52px;
+    border-top: 1px dashed var(--site-mist);
+    content: '';
+}
+
+.lp-steps b {
+    color: var(--site-navy);
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.lp-steps span {
+    max-width: 20rem;
+    color: var(--site-muted);
+    font-size: 14.5px;
+}
+
+/* ---------- Hubungi sales: panel navy + form ---------- */
+.lp-contact {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    overflow: hidden;
+    border: 1px solid var(--site-border);
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 24px 60px rgb(27 42 85 / 0.09);
+}
+
+.lp-contact-brand {
+    position: relative;
+    padding: 40px;
+    background:
+        radial-gradient(70% 60% at 0% 0%, rgb(77 104 186 / 0.5), transparent 70%),
+        linear-gradient(160deg, #1f3166, var(--site-navy) 60%, #131d3d);
+    color: var(--site-mist);
+    isolation: isolate;
+}
+
+.lp-contact-brand::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-image: radial-gradient(rgb(255 255 255 / 0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+    content: '';
+    mask-image: linear-gradient(0deg, #000, transparent 80%);
+}
+
+.lp-contact-brand h2 {
+    margin: 0 0 12px;
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+.lp-contact-brand > p:not(.lp-kicker) {
+    margin: 0 0 28px;
+    font-size: 15px;
+}
+
+.lp-contact-brand ul {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Ikon dalam kotak transparan, sama dengan panel brand login kasir */
+.lp-contact-brand li {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    color: #e4e8f2;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.lp-contact-brand li .site-icon {
+    width: 32px;
+    height: 32px;
+    padding: 7px;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.06);
+    color: #ffffff;
+}
+
+.lp-contact-brand a {
+    color: #ffffff;
+    font-weight: 700;
+    text-underline-offset: 3px;
+}
+
+.lp-contact-form {
+    padding: 40px;
+}
+
+/* ---------- Footer ---------- */
+.lp-footer {
+    padding: 56px 0 28px;
+    background: #131d3d;
+    color: var(--site-mist);
+    font-size: 14px;
+}
+
+.lp-footer-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+    gap: 40px;
+    padding-bottom: 40px;
+}
+
+.lp-footer-brand p {
+    max-width: 22rem;
+    margin: 14px 0 0;
+    line-height: 1.6;
+}
+
+.lp-footer nav {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+}
+
+.lp-footer h3 {
+    margin: 0 0 4px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.lp-footer nav a {
+    width: fit-content;
+    color: var(--site-mist);
+    text-decoration: none;
+}
+
+.lp-footer nav a:hover {
+    color: #ffffff;
+}
+
+.lp-footer-bottom {
+    padding-top: 24px;
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+    color: rgb(184 192 212 / 0.7);
+    font-size: 13px;
+}
+
+/* ---------- Responsif ---------- */
+@media (max-width: 1024px) {
+    .lp-hero-grid,
+    .lp-row,
+    .lp-roles,
+    .lp-head-split {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 40px;
+    }
+
+    .lp-hero-copy {
+        max-width: 640px;
+    }
+
+    .lp-stage {
+        max-width: 640px;
+    }
+
+    .lp-receipt {
+        left: auto;
+        right: 8px;
+    }
+
+    .lp-row-flip .lp-row-copy {
+        order: 0;
+    }
+
+    .lp-ledger {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lp-ledger-col:nth-child(3) {
+        border-inline-start: 0;
+    }
+
+    .lp-ledger-col:nth-child(n + 3) {
+        border-top: 1px dashed var(--site-border);
+    }
+
+    .lp-contact {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .lp-nav,
+    .lp-header-actions .site-btn-ghost {
+        display: none;
+    }
+
+    .lp-header-actions {
+        margin-inline-start: auto;
+    }
+
+    .lp-hero {
+        padding-top: 48px;
+    }
+
+    .lp-section {
+        padding: 64px 0;
+    }
+
+    .lp-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lp-facts div:nth-child(3) {
+        padding-inline-start: 0;
+        border-inline-start: 0;
+    }
+
+    .lp-facts div:nth-child(n + 3) {
+        border-top: 1px solid rgb(255 255 255 / 0.12);
+    }
+
+    .lp-steps {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 32px;
+    }
+
+    .lp-steps li:not(:last-child)::after {
+        display: none;
+    }
+
+    .lp-footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .lp-footer-brand {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 560px) {
+    .lp-container {
+        padding: 0 16px;
+    }
+
+    .lp-tablet-body {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lp-cart {
+        display: none;
+    }
+
+    .lp-receipt {
+        right: 0;
+        width: 170px;
+    }
+
+    .lp-panel {
+        padding: 16px;
+    }
+
+    .lp-ledger {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .lp-ledger-col + .lp-ledger-col {
+        border-top: 1px dashed var(--site-border);
+        border-inline-start: 0;
+    }
+
+    .lp-contact-brand,
+    .lp-contact-form {
+        padding: 24px 20px;
+    }
+
+    .lp-matrix {
+        font-size: 12.5px;
+    }
+
+    .lp-matrix th,
+    .lp-matrix td {
+        padding: 10px 6px;
+    }
+
+    .lp-matrix tbody th {
+        padding-inline-start: 12px;
+    }
+
+    .lp-matrix thead th {
+        font-size: 11px;
+    }
+
+    .lp-tag {
+        padding: 2px 6px;
+        font-size: 10.5px;
+        white-space: normal;
+    }
+
+    .lp-pin {
+        grid-template-columns: auto 1fr;
+        width: 100%;
+    }
+
+    .lp-pin span {
+        grid-column: 1 / -1;
+        text-align: start;
+    }
+}
