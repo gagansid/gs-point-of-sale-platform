@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 /**
@@ -111,6 +112,22 @@ it('setelan: key terenkripsi & tidak tampil; aktif butuh key; metode Online dibu
     DB::table('payment_gateway_settings')->update(['server_key' => null]);
     expect(fn () => app(UpdatePaymentGateway::class)->handle(['enabled' => true, 'is_production' => false]))
         ->toThrow(BusinessException::class, 'Isi Server Key');
+});
+
+it('key Midtrans owner: titik di dalam key diterima, salinan dibersihkan, Server/Client Key tertukar diberi pesan jelas', function () {
+    $update = app(UpdatePaymentGateway::class);
+
+    // Format key produksi asli memuat titik (contoh palsu); NBSP & baris baru dari salinan dashboard dibuang
+    $update->handle(['enabled' => true, 'is_production' => true, 'server_key' => "\u{00A0}Mid-server-pr_ABCDefgh.ijkl123\n", 'client_key' => 'Mid-client-ABCdef-u8-q']);
+    expect(PaymentGatewaySetting::current()->server_key)->toBe('Mid-server-pr_ABCDefgh.ijkl123')
+        ->and(PaymentGatewaySetting::current()->client_key)->toBe('Mid-client-ABCdef-u8-q');
+
+    expect(fn () => $update->handle(['enabled' => true, 'is_production' => true, 'server_key' => 'Mid-client-ABCdef-u8-q']))
+        ->toThrow(ValidationException::class, 'Yang ditempel Client Key');
+    expect(fn () => $update->handle(['enabled' => true, 'is_production' => true, 'client_key' => 'Mid-server-pr_ABCDefgh.ijkl123']))
+        ->toThrow(ValidationException::class, 'Yang ditempel Server Key');
+    expect(fn () => $update->handle(['enabled' => true, 'is_production' => true, 'server_key' => 'kata-sandi-login']))
+        ->toThrow(ValidationException::class, 'Server Key diawali Mid-server-');
 });
 
 it('tes koneksi: key salah 401 → error; benar (404 transaksi tidak ada) → terverifikasi', function () {

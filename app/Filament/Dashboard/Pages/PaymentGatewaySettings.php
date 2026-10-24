@@ -87,9 +87,9 @@ final class PaymentGatewaySettings extends DashboardPage
                         Toggle::make('enabled')->label('Aktifkan pembayaran online')->live(),
                         Toggle::make('is_production')->label('Mode production')
                             ->helperText('Matikan untuk uji coba (sandbox) dengan key sandbox Midtrans'),
-                        TextInput::make('server_key')->label('Server Key')->password()->revealable()->autocomplete('off')
+                        TextInput::make('server_key')->label('Server Key')->password()->revealable()->autocomplete('new-password')
                             ->placeholder($stored('server_key'))->maxLength(200),
-                        TextInput::make('client_key')->label('Client Key')->password()->revealable()->autocomplete('off')
+                        TextInput::make('client_key')->label('Client Key')->password()->revealable()->autocomplete('new-password')
                             ->placeholder($stored('client_key'))->maxLength(200),
                         CheckboxList::make('enabled_payments')->label('Metode yang ditawarkan')->columns(2)
                             ->options(PaymentGatewaySetting::PAYMENT_TYPES)

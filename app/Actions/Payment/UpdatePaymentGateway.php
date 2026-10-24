@@ -9,6 +9,8 @@ use App\Enums\PaymentCategory;
 use App\Exceptions\BusinessException;
 use App\Models\PaymentGatewaySetting;
 use App\Models\PaymentMethod;
+use App\Services\Payment\MidtransClient;
+use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -29,11 +31,18 @@ final class UpdatePaymentGateway
      */
     public function handle(array $data): PaymentGatewaySetting
     {
+        foreach (['server_key', 'client_key'] as $key) {
+            if (array_key_exists($key, $data) && $data[$key] !== null) {
+                $data[$key] = MidtransClient::cleanKey($data[$key]);
+            }
+        }
+
         $validated = Validator::make($data, [
             'enabled' => ['required', 'boolean'],
             'is_production' => ['required', 'boolean'],
-            'server_key' => ['nullable', 'string', 'max:200', 'regex:/^[A-Za-z0-9\-_:]+$/'],
-            'client_key' => ['nullable', 'string', 'max:200', 'regex:/^[A-Za-z0-9\-_:]+$/'],
+            // Key asli bisa memuat titik dll.; keaslian dipastikan lewat Tes koneksi ke Midtrans
+            'server_key' => ['nullable', 'string', 'max:200', self::keyRule('server')],
+            'client_key' => ['nullable', 'string', 'max:200', self::keyRule('client')],
             'enabled_payments' => ['nullable', 'array'],
             'enabled_payments.*' => [Rule::in(array_keys(PaymentGatewaySetting::PAYMENT_TYPES))],
         ], [], ['server_key' => 'Server Key', 'client_key' => 'Client Key', 'enabled_payments' => 'metode online'])->validate();
@@ -82,5 +91,20 @@ final class UpdatePaymentGateway
         } elseif ($method !== null && $method->is_active !== $enabled) {
             $method->forceFill(['is_active' => $enabled])->save();
         }
+    }
+
+    /** Format key: (SB-)Mid-{jenis}-… berisi karakter ASCII tampak; Server/Client Key tertukar diberi pesan jelas. */
+    private static function keyRule(string $kind): Closure
+    {
+        return function (string $attribute, mixed $value, Closure $fail) use ($kind): void {
+            $key = (string) $value;
+            $other = $kind === 'server' ? 'client' : 'server';
+
+            if (str_contains($key, 'Mid-'.$other.'-')) {
+                $fail($kind === 'server' ? 'Yang ditempel Client Key. Server Key diawali Mid-server- (sandbox: SB-Mid-server-)' : 'Yang ditempel Server Key. Client Key diawali Mid-client- (sandbox: SB-Mid-client-)');
+            } elseif (preg_match('/^(SB-)?Mid-'.$kind.'-[\x21-\x7E]{3,180}$/', $key) !== 1) {
+                $fail($kind === 'server' ? 'Server Key diawali Mid-server- (sandbox: SB-Mid-server-)' : 'Client Key diawali Mid-client- (sandbox: SB-Mid-client-)');
+            }
+        };
     }
 }

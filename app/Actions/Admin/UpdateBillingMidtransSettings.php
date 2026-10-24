@@ -34,8 +34,7 @@ final class UpdateBillingMidtransSettings
         $clear = (bool) ($data['midtrans_clear_keys'] ?? false);
         $keys = [];
         foreach (array_keys(SystemSettings::MIDTRANS_MODES) as $keyMode) {
-            // Salinan dari dashboard Midtrans bisa membawa spasi khusus (NBSP, zero-width) yang tidak terbuang trim()
-            $key = (string) preg_replace('/[\s\x{00A0}\x{200B}-\x{200D}\x{2060}\x{FEFF}]+/u', '', (string) ($data['midtrans_'.$keyMode.'_key'] ?? ''));
+            $key = MidtransClient::cleanKey($data['midtrans_'.$keyMode.'_key'] ?? '');
             if ($key === '') {
                 $keys[$keyMode] = $clear ? '' : null;
 

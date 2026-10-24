@@ -162,6 +162,15 @@ final class MidtransClient
         }
     }
 
+    /**
+     * Key Midtrans dari salinan dashboard: buang spasi biasa & khusus (NBSP, zero-width, baris baru) yang ikut tersalin.
+     * Isi key sendiri bebas karakter ASCII tampak (key asli bisa memuat titik, mis. "Mid-server-pr_….abc").
+     */
+    public static function cleanKey(mixed $key): string
+    {
+        return (string) preg_replace('/[\s\x{00A0}\x{200B}-\x{200D}\x{2060}\x{FEFF}]+/u', '', (string) $key);
+    }
+
     /** Tanda tangan notifikasi Midtrans: SHA512(order_id + status_code + gross_amount + server_key). */
     public static function signature(string $orderId, string $statusCode, string $grossAmount, string $serverKey): string
     {
