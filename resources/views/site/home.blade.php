@@ -23,6 +23,17 @@
         ['Laporan', [true, true, '31 hari', 'Shift sendiri']],
         ['Karyawan, outlet & hak akses', [true, false, false, false]],
     ];
+
+    // Pertanyaan umum; jawaban mengikuti SPEC (Q32 hanya-baca, ADR 0024 ganti paket, Q54 kasir web tanpa offline)
+    $faqs = [
+        ['Perangkat apa yang dibutuhkan?', 'Tablet Android untuk aplikasi kasir. Owner membuka dashboard dari browser di laptop atau HP. Paket dengan fitur Kasir web juga bisa berjualan langsung dari browser, cocok sebagai cadangan bila tablet bermasalah.'],
+        ['Apakah bisa dipakai tanpa internet?', 'Belum. Setiap transaksi langsung tersimpan di server agar stok, shift, dan laporan di semua perangkat selalu sama. Gunakan koneksi yang stabil di outlet.'],
+        ['Apa yang terjadi saat masa uji coba berakhir?', 'Akun menjadi hanya-baca, bukan dihapus. Data dan laporan tetap bisa dibuka; transaksi baru bisa dilakukan lagi begitu langganan aktif.'],
+        ['Bisa ganti paket di tengah jalan?', 'Bisa. Naik paket langsung aktif dan Anda hanya membayar selisih untuk sisa masa aktif. Turun paket berlaku di akhir masa aktif yang sedang berjalan.'],
+        ['Bagaimana cara membayar langganan?', 'Owner membuat tagihan dari menu Pengaturan → Langganan di dashboard, lalu membayarnya lewat transfer bank atau pembayaran online yang tersedia.'],
+        ['Apakah data bisnis saya aman?', 'Data setiap bisnis terpisah dan tidak bisa dilihat bisnis lain. Karyawan hanya mengakses menu sesuai perannya, aksi berisiko butuh PIN atasan, dan perubahan data penting tercatat beserta pelakunya.'],
+        ['Punya lebih dari satu cabang?', 'Satu akun bisa mengelola banyak outlet. Menu, harga, metode bayar, dan stok diatur per outlet, laporan bisa dilihat per outlet atau gabungan, dan stok bisa ditransfer antar outlet.'],
+    ];
 @endphp
 
 <x-site.layout>
@@ -38,6 +49,7 @@
                     <a href="#pricing">Harga</a>
                 @endif
                 <a href="#how-it-works">Cara kerja</a>
+                <a href="#faq">FAQ</a>
                 <a href="#contact">Kontak</a>
             </nav>
 
@@ -429,6 +441,26 @@
             </div>
         </section>
 
+        {{-- ---------- Pertanyaan umum: <details> tanpa JavaScript, satu terbuka sekaligus (atribut name) ---------- --}}
+        <section id="faq" @class(['lp-section', 'lp-section-muted' => $plans->isNotEmpty()])>
+            <div class="lp-container lp-faq">
+                <div class="lp-faq-head">
+                    <p class="lp-kicker">Pertanyaan umum</p>
+                    <h2 class="lp-title">Yang sering ditanyakan sebelum mulai</h2>
+                    <p class="lp-lead">Belum menemukan jawabannya? <a href="#contact">Tanya tim sales</a>, kami balas lewat WhatsApp.</p>
+                </div>
+
+                <div class="lp-faq-list">
+                    @foreach ($faqs as [$question, $answer])
+                        <details name="faq" class="lp-faq-item" @if ($loop->first) open @endif>
+                            <summary>{{ $question }}<span class="lp-faq-toggle" aria-hidden="true"></span></summary>
+                            <p>{{ $answer }}</p>
+                        </details>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
         {{-- ---------- Hubungi sales ---------- --}}
         <section id="contact" class="lp-section">
             <div class="lp-container">
@@ -507,6 +539,7 @@
                         <a href="#pricing">Harga</a>
                     @endif
                     <a href="#how-it-works">Cara kerja</a>
+                    <a href="#faq">Pertanyaan umum</a>
                 </nav>
                 <nav aria-label="Akun">
                     <h3>Akun</h3>

@@ -58,6 +58,14 @@ it('harga: section disembunyikan bila belum ada paket publik', function () {
         ->assertDontSee('href="#pricing"', false);
 });
 
+it('pertanyaan umum tampil dengan jawaban yang jujur soal offline & masa uji coba', function () {
+    $this->get('/')->assertOk()
+        ->assertSee('id="faq"', false)
+        ->assertSee('href="#faq"', false)
+        ->assertSee('Apakah bisa dipakai tanpa internet?')
+        ->assertSee('Akun menjadi hanya-baca, bukan dihapus.');
+});
+
 it('form hubungi sales menyimpan calon pelanggan', function () {
     $this->post('/contact-sales', leadBody(['message' => 'Dua kasir']))
         ->assertRedirect()
